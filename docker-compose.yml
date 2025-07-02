@@ -1,0 +1,31 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: teumteum_mysql_container
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: teumteum
+      MYSQL_USER: test
+      MYSQL_PASSWORD: testpw
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - teum-network
+
+  redis:
+    image: redis:7.0
+    container_name: teumteum_redis_container
+    ports:
+      - "6379:6379"
+    networks:
+      - teum-network
+
+volumes:
+  mysql_data:
+
+networks:
+  teum-network:
+    driver: bridge
