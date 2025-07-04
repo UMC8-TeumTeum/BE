@@ -11,9 +11,12 @@ public class SwaggerConfig {
   @Bean
   public OpenAPI openAPI() {
     return new OpenAPI()
-        .info(new Info()
-            .title("TeumTeum API 명세서")
-            .version("v1")
-            .description("TeumTeum 프로젝트 API 명세 초기 구성"));
+        .info(apiInfo());
+  }
+  private Info apiInfo() {
+    return new Info()
+        .title("TeumTeum API 명세서")
+        .description("TeumTeum 프로젝트 API 명세 초기 구성")
+        .version("1.0.0");
   }
 }
