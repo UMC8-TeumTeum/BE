@@ -1,7 +1,6 @@
 package umc.teumteum.server.domain.teum.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +62,19 @@ public class TeumController {
     @GetMapping(value = "/{responseId}/request-detail", produces = "application/json")
     public ApiResponse<TeumRequestDetailResponseDto> getRequestDetail(
             @PathVariable("responseId") Long responseId
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
+    @Operation(
+            summary = "틈 응답 상태 변경",
+            description = "응답 ID(responseId)에 해당하는 응답의 상태를 변경합니다. 상태가 'accepted'인 경우 틈 생성 여부를 판단하여 반환합니다.",
+            security = { @SecurityRequirement(name = "BearerAuth") }
+    )
+    @PatchMapping(value = "/response/{responseId}/status", consumes = "application/json", produces = "application/json")
+    public ApiResponse<TeumStatusUpdateResponseDto> updateResponseStatus(
+            @PathVariable("responseId") Long responseId,
+            @RequestBody TeumStatusUpdateRequestDto requestDto
     ) {
         return ApiResponse.onSuccess(null);
     }

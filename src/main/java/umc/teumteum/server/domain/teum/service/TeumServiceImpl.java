@@ -3,10 +3,7 @@ package umc.teumteum.server.domain.teum.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import umc.teumteum.server.domain.teum.dto.TeumReceivedResponseDto;
-import umc.teumteum.server.domain.teum.dto.TeumRequestDetailResponseDto;
-import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
-import umc.teumteum.server.domain.teum.dto.TeumResendRequestDto;
+import umc.teumteum.server.domain.teum.dto.*;
 
 import java.util.List;
 
@@ -40,5 +37,10 @@ public class TeumServiceImpl implements TeumService {
         return null;
     }
 
+    @Override
+    public TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto) {
+        // TODO: 틈 응답 상태 변경 로직 추후 구현
+        return null;
+    }
 
 }
