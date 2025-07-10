@@ -25,4 +25,16 @@ public class UserController {
         // TODO: 온보딩 약관 동의 저장 로직 구현
         return null;
     }
+
+
+    @Operation(
+            summary = "온보딩 닉네임과 분야/직종 저장",
+            description = "온보딩 과정에서 닉네임과 분야/직종 정보를 저장합니다."
+    )
+    @PostMapping(value = "/onboarding/nickname-job", produces = "application/json")
+    public ApiResponse<Object> saveNicknameAndJob(
+    ) {
+        // TODO: 온보딩 닉네임과 분야/직종 저장 로직 구현
+        return null;
+    }
 }
