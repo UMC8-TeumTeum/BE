@@ -12,7 +12,13 @@ public class FriendServiceImpl implements FriendService {
     @Override
     @Transactional
     public Long follow(Long userId) {
-        // TODO : 실제 로직 구현
+        // TODO : 팔로우 로직 추후 구현
         return 123L;
+    }
+
+    @Override
+    @Transactional
+    public void unfollow(Long userId) {
+        // TODO : 언팔로우 로직 추후 구현
     }
 }

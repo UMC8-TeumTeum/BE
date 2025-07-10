@@ -34,4 +34,19 @@ public class FriendController {
         return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, new FollowResponseDto(followId));
     }
 
+    @Operation(
+            summary = "유저 언팔로우",
+            description = "특정 유저에 대한 팔로우를 취소합니다."
+    )
+    @DeleteMapping(value = "/{userId}/follow", produces = "application/json")
+    public ApiResponse<Void> unfollowUser(
+            @Parameter(
+                    name = "userId",
+                    required = true
+            )
+            @PathVariable("userId") Long userId
+    ) {
+        friendService.unfollow(userId);
+        return ApiResponse.of(FriendSuccessStatus._UNFOLLOW_SUCCESS, null);
+    }
 }
