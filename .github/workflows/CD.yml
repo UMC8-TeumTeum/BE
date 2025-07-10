@@ -1,0 +1,99 @@
+name: CD with Gradle
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout With Submodules
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.ACCESS_TOKEN }}
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Update Git Submodules
+        run: git submodule update --init --recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for Gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build Jar
+        run: ./gradlew clean bootJar -Dspring.profiles.active=prod
+
+      - name: Docker login
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Docker build and push
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Deploy via Bastion
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.BASTION_HOST }}
+          username: ${{ secrets.BASTION_USERNAME }}
+          key: ${{ secrets.BASTION_PRIVATE_KEY }}
+          script: |
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/teumteum.pem ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }} << EOF
+              docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest
+            
+              docker stop spring-app || true && docker rm spring-app || true
+              docker stop redis-container || true && docker rm redis-container || true
+            
+              docker network create app-net || true
+
+              docker run -d --name redis-container \
+              --network app-net \
+              -p ${{ secrets.REDIS_PORT }}:${{ secrets.REDIS_PORT }} \
+              redis:${{ secrets.REDIS_VERSION }} \
+              redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}
+              
+              docker run -d --name spring-app \
+              --network app-net \
+              -p ${{ secrets.SPRINGBOOT_PORT }}:${{ secrets.SPRINGBOOT_PORT }} \
+              -e SPRINGBOOT_PORT=${{ secrets.SPRINGBOOT_PORT }} \
+              -e SPRING_REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
+              -e DB_URL=${{ secrets.DB_URL }} \
+              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest
+
+            EOF
+
+
+      - name: Notify on Discord(Success)
+        if: success()
+        uses: Ilshidur/action-discord@master
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          message: "서버 배포 성공! `${{ github.repository }}` (${{github.ref_name }}) 커밋 `${{ github.sha }}`"
+          args: ''
+
+      - name: Notify on Discord(Fail)
+        if: failure()
+        uses: Ilshidur/action-discord@master
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          message: "서버 배포 실패\n`${{ github.repository }}` (${{github.ref_name }}) 커밋 `${{ github.sha }}`\n로그 확인 필요!"
+          args: ''
+
+
+
