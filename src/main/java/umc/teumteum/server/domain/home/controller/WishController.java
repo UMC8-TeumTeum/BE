@@ -42,9 +42,9 @@ public class WishController {
         return ApiResponse.onSuccess(null);
     }
 
-    @DeleteMapping(value = "/{wishId}", consumes = "application/json")
+    @DeleteMapping(value = "", consumes = "application/json")
     @Operation(summary = "위시 삭제 API",description = "위시를 삭제하는 API입니다.")
-    public ApiResponse<String> deleteWish(@PathVariable("wishId") Long wishId){
+    public ApiResponse<String> deleteWish(){
         return ApiResponse.onSuccess(null);
     }
 
@@ -54,8 +54,8 @@ public class WishController {
         return ApiResponse.onSuccess(null);
     }
 
-    @PostMapping(value = "/{wishId}", consumes = "application/json", produces = "application/json")
-    @Operation(summary = "위시 등록 API",description = "위시를 투두로 등록하는 API입니다.")
+    @PostMapping(value = "/{wishId}/assign", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "위시 투두 등록 API",description = "위시를 투두로 등록하는 API입니다.")
     public ApiResponse<String> assignWish(@PathVariable("wishId") Long wishId){
         return ApiResponse.onSuccess(null);
     }
