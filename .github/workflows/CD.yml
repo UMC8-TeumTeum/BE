@@ -82,18 +82,27 @@ jobs:
       - name: Notify on Discord(Success)
         if: success()
         uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          webhook: ${{ secrets.DISCORD_WEBHOOK }}
-          message: "서버 배포 성공! `${{ github.repository }}` (${{github.ref_name }}) 커밋 `${{ github.sha }}`"
-          args: ''
+          args: |
+           서버 배포 성공
+            • Repo: `${{ github.repository }}`
+            • Branch: `${{ github.ref_name }}`
+            • Commit: `${{ github.sha }}`
 
       - name: Notify on Discord(Fail)
         if: failure()
         uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          webhook: ${{ secrets.DISCORD_WEBHOOK }}
-          message: "서버 배포 실패\n`${{ github.repository }}` (${{github.ref_name }}) 커밋 `${{ github.sha }}`\n로그 확인 필요!"
-          args: ''
+          args: |
+            서버 배포 실패
+            • Repo: `${{ github.repository }}`
+            • Branch: `${{ github.ref_name }}`
+            • Commit: `${{ github.sha }}`
+            → 로그 확인 필요!
 
 
 
