@@ -1,7 +1,6 @@
 package umc.teumteum.server.domain.home.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -16,57 +15,57 @@ import java.time.LocalDate;
 @Tag(name = "home", description = "home domain API")
 public class HomeController {
 
-    @GetMapping("/teum-time")
-    @Operation(summary = "빈틈 시간 조회 API",description = "지금까지 채운 빈틈 시간 조회 API입니다.",security = { @SecurityRequirement(name = "BearerAuth")})
-    public ApiResponse<String> getTuemTime(){
+    @GetMapping(value = "/teum-time", produces = "application/json")
+    @Operation(summary = "빈틈 시간 조회 API",description = "지금까지 채운 빈틈 시간 조회 API입니다.")
+    public ApiResponse<String> getTeumTime(){
         return ApiResponse.onSuccess(null);
     }
 
-    @GetMapping("/today")
-    @Operation(summary = "오늘의 빈틈 조회 API",description = "오늘의 빈틈 시간을 조회하는 API입니다. query string으로 am 또는 pm을 입력주세요.",security = { @SecurityRequirement(name = "BearerAuth")})
+    @GetMapping(value = "/today", produces = "application/json")
+    @Operation(summary = "오늘의 빈틈 조회 API",description = "오늘의 빈틈 시간을 조회하는 API입니다. query string으로 am 또는 pm을 입력주세요.")
     public ApiResponse<TodyTeumResponseDTO> getTodayTeum(@RequestParam("period") String period){
         return ApiResponse.onSuccess(null);
     }
 
-    @GetMapping("/calendar")
-    @Operation(summary = "캘린더 조회 API",description = "오늘의 빈틈 시간을 조회하는 API입니다. query string으로 시작날짜와 종료날찌를 입력주세요.",security = { @SecurityRequirement(name = "BearerAuth")})
+    @GetMapping(value = "/calendar", produces = "application/json")
+    @Operation(summary = "캘린더 조회 API",description = "오늘의 빈틈 시간을 조회하는 API입니다. query string으로 시작날짜와 종료날찌를 입력주세요.")
     public ApiResponse<String> getCalendar(@RequestParam("startDate") LocalDate startDate, @RequestParam("endDate") LocalDate endDate){
         return ApiResponse.onSuccess(null);
     }
 
-    @GetMapping("/todolist")
-    @Operation(summary = "투두리스트 조회 API",description = "특정날찌의 투두를 조회하는 API입니다. query string으로 날짜를 입력주세요.",security = { @SecurityRequirement(name = "BearerAuth")})
+    @GetMapping(value = "/todolist", produces = "application/json")
+    @Operation(summary = "투두리스트 조회 API",description = "특정날찌의 투두를 조회하는 API입니다. query string으로 날짜를 입력주세요.")
     public ApiResponse<String> getTodolist(@RequestParam("startDate") LocalDate date){
         return ApiResponse.onSuccess(null);
     }
 
-    @GetMapping("/user-reminds")
-    @Operation(summary = "리마인드 알림 정보 조회 API",description = "유저의 리마인드 알림 설정 정보를 조회하는 API입니다",security = { @SecurityRequirement(name = "BearerAuth")})
-    public ApiResponse<String> getUserRemindI(){
+    @GetMapping(value = "/user-reminds", produces = "application/json")
+    @Operation(summary = "리마인드 알림 정보 조회 API",description = "유저의 리마인드 알림 설정 정보를 조회하는 API입니다")
+    public ApiResponse<String> getUserRemind(){
         return ApiResponse.onSuccess(null);
     }
 
-    @PostMapping("/todo")
-    @Operation(summary = "투두 등록 API",description = "새로운 투두를 업로드하는 API입니다.",security = { @SecurityRequirement(name = "BearerAuth")})
+    @PostMapping(value = "/todo",consumes = "application/json", produces = "application/json")
+    @Operation(summary = "투두 등록 API",description = "새로운 투두를 등록 API입니다.")
     public ApiResponse<String> createTodo(){
         return ApiResponse.onSuccess(null);
     }
 
-    @GetMapping("/todo")
-    @Operation(summary = "특정 투두 정보 조회 API",description = "특정투두의 상세정보를 조회하는 API입니다. query string으로 투두ID를 입력주세요.",security = { @SecurityRequirement(name = "BearerAuth")})
-    public ApiResponse<String> getTodo(@RequestParam("todoId") Long todoId){
+    @GetMapping(value = "/todo/{todoId}", produces = "application/json")
+    @Operation(summary = "특정 투두 정보 조회 API",description = "특정투두의 상세정보를 조회하는 API입니다. path variable로 투두ID를 입력주세요.")
+    public ApiResponse<String> getTodo(@PathVariable("todoId") Long todoId){
         return ApiResponse.onSuccess(null);
     }
 
-    @PatchMapping("/todo")
-    @Operation(summary = "특정 투두 정보 조회 API",description = "특정투두의 상세정보를 조회하는 API입니다. query string으로 투두ID를 입력주세요.",security = { @SecurityRequirement(name = "BearerAuth")})
-    public ApiResponse<String> updateTodo(@RequestParam("todoId") Long todoId){
+    @PatchMapping(value = "/todo/{todoId}",consumes = "application/json", produces = "application/json")
+    @Operation(summary = "특정 투두 정보 수정 API",description = "특정투두의 상세정보를 수정하는 API입니다. path variable로 투두ID를 입력주세요.")
+    public ApiResponse<String> updateTodo(@PathVariable("todoId") Long todoId){
         return ApiResponse.onSuccess(null);
     }
 
-    @DeleteMapping("/todo")
-    @Operation(summary = "특정 투두 삭제 API",description = "특정투두의 삭제하는 API입니다. query string으로 투두ID를 입력주세요.",security = { @SecurityRequirement(name = "BearerAuth")})
-    public ApiResponse<String> deleteTodo(@RequestParam("todoId") Long todoId){
+    @DeleteMapping(value = "/todo/{todoId}")
+    @Operation(summary = "특정 투두 삭제 API",description = "특정투두의 삭제하는 API입니다. path variable로 투두ID를 입력주세요.")
+    public ApiResponse<String> deleteTodo(@PathVariable("todoId") Long todoId){
         return ApiResponse.onSuccess(null);
     }
 }
