@@ -73,4 +73,16 @@ public class UserController {
         // TODO: 온보딩 수면 패턴 저장 로직 구현
         return null;
     }
+
+
+    @Operation(
+            summary = "온보딩 리마인드 알림 설정 저장",
+            description = "온보딩 과정에서 리마인드 알림 시간 설정(1분 전/3분 전/5분 전/10분 전/30분 전)을 저장합니다."
+    )
+    @PostMapping(value = "/onboarding/reminder", produces = "application/json")
+    public ApiResponse<Object> saveReminder(
+    ) {
+        // TODO: 온보딩 리마인드 알림 설정 저장 로직 구현
+        return null;
+    }
 }
