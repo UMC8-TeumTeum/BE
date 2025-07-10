@@ -4,6 +4,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import umc.teumteum.server.domain.friend.dto.FriendMutualResponseDto;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,5 +23,12 @@ public class FriendServiceImpl implements FriendService {
     @Transactional
     public void unfollow(Long userId) {
         // TODO : 언팔로우 로직 추후 구현
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FriendMutualResponseDto> getMutualFriends() {
+        // TODO : 맞팔로우 조회 로직 추후 구현
+        return null;
     }
 }

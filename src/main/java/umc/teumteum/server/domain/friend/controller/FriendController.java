@@ -2,13 +2,17 @@ package umc.teumteum.server.domain.friend.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.friend.dto.FollowResponseDto;
+import umc.teumteum.server.domain.friend.dto.FriendMutualResponseDto;
 import umc.teumteum.server.domain.friend.exception.status.FriendSuccessStatus;
 import umc.teumteum.server.domain.friend.service.FriendService;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
+
+import java.util.List;
 
 @Tag(name = "Friend", description = "친구 관련 API")
 @RestController
@@ -48,5 +52,15 @@ public class FriendController {
     ) {
         friendService.unfollow(userId);
         return ApiResponse.of(FriendSuccessStatus._UNFOLLOW_SUCCESS, null);
+    }
+
+    @Operation(
+            summary = "맞팔로우 목록 조회",
+            description = "특정 유저의 맞팔로우 목록을 조회합니다.",
+            security = { @SecurityRequirement(name = "BearerAuth") }
+    )
+    @GetMapping(value = "/mutuals", produces = "application/json")
+    public ApiResponse<List<FriendMutualResponseDto>> getMyMutualFriends() {
+        return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, null);
     }
 }
