@@ -61,4 +61,16 @@ public class UserController {
         // TODO: 온보딩 루틴 저장 로직 구현
         return null;
     }
+
+
+    @Operation(
+            summary = "온보딩 수면 패턴 저장",
+            description = "온보딩 과정에서 수면 패턴(취침시간/기상시간)을 저장합니다."
+    )
+    @PostMapping(value = "/onboarding/sleep-pattern", produces = "application/json")
+    public ApiResponse<Object> saveSleepPattern(
+    ) {
+        // TODO: 온보딩 수면 패턴 저장 로직 구현
+        return null;
+    }
 }
