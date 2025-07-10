@@ -51,11 +51,20 @@ public class TeumController {
             security = { @SecurityRequirement(name = "BearerAuth") }
     )
     @GetMapping(value = "/request/received", produces = "application/json")
-    public ApiResponse<List<TeumReceivedResponseDto>> getReceivedTeumRequests(
-            @Parameter(hidden = true) @RequestHeader("Authorization") String token
-    ) {
+    public ApiResponse<List<TeumReceivedResponseDto>> getReceivedTeumRequests() {
         return ApiResponse.onSuccess(null);
     }
 
+    @Operation(
+            summary = "틈 요청 상세 조회",
+            description = "응답 ID(responseId)를 기준으로 해당 사용자가 받은 요청 상세 정보를 조회합니다.",
+            security = { @SecurityRequirement(name = "BearerAuth") }
+    )
+    @GetMapping(value = "/{responseId}/request-detail", produces = "application/json")
+    public ApiResponse<TeumRequestDetailResponseDto> getRequestDetail(
+            @PathVariable("responseId") Long responseId
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
 
 }

@@ -25,11 +25,8 @@ public class TeumReceivedResponseDto {
     @Schema(description = "읽음 여부", example = "false")
     private boolean isRead;
 
-    @Schema(description = "보낸 사람 닉네임", example = "string")
-    private String senderNickname;
-
-    @Schema(description = "보낸 사람 프로필 이미지 URL", example = "string")
-    private String senderProfileImageUrl;
+    @Schema(description = "보낸 사용자 정보")
+    private SenderUserDto senderUser;
 
     @Schema(description = "수신자 총 인원 수 (본인 포함)", example = "1")
     private int receiverCount;

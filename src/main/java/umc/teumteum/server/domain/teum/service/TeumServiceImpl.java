@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.teum.dto.TeumReceivedResponseDto;
+import umc.teumteum.server.domain.teum.dto.TeumRequestDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
 import umc.teumteum.server.domain.teum.dto.TeumResendRequestDto;
 
@@ -32,4 +33,12 @@ public class TeumServiceImpl implements TeumService {
         // TODO: 틈 요청 불러오기 로직 추후 구현
         return List.of();
     }
+
+    @Override
+    public TeumRequestDetailResponseDto getRequestDetail(Long responseId, Long userId) {
+        // TODO: 틈 요청 상세보기 로직 추후 구현
+        return null;
+    }
+
+
 }
