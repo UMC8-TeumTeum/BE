@@ -37,4 +37,16 @@ public class UserController {
         // TODO: 온보딩 닉네임과 분야/직종 저장 로직 구현
         return null;
     }
+
+
+    @Operation(
+            summary = "온보딩 프로필 이미지 저장",
+            description = "온보딩 과정에서 S3에 업로드되고 난 뒤의 프로필 이미지 키를 저장합니다."
+    )
+    @PostMapping(value = "/onboarding/profile-image", produces = "application/json")
+    public ApiResponse<Object> saveProfileImageKey(
+    ) {
+        // TODO: 온보딩 프로필 이미지 키 저장 로직 구현
+        return null;
+    }
 }
