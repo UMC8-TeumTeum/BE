@@ -18,6 +18,7 @@ services:
   redis:
     image: redis:7.0
     container_name: teumteum_redis_container
+    command: redis-server --requirepass testpw
     ports:
       - "6379:6379"
     networks:
