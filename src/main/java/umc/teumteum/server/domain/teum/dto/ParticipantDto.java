@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class SenderUserDto {
+public class ParticipantDto {
 
     @Schema(description = "수신자 ID", example = "1")
     private Long userId;

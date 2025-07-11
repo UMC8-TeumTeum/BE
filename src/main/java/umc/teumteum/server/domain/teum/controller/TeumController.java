@@ -92,4 +92,16 @@ public class TeumController {
         return ApiResponse.onSuccess(null);
     }
 
+    @Operation(
+            summary = "약속된 틈 상세 조회",
+            description = "사용자가 참여 중인 틈(teumId)에 대한 상세 정보를 조회합니다. 과거 여부도 함께 반환됩니다.",
+            security = { @SecurityRequirement(name = "BearerAuth") }
+    )
+    @GetMapping(value = "/scheduled/{teumId}", produces = "application/json")
+    public ApiResponse<ScheduledTeumDetailResponseDto> getTeumDetail(
+            @PathVariable("teumId") Long teumId
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
 }

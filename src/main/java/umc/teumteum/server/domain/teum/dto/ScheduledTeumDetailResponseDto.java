@@ -6,24 +6,20 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(title = "TeumRequestDetailResponseDto : 틈 요청 상세 응답 DTO")
-public class TeumRequestDetailResponseDto {
+@Schema(title = "ScheduledTeumDetailResponseDto : 약속된 틈 상세 응답 DTO")
+public class ScheduledTeumDetailResponseDto {
 
-    @Schema(description = "요청 ID", example = "1")
-    private Long requestId;
-
-    @Schema(description = "보낸 사용자 정보")
-    private ParticipantDto senderUser;
+    @Schema(description = "틈 ID", example = "1")
+    private Long teumId;
 
     @Schema(description = "제목", example = "string")
     private String title;
-
-    @Schema(description = "내용", example = "string")
-    private String description;
 
     @Schema(description = "날짜", example = "YYYY-MM-DD")
     private String date;
@@ -34,9 +30,9 @@ public class TeumRequestDetailResponseDto {
     @Schema(description = "종료 시간", example = "00:00")
     private String endTime;
 
-    @Schema(description = "그래픽 ID", example = "1")
-    private int graphicId;
+    @Schema(description = "참여자 목록")
+    private List<ParticipantDto> participants;
 
-    @Schema(description = "읽음 여부", example = "true")
-    private boolean isRead;
+    @Schema(description = "이미 지난 틈 여부", example = "false")
+    private boolean isPast;
 }

@@ -49,4 +49,10 @@ public class TeumServiceImpl implements TeumService {
         return List.of();
     }
 
+    @Override
+    public ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long teumId, Long userId) {
+        // TODO: 약속된 틈 상세 조회 로직 추후 구현
+        return null;
+    }
+
 }

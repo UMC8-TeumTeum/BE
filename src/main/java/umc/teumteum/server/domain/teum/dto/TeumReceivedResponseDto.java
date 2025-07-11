@@ -26,7 +26,7 @@ public class TeumReceivedResponseDto {
     private boolean isRead;
 
     @Schema(description = "보낸 사용자 정보")
-    private SenderUserDto senderUser;
+    private ParticipantDto senderUser;
 
     @Schema(description = "수신자 총 인원 수 (본인 포함)", example = "1")
     private int receiverCount;
