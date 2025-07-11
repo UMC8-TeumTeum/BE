@@ -61,4 +61,10 @@ public class TeumServiceImpl implements TeumService {
         return null;
     }
 
+    @Override
+    public AvailableTimeResponseDto getAvailableTime(AvailableTimeRequestDto requestDto) {
+        // TODO: 시간표 계산 로직 추후 구현
+        return null;
+    }
+
 }

@@ -21,4 +21,7 @@ public interface TeumService {
     ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long teumId, Long userId);
 
     ScheduledTeumExitResponseDto exitScheduledTeum(Long teumId, Long userId);
+
+    AvailableTimeResponseDto getAvailableTime(AvailableTimeRequestDto requestDto);
+
 }
