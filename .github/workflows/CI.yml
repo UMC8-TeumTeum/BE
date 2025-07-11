@@ -6,6 +6,10 @@ on:
       - main
       - develop
 
+  pull_request:
+    branches:
+      - develop
+
 jobs:
   CI:
     name: Continuous Integration
