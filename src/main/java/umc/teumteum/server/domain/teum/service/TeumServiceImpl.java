@@ -67,4 +67,10 @@ public class TeumServiceImpl implements TeumService {
         return null;
     }
 
+    @Override
+    public SharedTeumResponseDto getSharedTeumStats(Long userId, Long friendId) {
+        // TODO : 함께한 틈 시간 조회 로직 추후 구현
+        return null;
+    }
+
 }

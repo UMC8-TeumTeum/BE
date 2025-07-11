@@ -128,4 +128,17 @@ public class TeumController {
         return ApiResponse.onSuccess(null);
     }
 
+    @Operation(
+            summary = "함께한 틈 시간 조회",
+            description = "로그인한 사용자와 지정된 친구가 함께 참여한 틈의 횟수와 누적 시간을 분 단위로 반환합니다.",
+            security = { @SecurityRequirement(name = "BearerAuth") }
+    )
+    @GetMapping(value = "/shared-time/{friendId}", produces = "application/json")
+    public ApiResponse<SharedTeumResponseDto> getSharedTeumStats(
+            @PathVariable("friendId") Long friendId
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
+
 }

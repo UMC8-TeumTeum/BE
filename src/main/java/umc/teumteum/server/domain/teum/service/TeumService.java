@@ -24,4 +24,5 @@ public interface TeumService {
 
     AvailableTimeResponseDto getAvailableTime(AvailableTimeRequestDto requestDto);
 
+    SharedTeumResponseDto getSharedTeumStats(Long userId, Long friendId);
 }
