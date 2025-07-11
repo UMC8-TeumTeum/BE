@@ -104,4 +104,16 @@ public class TeumController {
         return ApiResponse.onSuccess(null);
     }
 
+    @Operation(
+            summary = "약속된 틈 나가기",
+            description = "현재 로그인한 사용자가 참여 중인 틈(teumId)에서 나갑니다. 마지막 참여자가 나갈 경우 틈은 cancelled 상태로 변경됩니다.",
+            security = { @SecurityRequirement(name = "BearerAuth") }
+    )
+    @DeleteMapping(value = "/scheduled/{teumId}/exit", produces = "application/json")
+    public ApiResponse<ScheduledTeumExitResponseDto> exitScheduledTeum(
+            @PathVariable("teumId") Long teumId
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
 }

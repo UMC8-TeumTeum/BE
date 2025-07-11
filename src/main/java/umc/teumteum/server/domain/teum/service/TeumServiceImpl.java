@@ -55,4 +55,10 @@ public class TeumServiceImpl implements TeumService {
         return null;
     }
 
+    @Override
+    public ScheduledTeumExitResponseDto exitScheduledTeum(Long teumId, Long userId) {
+        // TODO: 약속된 틈 취소 로직 추후 구현
+        return null;
+    }
+
 }

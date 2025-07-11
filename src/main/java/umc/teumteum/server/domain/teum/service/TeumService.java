@@ -19,4 +19,6 @@ public interface TeumService {
     List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, int year, int month);
 
     ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long teumId, Long userId);
+
+    ScheduledTeumExitResponseDto exitScheduledTeum(Long teumId, Long userId);
 }
