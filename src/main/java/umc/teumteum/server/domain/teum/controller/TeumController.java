@@ -79,4 +79,17 @@ public class TeumController {
         return ApiResponse.onSuccess(null);
     }
 
+    @Operation(
+            summary = "약속된 틈 조회",
+            description = "사용자가 참여 중인 틈 중, 지정한 연/월에 해당하는 틈 목록을 조회합니다.",
+            security = { @SecurityRequirement(name = "BearerAuth") }
+    )
+    @GetMapping(value = "/scheduled", produces = "application/json")
+    public ApiResponse<List<ScheduledTeumResponseDto>> getScheduledTeums(
+            @RequestParam("year") int year,
+            @RequestParam("month") int month
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
 }
