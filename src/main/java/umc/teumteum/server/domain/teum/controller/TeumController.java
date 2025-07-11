@@ -5,7 +5,13 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import umc.teumteum.server.domain.teum.dto.*;
+import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
+import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
+import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
+import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumExitResponseDto;
+import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.service.TeumService;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 

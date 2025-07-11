@@ -1,10 +1,11 @@
-package umc.teumteum.server.domain.teum.dto;
+package umc.teumteum.server.domain.teum.dto.teum;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 
 @Getter
 @Builder

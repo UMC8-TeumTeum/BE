@@ -3,7 +3,13 @@ package umc.teumteum.server.domain.teum.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import umc.teumteum.server.domain.teum.dto.*;
+import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
+import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
+import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
+import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumExitResponseDto;
+import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.teum.*;
 
 import java.util.List;
 

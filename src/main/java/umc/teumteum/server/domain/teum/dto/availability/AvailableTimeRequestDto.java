@@ -1,4 +1,4 @@
-package umc.teumteum.server.domain.teum.dto;
+package umc.teumteum.server.domain.teum.dto.availability;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
