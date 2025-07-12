@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.teum.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,7 @@ public class TeumController {
     )
     @PostMapping(value = "/request/{parentRequestId}/resend", consumes = "application/json", produces = "application/json")
     public ApiResponse<TeumResendResponseDto> createResendRequest(
+            @Parameter(name = "parentRequestId", description = "재요청을 생성할 기준이 되는 기존 요청 ID", example = "1")
             @PathVariable("parentRequestId") Long parentRequestId,
             @RequestBody TeumResendRequestDto resendRequestDto
     ) {
@@ -79,6 +81,7 @@ public class TeumController {
     )
     @PatchMapping(value = "/response/{responseId}/status", consumes = "application/json", produces = "application/json")
     public ApiResponse<TeumStatusUpdateResponseDto> updateResponseStatus(
+            @Parameter(name = "responseId", description = "상태를 변경할 응답 ID", example = "1")
             @PathVariable("responseId") Long responseId,
             @RequestBody TeumStatusUpdateRequestDto requestDto
     ) {
@@ -92,7 +95,9 @@ public class TeumController {
     )
     @GetMapping(value = "/scheduled", produces = "application/json")
     public ApiResponse<List<ScheduledTeumResponseDto>> getScheduledTeums(
+            @Parameter(name = "year", description = "조회할 연도", example = "2025")
             @RequestParam("year") int year,
+            @Parameter(name = "month", description = "조회할 월", example = "7")
             @RequestParam("month") int month
     ) {
         return ApiResponse.onSuccess(null);
@@ -105,6 +110,7 @@ public class TeumController {
     )
     @GetMapping(value = "/scheduled/{teumId}", produces = "application/json")
     public ApiResponse<ScheduledTeumDetailResponseDto> getTeumDetail(
+            @Parameter(name = "teumId", description = "상세 정보를 조회할 틈 ID", example = "1")
             @PathVariable("teumId") Long teumId
     ) {
         return ApiResponse.onSuccess(null);
@@ -117,6 +123,7 @@ public class TeumController {
     )
     @DeleteMapping(value = "/scheduled/{teumId}/exit", produces = "application/json")
     public ApiResponse<ScheduledTeumExitResponseDto> exitScheduledTeum(
+            @Parameter(name = "teumId", description = "나갈 틈 ID", example = "1")
             @PathVariable("teumId") Long teumId
     ) {
         return ApiResponse.onSuccess(null);
@@ -139,9 +146,10 @@ public class TeumController {
             description = "로그인한 사용자와 지정된 친구가 함께 참여한 틈의 횟수와 누적 시간을 분 단위로 반환합니다.",
             security = { @SecurityRequirement(name = "BearerAuth") }
     )
-    @GetMapping(value = "/shared-time/{friendId}", produces = "application/json")
+    @GetMapping(value = "/shared-time/{userId}", produces = "application/json")
     public ApiResponse<SharedTeumResponseDto> getSharedTeumStats(
-            @PathVariable("friendId") Long friendId
+            @Parameter(name = "userId", description = "함께한 틈 정보를 조회할 친구 ID", example = "1")
+            @PathVariable("userId") Long userId
     ) {
         return ApiResponse.onSuccess(null);
     }
