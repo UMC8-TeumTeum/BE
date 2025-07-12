@@ -26,7 +26,8 @@ public class FriendController {
 
     @Operation(
             summary = "유저 팔로우",
-            description = "특정 유저를 팔로우합니다."
+            description = "특정 유저를 팔로우합니다.",
+            security = { @SecurityRequirement(name = "BearerAuth") }
     )
     @PostMapping(value = "/{userId}/follow", produces = "application/json")
     public ApiResponse<FollowResponseDto> followUser(
@@ -42,7 +43,8 @@ public class FriendController {
 
     @Operation(
             summary = "유저 언팔로우",
-            description = "특정 유저에 대한 팔로우를 취소합니다."
+            description = "특정 유저에 대한 팔로우를 취소합니다.",
+            security = { @SecurityRequirement(name = "BearerAuth") }
     )
     @DeleteMapping(value = "/{userId}/follow", produces = "application/json")
     public ApiResponse<Void> unfollowUser(
