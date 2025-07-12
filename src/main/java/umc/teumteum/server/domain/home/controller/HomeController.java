@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.home.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -23,19 +24,24 @@ public class HomeController {
 
     @GetMapping(value = "/today", produces = "application/json")
     @Operation(summary = "오늘의 빈틈 조회 API",description = "오늘의 빈틈 시간을 조회하는 API입니다. query string으로 am 또는 pm을 입력주세요.")
-    public ApiResponse<TodyTeumResponseDTO> getTodayTeum(@RequestParam("period") String period){
+    public ApiResponse<TodyTeumResponseDTO> getTodayTeum(
+            @Parameter(name = "period", description = "조회 시간대 (오전: am, 오후: pm)", example = "am")
+            @RequestParam("period") String period){
         return ApiResponse.onSuccess(null);
     }
 
     @GetMapping(value = "/calendar", produces = "application/json")
     @Operation(summary = "캘린더 조회 API",description = "오늘의 빈틈 시간을 조회하는 API입니다. query string으로 시작날짜와 종료날찌를 입력주세요.")
-    public ApiResponse<String> getCalendar(@RequestParam("startDate") LocalDate startDate, @RequestParam("endDate") LocalDate endDate){
+    public ApiResponse<String> getCalendar(
+            @Parameter(name= "startDate", description = "시작날짜", example = "2025-07-01") @RequestParam("startDate") LocalDate startDate,
+            @Parameter(name= "endDate", description = "종료날짜", example = "2025-07-31") @RequestParam("endDate") LocalDate endDate){
         return ApiResponse.onSuccess(null);
     }
 
     @GetMapping(value = "/todolist", produces = "application/json")
     @Operation(summary = "투두리스트 조회 API",description = "특정날찌의 투두를 조회하는 API입니다. query string으로 날짜를 입력주세요.")
-    public ApiResponse<String> getTodolist(@RequestParam("startDate") LocalDate date){
+    public ApiResponse<String> getTodolist(
+            @Parameter(name= "date", description = "날짜", example = "2025-07-31") @RequestParam("date") LocalDate date){
         return ApiResponse.onSuccess(null);
     }
 
@@ -53,19 +59,22 @@ public class HomeController {
 
     @GetMapping(value = "/todo/{todoId}", produces = "application/json")
     @Operation(summary = "특정 투두 정보 조회 API",description = "특정투두의 상세정보를 조회하는 API입니다. path variable로 투두ID를 입력주세요.")
-    public ApiResponse<String> getTodo(@PathVariable("todoId") Long todoId){
+    public ApiResponse<String> getTodo(
+            @Parameter(name= "todoId", description = "조회할 todo ID", example = "123") @PathVariable("todoId") Long todoId){
         return ApiResponse.onSuccess(null);
     }
 
     @PatchMapping(value = "/todo/{todoId}",consumes = "application/json", produces = "application/json")
     @Operation(summary = "특정 투두 정보 수정 API",description = "특정투두의 상세정보를 수정하는 API입니다. path variable로 투두ID를 입력주세요.")
-    public ApiResponse<String> updateTodo(@PathVariable("todoId") Long todoId){
+    public ApiResponse<String> updateTodo(
+            @Parameter(name= "todoId", description = "수정할 todo ID", example = "123") @PathVariable("todoId") Long todoId){
         return ApiResponse.onSuccess(null);
     }
 
     @DeleteMapping(value = "/todo/{todoId}")
     @Operation(summary = "특정 투두 삭제 API",description = "특정투두의 삭제하는 API입니다. path variable로 투두ID를 입력주세요.")
-    public ApiResponse<String> deleteTodo(@PathVariable("todoId") Long todoId){
+    public ApiResponse<String> deleteTodo(
+            @Parameter(name= "todoId", description = "삭제할 todo ID", example = "123") @PathVariable("todoId") Long todoId){
         return ApiResponse.onSuccess(null);
     }
 }
