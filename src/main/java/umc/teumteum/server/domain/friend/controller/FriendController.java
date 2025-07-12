@@ -31,10 +31,7 @@ public class FriendController {
     )
     @PostMapping(value = "/{userId}/follow", produces = "application/json")
     public ApiResponse<FollowResponseDto> followUser(
-            @Parameter(
-                    name = "userId",
-                    required = true
-            )
+            @Parameter(name = "userId", description = "팔로우할 대상 유저의 ID", example = "1")
             @PathVariable("userId") Long userId
     ) {
         Long followId = friendService.follow(userId);
@@ -48,10 +45,7 @@ public class FriendController {
     )
     @DeleteMapping(value = "/{userId}/follow", produces = "application/json")
     public ApiResponse<Void> unfollowUser(
-            @Parameter(
-                    name = "userId",
-                    required = true
-            )
+            @Parameter(name = "userId", description = "언팔로우할 대상 유저의 ID", example = "1")
             @PathVariable("userId") Long userId
     ) {
         friendService.unfollow(userId);
@@ -75,6 +69,7 @@ public class FriendController {
     )
     @PatchMapping(value = "/{userId}/favorite", consumes = "application/json", produces = "application/json")
     public ApiResponse<FavoriteResponseDto> updateFavorite(
+            @Parameter(name = "userId", description = "즐겨찾기를 설정/해제할 대상 유저의 ID", example = "1")
             @PathVariable("userId") Long userId,
             @RequestBody FavoriteRequestDto requestDto
     ) {
