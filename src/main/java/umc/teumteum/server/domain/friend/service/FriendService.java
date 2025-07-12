@@ -1,5 +1,6 @@
 package umc.teumteum.server.domain.friend.service;
 
+import umc.teumteum.server.domain.friend.dto.FollowerUserResponseDto;
 import umc.teumteum.server.domain.friend.dto.FollowingUserResponseDto;
 import umc.teumteum.server.domain.friend.dto.FriendMutualResponseDto;
 import umc.teumteum.server.domain.friend.dto.FavoriteResponseDto;
@@ -15,4 +16,6 @@ public interface FriendService {
     FavoriteResponseDto updateFavorite(Long userId, Boolean isFavorite);
 
     List<FollowingUserResponseDto> getFollowings();
+
+    List<FollowerUserResponseDto> getFollowers();
 }

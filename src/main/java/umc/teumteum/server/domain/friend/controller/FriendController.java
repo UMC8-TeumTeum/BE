@@ -85,4 +85,15 @@ public class FriendController {
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
+    @Operation(
+            summary = "팔로워 목록 조회",
+            description = "나를 팔로우한 유저 목록을 조회합니다.",
+            security = { @SecurityRequirement(name = "BearerAuth") }
+    )
+    @GetMapping(value = "/followers", produces = "application/json")
+    public ApiResponse<List<FollowerUserResponseDto>> getFollowers() {
+        List<FollowerUserResponseDto> response = friendService.getFollowers();
+        return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
+    }
+
 }
