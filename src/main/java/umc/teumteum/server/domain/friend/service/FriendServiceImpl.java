@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import umc.teumteum.server.domain.friend.dto.FavoriteResponseDto;
+import umc.teumteum.server.domain.friend.dto.FollowingUserResponseDto;
 import umc.teumteum.server.domain.friend.dto.FriendMutualResponseDto;
 
 import java.util.List;
@@ -38,5 +39,11 @@ public class FriendServiceImpl implements FriendService {
     public FavoriteResponseDto updateFavorite(Long userId, Boolean isFavorite) {
         // TODO : 즐겨찾기 로직 추후 구현
         return new FavoriteResponseDto(userId, isFavorite);
+    }
+
+    @Override
+    public List<FollowingUserResponseDto> getFollowings() {
+        // TODO : 팔로잉 목록 조회 로직 추후 구현
+        return List.of();
     }
 }

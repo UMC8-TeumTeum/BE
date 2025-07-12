@@ -6,10 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import umc.teumteum.server.domain.friend.dto.FavoriteRequestDto;
-import umc.teumteum.server.domain.friend.dto.FavoriteResponseDto;
-import umc.teumteum.server.domain.friend.dto.FollowResponseDto;
-import umc.teumteum.server.domain.friend.dto.FriendMutualResponseDto;
+import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.exception.status.FriendSuccessStatus;
 import umc.teumteum.server.domain.friend.service.FriendService;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
@@ -75,6 +72,17 @@ public class FriendController {
     ) {
         FavoriteResponseDto response = friendService.updateFavorite(userId, requestDto.getIsFavorite());
         return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, response);
+    }
+
+    @Operation(
+            summary = "팔로잉 목록 조회",
+            description = "내가 팔로우한 유저 목록을 조회합니다.",
+            security = { @SecurityRequirement(name = "BearerAuth") }
+    )
+    @GetMapping(value = "/followings", produces = "application/json")
+    public ApiResponse<List<FollowingUserResponseDto>> getFollowings() {
+        List<FollowingUserResponseDto> response = friendService.getFollowings();
+        return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
 }
