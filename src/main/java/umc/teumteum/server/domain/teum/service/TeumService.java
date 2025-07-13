@@ -22,7 +22,9 @@ public interface TeumService {
 
     TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto);
 
-    List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, int year, int month);
+    List<String> getScheduledTeumsOfMonth(Long userId, String month);
+
+    List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, String date);
 
     ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long teumId, Long userId);
 

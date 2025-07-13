@@ -1,4 +1,31 @@
 package umc.teumteum.server.domain.user.service;
 
+import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
+
+import java.util.List;
+
 public class UserServiceImpl implements UserService {
+    @Override
+    public Long searchByNickname(String nickname) {
+        // TODO : 닉네임으로 사용자 검색 로직 구현
+        return null;
+    }
+
+    @Override
+    public List<PublicTodoResponseDto> getRecentPublicTodos(Long userId) {
+        // TODO : 최근 공개 투두 2개 조회 로직 구현
+        return List.of();
+    }
+
+    @Override
+    public List<PublicTodoResponseDto> getDailyPublicTodos(Long userId, String date) {
+        // TODO : 특정 날짜의 공개 투두 조회 로직 구현
+        return List.of();
+    }
+
+    @Override
+    public List<String> getTodoDatesOfMonth(Long userId, String month) {
+        // TODO : 공개 투두가 있는 날짜 조회 로직 구현
+        return List.of();
+    }
 }

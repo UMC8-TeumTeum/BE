@@ -50,8 +50,14 @@ public class TeumServiceImpl implements TeumService {
     }
 
     @Override
-    public List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, int year, int month) {
-        // TODO: 약속된 틈 조회 로직 추후 구현
+    public List<String> getScheduledTeumsOfMonth(Long userId, String month) {
+        // TODO: 약속된 틈의 날짜 리스트 조회 로직 추후 구현
+        return List.of();
+    }
+
+    @Override
+    public List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, String date) {
+        // TODO: 특정 날짜의 약속된 틈 조회 로직 추후 구현
         return List.of();
     }
 

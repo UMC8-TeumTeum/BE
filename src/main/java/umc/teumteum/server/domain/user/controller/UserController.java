@@ -1,12 +1,14 @@
 package umc.teumteum.server.domain.user.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
+
+import java.util.List;
 
 
 @Tag(name = "User", description = "사용자 관련 API")
@@ -85,4 +87,59 @@ public class UserController {
         // TODO: 온보딩 리마인드 알림 설정 저장 로직 구현
         return null;
     }
+
+    @Operation(
+            summary = "닉네임 사용자 검색",
+            description = "닉네임으로 사용자를 검색하여 유저 번호를 반환합니다."
+    )
+    @GetMapping(value = "/search", produces = "application/json")
+    public ApiResponse<Long> searchByNickname(
+            @Parameter(description = "검색할 닉네임", example = "string")
+            @RequestParam("nickname") String nickname
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
+    @Operation(
+            summary = "최근 공개 투두 2개 조회",
+            description = "특정 유저의 최근 공개 투두 2개를 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/todos/public/recent", produces = "application/json")
+    public ApiResponse<List<PublicTodoResponseDto>> getRecentPublicTodos(
+            @Parameter(description = "공개 투두를 조회할 유저 ID", example = "1")
+            @PathVariable("userId") Long userId
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
+    @Operation(
+            summary = "특정 날짜의 공개 투두 조회",
+            description = "특정 유저의 특정 날짜에 해당하는 모든 공개 투두를 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/todos/public", produces = "application/json")
+    public ApiResponse<List<PublicTodoResponseDto>> getDailyPublicTodos(
+            @Parameter(description = "조회할 유저 ID", example = "1")
+            @PathVariable("userId") Long userId,
+
+            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2024-07-12")
+            @RequestParam("date") String date
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
+    @Operation(
+            summary = "공개 투두가 있는 날짜(월별) 조회",
+            description = "특정 유저의 특정 월에 공개 투두가 존재하는 날짜 목록을 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/todos/public/calendar", produces = "application/json")
+    public ApiResponse<List<String>> getTodoDatesOfMonth(
+            @Parameter(description = "조회할 유저 ID", required = true, example = "1")
+            @PathVariable("userId") Long userId,
+
+            @Parameter(description = "조회할 월 (YYYY-MM)", required = true, example = "2024-07")
+            @RequestParam("month") String month
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
 }
