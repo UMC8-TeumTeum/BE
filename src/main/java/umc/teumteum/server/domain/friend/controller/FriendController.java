@@ -23,8 +23,7 @@ public class FriendController {
 
     @Operation(
             summary = "유저 팔로우",
-            description = "특정 유저를 팔로우합니다.",
-            security = { @SecurityRequirement(name = "BearerAuth") }
+            description = "특정 유저를 팔로우합니다."
     )
     @PostMapping(value = "/{userId}/follow", produces = "application/json")
     public ApiResponse<FollowResponseDto> followUser(
@@ -37,8 +36,7 @@ public class FriendController {
 
     @Operation(
             summary = "유저 언팔로우",
-            description = "특정 유저에 대한 팔로우를 취소합니다.",
-            security = { @SecurityRequirement(name = "BearerAuth") }
+            description = "특정 유저에 대한 팔로우를 취소합니다."
     )
     @DeleteMapping(value = "/{userId}/follow", produces = "application/json")
     public ApiResponse<Void> unfollowUser(
@@ -51,8 +49,7 @@ public class FriendController {
 
     @Operation(
             summary = "맞팔로우 목록 조회",
-            description = "특정 유저의 맞팔로우 목록을 조회합니다.",
-            security = { @SecurityRequirement(name = "BearerAuth") }
+            description = "특정 유저의 맞팔로우 목록을 조회합니다."
     )
     @GetMapping(value = "/mutuals", produces = "application/json")
     public ApiResponse<List<FriendMutualResponseDto>> getMyMutualFriends() {
@@ -61,8 +58,7 @@ public class FriendController {
 
     @Operation(
             summary = "즐겨찾기 설정/해제",
-            description = "특정 유저에 대해 즐겨찾기 설정 또는 해제를 합니다.",
-            security = { @SecurityRequirement(name = "BearerAuth") }
+            description = "특정 유저에 대해 즐겨찾기 설정 또는 해제를 합니다."
     )
     @PatchMapping(value = "/{userId}/favorite", consumes = "application/json", produces = "application/json")
     public ApiResponse<FavoriteResponseDto> updateFavorite(
@@ -76,8 +72,7 @@ public class FriendController {
 
     @Operation(
             summary = "팔로잉 목록 조회",
-            description = "내가 팔로우한 유저 목록을 조회합니다.",
-            security = { @SecurityRequirement(name = "BearerAuth") }
+            description = "내가 팔로우한 유저 목록을 조회합니다."
     )
     @GetMapping(value = "/followings", produces = "application/json")
     public ApiResponse<List<FollowingUserResponseDto>> getFollowings() {
@@ -87,8 +82,7 @@ public class FriendController {
 
     @Operation(
             summary = "팔로워 목록 조회",
-            description = "나를 팔로우한 유저 목록을 조회합니다.",
-            security = { @SecurityRequirement(name = "BearerAuth") }
+            description = "나를 팔로우한 유저 목록을 조회합니다."
     )
     @GetMapping(value = "/followers", produces = "application/json")
     public ApiResponse<List<FollowerUserResponseDto>> getFollowers() {
