@@ -5,8 +5,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
+
+import java.util.List;
 
 
 @Tag(name = "User", description = "사용자 관련 API")
@@ -94,6 +97,18 @@ public class UserController {
     public ApiResponse<UserSearchResponseDto> searchByNickname(
             @Parameter(description = "검색할 닉네임", example = "string")
             @RequestParam("nickname") String nickname
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
+    @Operation(
+            summary = "최근 공개 투두 2개 조회",
+            description = "특정 유저의 최근 공개 투두 2개를 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/todos/public/recent", produces = "application/json")
+    public ApiResponse<List<PublicTodoResponseDto>> getRecentPublicTodos(
+            @Parameter(description = "공개 투두를 조회할 유저 ID", example = "1")
+            @PathVariable("userId") Long userId
     ) {
         return ApiResponse.onSuccess(null);
     }
