@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
-import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 import java.util.List;
@@ -94,7 +93,7 @@ public class UserController {
             description = "닉네임으로 사용자를 검색하여 유저 번호를 반환합니다."
     )
     @GetMapping(value = "/search", produces = "application/json")
-    public ApiResponse<UserSearchResponseDto> searchByNickname(
+    public ApiResponse<Long> searchByNickname(
             @Parameter(description = "검색할 닉네임", example = "string")
             @RequestParam("nickname") String nickname
     ) {
