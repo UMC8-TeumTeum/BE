@@ -1,11 +1,11 @@
 package umc.teumteum.server.domain.user.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 
@@ -85,4 +85,17 @@ public class UserController {
         // TODO: 온보딩 리마인드 알림 설정 저장 로직 구현
         return null;
     }
+
+    @Operation(
+            summary = "닉네임 사용자 검색",
+            description = "닉네임으로 사용자를 검색하여 유저 번호를 반환합니다."
+    )
+    @GetMapping(value = "/search", produces = "application/json")
+    public ApiResponse<UserSearchResponseDto> searchByNickname(
+            @Parameter(description = "검색할 닉네임", example = "string")
+            @RequestParam("nickname") String nickname
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
 }
