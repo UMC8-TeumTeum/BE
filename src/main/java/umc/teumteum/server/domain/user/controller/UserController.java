@@ -4,8 +4,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 import java.util.List;
@@ -88,6 +93,7 @@ public class UserController {
         return null;
     }
 
+
     @Operation(
             summary = "닉네임 사용자 검색",
             description = "닉네임으로 사용자를 검색하여 유저 번호를 반환합니다."
@@ -140,6 +146,31 @@ public class UserController {
             @RequestParam("month") String month
     ) {
         return ApiResponse.onSuccess(null);
+    }
+
+
+    @Operation(
+        summary = "마이페이지 정보 조회",
+        description = "사용자의 프로필, 이름, 직업 분야, 아이디 등 마이페이지에 필요한 정보를 조회합니다."
+    )
+    @GetMapping(value = "/mypage", produces = "application/json")
+    public ApiResponse<Object> getMypageInfo(
+    ) {
+        // TODO: 마이페이지 화면(프로필,이름,직업분야, 내 아이디) 조회 로직 구현
+        return null;
+    }
+
+
+    @Operation(
+        summary = "마이페이지 정보 (지금까지 채운 빈틈) 조회",
+        description = "사용자가 지금까지 채운 빈틈 시간 정보를 조회합니다."
+    )
+    @GetMapping(value = "/mypage/teum", produces = "application/json")
+    public ApiResponse<Object> getMypageTeum(
+    ) {
+        // TODO: 마이페이지 "지금까지 채운 빈틈" 조회 로직 구현
+        return null;
+
     }
 
 }

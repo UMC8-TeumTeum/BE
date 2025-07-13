@@ -12,8 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/notifications")
 public class NotificationController {
 
-  @GetMapping
-  @Operation(summary = "알림 목록 조회", description = "로그인한 사용자의 알림 목록을 조회합니다.")
+  @GetMapping(produces = "application/json")
+  @Operation(
+      summary = "알림 목록 조회",
+      description = "로그인한 사용자의 알림 목록을 조회합니다."
+  )
   public ResponseEntity<Object> getNotifications(){
     // TODO : 알림 목록 조회 로직 구현
     return null;
