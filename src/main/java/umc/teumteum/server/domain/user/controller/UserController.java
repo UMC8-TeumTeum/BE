@@ -128,4 +128,19 @@ public class UserController {
         return ApiResponse.onSuccess(null);
     }
 
+    @Operation(
+            summary = "공개 투두가 있는 날짜(월별) 조회",
+            description = "특정 유저의 특정 월에 공개 투두가 존재하는 날짜 목록을 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/todos/public/calendar", produces = "application/json")
+    public ApiResponse<List<String>> getTodoDatesOfMonth(
+            @Parameter(description = "조회할 유저 ID", required = true, example = "1")
+            @PathVariable("userId") Long userId,
+
+            @Parameter(description = "조회할 월 (YYYY-MM)", required = true, example = "2024-07")
+            @RequestParam("month") String month
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
 }

@@ -23,4 +23,10 @@ public class UserServiceImpl implements UserService {
         // TODO : 특정 날짜의 공개 투두 조회 로직 구현
         return List.of();
     }
+
+    @Override
+    public List<String> getTodoDatesOfMonth(Long userId, String month) {
+        // TODO : 공개 투두가 있는 날짜 조회 로직 구현
+        return List.of();
+    }
 }

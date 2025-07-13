@@ -11,4 +11,6 @@ public interface UserService {
     List<PublicTodoResponseDto> getRecentPublicTodos(Long userId);
 
     List<PublicTodoResponseDto> getDailyPublicTodos(Long userId, String date);
+
+    List<String> getTodoDatesOfMonth(Long userId, String month);
 }
