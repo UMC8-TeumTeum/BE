@@ -84,15 +84,13 @@ public class TeumController {
     }
 
     @Operation(
-            summary = "약속된 틈 조회",
-            description = "사용자가 참여 중인 틈 중, 지정한 연/월에 해당하는 틈 목록을 조회합니다."
+            summary = "특정 날짜의 약속된 틈 조회",
+            description = "사용자가 참여 중인 틈 중, 지정한 날짜에 해당하는 틈 목록을 조회합니다."
     )
     @GetMapping(value = "/scheduled", produces = "application/json")
     public ApiResponse<List<ScheduledTeumResponseDto>> getScheduledTeums(
-            @Parameter(name = "year", description = "조회할 연도", example = "2025")
-            @RequestParam("year") int year,
-            @Parameter(name = "month", description = "조회할 월", example = "7")
-            @RequestParam("month") int month
+            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2025-05-02")
+            @RequestParam("date") String date
     ) {
         return ApiResponse.onSuccess(null);
     }
