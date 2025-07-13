@@ -113,4 +113,19 @@ public class UserController {
         return ApiResponse.onSuccess(null);
     }
 
+    @Operation(
+            summary = "특정 날짜의 공개 투두 조회",
+            description = "특정 유저의 특정 날짜에 해당하는 모든 공개 투두를 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/todos/public", produces = "application/json")
+    public ApiResponse<List<PublicTodoResponseDto>> getDailyPublicTodos(
+            @Parameter(description = "조회할 유저 ID", example = "1")
+            @PathVariable("userId") Long userId,
+
+            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2024-07-12")
+            @RequestParam("date") String date
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
 }

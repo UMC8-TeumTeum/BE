@@ -9,4 +9,6 @@ public interface UserService {
     UserSearchResponseDto searchByNickname(String nickname);
 
     List<PublicTodoResponseDto> getRecentPublicTodos(Long userId);
+
+    List<PublicTodoResponseDto> getDailyPublicTodos(Long userId, String date);
 }

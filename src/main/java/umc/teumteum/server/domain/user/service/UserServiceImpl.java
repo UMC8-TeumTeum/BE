@@ -17,4 +17,10 @@ public class UserServiceImpl implements UserService {
         // TODO : 최근 공개 투두 2개 조회 로직 구현
         return List.of();
     }
+
+    @Override
+    public List<PublicTodoResponseDto> getDailyPublicTodos(Long userId, String date) {
+        // TODO : 특정 날짜의 공개 투두 조회 로직 구현
+        return List.of();
+    }
 }
