@@ -16,7 +16,7 @@ import umc.teumteum.server.global.monitoring.service.InfraRedisService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/test")
-@Tag(name = "test", description = "Redis 등 인프라 점검을 위한 테스트 API 입니다.")
+@Tag(name = "Test", description = "Redis 등 인프라 점검을 위한 테스트 API 입니다.")
 public class InfraTestController {
   private final InfraRedisService infraRedisService;
 
