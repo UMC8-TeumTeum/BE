@@ -1,4 +1,4 @@
-package umc.teumteum.server.domain.home.entity;
+package umc.teumteum.server.domain.teum.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,17 +12,13 @@ import umc.teumteum.server.global.common.BaseEntity;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "schedule_reminder")
-public class ScheduleReminder extends BaseEntity {
+@Table(name = "graphic")
+public class Graphic extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "schedule_id", nullable = false)
-    private Schedule schedule;
-
-    @Column(name = "reminder_time", nullable = false)
-    private Integer reminderTime;
+    @Column(name = "url", nullable = false)
+    private String url;
 }
