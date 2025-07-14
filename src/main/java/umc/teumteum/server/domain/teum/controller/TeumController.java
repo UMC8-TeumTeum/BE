@@ -84,6 +84,30 @@ public class TeumController {
     }
 
     @Operation(
+            summary = "틈 요청 날짜 리스트 조회",
+            description = "지정한 월에 틈 요청이 있는 날짜만 리스트로 반환합니다."
+    )
+    @GetMapping(value = "/requests/calendar", produces = "application/json")
+    public ApiResponse<List<String>> getTeumRequestsOfMonth(
+            @Parameter(description = "조회할 연월 (YYYY-MM)", example = "2025-05")
+            @RequestParam("month") String month
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
+    @Operation(
+            summary = "특정 날짜의 틈 요청 조회",
+            description = "지정한 날짜에 해당하는 틈 요청 목록을 조회합니다."
+    )
+    @GetMapping(value = "/requests", produces = "application/json")
+    public ApiResponse<List<TeumRequestResponseDto>> getTeumRequestsByDate(
+            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2025-05-02")
+            @RequestParam("date") String date
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
+    @Operation(
             summary = "약속된 틈 날짜 리스트 조회",
             description = "사용자가 참여 중인 틈 중, 지정한 월에 약속된 틈이 있는 날짜만 리스트로 반환합니다."
     )
