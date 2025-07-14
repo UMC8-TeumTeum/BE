@@ -11,6 +11,7 @@ import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumExitResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.service.TeumService;
@@ -179,5 +180,16 @@ public class TeumController {
         return ApiResponse.onSuccess(null);
     }
 
+    @Operation(
+            summary = "함께한 틈 목록 조회",
+            description = "로그인한 사용자와 지정된 친구가 함께 참여한 모든 틈 요청 목록을 반환합니다."
+    )
+    @GetMapping(value = "/shared-list/{userId}", produces = "application/json")
+    public ApiResponse<List<SharedTeumListResponseDto>> getSharedTeums(
+            @Parameter(name = "userId", description = "함께한 틈을 조회할 친구 ID", example = "1")
+            @PathVariable("userId") Long userId
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
 
 }
