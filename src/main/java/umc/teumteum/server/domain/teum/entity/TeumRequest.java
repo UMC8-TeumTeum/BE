@@ -1,12 +1,62 @@
 package umc.teumteum.server.domain.teum.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.global.common.BaseEntity;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
 
 @Entity
-public class TeumRequest {
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "teum_request")
+public class TeumRequest extends BaseEntity {
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // TODO : 필요한 필드 추후 작성
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_request_id")
+    private TeumRequest parentRequest;
+
+    @Column(name = "graphic_id", nullable = false)
+    private Long graphicId;
+
+    @Column(name = "title", nullable = false, length = 255)
+    private String title;
+
+    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "date", nullable = false)
+    private LocalDate date;
+
+    @Column(name = "start_time", nullable = false)
+    private LocalTime startTime;
+
+    @Column(name = "end_time", nullable = false)
+    private LocalTime endTime;
+
+
+    /*
+        양방향 연관관계
+    */
+    @OneToMany(mappedBy = "parentRequest", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<TeumRequest> childRequests;
+
+    @OneToMany(mappedBy = "teumRequest", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<TeumResponse> teumResponses;
 }
