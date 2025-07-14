@@ -76,10 +76,6 @@ public class User extends BaseEntity {
     /*
         양방향 연관관계
     */
-    // 약관 동의
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Agreement agreement;
-
     // 요일별 반복 일정
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Routine> routines = new ArrayList<>();
@@ -91,10 +87,6 @@ public class User extends BaseEntity {
     // 알림
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Notification> notifications;
-
-    // 알림 설정
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private NotificationSetting notificationSetting;
 
     // 내가 팔로우하는 사람들
     @OneToMany(mappedBy = "follower", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
