@@ -11,6 +11,7 @@ import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumExitResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.service.TeumService;
@@ -79,6 +80,30 @@ public class TeumController {
             @Parameter(name = "responseId", description = "상태를 변경할 응답 ID", example = "1")
             @PathVariable("responseId") Long responseId,
             @RequestBody TeumStatusUpdateRequestDto requestDto
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
+    @Operation(
+            summary = "틈 요청 날짜 리스트 조회",
+            description = "지정한 월에 틈 요청이 있는 날짜만 리스트로 반환합니다."
+    )
+    @GetMapping(value = "/requests/calendar", produces = "application/json")
+    public ApiResponse<List<String>> getTeumRequestsOfMonth(
+            @Parameter(description = "조회할 연월 (YYYY-MM)", example = "2025-05")
+            @RequestParam("month") String month
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
+    @Operation(
+            summary = "특정 날짜의 틈 요청 조회",
+            description = "지정한 날짜에 해당하는 틈 요청 목록을 조회합니다."
+    )
+    @GetMapping(value = "/requests", produces = "application/json")
+    public ApiResponse<List<TeumRequestResponseDto>> getTeumRequestsByDate(
+            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2025-05-02")
+            @RequestParam("date") String date
     ) {
         return ApiResponse.onSuccess(null);
     }
@@ -155,5 +180,16 @@ public class TeumController {
         return ApiResponse.onSuccess(null);
     }
 
+    @Operation(
+            summary = "함께한 틈 목록 조회",
+            description = "로그인한 사용자와 지정된 친구가 함께 참여한 모든 틈 요청 목록을 반환합니다."
+    )
+    @GetMapping(value = "/shared-list/{userId}", produces = "application/json")
+    public ApiResponse<List<SharedTeumListResponseDto>> getSharedTeums(
+            @Parameter(name = "userId", description = "함께한 틈을 조회할 친구 ID", example = "1")
+            @PathVariable("userId") Long userId
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
 
 }

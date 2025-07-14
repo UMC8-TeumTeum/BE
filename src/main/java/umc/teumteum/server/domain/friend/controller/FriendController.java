@@ -90,4 +90,16 @@ public class FriendController {
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
+    @Operation(
+            summary = "친구 프로필 조회",
+            description = "지정한 친구(userId)의 프로필 정보를 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/profile", produces = "application/json")
+    public ApiResponse<FriendProfileResponseDto> getFriendProfile(
+            @Parameter(name = "userId", description = "조회할 친구 ID", example = "1")
+            @PathVariable("userId") Long userId
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
 }
