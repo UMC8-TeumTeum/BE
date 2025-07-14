@@ -39,6 +39,6 @@ public class TeumResponse extends BaseEntity {
     @Column(name = "status", nullable = false)
     private ResponseStatus status = ResponseStatus.PENDING;
 
-    @Column(name = "react_at", nullable = false)
-    private LocalDateTime reactAt;
+    @Column(name = "read_at", nullable = true)
+    private LocalDateTime readAt;
 }
