@@ -74,9 +74,11 @@ public class FriendController {
             summary = "팔로잉 목록 조회",
             description = "내가 팔로우한 유저 목록을 조회합니다."
     )
-    @GetMapping(value = "/followings", produces = "application/json")
-    public ApiResponse<List<FollowingUserResponseDto>> getFollowings() {
-        List<FollowingUserResponseDto> response = friendService.getFollowings();
+    @GetMapping(value = "/{userId}/followings", produces = "application/json")
+    public ApiResponse<List<FollowingUserResponseDto>> getFollowingsByUser(
+            @PathVariable("userId") Long userId
+    ) {
+        List<FollowingUserResponseDto> response = friendService.getFollowingsByUser(userId);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
