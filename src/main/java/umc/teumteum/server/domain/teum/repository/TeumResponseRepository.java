@@ -1,0 +1,8 @@
+package umc.teumteum.server.domain.teum.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import umc.teumteum.server.domain.teum.entity.TeumResponse;
+
+public interface TeumResponseRepository extends JpaRepository<TeumResponse, Long> {
+    // 필요 시 커스텀 메서드 추가
+}

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
@@ -14,6 +15,7 @@ import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
+import umc.teumteum.server.domain.teum.exception.status.TeumSuccessStatus;
 import umc.teumteum.server.domain.teum.service.TeumService;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
@@ -32,9 +34,10 @@ public class TeumController {
             description = "틈 요청을 전송합니다."
     )
     @PostMapping(value = "/request", consumes = "application/json", produces = "application/json")
-    public ApiResponse<TeumResponseDto> createTeumRequest(@RequestBody TeumRequestDto requestDto) {
+    public ApiResponse<Long> createTeumRequest(@RequestBody @Valid TeumRequestDto requestDto) {
         Long id = teumService.createRequest(requestDto);
-        return ApiResponse.of(null, new TeumResponseDto(id));
+        return ApiResponse.of(TeumSuccessStatus._TEUM_REQUEST_CREATED, id);
+
     }
 
     @Operation(

@@ -5,11 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.teum.entity.enums.RequestStatus;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.common.BaseEntity;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -50,6 +52,11 @@ public class TeumRequest extends BaseEntity {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private RequestStatus status = RequestStatus.ACTIVE;
+
 
     /*
         양방향 연관관계
@@ -57,6 +64,11 @@ public class TeumRequest extends BaseEntity {
     @OneToMany(mappedBy = "parentRequest", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<TeumRequest> childRequests;
 
+    @Builder.Default
     @OneToMany(mappedBy = "teumRequest", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<TeumResponse> teumResponses;
+    private List<TeumResponse> teumResponses = new ArrayList<>();
+
+    public void markAsClosed() {
+        this.status = RequestStatus.CLOSED;
+    }
 }
