@@ -70,8 +70,15 @@ public class FriendServiceImpl implements FriendService {
     }
 
     @Override
-    public List<FollowerUserResponseDto> getFollowers() {
-        // TODO : 팔로워 목록 조회 로직 추후 구현
-        return List.of();
+    public List<FollowerUserResponseDto> getFollowersByUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GlobalHandler(FriendErrorStatus.USER_NOT_FOUND));
+
+        List<Friend> followers = friendRepository.findByFollowingId(user.getId());
+
+        return FriendConverter.toFollowerUserResponseList(followers).stream()
+                .sorted(Comparator.comparing(FollowerUserResponseDto::getNickname))
+                .collect(Collectors.toList());
     }
+
 }

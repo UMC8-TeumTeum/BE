@@ -84,13 +84,16 @@ public class FriendController {
 
     @Operation(
             summary = "팔로워 목록 조회",
-            description = "나를 팔로우한 유저 목록을 조회합니다."
+            description = "특정 유저를 팔로우한 유저 목록을 조회합니다."
     )
-    @GetMapping(value = "/followers", produces = "application/json")
-    public ApiResponse<List<FollowerUserResponseDto>> getFollowers() {
-        List<FollowerUserResponseDto> response = friendService.getFollowers();
+    @GetMapping(value = "/{userId}/followers", produces = "application/json")
+    public ApiResponse<List<FollowerUserResponseDto>> getFollowersByUser(
+            @PathVariable("userId") Long userId
+    ) {
+        List<FollowerUserResponseDto> response = friendService.getFollowersByUser(userId);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
+
 
     @Operation(
             summary = "친구 프로필 조회",

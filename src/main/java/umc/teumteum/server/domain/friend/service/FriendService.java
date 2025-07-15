@@ -17,5 +17,6 @@ public interface FriendService {
 
     List<FollowingUserResponseDto> getFollowingsByUser(Long userId);
 
-    List<FollowerUserResponseDto> getFollowers();
+    List<FollowerUserResponseDto> getFollowersByUser(Long userId);
+
 }
