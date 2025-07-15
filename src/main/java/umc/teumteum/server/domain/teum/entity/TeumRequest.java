@@ -67,4 +67,8 @@ public class TeumRequest extends BaseEntity {
     @Builder.Default
     @OneToMany(mappedBy = "teumRequest", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<TeumResponse> teumResponses = new ArrayList<>();
+
+    public void markAsClosed() {
+        this.status = RequestStatus.CLOSED;
+    }
 }
