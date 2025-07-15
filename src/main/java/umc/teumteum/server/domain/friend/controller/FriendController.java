@@ -76,9 +76,9 @@ public class FriendController {
     )
     @GetMapping(value = "/{userId}/followings", produces = "application/json")
     public ApiResponse<List<FollowingUserResponseDto>> getFollowingsByUser(
-            @PathVariable("userId") Long userId,
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size
+            @Parameter(description = "조회할 유저의 ID") @PathVariable("userId") Long userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
+            @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
         List<FollowingUserResponseDto> response = friendService.getFollowingsByUser(userId, page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
@@ -90,9 +90,9 @@ public class FriendController {
     )
     @GetMapping(value = "/{userId}/followers", produces = "application/json")
     public ApiResponse<List<FollowerUserResponseDto>> getFollowersByUser(
-            @PathVariable("userId") Long userId,
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size
+            @Parameter(description = "조회할 유저의 ID") @PathVariable("userId") Long userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
+            @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
         List<FollowerUserResponseDto> response = friendService.getFollowersByUser(userId, page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
