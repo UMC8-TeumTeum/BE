@@ -115,4 +115,5 @@ public class User extends BaseEntity {
     // 위시
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Wish> wishes;
+
 }

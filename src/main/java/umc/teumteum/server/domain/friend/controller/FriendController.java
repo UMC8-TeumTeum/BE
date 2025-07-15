@@ -74,19 +74,27 @@ public class FriendController {
             summary = "팔로잉 목록 조회",
             description = "내가 팔로우한 유저 목록을 조회합니다."
     )
-    @GetMapping(value = "/followings", produces = "application/json")
-    public ApiResponse<List<FollowingUserResponseDto>> getFollowings() {
-        List<FollowingUserResponseDto> response = friendService.getFollowings();
+    @GetMapping(value = "/{userId}/followings", produces = "application/json")
+    public ApiResponse<List<FollowingUserResponseDto>> getFollowingsByUser(
+            @Parameter(description = "조회할 유저의 ID") @PathVariable("userId") Long userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
+            @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
+    ) {
+        List<FollowingUserResponseDto> response = friendService.getFollowingsByUser(userId, page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
     @Operation(
             summary = "팔로워 목록 조회",
-            description = "나를 팔로우한 유저 목록을 조회합니다."
+            description = "특정 유저를 팔로우한 유저 목록을 조회합니다."
     )
-    @GetMapping(value = "/followers", produces = "application/json")
-    public ApiResponse<List<FollowerUserResponseDto>> getFollowers() {
-        List<FollowerUserResponseDto> response = friendService.getFollowers();
+    @GetMapping(value = "/{userId}/followers", produces = "application/json")
+    public ApiResponse<List<FollowerUserResponseDto>> getFollowersByUser(
+            @Parameter(description = "조회할 유저의 ID") @PathVariable("userId") Long userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
+            @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
+    ) {
+        List<FollowerUserResponseDto> response = friendService.getFollowersByUser(userId, page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 

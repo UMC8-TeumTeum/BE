@@ -3,6 +3,7 @@ package umc.teumteum.server.domain.teum.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import umc.teumteum.server.domain.teum.converter.TeumConverter;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
@@ -35,41 +36,27 @@ public class TeumServiceImpl implements TeumService {
     @Override
     @Transactional
     public Long createRequest(TeumRequestDto dto) {
-        // senderUserId로 요청자 조회 (임시방안)
-        User sender = userRepository.findById(dto.getSenderUserId())
-                .orElseThrow(() -> new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE));
+        User sender = getUserOrThrow(dto.getSenderUserId());
 
-        TeumRequest request = TeumRequest.builder()
-                .title(dto.getTitle())
-                .description(dto.getDescription())
-                .date(LocalDate.parse(dto.getDate()))
-                .startTime(LocalTime.parse(dto.getStartTime()))
-                .endTime(LocalTime.parse(dto.getEndTime()))
-                .graphicId(dto.getGraphicId())
-                .user(sender)
-                .build();
+        TeumRequest request = TeumConverter.toTeumRequest(dto, sender);
 
-        List<TeumResponse> responses = dto.getReceiverUserIds().stream()
-                .distinct()
-                .map(receiverId -> {
-                    if (receiverId.equals(sender.getId())) {
-                        throw new GeneralException(TeumErrorStatus.CANNOT_REQUEST_SELF);
-                    }
-                    User receiver = userRepository.findById(receiverId)
-                            .orElseThrow(() -> new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE));
-                    return TeumResponse.builder()
-                            .teumRequest(request)
-                            .receiverUser(receiver)
-                            .status(ResponseStatus.PENDING)
-                            .readAt(null)
-                            .message("")
-                            .build();
-                }).toList();
+        List<TeumResponse> responses = TeumConverter.toTeumResponses(
+                dto.getReceiverUserIds(),
+                sender.getId(),
+                request,
+                this::getUserOrThrow
+        );
 
         request.getTeumResponses().addAll(responses);
         teumRequestRepository.save(request);
 
         return request.getId();
+    }
+
+
+    private User getUserOrThrow(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE));
     }
 
     @Override

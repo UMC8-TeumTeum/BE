@@ -4,16 +4,30 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import umc.teumteum.server.domain.friend.controller.FriendController;
+import umc.teumteum.server.domain.friend.converter.FriendConverter;
 import umc.teumteum.server.domain.friend.dto.FavoriteResponseDto;
 import umc.teumteum.server.domain.friend.dto.FollowerUserResponseDto;
 import umc.teumteum.server.domain.friend.dto.FollowingUserResponseDto;
 import umc.teumteum.server.domain.friend.dto.FriendMutualResponseDto;
+import umc.teumteum.server.domain.friend.entity.Friend;
+import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
+import umc.teumteum.server.domain.friend.repository.FriendRepository;
+import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.global.exception.handler.GlobalHandler;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class FriendServiceImpl implements FriendService {
+
+    private final UserRepository userRepository;
+    private final FriendRepository friendRepository;
+    private final FriendConverter friendConverter;
 
     @Override
     @Transactional
@@ -43,14 +57,42 @@ public class FriendServiceImpl implements FriendService {
     }
 
     @Override
-    public List<FollowingUserResponseDto> getFollowings() {
-        // TODO : 팔로잉 목록 조회 로직 추후 구현
-        return List.of();
+    public List<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size) {
+        User user = getUserOrThrow(userId);
+
+        List<Friend> followings = friendRepository.findByFollowerId(user.getId());
+
+        List<FollowingUserResponseDto> sortedList = friendConverter.toFollowingUserResponseList(followings).stream()
+                .sorted(Comparator
+                        .comparing(FollowingUserResponseDto::getIsFavorite).reversed()
+                        .thenComparing(FollowingUserResponseDto::getNickname))
+                .collect(Collectors.toList());
+
+        int start = page * size;
+        int end = Math.min(start + size, sortedList.size());
+
+        return (start >= sortedList.size()) ? List.of() : sortedList.subList(start, end);
     }
 
     @Override
-    public List<FollowerUserResponseDto> getFollowers() {
-        // TODO : 팔로워 목록 조회 로직 추후 구현
-        return List.of();
+    public List<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size) {
+        User user = getUserOrThrow(userId);
+
+        List<Friend> followers = friendRepository.findByFollowingId(user.getId());
+
+        List<FollowerUserResponseDto> sortedList = friendConverter.toFollowerUserResponseList(followers).stream()
+                .sorted(Comparator.comparing(FollowerUserResponseDto::getNickname))
+                .collect(Collectors.toList());
+
+        int start = page * size;
+        int end = Math.min(start + size, sortedList.size());
+
+        return (start >= sortedList.size()) ? List.of() : sortedList.subList(start, end);
     }
+
+    private User getUserOrThrow(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new GlobalHandler(FriendErrorStatus.USER_NOT_FOUND));
+    }
+
 }
