@@ -1,5 +1,7 @@
 package umc.teumteum.server.domain.teum.converter;
 
+import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
+import umc.teumteum.server.domain.teum.dto.teum.TeumReceivedResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumRequestDto;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
@@ -7,6 +9,8 @@ import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.exception.GeneralException;
+import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
+import umc.teumteum.server.global.util.S3Util;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -46,6 +50,38 @@ public class TeumConverter {
                             .message("")
                             .build();
                 })
+                .toList();
+    }
+
+    public static TeumReceivedResponseDto toReceivedResponseDto(TeumResponse response, S3Util s3Util) {
+        TeumRequest request = response.getTeumRequest();
+        User sender = request.getUser();
+
+        return TeumReceivedResponseDto.builder()
+                .responseId(response.getId())
+                .requestId(request.getId())
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .graphicId(request.getGraphicId())
+                .isRead(response.getReadAt() != null)
+                .receiverCount(request.getTeumResponses().size())
+                .senderUser(ParticipantDto.builder()
+                        .userId(sender.getId())
+                        .nickname(sender.getNickname())
+                        .profileImageUrl(s3Util.toUrl(sender.getProfileImageKey()))
+                        .build())
+                .date(request.getDate().toString())
+                .timeSlot(TimeSlot.builder()
+                        .start(request.getStartTime().toString())
+                        .end(request.getEndTime().toString())
+                        .build())
+                .build();
+    }
+
+
+    public static List<TeumReceivedResponseDto> toReceivedResponseDtoList(List<TeumResponse> responses, S3Util s3Util) {
+        return responses.stream()
+                .map(response -> toReceivedResponseDto(response, s3Util))
                 .toList();
     }
 

@@ -13,6 +13,7 @@ import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
+import umc.teumteum.server.domain.teum.entity.enums.RequestStatus;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
@@ -20,6 +21,7 @@ import umc.teumteum.server.domain.teum.repository.TeumResponseRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
+import umc.teumteum.server.global.util.S3Util;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -29,6 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TeumServiceImpl implements TeumService {
 
+    private final S3Util s3Util;
     private final UserRepository userRepository;
     private final TeumRequestRepository teumRequestRepository;
     private final TeumResponseRepository teumResponseRepository;
@@ -67,9 +70,15 @@ public class TeumServiceImpl implements TeumService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TeumReceivedResponseDto> getReceivedRequests(Long userId) {
-        // TODO: 틈 요청 불러오기 로직 추후 구현
-        return List.of();
+        getUserOrThrow(userId);
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+
+        List<TeumResponse> responses = teumResponseRepository.findValidPendingResponses(userId, today, now);
+
+        return TeumConverter.toReceivedResponseDtoList(responses, s3Util);
     }
 
     @Override
