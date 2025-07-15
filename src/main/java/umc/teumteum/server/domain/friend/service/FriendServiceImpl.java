@@ -57,8 +57,7 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     public List<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new GlobalHandler(FriendErrorStatus.USER_NOT_FOUND));
+        User user = getUserOrThrow(userId);
 
         List<Friend> followings = friendRepository.findByFollowerId(user.getId());
 
@@ -76,8 +75,7 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     public List<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new GlobalHandler(FriendErrorStatus.USER_NOT_FOUND));
+        User user = getUserOrThrow(userId);
 
         List<Friend> followers = friendRepository.findByFollowingId(user.getId());
 
@@ -89,6 +87,11 @@ public class FriendServiceImpl implements FriendService {
         int end = Math.min(start + size, sortedList.size());
 
         return (start >= sortedList.size()) ? List.of() : sortedList.subList(start, end);
+    }
+
+    private User getUserOrThrow(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new GlobalHandler(FriendErrorStatus.USER_NOT_FOUND));
     }
 
 }
