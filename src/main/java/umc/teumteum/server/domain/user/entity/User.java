@@ -116,10 +116,4 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Wish> wishes;
 
-    public String getProfileImageUrl() {
-        if (profileImageKey== null || profileImageKey.isBlank()) {
-            return null; // 또는 "/images/default-profile.png"
-        }
-        return "/images/" + profileImageKey;
-    }
 }

@@ -27,6 +27,7 @@ public class FriendServiceImpl implements FriendService {
 
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
+    private final FriendConverter friendConverter;
 
     @Override
     @Transactional
@@ -61,7 +62,7 @@ public class FriendServiceImpl implements FriendService {
 
         List<Friend> followings = friendRepository.findByFollowerId(user.getId());
 
-        List<FollowingUserResponseDto> sortedList = FriendConverter.toFollowingUserResponseList(followings).stream()
+        List<FollowingUserResponseDto> sortedList = friendConverter.toFollowingUserResponseList(followings).stream()
                 .sorted(Comparator
                         .comparing(FollowingUserResponseDto::getIsFavorite).reversed()
                         .thenComparing(FollowingUserResponseDto::getNickname))
@@ -79,7 +80,7 @@ public class FriendServiceImpl implements FriendService {
 
         List<Friend> followers = friendRepository.findByFollowingId(user.getId());
 
-        List<FollowerUserResponseDto> sortedList = FriendConverter.toFollowerUserResponseList(followers).stream()
+        List<FollowerUserResponseDto> sortedList = friendConverter.toFollowerUserResponseList(followers).stream()
                 .sorted(Comparator.comparing(FollowerUserResponseDto::getNickname))
                 .collect(Collectors.toList());
 
