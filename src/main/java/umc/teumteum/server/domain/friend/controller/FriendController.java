@@ -90,12 +90,13 @@ public class FriendController {
     )
     @GetMapping(value = "/{userId}/followers", produces = "application/json")
     public ApiResponse<List<FollowerUserResponseDto>> getFollowersByUser(
-            @PathVariable("userId") Long userId
+            @PathVariable("userId") Long userId,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        List<FollowerUserResponseDto> response = friendService.getFollowersByUser(userId);
+        List<FollowerUserResponseDto> response = friendService.getFollowersByUser(userId, page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
-
 
     @Operation(
             summary = "친구 프로필 조회",
