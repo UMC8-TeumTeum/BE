@@ -39,12 +39,6 @@ public class TeumServiceImpl implements TeumService {
         User sender = userRepository.findById(dto.getSenderUserId())
                 .orElseThrow(() -> new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE));
 
-        TeumRequest parent = null;
-        if (dto.getParentRequestId() != null) {
-            parent = teumRequestRepository.findById(dto.getParentRequestId())
-                    .orElseThrow(() -> new GeneralException(TeumErrorStatus.INVALID_PARENT_REQUEST));
-        }
-
         TeumRequest request = TeumRequest.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
@@ -53,7 +47,6 @@ public class TeumServiceImpl implements TeumService {
                 .endTime(LocalTime.parse(dto.getEndTime()))
                 .graphicId(dto.getGraphicId())
                 .user(sender)
-                .parentRequest(parent)
                 .build();
 
         List<TeumResponse> responses = dto.getReceiverUserIds().stream()
