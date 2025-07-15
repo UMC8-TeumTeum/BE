@@ -56,17 +56,22 @@ public class FriendServiceImpl implements FriendService {
     }
 
     @Override
-    public List<FollowingUserResponseDto> getFollowingsByUser(Long userId) {
+    public List<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GlobalHandler(FriendErrorStatus.USER_NOT_FOUND));
 
         List<Friend> followings = friendRepository.findByFollowerId(user.getId());
 
-        return FriendConverter.toFollowingUserResponseList(followings).stream()
+        List<FollowingUserResponseDto> sortedList = FriendConverter.toFollowingUserResponseList(followings).stream()
                 .sorted(Comparator
                         .comparing(FollowingUserResponseDto::getIsFavorite).reversed()
                         .thenComparing(FollowingUserResponseDto::getNickname))
                 .collect(Collectors.toList());
+
+        int start = page * size;
+        int end = Math.min(start + size, sortedList.size());
+
+        return (start >= sortedList.size()) ? List.of() : sortedList.subList(start, end);
     }
 
     @Override

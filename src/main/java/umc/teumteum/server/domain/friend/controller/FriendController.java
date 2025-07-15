@@ -76,9 +76,11 @@ public class FriendController {
     )
     @GetMapping(value = "/{userId}/followings", produces = "application/json")
     public ApiResponse<List<FollowingUserResponseDto>> getFollowingsByUser(
-            @PathVariable("userId") Long userId
+            @PathVariable("userId") Long userId,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        List<FollowingUserResponseDto> response = friendService.getFollowingsByUser(userId);
+        List<FollowingUserResponseDto> response = friendService.getFollowingsByUser(userId, page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
