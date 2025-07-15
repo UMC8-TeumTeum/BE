@@ -5,7 +5,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.home.dto.CreateTodoRequestDTO;
+import umc.teumteum.server.domain.home.dto.CreateTodoResponseDTO;
 import umc.teumteum.server.domain.home.dto.TodyTeumResponseDTO;
+import umc.teumteum.server.domain.home.service.HomeService;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 import java.time.LocalDate;
@@ -15,6 +18,8 @@ import java.time.LocalDate;
 @RequestMapping("/api/home")
 @Tag(name = "home", description = "home domain API")
 public class HomeController {
+
+    private final HomeService homeService;
 
     @GetMapping(value = "/teum-time", produces = "application/json")
     @Operation(summary = "빈틈 시간 조회 API",description = "지금까지 채운 빈틈 시간 조회 API입니다.")
@@ -53,8 +58,11 @@ public class HomeController {
 
     @PostMapping(value = "/todo",consumes = "application/json", produces = "application/json")
     @Operation(summary = "투두 등록 API",description = "새로운 투두를 등록 API입니다.")
-    public ApiResponse<String> createTodo(){
-        return ApiResponse.onSuccess(null);
+    public ApiResponse<CreateTodoResponseDTO> createTodo(
+            @RequestBody CreateTodoRequestDTO request
+            ){
+        CreateTodoResponseDTO response = homeService.createTodo(request);
+        return ApiResponse.onSuccess(response);
     }
 
     @GetMapping(value = "/todo/{todoId}", produces = "application/json")
