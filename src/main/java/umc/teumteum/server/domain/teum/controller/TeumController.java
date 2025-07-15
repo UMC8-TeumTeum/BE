@@ -55,12 +55,14 @@ public class TeumController {
     }
 
     @Operation(
-            summary = "내가 받은 틈 요청 조회",
+            summary = "틈 요청 조회",
             description = "현재 로그인 사용자가 응답자로 지정된 틈 요청 중, 아직 응답하지 않았고 요청 시간이 지나지 않은 요청 목록을 조회합니다."
     )
-    @GetMapping(value = "/request/received", produces = "application/json")
-    public ApiResponse<List<TeumReceivedResponseDto>> getReceivedTeumRequests() {
-        return ApiResponse.onSuccess(null);
+    @GetMapping("/request/received")
+    public ApiResponse<List<TeumReceivedResponseDto>> getReceivedTeumRequests(
+            @RequestParam("userId") Long userId
+    ) {
+        return ApiResponse.onSuccess(teumService.getReceivedRequests(userId));
     }
 
     @Operation(
