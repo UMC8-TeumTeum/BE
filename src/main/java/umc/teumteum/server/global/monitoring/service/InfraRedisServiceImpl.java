@@ -1,6 +1,8 @@
 package umc.teumteum.server.global.monitoring.service;
 
-import lombok.RequiredArgsConstructor;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
@@ -8,45 +10,65 @@ import umc.teumteum.server.global.exception.handler.GlobalHandler;
 
 
 @Service
-@RequiredArgsConstructor
 public class InfraRedisServiceImpl implements InfraRedisService {
-  private final RedisTemplate<String, String> redisTemplate;
+
+  private final RedisTemplate<String, String> notifiactionRedisTemplate;
+  private final RedisTemplate<String, String> aiContentsRedisTemplate;
+  private final RedisTemplate<String, String> rtRedisTemplate;
+
+  public InfraRedisServiceImpl(
+      @Qualifier("notificationRedisTemplate") RedisTemplate<String, String> notifiactionRedisTemplate,
+      @Qualifier("aiContentsRedisTemplate") RedisTemplate<String, String> aiContentsRedisTemplate,
+      @Qualifier("rtRedisTemplate") RedisTemplate<String, String> rtRedisTemplate) {
+    this.notifiactionRedisTemplate = notifiactionRedisTemplate;
+    this.aiContentsRedisTemplate = aiContentsRedisTemplate;
+    this.rtRedisTemplate = rtRedisTemplate;
+  }
 
 
   @Override
-  public void setKeyValue(String key, String value) {
+  public Map<String, String> checkRedisIsolation() {
+    Map<String, String> result = new LinkedHashMap<>();
+
+    rtRedisTemplate.opsForValue().set("test_key", "RT_DATA");
+    aiContentsRedisTemplate.opsForValue().set("test_key", "AI_DATA");
+    notifiactionRedisTemplate.opsForValue().set("test_key", "NOTI_DATA");
+
+    String rtValue = rtRedisTemplate.opsForValue().get("test_key");
+    String aiValue = aiContentsRedisTemplate.opsForValue().get("test_key");
+    String notiValue = notifiactionRedisTemplate.opsForValue().get("test_key");
+
+    result.put("RT_DB (index 0)", rtValue);
+    result.put("NOTIFICATION_DB (index 1)", notiValue);
+    result.put("AI_CONTENTS_DB (index 2)", aiValue);
+
+    rtRedisTemplate.delete("test_key");
+    notifiactionRedisTemplate.delete("test_key");
+    aiContentsRedisTemplate.delete("test_key");
+
+    return result;
+  }
+
+  @Override
+  public String pingNotifiactionRedisTemplate() {
     try {
-      redisTemplate.opsForValue().set(key, value);
+      return notifiactionRedisTemplate.getConnectionFactory().getConnection().ping();
     } catch (Exception e) {
       throw new GlobalHandler(ErrorStatus._INTERNAL_SERVER_ERROR);
     }
   }
-
   @Override
-  public String getValue(String key) {
+  public String pingRtRedisTemplate() {
     try {
-      return redisTemplate.opsForValue().get(key);
+      return rtRedisTemplate.getConnectionFactory().getConnection().ping();
     } catch (Exception e) {
       throw new GlobalHandler(ErrorStatus._INTERNAL_SERVER_ERROR);
     }
   }
-
   @Override
-  public void deleteKey(String key) {
+  public String pingAiContentsRedisTemplate() {
     try {
-      Boolean result = redisTemplate.delete(key);
-      if (!Boolean.TRUE.equals(result)) {
-        throw new GlobalHandler(ErrorStatus._BAD_REQUEST); // 커스텀 상태코드가 더 좋을 수도 있음
-      }
-    } catch (Exception e) {
-      throw new GlobalHandler(ErrorStatus._INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  @Override
-  public String ping() {
-    try {
-      return redisTemplate.getConnectionFactory().getConnection().ping();
+      return aiContentsRedisTemplate.getConnectionFactory().getConnection().ping();
     } catch (Exception e) {
       throw new GlobalHandler(ErrorStatus._INTERNAL_SERVER_ERROR);
     }

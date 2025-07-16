@@ -1,10 +1,8 @@
 package umc.teumteum.server.global.config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
@@ -23,41 +21,41 @@ public class RedisConfig {
   @Value("${spring.data.redis.port}")
   private int port;
 
-  private LettuceConnectionFactory createConnectionFactory(int dbIndex){
-    RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration(host, port);
-    configuration.setDatabase(dbIndex);
+  private LettuceConnectionFactory createConnectionFactory(int dbIndex) {
+    RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
+    config.setDatabase(dbIndex);
     if (!password.isEmpty()) {
-      configuration.setPassword(RedisPassword.of(password));
+      config.setPassword(RedisPassword.of(password));
     }
-    return new LettuceConnectionFactory(configuration);
-  }
-
-
-  @Bean
-  public RedisTemplate<String,String> createRedisTemplate(LettuceConnectionFactory factory) {
+    LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
     factory.afterPropertiesSet();
-    RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
-    redisTemplate.setConnectionFactory(factory);
-    redisTemplate.setKeySerializer(new StringRedisSerializer());
-    redisTemplate.setValueSerializer(new StringRedisSerializer());
-    return redisTemplate;
+    return factory;
   }
 
-  // RT용 Redis(index0)
+  private RedisTemplate<String, String> createRedisTemplate(LettuceConnectionFactory factory) {
+    RedisTemplate<String, String> template = new RedisTemplate<>();
+    template.setConnectionFactory(factory);
+    template.setKeySerializer(new StringRedisSerializer());
+    template.setValueSerializer(new StringRedisSerializer());
+    template.afterPropertiesSet();
+    return template;
+  }
+
+  // RT용 Redis(index 0)
   @Bean
-  public RedisTemplate<String,String> rtRedisTemplate() {
+  public RedisTemplate<String, String> rtRedisTemplate() {
     return createRedisTemplate(createConnectionFactory(0));
   }
 
-  // 알림용 Redis(index1)
+  // 알림용 Redis(index 1)
   @Bean
-  public RedisTemplate<String,String> notificationRedisTemplate() {
+  public RedisTemplate<String, String> notificationRedisTemplate() {
     return createRedisTemplate(createConnectionFactory(1));
   }
 
-  // 채움활동 AI 컨텐츠용 Redis(index2)
+  // AI 컨텐츠용 Redis(index 2)
   @Bean
-  public RedisTemplate<String,String> aiContentsRedisTemplate() {
+  public RedisTemplate<String, String> aiContentsRedisTemplate() {
     return createRedisTemplate(createConnectionFactory(2));
   }
 
