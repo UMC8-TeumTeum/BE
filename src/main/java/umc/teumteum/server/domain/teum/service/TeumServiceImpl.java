@@ -1,6 +1,10 @@
 package umc.teumteum.server.domain.teum.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
@@ -71,14 +75,19 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TeumReceivedResponseDto> getReceivedRequests(Long userId) {
+    public Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, Pageable pageable) {
         getUserOrThrow(userId);
+
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
 
-        List<TeumResponse> responses = teumResponseRepository.findValidPendingResponses(userId, today, now);
+        Page<TeumResponse> page = teumResponseRepository.findValidPendingResponses(userId, today, now, pageable);
 
-        return TeumConverter.toReceivedResponseDtoList(responses, s3Util);
+        List<TeumReceivedResponseDto> dtoList = page.getContent().stream()
+                .map(response -> TeumConverter.toReceivedResponseDto(response, s3Util))
+                .toList();
+
+        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
     }
 
     @Override
