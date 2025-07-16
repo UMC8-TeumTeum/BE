@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.home.dto.CreateTodoRequestDTO;
 import umc.teumteum.server.domain.home.dto.CreateTodoResponseDTO;
+import umc.teumteum.server.domain.home.dto.TodoInfoResponseDTO;
 import umc.teumteum.server.domain.home.dto.TodyTeumResponseDTO;
 import umc.teumteum.server.domain.home.service.HomeService;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
@@ -68,9 +69,10 @@ public class HomeController {
 
     @GetMapping(value = "/todo/{todoId}", produces = "application/json")
     @Operation(summary = "특정 투두 정보 조회 API",description = "특정투두의 상세정보를 조회하는 API입니다. path variable로 투두ID를 입력주세요.")
-    public ApiResponse<String> getTodo(
+    public ApiResponse<TodoInfoResponseDTO> getTodo(
             @Parameter(name= "todoId", description = "조회할 todo ID", example = "123") @PathVariable("todoId") Long todoId){
-        return ApiResponse.onSuccess(null);
+        TodoInfoResponseDTO response = homeService.getTodoInfo(todoId);
+        return ApiResponse.onSuccess(response);
     }
 
     @PatchMapping(value = "/todo/{todoId}",consumes = "application/json", produces = "application/json")

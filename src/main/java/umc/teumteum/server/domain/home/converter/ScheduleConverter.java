@@ -2,6 +2,7 @@ package umc.teumteum.server.domain.home.converter;
 
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.dto.CreateTodoRequestDTO;
+import umc.teumteum.server.domain.home.dto.TodoInfoResponseDTO;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
@@ -37,5 +38,24 @@ public class ScheduleConverter {
                         .reminderTime(time)
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    // Schedule -> TodoInfoResponseDTO
+    public TodoInfoResponseDTO toTodoInfoResponse(Schedule schedule, List<ScheduleReminder> reminders, List<String> profileUrls) {
+
+        return TodoInfoResponseDTO.builder()
+                .type(schedule.getType())
+                .title(schedule.getTitle())
+                .date(schedule.getDate())
+                .startTime(schedule.getStartTime().toLocalTime())
+                .endTime(schedule.getEndTime().toLocalTime())
+                .description(schedule.getDescription())
+                .isPublic(schedule.getIsPublic())
+                .includeTeum(schedule.getIncludeTeum())
+                .remindAlarm(reminders.stream()
+                        .map(ScheduleReminder::getReminderTime)
+                        .toList())
+                .profileUrl(profileUrls)
+                .build();
     }
 }
