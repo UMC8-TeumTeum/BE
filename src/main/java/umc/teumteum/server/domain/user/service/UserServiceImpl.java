@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
     }
 
 
-    // 소셜 로그인 시, 사용자 조회 (없으면 회원가입)
+    // 소셜 로그인 시, 사용자 조회 (없으면 생성)
     @Override
     public User findOrCreateUser(OAuthUserInfo userInfo) {
 

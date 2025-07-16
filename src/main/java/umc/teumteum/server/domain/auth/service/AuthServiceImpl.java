@@ -25,12 +25,12 @@ public class AuthServiceImpl implements AuthService {
         // 1. 소셜 로그인 - 사용자 정보 불러오기
         OAuthUserInfo userInfo = getUserInfo(request.getSocialType(), request.getAccessToken());
 
-        // 2. 사용자 조회 (없으면 회원가입)
+        // 2. 사용자 조회 (없으면 생성)
         User user = userService.findOrCreateUser(userInfo);
 
         // 3. 토큰 생성
-        // 액세스 토큰 생성
-        // 리프레시 토큰 생성
+        String accessToken = jwtUtil.generateAccessToken(user.getId());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId());
 
         // 4. TODO 리프레시 토큰 저장
 
@@ -38,7 +38,7 @@ public class AuthServiceImpl implements AuthService {
         String nextStep = userService.determineUserNextStep(user);
 
         // 6. converter 작업
-        return AuthConverter.toLoginResponse(null, null, nextStep);
+        return AuthConverter.toLoginResponse(accessToken, refreshToken, nextStep);
     }
 
     // SocialType 따라 로그인 분기 처리
