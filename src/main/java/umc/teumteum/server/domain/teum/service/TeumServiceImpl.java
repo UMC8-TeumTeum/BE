@@ -31,6 +31,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import static umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus.INVALID_PARENT_REQUEST;
+
 @Service
 @RequiredArgsConstructor
 public class TeumServiceImpl implements TeumService {
@@ -68,9 +70,28 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional
-    public Long createResendRequest(Long parentRequestId, TeumResendRequestDto resendRequestDto) {
-        // TODO: 틈 요청 로직 추후 구현
-        return 1L;
+    public Long createResendRequest(Long parentRequestId, TeumResendRequestDto dto) {
+        TeumRequest parent = findActiveRequestOrThrow(parentRequestId);
+
+        validateResendableRequest(parent);
+        validateResender(parent, dto.getSenderUserId());
+        validateTimeOrder(dto.getStartTime(), dto.getEndTime());
+
+        User resender = getUserOrThrow(dto.getSenderUserId());
+
+        // 새로운 요청/응답 생성
+        TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, resender);
+        TeumResponse newResponse = TeumConverter.toResendTeumResponse(newRequest, parent.getUser());
+        newRequest.getTeumResponses().add(newResponse);
+
+        // 원래 요청의 응답 상태를 RESEND로 변경
+        TeumResponse originalResponse = parent.getTeumResponses().getFirst();
+        originalResponse.changeStatus(ResponseStatus.RESEND); // enum도 RESEND로 이름 바꿔주세요
+
+        // 저장
+        teumRequestRepository.save(newRequest);
+
+        return newRequest.getId();
     }
 
     @Override
@@ -137,5 +158,40 @@ public class TeumServiceImpl implements TeumService {
         // TODO : 함께한 틈 시간 조회 로직 추후 구현
         return null;
     }
+
+    private TeumRequest findActiveRequestOrThrow(Long requestId) {
+        TeumRequest request = teumRequestRepository.findById(requestId)
+                .orElseThrow(() -> new GeneralException(TeumErrorStatus.TEUM_REQUEST_NOT_FOUND));
+        if (request.getStatus() != RequestStatus.ACTIVE) {
+            throw new GeneralException(TeumErrorStatus.REQUEST_ALREADY_CLOSED);
+        }
+        return request;
+    }
+
+    private void validateResendableRequest(TeumRequest request) {
+        if (request.getParentRequest() != null) {
+            throw new GeneralException(TeumErrorStatus.REQUEST_ALREADY_RESENT);
+        }
+        if (request.getTeumResponses().size() != 1) {
+            throw new GeneralException(TeumErrorStatus.REQUEST_NOT_ONE_TO_ONE);
+        }
+    }
+
+    private void validateResender(TeumRequest request, Long senderUserId) {
+        User resender = getUserOrThrow(senderUserId);
+        User actualReceiver = request.getTeumResponses().getFirst().getReceiverUser();
+        if (!resender.getId().equals(actualReceiver.getId())) {
+            throw new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE);
+        }
+    }
+
+    private void validateTimeOrder(String startTime, String endTime) {
+        LocalTime start = LocalTime.parse(startTime);
+        LocalTime end = LocalTime.parse(endTime);
+        if (!start.isBefore(end)) {
+            throw new GeneralException(TeumErrorStatus.INVALID_TEUM_TIME);
+        }
+    }
+
 
 }

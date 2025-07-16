@@ -55,7 +55,7 @@ public class TeumController {
             @RequestBody TeumResendRequestDto resendRequestDto
     ) {
         Long id = teumService.createResendRequest(parentRequestId, resendRequestDto);
-        return ApiResponse.of(null, new TeumResendResponseDto(id));
+        return ApiResponse.of(TeumSuccessStatus._TEUM_REQUEST_CREATED, new TeumResendResponseDto(id));
     }
 
     @Operation(
