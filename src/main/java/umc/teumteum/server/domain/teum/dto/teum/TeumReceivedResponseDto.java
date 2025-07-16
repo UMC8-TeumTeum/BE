@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
+import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 
 @Getter
 @Builder
@@ -23,6 +24,12 @@ public class TeumReceivedResponseDto {
     @Schema(description = "제목", example = "string")
     private String title;
 
+    @Schema(description = "내용", example = "string")
+    private String description;
+
+    @Schema(description = "그래픽 ID", example = "1")
+    private Long graphicId;
+
     @Schema(description = "읽음 여부", example = "false")
     private boolean isRead;
 
@@ -31,4 +38,10 @@ public class TeumReceivedResponseDto {
 
     @Schema(description = "수신자 총 인원 수 (본인 포함)", example = "1")
     private int receiverCount;
+
+    @Schema(description = "요청 날짜", example = "2025-07-15")
+    private String date;
+
+    @Schema(description = "요청 시간 구간")
+    private TimeSlot timeSlot;
 }

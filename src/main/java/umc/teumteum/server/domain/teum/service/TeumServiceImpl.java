@@ -1,6 +1,10 @@
 package umc.teumteum.server.domain.teum.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
@@ -13,6 +17,7 @@ import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
+import umc.teumteum.server.domain.teum.entity.enums.RequestStatus;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
@@ -20,6 +25,7 @@ import umc.teumteum.server.domain.teum.repository.TeumResponseRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
+import umc.teumteum.server.global.util.S3Util;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -29,6 +35,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TeumServiceImpl implements TeumService {
 
+    private final S3Util s3Util;
     private final UserRepository userRepository;
     private final TeumRequestRepository teumRequestRepository;
     private final TeumResponseRepository teumResponseRepository;
@@ -67,9 +74,20 @@ public class TeumServiceImpl implements TeumService {
     }
 
     @Override
-    public List<TeumReceivedResponseDto> getReceivedRequests(Long userId) {
-        // TODO: 틈 요청 불러오기 로직 추후 구현
-        return List.of();
+    @Transactional(readOnly = true)
+    public Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, Pageable pageable) {
+        getUserOrThrow(userId);
+
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+
+        Page<TeumResponse> page = teumResponseRepository.findValidPendingResponses(userId, today, now, pageable);
+
+        List<TeumReceivedResponseDto> dtoList = page.getContent().stream()
+                .map(response -> TeumConverter.toReceivedResponseDto(response, s3Util))
+                .toList();
+
+        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
     }
 
     @Override

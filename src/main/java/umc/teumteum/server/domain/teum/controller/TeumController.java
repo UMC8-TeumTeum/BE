@@ -6,6 +6,10 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
@@ -55,12 +59,23 @@ public class TeumController {
     }
 
     @Operation(
-            summary = "내가 받은 틈 요청 조회",
+            summary = "틈 요청 조회",
             description = "현재 로그인 사용자가 응답자로 지정된 틈 요청 중, 아직 응답하지 않았고 요청 시간이 지나지 않은 요청 목록을 조회합니다."
     )
-    @GetMapping(value = "/request/received", produces = "application/json")
-    public ApiResponse<List<TeumReceivedResponseDto>> getReceivedTeumRequests() {
-        return ApiResponse.onSuccess(null);
+    @GetMapping("/request/received")
+    public ApiResponse<Page<TeumReceivedResponseDto>> getReceivedTeumRequests(
+            @Parameter(description = "조회할 유저의 ID") @RequestParam(name = "userId") Long userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
+            @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
+    ) {
+        Sort sort = Sort.by(
+                Sort.Order.asc("readAt"),
+                Sort.Order.desc("createdAt")
+        );
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return ApiResponse.onSuccess(teumService.getReceivedRequests(userId, pageable));
     }
 
     @Operation(
