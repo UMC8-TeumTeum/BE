@@ -79,15 +79,20 @@ public class TeumServiceImpl implements TeumService {
 
         User resender = getUserOrThrow(dto.getSenderUserId());
 
+        // 새로운 요청/응답 생성
         TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, resender);
         TeumResponse newResponse = TeumConverter.toResendTeumResponse(newRequest, parent.getUser());
-
         newRequest.getTeumResponses().add(newResponse);
+
+        // 원래 요청의 응답 상태를 RESEND로 변경
+        TeumResponse originalResponse = parent.getTeumResponses().getFirst();
+        originalResponse.changeStatus(ResponseStatus.RESEND); // enum도 RESEND로 이름 바꿔주세요
+
+        // 저장
         teumRequestRepository.save(newRequest);
 
         return newRequest.getId();
     }
-
 
     @Override
     @Transactional(readOnly = true)
