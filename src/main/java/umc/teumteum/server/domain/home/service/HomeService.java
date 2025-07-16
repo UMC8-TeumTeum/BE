@@ -13,4 +13,7 @@ public interface HomeService {
 
     // Todo(Schedule) 수정
     TodoIdResponseDTO updateTodoInfo(TodoRequestDTO dto, Long scheduleId);
+
+    // Todo(Schedule) 삭제
+    void deleteTodo(Long scheduleId);
 }

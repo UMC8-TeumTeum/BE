@@ -90,4 +90,15 @@ public class HomeServiceImpl implements HomeService {
         }
         return new TodoIdResponseDTO(schedule.getId());
     }
+
+    @Transactional
+    @Override
+    public void deleteTodo(Long scheduleId) {
+        // Todo(Schedule) 삭제
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
+
+        scheduleRepository.deleteById(scheduleId);
+        scheduleReminderRepository.deleteByScheduleId(scheduleId);
+    }
 }

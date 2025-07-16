@@ -15,7 +15,7 @@ import java.time.LocalDate;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/home")
-@Tag(name = "home", description = "home domain API")
+@Tag(name = "Home", description = "Home 관련 API")
 public class HomeController {
 
     private final HomeService homeService;
@@ -58,8 +58,7 @@ public class HomeController {
     @PostMapping(value = "/todo",consumes = "application/json", produces = "application/json")
     @Operation(summary = "투두 등록 API",description = "새로운 투두를 등록 API입니다.")
     public ApiResponse<TodoIdResponseDTO> createTodo(
-            @RequestBody @Valid TodoRequestDTO request
-            ){
+            @RequestBody @Valid TodoRequestDTO request){
         TodoIdResponseDTO response = homeService.createTodo(request);
         return ApiResponse.onSuccess(response);
     }
@@ -85,6 +84,7 @@ public class HomeController {
     @Operation(summary = "특정 투두 삭제 API",description = "특정투두의 삭제하는 API입니다. path variable로 투두ID를 입력주세요.")
     public ApiResponse<String> deleteTodo(
             @Parameter(name= "todoId", description = "삭제할 todo ID", example = "123") @PathVariable("todoId") Long todoId){
+        homeService.deleteTodo(todoId);
         return ApiResponse.onSuccess(null);
     }
 }
