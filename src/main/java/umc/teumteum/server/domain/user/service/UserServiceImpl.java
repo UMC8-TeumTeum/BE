@@ -1,10 +1,24 @@
 package umc.teumteum.server.domain.user.service;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
+import umc.teumteum.server.domain.user.entity.Agreement;
+import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.domain.user.repository.AgreementRepository;
+import umc.teumteum.server.domain.user.repository.UserRepository;
 
 import java.util.List;
 
+@Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+
+    private final UserRepository userRepository;
+    private final AgreementRepository agreementRepository;
+
     @Override
     public Long searchByNickname(String nickname) {
         // TODO : 닉네임으로 사용자 검색 로직 구현
@@ -27,5 +41,46 @@ public class UserServiceImpl implements UserService {
     public List<String> getTodoDatesOfMonth(Long userId, String month) {
         // TODO : 공개 투두가 있는 날짜 조회 로직 구현
         return List.of();
+    }
+
+
+    // 소셜 로그인 시, 사용자 조회 (없으면 생성)
+    @Override
+    public User findOrCreateUser(OAuthUserInfo userInfo) {
+
+        SocialType socialType = userInfo.getSocialType();
+        String socialId = userInfo.getSocialId();
+        String email = userInfo.getEmail();
+
+        return userRepository.findBySocialTypeAndSocialId(socialType, socialId)
+                .orElseGet(() -> {
+                    User newUser = User.builder()
+                            .socialType(socialType)
+                            .socialId(socialId)
+                            .email(email)
+                            .build()
+                            ;
+
+                    return userRepository.save(newUser);
+                });
+    }
+
+    // 소셜 로그인 시, 사용자 다음 화면 결정
+    @Override
+    public String determineUserNextStep(User user) {
+        // 1. 약관 동의 체크 -> 약관 동의 화면
+        Agreement agreement = agreementRepository.findByUser(user)
+                .orElse(null);
+        if (agreement == null) {
+            return "AGREEMENT";
+        }
+
+        // 2. 닉네임 체크 -> 온보딩 화면
+        if (user.getNickname() == null) {
+            return "ONBOARDING";
+        }
+
+        // 3. 메인 화면
+        return "MAIN";
     }
 }
