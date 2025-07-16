@@ -39,6 +39,20 @@ public class TeumResponse extends BaseEntity {
     @Column(name = "status", nullable = false)
     private ResponseStatus status = ResponseStatus.PENDING;
 
-    @Column(name = "read_at", nullable = true)
+    @Column(name = "read_at")
     private LocalDateTime readAt;
+
+    /**
+     * 응답 상태 변경
+     */
+    public void changeStatus(ResponseStatus newStatus) {
+        this.status = newStatus;
+    }
+
+    /**
+     * 응답 읽음 처리
+     */
+    public void markAsRead() {
+        this.readAt = LocalDateTime.now();
+    }
 }
