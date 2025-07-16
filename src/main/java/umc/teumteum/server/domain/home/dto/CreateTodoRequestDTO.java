@@ -2,6 +2,8 @@ package umc.teumteum.server.domain.home.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -14,16 +16,20 @@ import java.util.List;
 @Schema(title = "CreateTodoRequestDTO : 투두 생성 DTO")
 public class CreateTodoRequestDTO {
 
+    @NotBlank
     @Schema(description = "투두 제목", example = "string")
     private String title;
 
+    @NotNull
     @Schema(description = "날짜", example = "2025-07-15")
     private LocalDate date;
 
+    @NotNull
     @Schema(description = "시작 시간", example = "09:00")
     @JsonFormat(pattern = "HH:mm")
     private LocalTime startTime;
 
+    @NotNull
     @Schema(description = "종료 시간", example = "10:00")
     @JsonFormat(pattern = "HH:mm")
     private LocalTime endTime;
@@ -31,9 +37,11 @@ public class CreateTodoRequestDTO {
     @Schema(description = "상세 설명", example = "string")
     private String description;
 
+    @NotNull
     @Schema(description = "공개 여부", example = "false")
     private Boolean isPublic;
 
+    @NotNull
     @Schema(description = "빈틈 시간 포함 여부", example = "false")
     private Boolean includeTeum;
 

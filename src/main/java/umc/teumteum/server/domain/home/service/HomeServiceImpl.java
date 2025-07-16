@@ -2,14 +2,16 @@ package umc.teumteum.server.domain.home.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.converter.ScheduleConverter;
 import umc.teumteum.server.domain.home.dto.CreateTodoRequestDTO;
 import umc.teumteum.server.domain.home.dto.CreateTodoResponseDTO;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
+import umc.teumteum.server.domain.home.exception.HomeErrorStatus;
+import umc.teumteum.server.domain.home.exception.HomeException;
 import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
-import umc.teumteum.server.domain.user.entity.User;
 
 import java.util.List;
 
@@ -22,8 +24,13 @@ public class HomeServiceImpl implements HomeService {
     private final ScheduleReminderRepository scheduleReminderRepository;
 
     // Todo 등록
+    @Transactional
     @Override
     public CreateTodoResponseDTO createTodo(CreateTodoRequestDTO dto) {
+        // 종료 시간이 시작 시간보다 빠르면 예외 발생
+        if (dto.getEndTime().isBefore(dto.getStartTime())){
+            throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
+        }
 
         // 스케줄 저장
         Schedule schedule = scheduleConverter.toSchedule(dto);

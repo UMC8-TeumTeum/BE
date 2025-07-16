@@ -3,6 +3,7 @@ package umc.teumteum.server.domain.home.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.home.dto.CreateTodoRequestDTO;
@@ -59,7 +60,7 @@ public class HomeController {
     @PostMapping(value = "/todo",consumes = "application/json", produces = "application/json")
     @Operation(summary = "투두 등록 API",description = "새로운 투두를 등록 API입니다.")
     public ApiResponse<CreateTodoResponseDTO> createTodo(
-            @RequestBody CreateTodoRequestDTO request
+            @RequestBody @Valid CreateTodoRequestDTO request
             ){
         CreateTodoResponseDTO response = homeService.createTodo(request);
         return ApiResponse.onSuccess(response);
