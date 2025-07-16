@@ -3,6 +3,7 @@ package umc.teumteum.server.domain.teum.converter;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.teum.TeumReceivedResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumRequestDto;
+import umc.teumteum.server.domain.teum.dto.teum.TeumResendRequestDto;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
@@ -83,6 +84,29 @@ public class TeumConverter {
         return responses.stream()
                 .map(response -> toReceivedResponseDto(response, s3Util))
                 .toList();
+    }
+
+    public static TeumRequest toResendTeumRequest(TeumRequest parent, TeumResendRequestDto dto, User resender) {
+        return TeumRequest.builder()
+                .title(parent.getTitle())
+                .description(parent.getDescription())
+                .date(parent.getDate())
+                .startTime(LocalTime.parse(dto.getStartTime()))
+                .endTime(LocalTime.parse(dto.getEndTime()))
+                .graphicId(parent.getGraphicId())
+                .user(resender)
+                .parentRequest(parent)
+                .build();
+    }
+
+    public static TeumResponse toResendTeumResponse(TeumRequest request, User newReceiver) {
+        return TeumResponse.builder()
+                .teumRequest(request)
+                .receiverUser(newReceiver)
+                .status(ResponseStatus.PENDING)
+                .message("")
+                .readAt(null)
+                .build();
     }
 
 }
