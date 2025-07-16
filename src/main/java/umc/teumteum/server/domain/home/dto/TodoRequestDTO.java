@@ -13,8 +13,8 @@ import java.util.List;
 
 @Getter
 @NoArgsConstructor
-@Schema(title = "CreateTodoRequestDTO : 투두 생성 DTO")
-public class CreateTodoRequestDTO {
+@Schema(title = "TodoRequestDTO : 투두 등록/수정 DTO")
+public class TodoRequestDTO {
 
     @NotBlank
     @Schema(description = "투두 제목", example = "string")

@@ -1,7 +1,7 @@
 package umc.teumteum.server.domain.home.converter;
 
 import org.springframework.stereotype.Component;
-import umc.teumteum.server.domain.home.dto.CreateTodoRequestDTO;
+import umc.teumteum.server.domain.home.dto.TodoRequestDTO;
 import umc.teumteum.server.domain.home.dto.TodoInfoResponseDTO;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 @Component
 public class ScheduleConverter {
 
-    // CreateTodoRequestDTO -> Schedule
-    public Schedule toSchedule(CreateTodoRequestDTO dto) {
+    // TodoRequestDTO -> Schedule
+    public Schedule toSchedule(TodoRequestDTO dto) {
         return Schedule.builder()
                 .title(dto.getTitle())
                 .date(dto.getDate())

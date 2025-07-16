@@ -6,10 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import umc.teumteum.server.domain.home.dto.CreateTodoRequestDTO;
-import umc.teumteum.server.domain.home.dto.CreateTodoResponseDTO;
-import umc.teumteum.server.domain.home.dto.TodoInfoResponseDTO;
-import umc.teumteum.server.domain.home.dto.TodyTeumResponseDTO;
+import umc.teumteum.server.domain.home.dto.*;
 import umc.teumteum.server.domain.home.service.HomeService;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
@@ -60,10 +57,10 @@ public class HomeController {
 
     @PostMapping(value = "/todo",consumes = "application/json", produces = "application/json")
     @Operation(summary = "투두 등록 API",description = "새로운 투두를 등록 API입니다.")
-    public ApiResponse<CreateTodoResponseDTO> createTodo(
-            @RequestBody @Valid CreateTodoRequestDTO request
+    public ApiResponse<TodoIdResponseDTO> createTodo(
+            @RequestBody @Valid TodoRequestDTO request
             ){
-        CreateTodoResponseDTO response = homeService.createTodo(request);
+        TodoIdResponseDTO response = homeService.createTodo(request);
         return ApiResponse.onSuccess(response);
     }
 
@@ -75,11 +72,13 @@ public class HomeController {
         return ApiResponse.onSuccess(response);
     }
 
-    @PatchMapping(value = "/todo/{todoId}",consumes = "application/json", produces = "application/json")
+    @PutMapping(value = "/todo/{todoId}",consumes = "application/json", produces = "application/json")
     @Operation(summary = "특정 투두 정보 수정 API",description = "특정투두의 상세정보를 수정하는 API입니다. path variable로 투두ID를 입력주세요.")
-    public ApiResponse<String> updateTodo(
-            @Parameter(name= "todoId", description = "수정할 todo ID", example = "123") @PathVariable("todoId") Long todoId){
-        return ApiResponse.onSuccess(null);
+    public ApiResponse<TodoIdResponseDTO> updateTodo(
+            @Parameter(name= "todoId", description = "수정할 todo ID", example = "123") @PathVariable("todoId") Long todoId,
+            @RequestBody @Valid TodoRequestDTO request){
+        TodoIdResponseDTO response = homeService.updateTodoInfo(request,todoId);
+        return ApiResponse.onSuccess(response);
     }
 
     @DeleteMapping(value = "/todo/{todoId}")
