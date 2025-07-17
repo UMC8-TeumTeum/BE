@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.home.dto.*;
+import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
 import umc.teumteum.server.domain.home.service.HomeService;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
@@ -60,7 +61,7 @@ public class HomeController {
     public ApiResponse<TodoIdResponseDTO> createTodo(
             @RequestBody @Valid TodoRequestDTO request){
         TodoIdResponseDTO response = homeService.createTodo(request);
-        return ApiResponse.onSuccess(response);
+        return ApiResponse.of(HomeSuccessStatus._TODO_CREATED,response);
     }
 
     @GetMapping(value = "/todo/{todoId}", produces = "application/json")
@@ -68,7 +69,7 @@ public class HomeController {
     public ApiResponse<TodoInfoResponseDTO> getTodo(
             @Parameter(name= "todoId", description = "조회할 todo ID", example = "123") @PathVariable("todoId") Long todoId){
         TodoInfoResponseDTO response = homeService.getTodoInfo(todoId);
-        return ApiResponse.onSuccess(response);
+        return ApiResponse.of(HomeSuccessStatus._TODO_LOADED,response);
     }
 
     @PutMapping(value = "/todo/{todoId}",consumes = "application/json", produces = "application/json")
@@ -77,7 +78,7 @@ public class HomeController {
             @Parameter(name= "todoId", description = "수정할 todo ID", example = "123") @PathVariable("todoId") Long todoId,
             @RequestBody @Valid TodoRequestDTO request){
         TodoIdResponseDTO response = homeService.updateTodoInfo(request,todoId);
-        return ApiResponse.onSuccess(response);
+        return ApiResponse.of(HomeSuccessStatus._TODO_UPDATED,response);
     }
 
     @DeleteMapping(value = "/todo/{todoId}")
@@ -85,6 +86,6 @@ public class HomeController {
     public ApiResponse<String> deleteTodo(
             @Parameter(name= "todoId", description = "삭제할 todo ID", example = "123") @PathVariable("todoId") Long todoId){
         homeService.deleteTodo(todoId);
-        return ApiResponse.onSuccess(null);
+        return  ApiResponse.of(HomeSuccessStatus._TODO_DELETED,null);
     }
 }

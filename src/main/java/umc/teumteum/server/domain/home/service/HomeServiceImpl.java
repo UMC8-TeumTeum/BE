@@ -10,7 +10,7 @@ import umc.teumteum.server.domain.home.dto.TodoInfoResponseDTO;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
-import umc.teumteum.server.domain.home.exception.HomeErrorStatus;
+import umc.teumteum.server.domain.home.exception.status.HomeErrorStatus;
 import umc.teumteum.server.domain.home.exception.HomeException;
 import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;

@@ -1,4 +1,4 @@
-package umc.teumteum.server.domain.home.exception;
+package umc.teumteum.server.domain.home.exception.status;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
