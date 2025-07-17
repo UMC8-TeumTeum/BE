@@ -112,9 +112,16 @@ public class TeumServiceImpl implements TeumService {
     }
 
     @Override
-    public TeumRequestDetailResponseDto getRequestDetail(Long responseId, Long userId) {
-        // TODO: 틈 요청 상세보기 로직 추후 구현
-        return null;
+    @Transactional
+    public Long updateReadStatus(Long responseId, Long userId) {
+        TeumResponse response = getResponseOrThrow(responseId);
+
+        if (!response.getReceiverUser().getId().equals(userId)) {
+            throw new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE);
+        }
+
+        response.markAsRead();
+        return responseId;
     }
 
     @Override
@@ -159,6 +166,11 @@ public class TeumServiceImpl implements TeumService {
         return null;
     }
 
+    private TeumResponse getResponseOrThrow(Long responseId) {
+        return teumResponseRepository.findById(responseId)
+                .orElseThrow(() -> new GeneralException(TeumErrorStatus.TEUM_RESPONSE_NOT_FOUND));
+    }
+
     private TeumRequest findActiveRequestOrThrow(Long requestId) {
         TeumRequest request = teumRequestRepository.findById(requestId)
                 .orElseThrow(() -> new GeneralException(TeumErrorStatus.TEUM_REQUEST_NOT_FOUND));
@@ -192,6 +204,5 @@ public class TeumServiceImpl implements TeumService {
             throw new GeneralException(TeumErrorStatus.INVALID_TEUM_TIME);
         }
     }
-
 
 }
