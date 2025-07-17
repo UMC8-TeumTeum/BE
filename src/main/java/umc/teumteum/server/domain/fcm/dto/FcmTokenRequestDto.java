@@ -15,6 +15,6 @@ import lombok.NoArgsConstructor;
 public class FcmTokenRequestDto {
 
   @Schema(description = "디바이스에서 발급받은 FCM 토큰", example = "c7DJdddsaaaasssdvvv")
-  private String token;
+  private String fcmToken;
 
 }

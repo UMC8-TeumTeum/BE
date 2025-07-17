@@ -9,7 +9,19 @@ import umc.teumteum.server.global.apiPayload.code.ReasonDto;
 @Getter
 @AllArgsConstructor
 public enum SuccessStatus implements BaseCode {
-  _OK(HttpStatus.OK, "COMMON2000", "성공입니다.");
+  _OK(HttpStatus.OK, "COMMON2000", "성공입니다."),
+
+
+  // Fcm 관련 성공 응답
+  FCM_REGISTER_SUCCESS(HttpStatus.OK, "FCM2001", "FCM 토큰이 성공적으로 등록되었습니다."),
+  FCM_DEACTIVATE_SUCCESS(HttpStatus.OK, "FCM2002", "FCM 토큰이 성공적으로 비활성화되었습니다."),
+  FCM_SEND_SUCCESS(HttpStatus.OK, "FCM2003", "FCM 알림이 성공적으로 전송되었습니다."),
+
+
+
+
+
+  ;
 
   private final HttpStatus httpStatus;
   private final String code;
