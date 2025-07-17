@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import umc.teumteum.server.domain.user.exception.status.UserSuccessStatus;
+import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 import java.util.List;
@@ -21,6 +23,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
 public class UserController {
+
+    private final UserService userService;
 
     @Operation(
             summary = "온보딩 약관 동의",
@@ -93,7 +97,6 @@ public class UserController {
         return null;
     }
 
-
     @Operation(
             summary = "닉네임 사용자 검색",
             description = "닉네임으로 사용자를 검색하여 유저 번호를 반환합니다."
@@ -101,9 +104,11 @@ public class UserController {
     @GetMapping(value = "/search", produces = "application/json")
     public ApiResponse<Long> searchByNickname(
             @Parameter(description = "검색할 닉네임", example = "string")
-            @RequestParam("nickname") String nickname
+            @RequestParam("nickname") String nickname,
+            @RequestParam("userId") Long userId
     ) {
-        return ApiResponse.onSuccess(null);
+        Long targetUserId = userService.searchByNickname(nickname, userId);
+        return ApiResponse.of(UserSuccessStatus._USER_FOUND, targetUserId);
     }
 
     @Operation(
