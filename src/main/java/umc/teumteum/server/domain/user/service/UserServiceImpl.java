@@ -1,36 +1,47 @@
 package umc.teumteum.server.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
+import umc.teumteum.server.domain.user.converter.UserConverter;
 import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
+import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.Agreement;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
-import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.AgreementRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
-import umc.teumteum.server.global.exception.GeneralException;
 
+import java.util.AbstractMap;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    @Autowired
+    private final UserConverter userConverter;
     private final UserRepository userRepository;
     private final AgreementRepository agreementRepository;
 
     @Override
-    public Long searchByNickname(String nickname, Long requesterId) {
-        User user = userRepository.findByNickname(nickname)
-                .orElseThrow(() -> new GeneralException(UserErrorStatus.USER_NOT_FOUND));
+    public List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long requesterId) {
+        List<User> users = userRepository.findByNicknameContaining(keyword);
 
-        if (user.getId().equals(requesterId)) {
-            throw new GeneralException(UserErrorStatus.USER_NOT_FOUND);
-        }
+        LevenshteinDistance distanceCalculator = LevenshteinDistance.getDefaultInstance();
 
-        return user.getId();
+        return users.stream()
+                .filter(user -> !user.getId().equals(requesterId))
+                .map(user -> new AbstractMap.SimpleEntry<>(user,
+                        distanceCalculator.apply(keyword.toLowerCase(), user.getNickname().toLowerCase())))
+                .sorted(Comparator.comparingInt(Map.Entry::getValue))
+                .limit(5)
+                .map(entry -> userConverter.toSearchResponseDto(entry.getKey()))
+                .toList();
     }
 
     @Override
