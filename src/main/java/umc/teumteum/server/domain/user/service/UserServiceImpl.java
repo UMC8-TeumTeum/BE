@@ -7,8 +7,10 @@ import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
 import umc.teumteum.server.domain.user.entity.Agreement;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.AgreementRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.global.exception.GeneralException;
 
 import java.util.List;
 
@@ -20,9 +22,15 @@ public class UserServiceImpl implements UserService {
     private final AgreementRepository agreementRepository;
 
     @Override
-    public Long searchByNickname(String nickname) {
-        // TODO : 닉네임으로 사용자 검색 로직 구현
-        return null;
+    public Long searchByNickname(String nickname, Long requesterId) {
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new GeneralException(UserErrorStatus.USER_NOT_FOUND));
+
+        if (user.getId().equals(requesterId)) {
+            throw new GeneralException(UserErrorStatus.USER_NOT_FOUND);
+        }
+
+        return user.getId();
     }
 
     @Override

@@ -7,7 +7,7 @@ import umc.teumteum.server.domain.user.entity.User;
 import java.util.List;
 
 public interface UserService {
-    Long searchByNickname(String nickname);
+    Long searchByNickname(String nickname, Long requesterId);
 
     List<PublicTodoResponseDto> getRecentPublicTodos(Long userId);
 
