@@ -30,19 +30,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long requesterId) {
-        List<User> users = userRepository.findByNicknameContaining(keyword);
-
+        String keywordLower = keyword.toLowerCase();
         LevenshteinDistance distanceCalculator = LevenshteinDistance.getDefaultInstance();
 
-        return users.stream()
+        Comparator<Map.Entry<User, Integer>> byDistance = Comparator.comparingInt(Map.Entry::getValue);
+
+        return userRepository.findByNicknameContaining(keyword).stream()
                 .filter(user -> !user.getId().equals(requesterId))
-                .map(user -> new AbstractMap.SimpleEntry<>(user,
-                        distanceCalculator.apply(keyword.toLowerCase(), user.getNickname().toLowerCase())))
-                .sorted(Comparator.comparingInt(Map.Entry::getValue))
+                .map(user -> Map.entry(user,
+                        distanceCalculator.apply(keywordLower, user.getNickname().toLowerCase())))
+                .sorted(byDistance)
                 .limit(5)
                 .map(entry -> userConverter.toSearchResponseDto(entry.getKey()))
                 .toList();
     }
+
 
     @Override
     public List<PublicTodoResponseDto> getRecentPublicTodos(Long userId) {
