@@ -12,7 +12,6 @@ import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.notification.controller.entity.Notification;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
-import umc.teumteum.server.domain.home.entity.mapping.TeumMate;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.UserRole;
 import umc.teumteum.server.domain.user.entity.enums.UserStatus;
@@ -99,10 +98,6 @@ public class User extends BaseEntity {
     // 스케줄
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Schedule> schedules = new ArrayList<>();
-
-    // 틈메이트
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<TeumMate> teumMates = new ArrayList<>();
 
     // 틈 요청
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.teum.entity.enums.RequestStatus;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.common.BaseEntity;
@@ -67,6 +68,9 @@ public class TeumRequest extends BaseEntity {
     @Builder.Default
     @OneToMany(mappedBy = "teumRequest", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<TeumResponse> teumResponses = new ArrayList<>();
+
+    @OneToMany(mappedBy = "teumRequest", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Schedule> schedules = new ArrayList<>();
 
     public void markAsClosed() {
         this.status = RequestStatus.CLOSED;
