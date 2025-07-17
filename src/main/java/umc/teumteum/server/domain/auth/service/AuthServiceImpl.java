@@ -36,9 +36,9 @@ public class AuthServiceImpl implements AuthService {
     private long refreshExpirationMs;
 
     @Override
-    public AuthResponseDTO.LoginResponse socialLogin(AuthRequestDTO.SocialLoginRequest request) {
+    public AuthResponseDTO.LoginResponse socialLogin(SocialType socialType, AuthRequestDTO.SocialLoginRequest request) {
         // 1. 소셜 로그인 - 사용자 정보 불러오기
-        OAuthUserInfo userInfo = getUserInfo(request.getSocialType(), request.getAccessToken());
+        OAuthUserInfo userInfo = getUserInfo(socialType, request.getAccessToken());
 
         // 2. 사용자 조회 (없으면 생성)
         User user = userService.findOrCreateUser(userInfo);
@@ -65,11 +65,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // SocialType 따라 로그인 분기 처리
-    private OAuthUserInfo getUserInfo(String socialType, String accessToken) {
-        switch (socialType.toUpperCase()) {
-            case "KAKAO":
+    private OAuthUserInfo getUserInfo(SocialType socialType, String accessToken) {
+        switch (socialType) {
+            case SocialType.KAKAO:
                 return kakaoOAuthService.getUserInfoWithAccessToken(accessToken);
-            case "NAVER":
+            case SocialType.NAVER:
                 return naverOAuthService.getUserInfoWithAccessToken(accessToken);
             default:
                 throw new AuthHandler(ErrorStatus.INVALID_SOCIAL_TYPE);
