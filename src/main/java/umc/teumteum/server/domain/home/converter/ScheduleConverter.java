@@ -26,7 +26,7 @@ public class ScheduleConverter {
                 .isPublic(dto.getIsPublic())
                 .includeTeum(dto.getIncludeTeum())
                 .type(ScheduleType.TODO)
-                .user(User.builder().id(1L).build()) // 임시 유저
+                .user(User.builder().id(dto.getUserId()).build()) // 임시 유저
                 .build();
     }
 

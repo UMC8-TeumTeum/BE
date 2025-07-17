@@ -47,4 +47,7 @@ public class TodoRequestDTO {
 
     @Schema(description = "리마인드 알림 목록", example = "[1, 3, 5, 10, 30]")
     private List<Integer> remindAlarm;
+
+    @Schema(description = "회원 ID", example = "1")
+    private Long userId;
 }
