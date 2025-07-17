@@ -6,7 +6,7 @@ import umc.teumteum.server.domain.user.entity.enums.SocialType;
 
 public class AuthConverter {
 
-    public static OAuthUserInfo toOAuthUserInfoDTO (SocialType socialType, String socialId, String email) {
+    public static OAuthUserInfo toOAuthUserInfo (SocialType socialType, String socialId, String email) {
         return OAuthUserInfo.builder()
                 .socialType(socialType)
                 .socialId(socialId)

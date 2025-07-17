@@ -1,24 +1,39 @@
 package umc.teumteum.server.domain.auth.service;
 
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import umc.teumteum.server.domain.auth.converter.AuthConverter;
 import umc.teumteum.server.domain.auth.dto.AuthRequestDTO;
 import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.exception.handler.AuthHandler;
 import umc.teumteum.server.global.util.JwtUtil;
 
+import java.time.Duration;
+
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
     private final KakaoOAuthService kakaoOAuthService;
+    private final NaverOAuthService naverOAuthService;
     private final UserService userService;
     private final JwtUtil jwtUtil;
+
+    @Resource(name = "rtRedisTemplate")
+    private RedisTemplate<String, String> rtRedisTemplate;
+
+    @Value("${jwt.refresh-expiration-ms}")
+    private long refreshExpirationMs;
 
     @Override
     public AuthResponseDTO.LoginResponse socialLogin(AuthRequestDTO.SocialLoginRequest request) {
@@ -32,7 +47,15 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtUtil.generateAccessToken(user.getId());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId());
 
-        // 4. TODO 리프레시 토큰 저장
+        // 4. 리프레시 토큰 저장
+        String key = user.getId().toString();
+        Duration refreshDuration = Duration.ofMillis(refreshExpirationMs);
+
+        rtRedisTemplate.opsForValue().set(key, refreshToken, refreshDuration);
+
+        // 저장 확인
+        String stored = rtRedisTemplate.opsForValue().get(key);
+        log.info("RT 저장 확인 - userId: {}, stored: {}", user.getId(), stored);
 
         // 5. 다음 단계 결정
         String nextStep = userService.determineUserNextStep(user);
@@ -46,11 +69,8 @@ public class AuthServiceImpl implements AuthService {
         switch (socialType.toUpperCase()) {
             case "KAKAO":
                 return kakaoOAuthService.getUserInfoWithAccessToken(accessToken);
-
-//             TODO 네이버 소셜 로그인 구현
-//            case "naver":
-//                return naverOAuthService.getUserInfoWithAccessToken(accessToken);
-
+            case "NAVER":
+                return naverOAuthService.getUserInfoWithAccessToken(accessToken);
             default:
                 throw new AuthHandler(ErrorStatus.INVALID_SOCIAL_TYPE);
         }
