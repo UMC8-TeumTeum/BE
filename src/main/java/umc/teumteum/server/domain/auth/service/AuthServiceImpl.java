@@ -47,15 +47,11 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtUtil.generateAccessToken(user.getId());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId());
 
+        // TODO 기기별 분리 저장 필요
         // 4. 리프레시 토큰 저장
         String key = user.getId().toString();
         Duration refreshDuration = Duration.ofMillis(refreshExpirationMs);
-
         rtRedisTemplate.opsForValue().set(key, refreshToken, refreshDuration);
-
-        // 저장 확인
-        String stored = rtRedisTemplate.opsForValue().get(key);
-        log.info("RT 저장 확인 - userId: {}, stored: {}", user.getId(), stored);
 
         // 5. 다음 단계 결정
         String nextStep = userService.determineUserNextStep(user);

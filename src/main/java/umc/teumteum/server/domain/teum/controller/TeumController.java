@@ -79,14 +79,18 @@ public class TeumController {
     }
 
     @Operation(
-            summary = "틈 요청 상세 조회",
-            description = "응답 ID(responseId)를 기준으로 해당 사용자가 받은 요청 상세 정보를 조회합니다."
+            summary = "틈 요청 읽기 처리",
+            description = "응답 ID(responseId)와 사용자 ID(userId)를 기준으로 틈 요청을 읽음 처리합니다."
     )
-    @GetMapping(value = "/{responseId}/request-detail", produces = "application/json")
-    public ApiResponse<TeumRequestDetailResponseDto> getRequestDetail(
-            @PathVariable("responseId") Long responseId
+    @PatchMapping(value = "/request/{responseId}/read", produces = "application/json")
+    public ApiResponse<Long> updateReadStatus(
+            @Parameter(name = "responseId", description = "응답 ID", example = "1")
+            @PathVariable("responseId") Long responseId,
+            @Parameter(name = "userId", description = "현재 사용자 ID", example = "2")
+            @RequestParam("userId") Long userId
     ) {
-        return ApiResponse.onSuccess(null);
+        Long id = teumService.updateReadStatus(responseId, userId);
+        return ApiResponse.of(TeumSuccessStatus._TEUM_READ_SUCCESS, id);
     }
 
     @Operation(

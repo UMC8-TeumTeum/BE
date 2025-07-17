@@ -20,7 +20,7 @@ public interface TeumService {
 
     Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, Pageable pageable);
 
-    TeumRequestDetailResponseDto getRequestDetail(Long responseId, Long userId);
+    Long updateReadStatus(Long responseId, Long userId);
 
     TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto);
 
