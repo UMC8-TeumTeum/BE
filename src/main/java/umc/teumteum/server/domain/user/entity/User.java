@@ -49,7 +49,7 @@ public class User extends BaseEntity {
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "nickname")
+    @Column(name = "nickname", unique = true)
     private String nickname;
 
     @Column(name = "sleep_time")
