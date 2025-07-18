@@ -23,7 +23,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    @Autowired
     private final UserConverter userConverter;
     private final UserRepository userRepository;
     private final AgreementRepository agreementRepository;
