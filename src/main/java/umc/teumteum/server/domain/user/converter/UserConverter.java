@@ -6,6 +6,8 @@ import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
 
+import java.time.Duration;
+
 @Component
 @RequiredArgsConstructor
 public class UserConverter {
@@ -16,7 +18,7 @@ public class UserConverter {
         return new UserSearchResponseDto(
                 user.getId(),
                 user.getNickname(),
-                s3Util.toUrl(user.getProfileImageKey()),
+                s3Util.toPresignedUrl(user.getProfileImageKey(), Duration.ofMinutes(30)),
                 user.getJob()
         );
     }
