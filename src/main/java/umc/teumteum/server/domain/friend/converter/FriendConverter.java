@@ -1,5 +1,6 @@
 package umc.teumteum.server.domain.friend.converter;
 
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.friend.dto.FollowerUserResponseDto;
@@ -20,7 +21,7 @@ public class FriendConverter {
 
     public FollowingUserResponseDto toFollowingUserResponse(Friend friend) {
         User following = friend.getFollowing();
-        String imageUrl = s3Util.toUrl(following.getProfileImageKey());
+        String imageUrl = s3Util.toPresignedUrl(following.getProfileImageKey(), Duration.ofMinutes(30));
 
         return new FollowingUserResponseDto(
                 following.getId(),
@@ -38,7 +39,7 @@ public class FriendConverter {
 
     public FollowerUserResponseDto toFollowerUserResponse(Friend friend) {
         User follower = friend.getFollower();
-        String imageUrl = s3Util.toUrl(follower.getProfileImageKey());
+        String imageUrl = s3Util.toPresignedUrl(follower.getProfileImageKey(), Duration.ofMinutes(30));
 
         return new FollowerUserResponseDto(
                 follower.getId(),
@@ -54,7 +55,7 @@ public class FriendConverter {
     }
 
     public FriendProfileResponseDto toFriendProfileResponse(User targetUser, Friend followRelation) {
-        String imageUrl = s3Util.toUrl(targetUser.getProfileImageKey());
+        String imageUrl = s3Util.toPresignedUrl(targetUser.getProfileImageKey(), Duration.ofMinutes(30));
 
         return FriendProfileResponseDto.builder()
                 .userId(targetUser.getId())
