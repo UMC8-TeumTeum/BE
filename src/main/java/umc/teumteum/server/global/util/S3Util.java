@@ -12,7 +12,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 @RequiredArgsConstructor
 public class S3Util {
 
-    @Value("${cloud.aws.s3.bucket.name}")
+    @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
 
     private final S3Presigner s3Presigner;
