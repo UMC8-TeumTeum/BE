@@ -23,6 +23,7 @@ import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.S3Util;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -74,7 +75,7 @@ public class HomeServiceImpl implements HomeService {
             profileUrls = getTeumProfileUrls(schedule);
         } else{
             String profileImageKey = schedule.getUser().getProfileImageKey();
-            profileUrls = profileImageKey != null ? List.of(s3Util.toUrl(profileImageKey)) : List.of();
+            profileUrls = profileImageKey != null ? List.of(s3Util.toPresignedUrl(profileImageKey, Duration.ofMinutes(30))) : List.of();
         }
 
         return scheduleConverter.toTodoInfoResponse(schedule,reminders, profileUrls);
@@ -103,7 +104,7 @@ public class HomeServiceImpl implements HomeService {
         return userRepository.findAllById(userIds).stream()
                 .map(User::getProfileImageKey)
                 .filter(Objects::nonNull)
-                .map(s3Util::toUrl)
+                .map(key -> s3Util.toPresignedUrl(key, Duration.ofMinutes(30)))
                 .toList();
     }
 
