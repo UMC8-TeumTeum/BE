@@ -19,4 +19,6 @@ public interface FriendService {
 
     FriendProfileResponseDto getFriendProfile(Long loginUserId, Long targetUserId);
 
+    Long getFriendTeumTime(Long userId);
+
 }
