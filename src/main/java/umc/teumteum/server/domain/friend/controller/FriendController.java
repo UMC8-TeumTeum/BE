@@ -113,5 +113,16 @@ public class FriendController {
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
+    @Operation(
+            summary = "친구의 빈틈 시간 조회",
+            description = "isIncludeTeumTime == true 인 일정들의 시간을 합산하여 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/teum-time", produces = "application/json")
+    public ApiResponse<Long> getFriendTeumTime(
+            @Parameter(name = "userId", description = "조회할 친구 ID") @PathVariable("userId") Long userId
+    ) {
+        Long result = friendService.getFriendTeumTime(userId);
+        return ApiResponse.of(FriendSuccessStatus.GET_FRIEND_TEUM_TIME_SUCCESS, result);
+    }
 
 }

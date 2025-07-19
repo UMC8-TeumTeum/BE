@@ -7,6 +7,7 @@ import umc.teumteum.server.domain.friend.dto.FollowerUserResponseDto;
 import umc.teumteum.server.domain.friend.dto.FollowingUserResponseDto;
 import umc.teumteum.server.domain.friend.dto.FriendProfileResponseDto;
 import umc.teumteum.server.domain.friend.entity.Friend;
+import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
 
@@ -65,6 +66,12 @@ public class FriendConverter {
                 .isFollowing(followRelation != null)
                 .isFavorite(followRelation != null && followRelation.getIsFavorite())
                 .build();
+    }
+
+    public Long calculateTeumTime(List<Schedule> schedules) {
+        return schedules.stream()
+                .mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes())
+                .sum();
     }
 
 }

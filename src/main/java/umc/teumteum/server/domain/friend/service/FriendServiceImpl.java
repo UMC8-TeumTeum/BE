@@ -10,10 +10,13 @@ import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
+import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +28,7 @@ public class FriendServiceImpl implements FriendService {
 
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
+    private final ScheduleRepository scheduleRepository;
     private final FriendConverter friendConverter;
 
     @Override
@@ -101,6 +105,13 @@ public class FriendServiceImpl implements FriendService {
                 .findByFollowerIdAndFollowingId(loginUser.getId(), targetUser.getId());
 
         return friendConverter.toFriendProfileResponse(targetUser, followRelationOpt.orElse(null));
+    }
+
+    @Override
+    public Long getFriendTeumTime(Long userId) {
+        User user = getUserOrThrow(userId);
+        List<Schedule> schedules = scheduleRepository.findByUserIdAndIncludeTeumIsTrue(userId);
+        return friendConverter.calculateTeumTime(schedules);
     }
 
     private User getUserOrThrow(Long userId) {
