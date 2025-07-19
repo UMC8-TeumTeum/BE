@@ -90,4 +90,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
                                        @Param("startOfToday") LocalDateTime startOfToday,
                                        @Param("startOfTomorrow") LocalDateTime startOfTomorrow);
 
+
+    List<Schedule> findByUserIdAndStartTime(Long id, LocalDate now);
+
 }
