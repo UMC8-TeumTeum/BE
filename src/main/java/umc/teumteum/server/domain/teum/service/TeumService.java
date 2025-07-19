@@ -1,5 +1,7 @@
 package umc.teumteum.server.domain.teum.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
@@ -16,9 +18,9 @@ public interface TeumService {
 
     Long createResendRequest(Long parentRequestId, TeumResendRequestDto resendRequestDto);
 
-    List<TeumReceivedResponseDto> getReceivedRequests(Long userId);
+    Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, Pageable pageable);
 
-    TeumRequestDetailResponseDto getRequestDetail(Long responseId, Long userId);
+    Long updateReadStatus(Long responseId, Long userId);
 
     TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto);
 

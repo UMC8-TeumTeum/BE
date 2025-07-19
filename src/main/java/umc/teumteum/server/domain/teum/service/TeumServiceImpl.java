@@ -1,6 +1,10 @@
 package umc.teumteum.server.domain.teum.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
@@ -13,6 +17,7 @@ import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
+import umc.teumteum.server.domain.teum.entity.enums.RequestStatus;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
@@ -20,15 +25,19 @@ import umc.teumteum.server.domain.teum.repository.TeumResponseRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
+import umc.teumteum.server.global.util.S3Util;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import static umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus.INVALID_PARENT_REQUEST;
+
 @Service
 @RequiredArgsConstructor
 public class TeumServiceImpl implements TeumService {
 
+    private final S3Util s3Util;
     private final UserRepository userRepository;
     private final TeumRequestRepository teumRequestRepository;
     private final TeumResponseRepository teumResponseRepository;
@@ -61,21 +70,58 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional
-    public Long createResendRequest(Long parentRequestId, TeumResendRequestDto resendRequestDto) {
-        // TODO: 틈 요청 로직 추후 구현
-        return 1L;
+    public Long createResendRequest(Long parentRequestId, TeumResendRequestDto dto) {
+        TeumRequest parent = findActiveRequestOrThrow(parentRequestId);
+
+        validateResendableRequest(parent);
+        validateResender(parent, dto.getSenderUserId());
+        validateTimeOrder(dto.getStartTime(), dto.getEndTime());
+
+        User resender = getUserOrThrow(dto.getSenderUserId());
+
+        // 새로운 요청/응답 생성
+        TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, resender);
+        TeumResponse newResponse = TeumConverter.toResendTeumResponse(newRequest, parent.getUser());
+        newRequest.getTeumResponses().add(newResponse);
+
+        // 원래 요청의 응답 상태를 RESEND로 변경
+        TeumResponse originalResponse = parent.getTeumResponses().getFirst();
+        originalResponse.changeStatus(ResponseStatus.RESEND); // enum도 RESEND로 이름 바꿔주세요
+
+        // 저장
+        teumRequestRepository.save(newRequest);
+
+        return newRequest.getId();
     }
 
     @Override
-    public List<TeumReceivedResponseDto> getReceivedRequests(Long userId) {
-        // TODO: 틈 요청 불러오기 로직 추후 구현
-        return List.of();
+    @Transactional(readOnly = true)
+    public Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, Pageable pageable) {
+        getUserOrThrow(userId);
+
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+
+        Page<TeumResponse> page = teumResponseRepository.findValidPendingResponses(userId, today, now, pageable);
+
+        List<TeumReceivedResponseDto> dtoList = page.getContent().stream()
+                .map(response -> TeumConverter.toReceivedResponseDto(response, s3Util))
+                .toList();
+
+        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
     }
 
     @Override
-    public TeumRequestDetailResponseDto getRequestDetail(Long responseId, Long userId) {
-        // TODO: 틈 요청 상세보기 로직 추후 구현
-        return null;
+    @Transactional
+    public Long updateReadStatus(Long responseId, Long userId) {
+        TeumResponse response = getResponseOrThrow(responseId);
+
+        if (!response.getReceiverUser().getId().equals(userId)) {
+            throw new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE);
+        }
+
+        response.markAsRead();
+        return responseId;
     }
 
     @Override
@@ -118,6 +164,45 @@ public class TeumServiceImpl implements TeumService {
     public SharedTeumResponseDto getSharedTeumStats(Long userId, Long friendId) {
         // TODO : 함께한 틈 시간 조회 로직 추후 구현
         return null;
+    }
+
+    private TeumResponse getResponseOrThrow(Long responseId) {
+        return teumResponseRepository.findById(responseId)
+                .orElseThrow(() -> new GeneralException(TeumErrorStatus.TEUM_RESPONSE_NOT_FOUND));
+    }
+
+    private TeumRequest findActiveRequestOrThrow(Long requestId) {
+        TeumRequest request = teumRequestRepository.findById(requestId)
+                .orElseThrow(() -> new GeneralException(TeumErrorStatus.TEUM_REQUEST_NOT_FOUND));
+        if (request.getStatus() != RequestStatus.ACTIVE) {
+            throw new GeneralException(TeumErrorStatus.REQUEST_ALREADY_CLOSED);
+        }
+        return request;
+    }
+
+    private void validateResendableRequest(TeumRequest request) {
+        if (request.getParentRequest() != null) {
+            throw new GeneralException(TeumErrorStatus.REQUEST_ALREADY_RESENT);
+        }
+        if (request.getTeumResponses().size() != 1) {
+            throw new GeneralException(TeumErrorStatus.REQUEST_NOT_ONE_TO_ONE);
+        }
+    }
+
+    private void validateResender(TeumRequest request, Long senderUserId) {
+        User resender = getUserOrThrow(senderUserId);
+        User actualReceiver = request.getTeumResponses().getFirst().getReceiverUser();
+        if (!resender.getId().equals(actualReceiver.getId())) {
+            throw new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE);
+        }
+    }
+
+    private void validateTimeOrder(String startTime, String endTime) {
+        LocalTime start = LocalTime.parse(startTime);
+        LocalTime end = LocalTime.parse(endTime);
+        if (!start.isBefore(end)) {
+            throw new GeneralException(TeumErrorStatus.INVALID_TEUM_TIME);
+        }
     }
 
 }

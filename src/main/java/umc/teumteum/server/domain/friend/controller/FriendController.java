@@ -100,14 +100,29 @@ public class FriendController {
 
     @Operation(
             summary = "친구 프로필 조회",
-            description = "지정한 친구(userId)의 프로필 정보를 반환합니다."
+            description = "지정한 친구(userId)의 프로필 정보를 반환합니다. 인증 미적용 상태에서는 loginUserId도 파라미터로 전달해야 합니다."
     )
     @GetMapping(value = "/{userId}/profile", produces = "application/json")
     public ApiResponse<FriendProfileResponseDto> getFriendProfile(
-            @Parameter(name = "userId", description = "조회할 친구 ID", example = "1")
-            @PathVariable("userId") Long userId
+            @Parameter(name = "userId", description = "조회할 친구 ID", example = "2")
+            @PathVariable("userId") Long targetUserId,
+            @Parameter(name = "loginUserId", description = "현재 로그인한 유저 ID", example = "1")
+            @RequestParam("loginUserId") Long loginUserId
     ) {
-        return ApiResponse.onSuccess(null);
+        FriendProfileResponseDto response = friendService.getFriendProfile(loginUserId, targetUserId);
+        return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
+    }
+
+    @Operation(
+            summary = "친구의 빈틈 시간 조회",
+            description = "isIncludeTeumTime == true 인 일정들의 시간을 합산하여 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/teum-time", produces = "application/json")
+    public ApiResponse<Long> getFriendTeumTime(
+            @Parameter(name = "userId", description = "조회할 친구 ID") @PathVariable("userId") Long userId
+    ) {
+        Long result = friendService.getFriendTeumTime(userId);
+        return ApiResponse.of(FriendSuccessStatus.GET_FRIEND_TEUM_TIME_SUCCESS, result);
     }
 
 }

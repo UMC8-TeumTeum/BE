@@ -37,8 +37,8 @@ public class User extends BaseEntity {
     private String socialId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
-    private SocialType type;
+    @Column(name = "social_type", nullable = false)
+    private SocialType socialType;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
@@ -48,13 +48,13 @@ public class User extends BaseEntity {
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "nickname", nullable = false)
+    @Column(name = "nickname")
     private String nickname;
 
-    @Column(name = "sleep_time", nullable = false)
+    @Column(name = "sleep_time")
     private LocalTime sleepTime;
 
-    @Column(name = "wake_time", nullable = false)
+    @Column(name = "wake_time")
     private LocalTime wakeTime;
 
     @Column(name = "job")
