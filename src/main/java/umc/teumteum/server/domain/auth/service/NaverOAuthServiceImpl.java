@@ -17,14 +17,14 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class KakaoOAuthServiceImpl implements KakaoOAuthService {
+public class NaverOAuthServiceImpl implements NaverOAuthService {
 
     private final RestTemplate restTemplate;
 
     // 사용자 정보 조회
     @Override
     public OAuthUserInfo getUserInfoWithAccessToken(String accessToken) {
-        String userInfoUrl = "https://kapi.kakao.com/v2/user/me";
+        String userInfoUrl = "https://openapi.naver.com/v1/nid/me";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
@@ -35,18 +35,18 @@ public class KakaoOAuthServiceImpl implements KakaoOAuthService {
             ResponseEntity<Map> response = restTemplate.exchange(userInfoUrl, HttpMethod.GET, request, Map.class);
             Map<String, Object> body = response.getBody();
 
-            if (body == null || !body.containsKey("id")) {
-                throw new AuthHandler(ErrorStatus.KAKAO_USER_INFO_FAILED);
+            if (body == null || !body.containsKey("response")) {
+                throw new AuthHandler(ErrorStatus.NAVER_USER_INFO_FAILED);
             }
 
-            String socialId = String.valueOf(body.get("id"));
-            Map<String, Object> kakaoAccount = (Map<String, Object>) body.get("kakao_account");
-            String email = kakaoAccount != null ? (String) kakaoAccount.get("email") : null;
+            Map<String, Object> responseData = (Map<String, Object>) body.get("response");
+            String socialId = (String) responseData.get("id");
+            String email = (String) responseData.get("email");
 
-            return AuthConverter.toOAuthUserInfo(SocialType.KAKAO, socialId, email);
+            return AuthConverter.toOAuthUserInfo(SocialType.NAVER, socialId, email);
 
         } catch (Exception e) {
-            throw new AuthHandler(ErrorStatus.KAKAO_USER_INFO_FAILED);
+            throw new AuthHandler(ErrorStatus.NAVER_USER_INFO_FAILED);
         }
     }
 }

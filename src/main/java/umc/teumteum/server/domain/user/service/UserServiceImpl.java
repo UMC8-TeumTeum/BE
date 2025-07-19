@@ -9,9 +9,11 @@ import umc.teumteum.server.domain.user.converter.UserConverter;
 import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.Agreement;
+import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.repository.AgreementRepository;
+import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 
 import java.util.AbstractMap;
@@ -26,6 +28,7 @@ public class UserServiceImpl implements UserService {
     private final UserConverter userConverter;
     private final UserRepository userRepository;
     private final AgreementRepository agreementRepository;
+    private final RemindAlarmRepository remindAlarmRepository;
 
     @Override
     public List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long requesterId) {
@@ -88,15 +91,17 @@ public class UserServiceImpl implements UserService {
     // 소셜 로그인 시, 사용자 다음 화면 결정
     @Override
     public String determineUserNextStep(User user) {
-        // 1. 약관 동의 체크 -> 약관 동의 화면
+        // 1. 약관 동의 체크 -> 없으면 약관 동의 화면
         Agreement agreement = agreementRepository.findByUser(user)
                 .orElse(null);
         if (agreement == null) {
             return "AGREEMENT";
         }
 
-        // 2. 닉네임 체크 -> 온보딩 화면
-        if (user.getNickname() == null) {
+        // 2. 리마인드 알림 체크 -> 없으면 온보딩 화면
+        RemindAlarm remindAlarm = remindAlarmRepository.findByUser(user)
+                .orElse(null);
+        if (remindAlarm == null) {
             return "ONBOARDING";
         }
 

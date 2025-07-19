@@ -18,6 +18,7 @@ public enum ErrorStatus implements BaseErrorCode {
   // 인증 관련
   INVALID_SOCIAL_TYPE(HttpStatus.BAD_REQUEST, "AUTH4001", "지원하지 않는 소셜 로그인 타입입니다."),
   KAKAO_USER_INFO_FAILED(HttpStatus.BAD_REQUEST, "AUTH4002", "카카오 사용자 정보 조회에 실패했습니다."),
+  NAVER_USER_INFO_FAILED(HttpStatus.BAD_REQUEST, "AUTH4003", "네이버 사용자 정보 조회에 실패했습니다."),
 
 
   ;

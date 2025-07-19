@@ -1,13 +1,12 @@
 package umc.teumteum.server.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.auth.dto.AuthRequestDTO;
 import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
 import umc.teumteum.server.domain.auth.service.AuthService;
@@ -25,11 +24,17 @@ public class AuthController {
             summary = "소셜 로그인",
             description = "카카오, 네이버에 대한 소셜 플랫폼을 통한 로그인을 처리합니다."
     )
-    @PostMapping(value = "/social-login", produces = "application/json")
+    @PostMapping(value = "/social-login/{socialType}", produces = "application/json")
     public ApiResponse<AuthResponseDTO.LoginResponse> socialLogin(
+            @Parameter(
+                    description = "소셜 로그인 타입 (naver 또는 kakao)",
+                    required = true,
+                    schema = @Schema(type = "string", allowableValues = {"naver", "kakao"}, example = "kakao")
+            )
+            @PathVariable("socialType") String socialType,
             @Valid @RequestBody AuthRequestDTO.SocialLoginRequest request
             ) {
-        AuthResponseDTO.LoginResponse response = authService.socialLogin(request);
+        AuthResponseDTO.LoginResponse response = authService.socialLogin(socialType, request);
 
         return ApiResponse.onSuccess(response);
     }
