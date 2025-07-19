@@ -5,9 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.home.dto.TodoRequestDTO;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
-import umc.teumteum.server.domain.home.entity.mapping.TeumMate;
+import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.common.BaseEntity;
 
@@ -64,13 +65,23 @@ public class Schedule extends BaseEntity {
     @Column(name = "status", nullable = false)
     private ScheduleStatus status = ScheduleStatus.ACTIVE;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "teum_request_id")
+    private TeumRequest teumRequest;
 
     /*
         양방향 연관관계
     */
     @OneToMany(mappedBy = "schedule", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<TeumMate> teumMates = new ArrayList<>();
-
-    @OneToMany(mappedBy = "schedule", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ScheduleReminder> scheduleReminders = new ArrayList<>();
+
+    public void updateField(TodoRequestDTO dto) {
+        this.title = dto.getTitle();
+        this.date = dto.getDate();
+        this.startTime = LocalDateTime.of(dto.getDate(), dto.getStartTime());
+        this.endTime = LocalDateTime.of(dto.getDate(), dto.getEndTime());
+        this.description = dto.getDescription();
+        this.isPublic = dto.getIsPublic();
+        this.includeTeum = dto.getIncludeTeum();
+    }
 }
