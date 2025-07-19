@@ -122,7 +122,7 @@ public class FriendController {
             @Parameter(name = "userId", description = "조회할 친구 ID") @PathVariable("userId") Long userId
     ) {
         Long result = friendService.getFriendTeumTime(userId);
-        return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, result);
+        return ApiResponse.of(FriendSuccessStatus.GET_FRIEND_TEUM_TIME_SUCCESS, result);
     }
 
 }
