@@ -36,9 +36,9 @@ public class AuthServiceImpl implements AuthService {
     private long refreshExpirationMs;
 
     @Override
-    public AuthResponseDTO.LoginResponse socialLogin(SocialType socialType, AuthRequestDTO.SocialLoginRequest request) {
+    public AuthResponseDTO.LoginResponse socialLogin(String socialType, AuthRequestDTO.SocialLoginRequest request) {
         // 1. 소셜 로그인 - 사용자 정보 불러오기
-        OAuthUserInfo userInfo = getUserInfo(socialType, request.getAccessToken());
+        OAuthUserInfo userInfo = getUserInfo(SocialType.valueOf(socialType.toUpperCase()), request.getAccessToken());
 
         // 2. 사용자 조회 (없으면 생성)
         User user = userService.findOrCreateUser(userInfo);
