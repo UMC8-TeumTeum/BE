@@ -6,19 +6,20 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import umc.teumteum.server.domain.friend.controller.FriendController;
 import umc.teumteum.server.domain.friend.converter.FriendConverter;
-import umc.teumteum.server.domain.friend.dto.FavoriteResponseDto;
-import umc.teumteum.server.domain.friend.dto.FollowerUserResponseDto;
-import umc.teumteum.server.domain.friend.dto.FollowingUserResponseDto;
-import umc.teumteum.server.domain.friend.dto.FriendMutualResponseDto;
+import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
+import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +28,7 @@ public class FriendServiceImpl implements FriendService {
 
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
+    private final ScheduleRepository scheduleRepository;
     private final FriendConverter friendConverter;
 
     @Override
@@ -88,6 +90,28 @@ public class FriendServiceImpl implements FriendService {
         int end = Math.min(start + size, sortedList.size());
 
         return (start >= sortedList.size()) ? List.of() : sortedList.subList(start, end);
+    }
+
+    @Override
+    public FriendProfileResponseDto getFriendProfile(Long loginUserId, Long targetUserId) {
+        if (loginUserId.equals(targetUserId)) {
+            throw new GlobalHandler(FriendErrorStatus.CANNOT_VIEW_SELF);
+        }
+
+        User loginUser = getUserOrThrow(loginUserId);
+        User targetUser = getUserOrThrow(targetUserId);
+
+        Optional<Friend> followRelationOpt = friendRepository
+                .findByFollowerIdAndFollowingId(loginUser.getId(), targetUser.getId());
+
+        return friendConverter.toFriendProfileResponse(targetUser, followRelationOpt.orElse(null));
+    }
+
+    @Override
+    public Long getFriendTeumTime(Long userId) {
+        User user = getUserOrThrow(userId);
+        List<Schedule> schedules = scheduleRepository.findByUserIdAndIncludeTeumIsTrue(userId);
+        return friendConverter.calculateTeumTime(schedules);
     }
 
     private User getUserOrThrow(Long userId) {

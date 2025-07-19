@@ -1,29 +1,49 @@
 package umc.teumteum.server.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
+import umc.teumteum.server.domain.user.converter.UserConverter;
 import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
+import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.Agreement;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.repository.AgreementRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 
+import java.util.AbstractMap;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    private final UserConverter userConverter;
     private final UserRepository userRepository;
     private final AgreementRepository agreementRepository;
 
     @Override
-    public Long searchByNickname(String nickname) {
-        // TODO : 닉네임으로 사용자 검색 로직 구현
-        return null;
+    public List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long requesterId) {
+        String keywordLower = keyword.toLowerCase();
+        LevenshteinDistance distanceCalculator = LevenshteinDistance.getDefaultInstance();
+
+        Comparator<Map.Entry<User, Integer>> byDistance = Comparator.comparingInt(Map.Entry::getValue);
+
+        return userRepository.findByNicknameContaining(keyword).stream()
+                .filter(user -> !user.getId().equals(requesterId))
+                .map(user -> Map.entry(user,
+                        distanceCalculator.apply(keywordLower, user.getNickname().toLowerCase())))
+                .sorted(byDistance)
+                .limit(5)
+                .map(entry -> userConverter.toSearchResponseDto(entry.getKey()))
+                .toList();
     }
+
 
     @Override
     public List<PublicTodoResponseDto> getRecentPublicTodos(Long userId) {

@@ -1,4 +1,4 @@
-package umc.teumteum.server.domain.friend.exception.status;
+package umc.teumteum.server.domain.user.exception.status;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,12 +8,9 @@ import umc.teumteum.server.global.apiPayload.code.ErrorReasonDto;
 
 @Getter
 @AllArgsConstructor
-public enum FriendErrorStatus implements BaseErrorCode {
+public enum UserErrorStatus implements BaseErrorCode {
 
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "FRIEND4040", "존재하지 않는 유저입니다."),
-    ALREADY_FOLLOWING(HttpStatus.BAD_REQUEST, "FRIEND4001", "이미 팔로우한 유저입니다."),
-    CANNOT_VIEW_SELF(HttpStatus.BAD_REQUEST, "FRIEND4002", "자기 자신의 프로필은 친구 프로필 API에서 조회할 수 없습니다."),
-    CANNOT_FOLLOW_SELF(HttpStatus.CONFLICT, "FRIEND4090", "자기 자신은 팔로우할 수 없습니다.");
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER4040", "존재하지 않는 사용자입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
@@ -23,8 +20,8 @@ public enum FriendErrorStatus implements BaseErrorCode {
     public ErrorReasonDto getReason() {
         return ErrorReasonDto.builder()
                 .isSuccess(false)
-                .message(message)
                 .code(code)
+                .message(message)
                 .build();
     }
 

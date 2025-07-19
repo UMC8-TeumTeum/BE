@@ -1,5 +1,6 @@
 package umc.teumteum.server.domain.teum.converter;
 
+import java.time.Duration;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.teum.TeumReceivedResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumRequestDto;
@@ -69,7 +70,8 @@ public class TeumConverter {
                 .senderUser(ParticipantDto.builder()
                         .userId(sender.getId())
                         .nickname(sender.getNickname())
-                        .profileImageUrl(s3Util.toUrl(sender.getProfileImageKey()))
+                        .profileImageUrl(s3Util.toPresignedUrl(sender.getProfileImageKey(),
+                            Duration.ofMinutes(30)))
                         .build())
                 .date(request.getDate().toString())
                 .timeSlot(TimeSlot.builder()
