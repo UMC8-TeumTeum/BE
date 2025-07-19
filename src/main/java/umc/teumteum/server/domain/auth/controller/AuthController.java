@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.auth.dto.AuthRequestDTO;
 import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
+import umc.teumteum.server.domain.auth.exception.status.AuthSuccessStatus;
 import umc.teumteum.server.domain.auth.service.AuthService;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
@@ -36,7 +37,7 @@ public class AuthController {
             ) {
         AuthResponseDTO.LoginResponse response = authService.socialLogin(socialType, request);
 
-        return ApiResponse.onSuccess(response);
+        return ApiResponse.of(AuthSuccessStatus.SOCIAL_LOGIN_SUCCESS, response);
     }
 
 

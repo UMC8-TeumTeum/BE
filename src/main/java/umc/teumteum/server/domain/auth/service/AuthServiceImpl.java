@@ -10,11 +10,11 @@ import umc.teumteum.server.domain.auth.converter.AuthConverter;
 import umc.teumteum.server.domain.auth.dto.AuthRequestDTO;
 import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
+import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.service.UserService;
-import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
-import umc.teumteum.server.global.exception.handler.AuthHandler;
+import umc.teumteum.server.domain.auth.exception.AuthHandler;
 import umc.teumteum.server.global.util.JwtUtil;
 
 import java.time.Duration;
@@ -68,7 +68,7 @@ public class AuthServiceImpl implements AuthService {
             case SocialType.NAVER:
                 return naverOAuthService.getUserInfoWithAccessToken(accessToken);
             default:
-                throw new AuthHandler(ErrorStatus.INVALID_SOCIAL_TYPE);
+                throw new AuthHandler(AuthErrorStatus.INVALID_SOCIAL_TYPE);
         }
     }
 }

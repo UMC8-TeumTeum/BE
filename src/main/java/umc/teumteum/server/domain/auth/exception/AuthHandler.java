@@ -1,4 +1,4 @@
-package umc.teumteum.server.global.exception.handler;
+package umc.teumteum.server.domain.auth.exception;
 
 import umc.teumteum.server.global.apiPayload.code.BaseErrorCode;
 import umc.teumteum.server.global.exception.GeneralException;
