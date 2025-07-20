@@ -152,16 +152,15 @@ public class HomeServiceImpl implements HomeService {
         // Wish 등록
         User user = userRepository.getReferenceById(dto.getUserId()); // 시큐리티 적용후 변경 예정
 
-        // 동일한 wish가 이미 존재하는지 확인
-        boolean isDuplicate = wishRepository.existsByUserAndTitleAndContentAndEstimatedDuration(user, dto.getTitle(),dto.getContent(), dto.getEstimatedDuration());
-        if (isDuplicate) {
-            throw new HomeException(HomeErrorStatus._WISH_CONFLICT);
-        }
-
         // 카테고리 ID 유효성 검사
         List<Category> categories = categoryRepository.findAllById(dto.getCategories());
         if(categories.size () != dto.getCategories().size()){
             throw new HomeException(HomeErrorStatus._CATEGORY_NOT_FOUND);
+        }
+
+        // 동일한 wish가 이미 존재하는지 확인
+        if (isDuplicateWish(user, dto, null)) {
+            throw new HomeException(HomeErrorStatus._WISH_CONFLICT);
         }
 
         // Wish & Wish Category 저장
@@ -228,7 +227,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     private boolean isDuplicateWish(User user, WishRequestDTO dto, Long currentWishId) {
-        // 위시 수정 - 중복 검사
+        // 중복 검사
         // user, title, content, duration이 같은 wish
         List<Wish> candidates = wishRepository.findByUserAndTitleAndContentAndEstimatedDuration(
                 user, dto.getTitle(), dto.getContent(), dto.getEstimatedDuration()
@@ -236,7 +235,7 @@ public class HomeServiceImpl implements HomeService {
 
         for (Wish candidate : candidates) {
             // 현재 wish id(자기자신) 제외
-            if (candidate.getId().equals(currentWishId)) continue;
+            if (currentWishId != null && currentWishId.equals(candidate.getId())) continue;
 
             // 카테고리 ID 목록 비교
             Set<Long> dtoCategoryIds = new HashSet<>(dto.getCategories());
