@@ -119,10 +119,7 @@ public class TeumServiceImpl implements TeumService {
     @Transactional
     public Long updateReadStatus(Long responseId, Long userId) {
         TeumResponse response = getResponseOrThrow(responseId);
-
-        if (!response.getReceiverUser().getId().equals(userId)) {
-            throw new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE);
-        }
+        validateReceiver(response, userId);
 
         response.markAsRead();
         return responseId;
@@ -132,10 +129,7 @@ public class TeumServiceImpl implements TeumService {
     @Transactional
     public TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto) {
         TeumResponse response = getResponseOrThrow(responseId);
-
-        if (!response.getReceiverUser().getId().equals(userId)) {
-            throw new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE);
-        }
+        validateReceiver(response, userId);
 
         if (response.getStatus() != ResponseStatus.PENDING) {
             throw new GeneralException(TeumErrorStatus.REQUEST_ALREADY_CLOSED);
@@ -218,6 +212,12 @@ public class TeumServiceImpl implements TeumService {
             throw new GeneralException(TeumErrorStatus.REQUEST_ALREADY_CLOSED);
         }
         return request;
+    }
+
+    private void validateReceiver(TeumResponse response, Long userId) {
+        if (!response.getReceiverUser().getId().equals(userId)) {
+            throw new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE);
+        }
     }
 
     private void validateResendableRequest(TeumRequest request) {
