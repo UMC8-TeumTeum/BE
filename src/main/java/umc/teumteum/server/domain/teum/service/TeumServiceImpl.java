@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
@@ -195,9 +196,11 @@ public class TeumServiceImpl implements TeumService {
             User member = getUserOrThrow(memberId);
 
             // 일반 일정
-            List<Schedule> schedules = scheduleRepository.findByUserIdAndIncludeTeumIsTrue(memberId);
+            List<Schedule> schedules = scheduleRepository.findByUserIdAndDateAndStatus(
+                    memberId, date, ScheduleStatus.ACTIVE
+            );
             schedules.stream()
-                    .filter(schedule -> schedule.getDate().isEqual(date) && !Boolean.TRUE.equals(schedule.getIsDeleted()))
+                    .filter(schedule -> !Boolean.TRUE.equals(schedule.getIsDeleted()))
                     .map(TeumConverter::fromSchedule)
                     .forEach(scheduledSlots::add);
 
