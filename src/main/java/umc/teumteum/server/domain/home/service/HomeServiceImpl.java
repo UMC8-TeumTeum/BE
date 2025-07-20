@@ -4,16 +4,23 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.converter.ScheduleConverter;
+import umc.teumteum.server.domain.home.converter.WishConverter;
 import umc.teumteum.server.domain.home.dto.TodoRequestDTO;
 import umc.teumteum.server.domain.home.dto.TodoIdResponseDTO;
 import umc.teumteum.server.domain.home.dto.TodoInfoResponseDTO;
+import umc.teumteum.server.domain.home.dto.WishRequestDTO;
+import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
+import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.domain.home.entity.mapping.WishCategory;
 import umc.teumteum.server.domain.home.exception.status.HomeErrorStatus;
 import umc.teumteum.server.domain.home.exception.HomeException;
+import umc.teumteum.server.domain.home.repository.CategoryRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
+import umc.teumteum.server.domain.home.repository.WishRepository;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
@@ -33,10 +40,13 @@ import java.util.Objects;
 public class HomeServiceImpl implements HomeService {
 
     private final ScheduleConverter scheduleConverter;
+    private final WishConverter wishConverter;
     private final ScheduleRepository scheduleRepository;
     private final ScheduleReminderRepository scheduleReminderRepository;
     private final TeumRequestRepository teumRequestRepository;
     private final UserRepository userRepository;
+    private final WishRepository wishRepository;
+    private final CategoryRepository categoryRepository;
     private final S3Util s3Util;
 
     @Transactional
@@ -141,5 +151,30 @@ public class HomeServiceImpl implements HomeService {
 
         scheduleRepository.deleteById(scheduleId);
         scheduleReminderRepository.deleteByScheduleId(scheduleId);
+    }
+
+    @Transactional
+    @Override
+    public void createWish(WishRequestDTO dto) {
+        // Wish 등록
+        User user = userRepository.getReferenceById(dto.getUserId());
+
+        // 동일한 wish가 이미 존재하는지 확인
+        boolean isDuplicate = wishRepository.existsByUserAndTitleAndEstimatedDuration(user, dto.getTitle(), dto.getEstimatedDuration());
+        if (isDuplicate) {
+            throw new HomeException(HomeErrorStatus._WISH_CONFLICT);
+        }
+
+        // 카테고리 ID 유효성 검사
+        List<Category> categories = categoryRepository.findAllById(dto.getCategories());
+        if(categories.size () != dto.getCategories().size()){
+            throw new HomeException(HomeErrorStatus._CATEGORY_NOT_FOUND);
+        }
+
+        // Wish & Wish Category 저장
+        Wish wish = wishConverter.toWish(dto,user);
+        List<WishCategory> wishCategories = wishConverter.toWishCategories(wish,categories);
+        wish.setWishCategories(wishCategories);
+        wishRepository.save(wish);
     }
 }

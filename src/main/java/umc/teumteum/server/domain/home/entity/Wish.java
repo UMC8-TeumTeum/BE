@@ -44,4 +44,11 @@ public class Wish extends BaseEntity {
     */
     @OneToMany(mappedBy = "wish", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<WishCategory> wishCategories;
+
+    public void setWishCategories(List<WishCategory> wishCategories) {
+        this.wishCategories = wishCategories;
+        for (WishCategory wishCategory : wishCategories) {
+            wishCategory.setWish(this);
+        }
+    }
 }

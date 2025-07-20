@@ -3,8 +3,12 @@ package umc.teumteum.server.domain.home.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.home.dto.WishRequestDTO;
+import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
+import umc.teumteum.server.domain.home.service.HomeService;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 @RestController
@@ -12,6 +16,8 @@ import umc.teumteum.server.global.apiPayload.ApiResponse;
 @RequestMapping("/api/wishes")
 @Tag(name = "wish", description = "위시 관련 API")
 public class WishController {
+
+    private final HomeService homeService;
 
     @GetMapping(value = "/wishlist", produces = "application/json")
     @Operation(summary = "위시리스트 정보 조회 API",description = "위시 목록을 조회하는 API입니다. query string으로 조회 기간과 page 번호를 입력주세요.")
@@ -23,8 +29,11 @@ public class WishController {
 
     @PostMapping(value = "", consumes = "application/json", produces = "application/json")
     @Operation(summary = "위시 등록 API",description = "새로운 위시를 생성하는 API입니다.")
-    public ApiResponse<String> createWish(){
-        return ApiResponse.onSuccess(null);
+    public ApiResponse<String> createWish(
+            @RequestBody @Valid WishRequestDTO request
+            ){
+        homeService.createWish(request);
+        return ApiResponse.of(HomeSuccessStatus._WISH_CREATED, null);
     }
 
     @GetMapping(value = "/{wishId}", produces = "application/json")
