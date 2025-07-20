@@ -51,4 +51,10 @@ public class Wish extends BaseEntity {
             wishCategory.setWish(this);
         }
     }
+
+    public void update(String title, String content, EstimatedDuration duration) {
+        this.title = title;
+        this.content = content;
+        this.estimatedDuration = duration;
+    }
 }

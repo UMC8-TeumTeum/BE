@@ -49,8 +49,10 @@ public class WishController {
     @PatchMapping(value = "/{wishId}", consumes = "application/json", produces = "application/json")
     @Operation(summary = "특정 위시 정보 수정 API",description = "특정위시의 상세정보를 수정하는 API입니다.")
     public ApiResponse<String> updateWish(
-            @Parameter(name= "wishId", description = "수정할 위시 ID", example = "123") @PathVariable("wishId") Long wishId){
-        return ApiResponse.onSuccess(null);
+            @Parameter(name= "wishId", description = "수정할 위시 ID", example = "123") @PathVariable("wishId") Long wishId,
+            @RequestBody @Valid WishRequestDTO request){
+        homeService.updateWishInfo(request, wishId);
+        return ApiResponse.of(HomeSuccessStatus._WISH_UPDATED, null);
     }
 
     @GetMapping(value = "/categories", produces = "application/json")

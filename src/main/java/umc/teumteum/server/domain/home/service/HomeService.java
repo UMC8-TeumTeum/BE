@@ -23,4 +23,7 @@ public interface HomeService {
 
     // Wish 삭제
     void deleteWishByIds(WishDeleteRequestDTO dto);
+
+    // Wish 수정
+    void updateWishInfo(WishRequestDTO dto, Long wishId);
 }
