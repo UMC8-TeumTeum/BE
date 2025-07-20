@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 
 @Getter
 @Builder
@@ -14,11 +15,11 @@ import lombok.NoArgsConstructor;
 public class TeumStatusUpdateResponseDto {
 
     @Schema(description = "응답 상태", example = "ACCEPTED")
-    private TeumResponseStatus status;
+    private ResponseStatus status;
 
     @Schema(description = "새로운 틈이 생성되었는지 여부 (accepted일 때만 반환)", example = "true")
     private Boolean teumCreated;
 
-    @Schema(description = "생성된 틈 ID (accepted이고 새로 생성된 경우만)", example = "1")
+    @Schema(description = "생성된 틈 ID (accepted일 때만 반환)", example = "1")
     private Long teumId;
 }
