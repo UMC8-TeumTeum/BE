@@ -192,12 +192,12 @@ public class TeumServiceImpl implements TeumService {
         List<TimeSlot> scheduledSlots = new ArrayList<>();
         DayOfWeek targetDay = date.getDayOfWeek();
 
-        for (Long memberId : requestDto.getUserIds()) {
-            User member = getUserOrThrow(memberId);
+        for (Long userId : requestDto.getUserIds()) {
+            User user = getUserOrThrow(userId);
 
             // 일반 일정
             List<Schedule> schedules = scheduleRepository.findByUserIdAndDateAndStatus(
-                    memberId, date, ScheduleStatus.ACTIVE
+                    userId, date, ScheduleStatus.ACTIVE
             );
             schedules.stream()
                     .filter(schedule -> !Boolean.TRUE.equals(schedule.getIsDeleted()))
@@ -205,8 +205,8 @@ public class TeumServiceImpl implements TeumService {
                     .forEach(scheduledSlots::add);
 
             // 수면 시간
-            LocalTime sleep = member.getSleepTime();
-            LocalTime wake = member.getWakeTime();
+            LocalTime sleep = user.getSleepTime();
+            LocalTime wake = user.getWakeTime();
             if (sleep != null && wake != null) {
                 if (sleep.isBefore(wake)) {
                     scheduledSlots.add(new TimeSlot(sleep.toString(), wake.toString()));
@@ -217,13 +217,13 @@ public class TeumServiceImpl implements TeumService {
             }
 
             // 반복 일정
-            for (Routine routine : member.getRoutines()) {
+            for (Routine routine : user.getRoutines()) {
                 if (routine.getWeekday().matches(targetDay)) {
                     LocalDateTime routineStart = LocalDateTime.of(date, routine.getStartTime());
                     LocalDateTime routineEnd = LocalDateTime.of(date, routine.getEndTime());
 
                     boolean isRoutineDeleted = scheduleRepository.existsDeletedRoutineInstance(
-                            memberId, date, routineStart, routineEnd);
+                            userId, date, routineStart, routineEnd);
 
                     if (!isRoutineDeleted) {
                         scheduledSlots.add(new TimeSlot(
