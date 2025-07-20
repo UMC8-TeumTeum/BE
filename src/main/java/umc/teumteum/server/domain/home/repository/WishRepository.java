@@ -6,5 +6,5 @@ import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
 import umc.teumteum.server.domain.user.entity.User;
 
 public interface WishRepository extends JpaRepository<Wish, Long> {
-    boolean existsByUserAndTitleAndEstimatedDuration(User user, String title, EstimatedDuration estimatedDuration);
+    boolean existsByUserAndTitleAndContentAndEstimatedDuration(User user, String title, String content, EstimatedDuration estimatedDuration);
 }
