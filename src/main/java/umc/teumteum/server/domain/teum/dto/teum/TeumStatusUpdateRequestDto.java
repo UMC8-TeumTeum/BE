@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 public class TeumStatusUpdateRequestDto {
 
     @Schema(description = "응답 상태", example = "ACCEPTED", allowableValues = {"ACCEPTED", "DECLINED", "SUGGESTED"})
-    private TeumResponseStatus status;
+    private String status;
 }

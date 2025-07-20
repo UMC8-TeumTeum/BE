@@ -97,13 +97,16 @@ public class TeumController {
             summary = "틈 응답 상태 변경",
             description = "응답 ID(responseId)에 해당하는 응답의 상태를 변경합니다. 상태가 'accepted'인 경우 틈 생성 여부를 판단하여 반환합니다."
     )
-    @PatchMapping(value = "/response/{responseId}/status", consumes = "application/json", produces = "application/json")
+    @PatchMapping("/response/{responseId}/status")
     public ApiResponse<TeumStatusUpdateResponseDto> updateResponseStatus(
-            @Parameter(name = "responseId", description = "상태를 변경할 응답 ID", example = "1")
+            @Parameter(name = "responseId", description = "응답 ID", example = "1")
             @PathVariable("responseId") Long responseId,
+            @Parameter(name = "userId", description = "현재 사용자 ID", example = "2")
+            @RequestParam("userId") Long userId,
             @RequestBody TeumStatusUpdateRequestDto requestDto
     ) {
-        return ApiResponse.onSuccess(null);
+        TeumStatusUpdateResponseDto result = teumService.updateResponseStatus(responseId, userId, requestDto);
+        return ApiResponse.of(TeumSuccessStatus._TEUM_STATUS_UPDATED, result);
     }
 
     @Operation(

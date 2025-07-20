@@ -7,6 +7,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
@@ -28,6 +30,7 @@ import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.S3Util;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -41,6 +44,7 @@ public class TeumServiceImpl implements TeumService {
     private final UserRepository userRepository;
     private final TeumRequestRepository teumRequestRepository;
     private final TeumResponseRepository teumResponseRepository;
+    private final ScheduleRepository scheduleRepository;
 
     @Override
     @Transactional
@@ -115,19 +119,49 @@ public class TeumServiceImpl implements TeumService {
     @Transactional
     public Long updateReadStatus(Long responseId, Long userId) {
         TeumResponse response = getResponseOrThrow(responseId);
-
-        if (!response.getReceiverUser().getId().equals(userId)) {
-            throw new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE);
-        }
+        validateReceiver(response, userId);
 
         response.markAsRead();
         return responseId;
     }
 
     @Override
+    @Transactional
     public TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto) {
-        // TODO: 틈 응답 상태 변경 로직 추후 구현
-        return null;
+        TeumResponse response = getResponseOrThrow(responseId);
+        validateReceiver(response, userId);
+
+        if (response.getStatus() != ResponseStatus.PENDING) {
+            throw new GeneralException(TeumErrorStatus.REQUEST_ALREADY_CLOSED);
+        }
+
+        ResponseStatus newStatus;
+        try {
+            newStatus = ResponseStatus.valueOf(requestDto.getStatus().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new GeneralException(TeumErrorStatus.INVALID_RESPONSE_STATUS);
+        }
+
+        response.changeStatus(newStatus);
+
+        boolean isAccepted = newStatus == ResponseStatus.ACCEPTED;
+        Long teumId = null;
+
+        if (isAccepted) {
+            TeumRequest request = response.getTeumRequest();
+            User receiver = response.getReceiverUser();
+
+            Schedule schedule = TeumConverter.toScheduleFromTeumRequest(request, receiver);
+            scheduleRepository.save(schedule);
+
+            teumId = schedule.getId();
+        }
+
+        return TeumStatusUpdateResponseDto.builder()
+                .status(newStatus)
+                .teumCreated(isAccepted)
+                .teumId(teumId)
+                .build();
     }
 
     @Override
@@ -178,6 +212,12 @@ public class TeumServiceImpl implements TeumService {
             throw new GeneralException(TeumErrorStatus.REQUEST_ALREADY_CLOSED);
         }
         return request;
+    }
+
+    private void validateReceiver(TeumResponse response, Long userId) {
+        if (!response.getReceiverUser().getId().equals(userId)) {
+            throw new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE);
+        }
     }
 
     private void validateResendableRequest(TeumRequest request) {

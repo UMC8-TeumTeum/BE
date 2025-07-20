@@ -1,6 +1,10 @@
 package umc.teumteum.server.domain.teum.converter;
 
 import java.time.Duration;
+
+import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.teum.TeumReceivedResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumRequestDto;
@@ -15,6 +19,7 @@ import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 import umc.teumteum.server.global.util.S3Util;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.function.Function;
@@ -108,6 +113,25 @@ public class TeumConverter {
                 .status(ResponseStatus.PENDING)
                 .message("")
                 .readAt(null)
+                .build();
+    }
+
+    public static Schedule toScheduleFromTeumRequest(TeumRequest request, User receiver) {
+        LocalDateTime start = LocalDateTime.of(request.getDate(), request.getStartTime());
+        LocalDateTime end = LocalDateTime.of(request.getDate(), request.getEndTime());
+
+        return Schedule.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .type(ScheduleType.TEUM)
+                .date(request.getDate())
+                .startTime(start)
+                .endTime(end)
+                .user(receiver)
+                .isPublic(false)
+                .includeTeum(false)
+                .teumRequest(request)
+                .status(ScheduleStatus.ACTIVE)
                 .build();
     }
 
