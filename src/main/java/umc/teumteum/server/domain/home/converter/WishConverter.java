@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.home.converter;
 
 import org.springframework.stereotype.Component;
+import umc.teumteum.server.domain.home.dto.WishInfoResponseDTO;
 import umc.teumteum.server.domain.home.dto.WishRequestDTO;
 import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Wish;
@@ -30,5 +31,23 @@ public class WishConverter {
                         .category(category)
                         .build())
                 .toList();
+    }
+
+    // Wish -> WishInfoResponseDTO
+    public WishInfoResponseDTO toWishInfoDTO(Wish wish) {
+        // WishCategory에서 Category 정보를 추출
+        List<WishInfoResponseDTO.CategoryDTO> categoryDTOS = wish.getWishCategories().stream()
+                .map(wc -> WishInfoResponseDTO.CategoryDTO.builder()
+                        .id(wc.getCategory().getId())
+                        .name(wc.getCategory().getName())
+                        .build())
+                .toList();
+
+        return WishInfoResponseDTO.builder()
+                .title(wish.getTitle())
+                .content(wish.getContent())
+                .estimatedDuration(wish.getEstimatedDuration())
+                .categories(categoryDTOS)
+                .build();
     }
 }

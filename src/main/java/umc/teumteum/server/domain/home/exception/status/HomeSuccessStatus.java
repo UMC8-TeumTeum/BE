@@ -14,7 +14,8 @@ public enum HomeSuccessStatus implements BaseCode {
     _TODO_UPDATED(HttpStatus.OK, "HOME2002", "투두 정보가 성공적으로 수정되었습니다."),
     _TODO_LOADED(HttpStatus.OK, "HOME2003", "투두 정보가 성공적으로 조회되었습니다."),
     _TODO_DELETED(HttpStatus.OK, "HOME2004", "투두가 성공적으로 삭제되었습니다."),
-    _WISH_CREATED(HttpStatus.OK, "HOME2005","위시가 성공적으로 생성되었습니다.");
+    _WISH_CREATED(HttpStatus.OK, "HOME2005","위시가 성공적으로 생성되었습니다."),
+    _WISH_LOADED(HttpStatus.OK, "HOME2006","위시 정보가 성공적으로 조회되었습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

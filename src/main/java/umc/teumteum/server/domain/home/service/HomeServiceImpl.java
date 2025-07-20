@@ -5,10 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.converter.ScheduleConverter;
 import umc.teumteum.server.domain.home.converter.WishConverter;
-import umc.teumteum.server.domain.home.dto.TodoRequestDTO;
-import umc.teumteum.server.domain.home.dto.TodoIdResponseDTO;
-import umc.teumteum.server.domain.home.dto.TodoInfoResponseDTO;
-import umc.teumteum.server.domain.home.dto.WishRequestDTO;
+import umc.teumteum.server.domain.home.dto.*;
 import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
@@ -176,5 +173,13 @@ public class HomeServiceImpl implements HomeService {
         List<WishCategory> wishCategories = wishConverter.toWishCategories(wish,categories);
         wish.setWishCategories(wishCategories);
         wishRepository.save(wish);
+    }
+
+    @Override
+    public WishInfoResponseDTO getWishInfo(Long wishId) {
+        // Wish 조회
+        Wish wish = wishRepository.findById(wishId)
+                .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
+        return wishConverter.toWishInfoDTO(wish);
     }
 }

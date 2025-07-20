@@ -1,9 +1,6 @@
 package umc.teumteum.server.domain.home.service;
 
-import umc.teumteum.server.domain.home.dto.TodoRequestDTO;
-import umc.teumteum.server.domain.home.dto.TodoIdResponseDTO;
-import umc.teumteum.server.domain.home.dto.TodoInfoResponseDTO;
-import umc.teumteum.server.domain.home.dto.WishRequestDTO;
+import umc.teumteum.server.domain.home.dto.*;
 
 public interface HomeService {
     // Todo 등록
@@ -20,4 +17,7 @@ public interface HomeService {
 
     // Wish 등록
     void createWish(WishRequestDTO dto);
+
+    // Wish 조회
+    WishInfoResponseDTO getWishInfo(Long wishId);
 }

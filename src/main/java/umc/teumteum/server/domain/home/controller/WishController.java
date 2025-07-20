@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.home.dto.WishInfoResponseDTO;
 import umc.teumteum.server.domain.home.dto.WishRequestDTO;
 import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
 import umc.teumteum.server.domain.home.service.HomeService;
@@ -38,9 +39,10 @@ public class WishController {
 
     @GetMapping(value = "/{wishId}", produces = "application/json")
     @Operation(summary = "특정 위시 정보 조회 API",description = "특정위시의 상세정보를 조회하는 API입니다.")
-    public ApiResponse<String> getWish(
+    public ApiResponse<WishInfoResponseDTO> getWish(
             @Parameter(name= "wishId", description = "조회할 위시 ID", example = "123") @PathVariable("wishId") Long wishId){
-        return ApiResponse.onSuccess(null);
+        WishInfoResponseDTO response = homeService.getWishInfo(wishId);
+        return ApiResponse.of(HomeSuccessStatus._WISH_LOADED,response);
     }
 
     @PatchMapping(value = "/{wishId}", consumes = "application/json", produces = "application/json")
