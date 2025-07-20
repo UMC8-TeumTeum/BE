@@ -157,11 +157,8 @@ public class TeumServiceImpl implements TeumService {
             teumId = schedule.getId();
         }
 
-        return TeumStatusUpdateResponseDto.builder()
-                .status(newStatus)
-                .teumCreated(isAccepted)
-                .teumId(teumId)
-                .build();
+        return TeumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
+
     }
 
     @Override

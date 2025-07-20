@@ -9,6 +9,7 @@ import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.teum.TeumReceivedResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumRequestDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumResendRequestDto;
+import umc.teumteum.server.domain.teum.dto.teum.TeumStatusUpdateResponseDto;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
@@ -134,5 +135,14 @@ public class TeumConverter {
                 .status(ScheduleStatus.ACTIVE)
                 .build();
     }
+
+    public static TeumStatusUpdateResponseDto toStatusUpdateResponseDto(ResponseStatus status, boolean isAccepted, Long teumId) {
+        return TeumStatusUpdateResponseDto.builder()
+                .status(status)
+                .teumCreated(isAccepted)
+                .teumId(teumId)
+                .build();
+    }
+
 
 }
