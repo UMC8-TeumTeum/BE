@@ -23,7 +23,7 @@ public class WishRequestDTO {
     private String content;
 
     @NotNull
-    @Schema(description = "예상 소요 시간", example = "MINUTES_10")
+    @Schema(description = "예상 소요 시간", example = "10m")
     private EstimatedDuration estimatedDuration;
 
     @NotEmpty
