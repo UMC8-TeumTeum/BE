@@ -10,7 +10,7 @@ import umc.teumteum.server.global.apiPayload.code.ReasonDto;
 @AllArgsConstructor
 public enum AuthSuccessStatus implements BaseCode {
 
-    SOCIAL_LOGIN_SUCCESS(HttpStatus.OK, "AUTH2000", "소셜 로그인이 성공적으로 완료되었습니다."),
+    SOCIAL_LOGIN_SUCCESS(HttpStatus.OK, "AUTH2001", "소셜 로그인이 성공적으로 완료되었습니다."),
     ;
 
     private final HttpStatus httpStatus;

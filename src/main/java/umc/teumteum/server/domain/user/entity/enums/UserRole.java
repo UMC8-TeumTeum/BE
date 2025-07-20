@@ -1,6 +1,6 @@
 package umc.teumteum.server.domain.user.entity.enums;
 
 public enum UserRole {
-    USER,    // 일반
-    ADMIN,   // 관리자
+    ROLE_USER,  // 일반
+    ROLE_ADMIN  // 관리자
 }

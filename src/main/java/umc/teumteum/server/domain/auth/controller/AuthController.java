@@ -51,4 +51,12 @@ public class AuthController {
         // TODO: 토큰 재발급 로직 구현
         return null;
     }
+
+
+//    @GetMapping(value = "/test/jwt", produces = "application/json")
+//    public ApiResponse<Long> getUser(
+//            @CurrentUser @Parameter(hidden = true) Long userId
+//    ) {
+//        return ApiResponse.onSuccess(userId);
+//    }
 }
