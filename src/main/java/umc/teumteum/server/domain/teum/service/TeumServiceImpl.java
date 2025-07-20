@@ -8,10 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
+import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumExitResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
@@ -24,14 +26,17 @@ import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
 import umc.teumteum.server.domain.teum.repository.TeumResponseRepository;
+import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.S3Util;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus.INVALID_PARENT_REQUEST;
@@ -66,12 +71,6 @@ public class TeumServiceImpl implements TeumService {
         return request.getId();
     }
 
-
-    private User getUserOrThrow(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE));
-    }
-
     @Override
     @Transactional
     public Long createResendRequest(Long parentRequestId, TeumResendRequestDto dto) {
@@ -83,16 +82,13 @@ public class TeumServiceImpl implements TeumService {
 
         User resender = getUserOrThrow(dto.getSenderUserId());
 
-        // 새로운 요청/응답 생성
         TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, resender);
         TeumResponse newResponse = TeumConverter.toResendTeumResponse(newRequest, parent.getUser());
         newRequest.getTeumResponses().add(newResponse);
 
-        // 원래 요청의 응답 상태를 RESEND로 변경
         TeumResponse originalResponse = parent.getTeumResponses().getFirst();
-        originalResponse.changeStatus(ResponseStatus.RESEND); // enum도 RESEND로 이름 바꿔주세요
+        originalResponse.changeStatus(ResponseStatus.RESEND);
 
-        // 저장
         teumRequestRepository.save(newRequest);
 
         return newRequest.getId();
@@ -157,11 +153,8 @@ public class TeumServiceImpl implements TeumService {
             teumId = schedule.getId();
         }
 
-        return TeumStatusUpdateResponseDto.builder()
-                .status(newStatus)
-                .teumCreated(isAccepted)
-                .teumId(teumId)
-                .build();
+        return TeumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
+
     }
 
     @Override
@@ -190,14 +183,73 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     public AvailableTimeResponseDto getAvailableTime(AvailableTimeRequestDto requestDto) {
-        // TODO: 시간표 계산 로직 추후 구현
-        return null;
+        Long requesterId = requestDto.getRequesterId();
+        if (!requestDto.getUserIds().contains(requesterId)) {
+            throw new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE);
+        }
+
+        LocalDate date = LocalDate.parse(requestDto.getDate());
+        List<TimeSlot> scheduledSlots = new ArrayList<>();
+        DayOfWeek targetDay = date.getDayOfWeek();
+
+        for (Long userId : requestDto.getUserIds()) {
+            User user = getUserOrThrow(userId);
+
+            // 일반 일정
+            List<Schedule> schedules = scheduleRepository.findByUserIdAndDateAndStatus(
+                    userId, date, ScheduleStatus.ACTIVE
+            );
+            schedules.stream()
+                    .filter(schedule -> !Boolean.TRUE.equals(schedule.getIsDeleted()))
+                    .map(TeumConverter::fromSchedule)
+                    .forEach(scheduledSlots::add);
+
+            // 수면 시간
+            LocalTime sleep = user.getSleepTime();
+            LocalTime wake = user.getWakeTime();
+            if (sleep != null && wake != null) {
+                if (sleep.isBefore(wake)) {
+                    scheduledSlots.add(new TimeSlot(sleep.toString(), wake.toString()));
+                } else {
+                    scheduledSlots.add(new TimeSlot(sleep.toString(), "23:59"));
+                    scheduledSlots.add(new TimeSlot("00:00", wake.toString()));
+                }
+            }
+
+            // 반복 일정
+            for (Routine routine : user.getRoutines()) {
+                if (routine.getWeekday().matches(targetDay)) {
+                    LocalDateTime routineStart = LocalDateTime.of(date, routine.getStartTime());
+                    LocalDateTime routineEnd = LocalDateTime.of(date, routine.getEndTime());
+
+                    boolean isRoutineDeleted = scheduleRepository.existsDeletedRoutineInstance(
+                            userId, date, routineStart, routineEnd);
+
+                    if (!isRoutineDeleted) {
+                        scheduledSlots.add(new TimeSlot(
+                                routine.getStartTime().toString(),
+                                routine.getEndTime().toString()
+                        ));
+                    }
+                }
+            }
+        }
+
+        List<TimeSlot> merged = TeumConverter.mergeScheduledTimeSlots(scheduledSlots);
+        List<TimeSlot> available = TeumConverter.invertScheduledToAvailable(merged);
+
+        return new AvailableTimeResponseDto(date.toString(), available);
     }
 
     @Override
     public SharedTeumResponseDto getSharedTeumStats(Long userId, Long friendId) {
         // TODO : 함께한 틈 시간 조회 로직 추후 구현
         return null;
+    }
+
+    private User getUserOrThrow(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE));
     }
 
     private TeumResponse getResponseOrThrow(Long responseId) {

@@ -9,6 +9,7 @@ import umc.teumteum.server.domain.home.dto.TodoRequestDTO;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
+import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.common.BaseEntity;
 
@@ -65,9 +66,17 @@ public class Schedule extends BaseEntity {
     @Column(name = "status", nullable = false)
     private ScheduleStatus status = ScheduleStatus.ACTIVE;
 
+    @Builder.Default
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teum_request_id")
     private TeumRequest teumRequest;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "routine_id")
+    private Routine routine;
 
     /*
         양방향 연관관계

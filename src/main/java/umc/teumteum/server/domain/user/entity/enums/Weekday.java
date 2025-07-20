@@ -1,5 +1,7 @@
 package umc.teumteum.server.domain.user.entity.enums;
 
+import java.time.DayOfWeek;
+
 public enum Weekday {
     MONDAY,    // 월요일
     TUESDAY,   // 화요일
@@ -9,4 +11,8 @@ public enum Weekday {
     SATURDAY,  // 토요일
     SUNDAY     // 일요일
     ;
+
+    public boolean matches(DayOfWeek dayOfWeek) {
+        return this.name().equalsIgnoreCase(dayOfWeek.name());
+    }
 }

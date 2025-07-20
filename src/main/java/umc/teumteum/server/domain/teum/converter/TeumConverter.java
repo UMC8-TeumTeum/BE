@@ -9,6 +9,7 @@ import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.teum.TeumReceivedResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumRequestDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumResendRequestDto;
+import umc.teumteum.server.domain.teum.dto.teum.TeumStatusUpdateResponseDto;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
@@ -21,6 +22,9 @@ import umc.teumteum.server.global.util.S3Util;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
@@ -134,5 +138,72 @@ public class TeumConverter {
                 .status(ScheduleStatus.ACTIVE)
                 .build();
     }
+
+    public static TeumStatusUpdateResponseDto toStatusUpdateResponseDto(ResponseStatus status, boolean isAccepted, Long teumId) {
+        return TeumStatusUpdateResponseDto.builder()
+                .status(status)
+                .teumCreated(isAccepted)
+                .teumId(teumId)
+                .build();
+    }
+
+    public static TimeSlot fromSchedule(Schedule schedule) {
+        return new TimeSlot(
+                schedule.getStartTime().toLocalTime().toString(),
+                schedule.getEndTime().toLocalTime().toString()
+        );
+    }
+
+    public static List<TimeSlot> mergeScheduledTimeSlots(List<TimeSlot> scheduledSlots) {
+        if (scheduledSlots.isEmpty()) return Collections.emptyList();
+
+        List<TimeSlot> sorted = new ArrayList<>(scheduledSlots);
+        sorted.sort(Comparator.comparing(slot -> LocalTime.parse(slot.getStart())));
+
+        List<TimeSlot> merged = new ArrayList<>();
+        TimeSlot current = sorted.get(0);
+
+        for (int i = 1; i < sorted.size(); i++) {
+            TimeSlot next = sorted.get(i);
+            LocalTime currEnd = LocalTime.parse(current.getEnd());
+            LocalTime nextStart = LocalTime.parse(next.getStart());
+
+            if (!currEnd.isBefore(nextStart)) {
+                current = new TimeSlot(
+                        current.getStart(),
+                        LocalTime.parse(current.getEnd()).isAfter(LocalTime.parse(next.getEnd()))
+                                ? current.getEnd() : next.getEnd()
+                );
+            } else {
+                merged.add(current);
+                current = next;
+            }
+        }
+        merged.add(current);
+        return merged;
+    }
+
+    public static List<TimeSlot> invertScheduledToAvailable(List<TimeSlot> scheduledSlots) {
+        List<TimeSlot> available = new ArrayList<>();
+        LocalTime startOfDay = LocalTime.of(0, 0);
+        LocalTime endOfDay = LocalTime.of(23, 59);
+
+        for (TimeSlot scheduled : scheduledSlots) {
+            LocalTime scheduledStart = LocalTime.parse(scheduled.getStart());
+            LocalTime scheduledEnd = LocalTime.parse(scheduled.getEnd());
+
+            if (startOfDay.isBefore(scheduledStart)) {
+                available.add(new TimeSlot(startOfDay.toString(), scheduledStart.toString()));
+            }
+            startOfDay = scheduledEnd;
+        }
+
+        if (startOfDay.isBefore(endOfDay)) {
+            available.add(new TimeSlot(startOfDay.toString(), endOfDay.toString()));
+        }
+
+        return available;
+    }
+
 
 }

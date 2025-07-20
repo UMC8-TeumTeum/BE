@@ -11,8 +11,11 @@ import java.util.List;
 @Schema(title = "AvailableTimeRequestDto : 공통 가능 시간 요청 DTO")
 public class AvailableTimeRequestDto {
 
+    @Schema(description = "요청자 ID", example = "5")
+    private Long requesterId;
+
     @Schema(description = "참여자 ID 목록", example = "[1, 2, 3]")
-    private List<Long> memberIds;
+    private List<Long> userIds;
 
     @Schema(description = "날짜 (YYYY-MM-DD)", example = "YYYY-MM-DD")
     private String date;
