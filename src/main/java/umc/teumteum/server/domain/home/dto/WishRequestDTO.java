@@ -27,10 +27,10 @@ public class WishRequestDTO {
     private EstimatedDuration estimatedDuration;
 
     @NotEmpty
-    @NotNull
     @Schema(description = "위시 카테고리", example = "[1]")
     private List<Long> categories;
 
+    @NotNull
     @Schema(description = "회원 ID", example = "1")
     private Long userId;
 }
