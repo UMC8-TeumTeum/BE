@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.home.dto.WishDeleteRequestDTO;
 import umc.teumteum.server.domain.home.dto.WishInfoResponseDTO;
 import umc.teumteum.server.domain.home.dto.WishRequestDTO;
 import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
@@ -60,8 +61,11 @@ public class WishController {
 
     @DeleteMapping(value = "", consumes = "application/json")
     @Operation(summary = "위시 삭제 API",description = "위시를 삭제하는 API입니다.")
-    public ApiResponse<String> deleteWish(){
-        return ApiResponse.onSuccess(null);
+    public ApiResponse<String> deleteWish(
+            @RequestBody @Valid WishDeleteRequestDTO request
+    ){
+        homeService.deleteWishByIds(request);
+        return ApiResponse.of(HomeSuccessStatus._WISH_DELETED, null);
     }
 
     @GetMapping(value = "/teum", produces = "application/json")

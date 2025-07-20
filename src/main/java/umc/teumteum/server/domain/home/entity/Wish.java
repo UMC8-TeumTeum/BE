@@ -42,7 +42,7 @@ public class Wish extends BaseEntity {
     /*
         양방향 연관관계
     */
-    @OneToMany(mappedBy = "wish", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "wish", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WishCategory> wishCategories;
 
     public void setWishCategories(List<WishCategory> wishCategories) {

@@ -20,4 +20,7 @@ public interface HomeService {
 
     // Wish 조회
     WishInfoResponseDTO getWishInfo(Long wishId);
+
+    // Wish 삭제
+    void deleteWishByIds(WishDeleteRequestDTO dto);
 }

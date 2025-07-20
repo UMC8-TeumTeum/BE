@@ -182,4 +182,21 @@ public class HomeServiceImpl implements HomeService {
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
         return wishConverter.toWishInfoDTO(wish);
     }
+
+    @Transactional
+    @Override
+    public void deleteWishByIds(WishDeleteRequestDTO dto) {
+        // Wish 삭제
+        List<Long> ids = dto.getWishIds();
+        List<Wish> wishes = wishRepository.findAllById(ids);
+
+        // 존재하지 않는 ID가 있는 경우 예외 처리
+        if (wishes.size() != ids.size()) {
+            throw new HomeException(HomeErrorStatus._WISH_NOT_FOUND);
+        }
+
+        // 삭제
+        wishRepository.deleteAll(wishes);
+
+    }
 }
