@@ -46,4 +46,15 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("endTime") LocalDateTime endTime
     );
 
+    @Query("SELECT DISTINCT s.date FROM Schedule s " +
+            "WHERE s.user.id = :userId " +
+            "AND s.type = 'TEUM' " +
+            "AND s.status IN (:statuses) " +
+            "AND FUNCTION('DATE_FORMAT', s.date, '%Y-%m') = :yearMonth " +
+            "AND s.isDeleted = false")
+    List<LocalDate> findScheduledTeumsByMonth(
+            @Param("userId") Long userId,
+            @Param("statuses") List<ScheduleStatus> statuses,
+            @Param("yearMonth") String yearMonth);
+
 }
