@@ -5,7 +5,7 @@ import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import umc.teumteum.server.global.notification.type.NotificationType;
+import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
 
 @Getter
 @Builder

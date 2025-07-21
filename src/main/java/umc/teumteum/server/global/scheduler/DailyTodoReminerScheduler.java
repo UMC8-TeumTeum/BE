@@ -2,7 +2,6 @@ package umc.teumteum.server.global.scheduler;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -18,7 +17,7 @@ import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.notification.dto.NotificationPayload;
 import umc.teumteum.server.global.notification.sender.FcmNotificationSender;
-import umc.teumteum.server.global.notification.type.NotificationType;
+import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
 
 @Slf4j
 @Component
@@ -39,7 +38,6 @@ public class DailyTodoReminerScheduler {
     for(User user : users) {
       List<Schedule> todos = scheduleRepository.findByUserIdAndStartTime(user.getId(), LocalDate.now());
 
-      //TODO : 투두가 없을때는 따로 띄워야 되는 문구가 없는거 같길래 continue로 처리
       if (todos.isEmpty()) continue;
 
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");

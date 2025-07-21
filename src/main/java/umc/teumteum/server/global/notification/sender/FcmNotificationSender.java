@@ -30,6 +30,7 @@ public class FcmNotificationSender {
       firebaseMessaging.send(message);
     } catch (FirebaseMessagingException e) {
       log.warn(e.getMessage());
+      log.warn("FCM 전송 실패: token={}, title={}, error={}", targetToken, payload.getTitle(), e.getMessage());
       // TODO : 예외처리 필요
     }
 
