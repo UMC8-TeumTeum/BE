@@ -63,6 +63,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("yearMonth") String yearMonth
     );
 
+
     @Query("""
     SELECT s FROM Schedule s
     WHERE s.teumRequest = :teumRequest
@@ -90,7 +91,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
                                        @Param("startOfToday") LocalDateTime startOfToday,
                                        @Param("startOfTomorrow") LocalDateTime startOfTomorrow);
 
-
-    List<Schedule> findByUserIdAndStartTime(Long id, LocalDate now);
+    List<Schedule> findByUserIdAndDate(Long id, LocalDate now);
 
 }

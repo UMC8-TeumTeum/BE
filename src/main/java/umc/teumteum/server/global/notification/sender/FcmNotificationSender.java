@@ -25,6 +25,11 @@ public class FcmNotificationSender {
             .build())
         .putAllData(payload.toFcmData())
         .build();
+    log.info("FCM 전송: Message 생성 완료");
+    log.info("targetToken: {}", targetToken);
+    log.info("title: {}", payload.getTitle());
+    log.info("body: {}", payload.getContent());
+    log.info("data: {}", payload.toFcmData());
 
     try {
       firebaseMessaging.send(message);

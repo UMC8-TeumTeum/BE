@@ -31,12 +31,13 @@ public class DailyTodoReminerScheduler {
 
 
   @Scheduled(cron = "0 0 9 * * *", zone = "Asia/Seoul")
+//  @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
   public void sendDailyTodos() {
     log.info("[9am 스케줄러] 오늘의 투두 알림 메서드 호출");
 
     List<User> users = userRepository.findAll();
     for(User user : users) {
-      List<Schedule> todos = scheduleRepository.findByUserIdAndStartTime(user.getId(), LocalDate.now());
+      List<Schedule> todos = scheduleRepository.findByUserIdAndDate(user.getId(), LocalDate.now());
 
       if (todos.isEmpty()) continue;
 
@@ -54,7 +55,7 @@ public class DailyTodoReminerScheduler {
           .data(Map.of("userId",user.getId().toString()))
           .build();
 
-      List<FcmToken> tokens = fcmTokenRepository.findActiveTokensByUser(user);
+      List<FcmToken> tokens = fcmTokenRepository.findByUserAndIsActiveTrue(user);
       for(FcmToken token : tokens) {
         fcmNotificationSender.send(token.getToken(), payload);
       }
