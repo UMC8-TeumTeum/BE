@@ -4,16 +4,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.converter.ScheduleConverter;
-import umc.teumteum.server.domain.home.dto.TodoRequestDTO;
-import umc.teumteum.server.domain.home.dto.TodoIdResponseDTO;
-import umc.teumteum.server.domain.home.dto.TodoInfoResponseDTO;
+import umc.teumteum.server.domain.home.converter.WishConverter;
+import umc.teumteum.server.domain.home.dto.*;
+import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
+import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.domain.home.entity.mapping.WishCategory;
 import umc.teumteum.server.domain.home.exception.status.HomeErrorStatus;
 import umc.teumteum.server.domain.home.exception.HomeException;
-import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
-import umc.teumteum.server.domain.home.repository.ScheduleRepository;
+import umc.teumteum.server.domain.home.repository.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
@@ -24,19 +25,21 @@ import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.S3Util;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class HomeServiceImpl implements HomeService {
 
     private final ScheduleConverter scheduleConverter;
+    private final WishConverter wishConverter;
     private final ScheduleRepository scheduleRepository;
     private final ScheduleReminderRepository scheduleReminderRepository;
     private final TeumRequestRepository teumRequestRepository;
     private final UserRepository userRepository;
+    private final WishRepository wishRepository;
+    private final CategoryRepository categoryRepository;
     private final S3Util s3Util;
 
     @Transactional
@@ -141,5 +144,110 @@ public class HomeServiceImpl implements HomeService {
 
         scheduleRepository.deleteById(scheduleId);
         scheduleReminderRepository.deleteByScheduleId(scheduleId);
+    }
+
+    @Transactional
+    @Override
+    public void createWish(WishRequestDTO dto) {
+        // Wish 등록
+        User user = userRepository.getReferenceById(dto.getUserId()); // 시큐리티 적용후 변경 예정
+
+        // 카테고리 ID 유효성 검사
+        List<Category> categories = categoryRepository.findAllById(dto.getCategories());
+        if(categories.size () != dto.getCategories().size()){
+            throw new HomeException(HomeErrorStatus._CATEGORY_NOT_FOUND);
+        }
+
+        // 동일한 wish가 이미 존재하는지 확인
+        if (isDuplicateWish(user, dto, null)) {
+            throw new HomeException(HomeErrorStatus._WISH_CONFLICT);
+        }
+
+        // Wish & Wish Category 저장
+        Wish wish = wishConverter.toWish(dto,user);
+        List<WishCategory> wishCategories = wishConverter.toWishCategories(wish,categories);
+        wish.setWishCategories(wishCategories);
+        wishRepository.save(wish);
+    }
+
+    @Override
+    public WishInfoResponseDTO getWishInfo(Long wishId) {
+        // Wish 조회
+        Wish wish = wishRepository.findById(wishId)
+                .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
+        return wishConverter.toWishInfoDTO(wish);
+    }
+
+    @Transactional
+    @Override
+    public void deleteWishByIds(WishDeleteRequestDTO dto) {
+        // Wish 삭제
+        List<Long> ids = dto.getWishIds();
+        List<Wish> wishes = wishRepository.findAllById(ids);
+
+        // 존재하지 않는 ID가 있는 경우 예외 처리
+        if (wishes.size() != ids.size()) {
+            throw new HomeException(HomeErrorStatus._WISH_NOT_FOUND);
+        }
+
+        // 삭제
+        wishRepository.deleteAll(wishes);
+    }
+
+    @Transactional
+    @Override
+    public void updateWishInfo(WishRequestDTO dto, Long wishId) {
+        // Wish 수정
+        User user = userRepository.getReferenceById(dto.getUserId()); // 시큐리티 적용후 변경 예정
+
+        Wish wish = wishRepository.findById(wishId)
+                .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
+
+        // 카테고리 ID 유효성 검사
+        List<Category> categories = categoryRepository.findAllById(dto.getCategories());
+        if(categories.size () != dto.getCategories().size()){
+            throw new HomeException(HomeErrorStatus._CATEGORY_NOT_FOUND);
+        }
+
+        // 동일한 wish가 이미 존재하는지 확인
+        if (isDuplicateWish(user, dto, wishId)) {
+            throw new HomeException(HomeErrorStatus._WISH_CONFLICT);
+        }
+
+        wish.getWishCategories().clear(); // 기존 wish category 정보 제거
+        // 새로운 WishCategory 저장 & Wish 필드 업데이트
+        List<WishCategory> wishCategories = wishConverter.toWishCategories(wish, categories);
+        wish.getWishCategories().addAll(wishCategories);
+        wish.update(
+                dto.getTitle(),
+                dto.getContent(),
+                dto.getEstimatedDuration()
+        );
+
+    }
+
+    private boolean isDuplicateWish(User user, WishRequestDTO dto, Long currentWishId) {
+        // 중복 검사
+        // user, title, content, duration이 같은 wish
+        List<Wish> candidates = wishRepository.findByUserAndTitleAndContentAndEstimatedDuration(
+                user, dto.getTitle(), dto.getContent(), dto.getEstimatedDuration()
+        );
+
+        for (Wish candidate : candidates) {
+            // 현재 wish id(자기자신) 제외
+            if (currentWishId != null && currentWishId.equals(candidate.getId())) continue;
+
+            // 카테고리 ID 목록 비교
+            Set<Long> dtoCategoryIds = new HashSet<>(dto.getCategories());
+
+            Set<Long> candidateCategoryIds = candidate.getWishCategories().stream()
+                    .map(wc -> wc.getCategory().getId())
+                    .collect(Collectors.toSet());
+
+            if (dtoCategoryIds.equals(candidateCategoryIds)) {
+                return true;
+            } // 카테고리까지 동일하다면 중복
+        }
+        return false;
     }
 }

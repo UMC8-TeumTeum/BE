@@ -5,4 +5,6 @@ import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
 
 public interface AuthService {
     AuthResponseDTO.LoginResponse socialLogin(String socialType, AuthRequestDTO.SocialLoginRequest request);
+
+    AuthResponseDTO.DevTokenResponse generateDevAccessToken();
 }
