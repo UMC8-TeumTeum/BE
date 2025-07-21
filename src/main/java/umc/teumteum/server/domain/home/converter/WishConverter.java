@@ -1,10 +1,9 @@
 package umc.teumteum.server.domain.home.converter;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
-import umc.teumteum.server.domain.home.dto.WishInfoResponseDTO;
-import umc.teumteum.server.domain.home.dto.WishRequestDTO;
-import umc.teumteum.server.domain.home.dto.WishlistResponseDTO;
+import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDTO;
+import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
+import umc.teumteum.server.domain.home.dto.response.WishlistResponseDTO;
 import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.mapping.WishCategory;

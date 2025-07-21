@@ -1,10 +1,12 @@
 package umc.teumteum.server.domain.home.service;
 
-import umc.teumteum.server.domain.home.dto.*;
-import umc.teumteum.server.domain.home.dto.TodoRequestDTO;
-import umc.teumteum.server.domain.home.dto.TodoIdResponseDTO;
-import umc.teumteum.server.domain.home.dto.TodoInfoResponseDTO;
-import umc.teumteum.server.domain.home.dto.WishlistResponseDTO;
+import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
+import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDTO;
+import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
+import umc.teumteum.server.domain.home.dto.response.TodoIdResponseDTO;
+import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDTO;
+import umc.teumteum.server.domain.home.dto.response.WishlistResponseDTO;
+import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDTO;
 import umc.teumteum.server.domain.user.entity.User;
 
 public interface HomeService {

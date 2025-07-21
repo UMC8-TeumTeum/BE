@@ -1,4 +1,4 @@
-package umc.teumteum.server.domain.home.dto;
+package umc.teumteum.server.domain.home.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
