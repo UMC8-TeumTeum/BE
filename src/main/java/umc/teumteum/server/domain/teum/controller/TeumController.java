@@ -21,6 +21,7 @@ import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.exception.status.TeumSuccessStatus;
 import umc.teumteum.server.domain.teum.service.TeumService;
+import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
@@ -143,9 +144,9 @@ public class TeumController {
     public ApiResponse<List<String>> getTeumDatesOfMonth(
             @Parameter(description = "조회할 연월 (YYYY-MM)", example = "2025-05")
             @RequestParam("month") String month,
-            @CurrentUser @Parameter(hidden = true) Long userId
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        List<String> dates = teumService.getScheduledTeumsOfMonth(userId, month);
+        List<String> dates = teumService.getScheduledTeumsOfMonth(user.getId(), month);
         return ApiResponse.of(TeumSuccessStatus._SCHEDULED_CALENDAR_LOADED, dates);
     }
 
