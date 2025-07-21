@@ -16,9 +16,17 @@ public enum ErrorStatus implements BaseErrorCode {
 
 
   // 인증 관련
-  INVALID_SOCIAL_TYPE(HttpStatus.BAD_REQUEST, "AUTH4001", "지원하지 않는 소셜 로그인 타입입니다."),
-  KAKAO_USER_INFO_FAILED(HttpStatus.BAD_REQUEST, "AUTH4002", "카카오 사용자 정보 조회에 실패했습니다."),
-  NAVER_USER_INFO_FAILED(HttpStatus.BAD_REQUEST, "AUTH4003", "네이버 사용자 정보 조회에 실패했습니다."),
+  MALFORMED_JWT_TOKEN(HttpStatus.BAD_REQUEST, "AUTH4101", "잘못 구성된 JWT 형식입니다."),
+  UNSUPPORTED_JWT_TOKEN(HttpStatus.BAD_REQUEST, "AUTH4102", "지원하지 않는 JWT 형식입니다."),
+  EMPTY_JWT_CLAIMS(HttpStatus.BAD_REQUEST, "AUTH4103", "JWT 클레임이 비어 있습니다."),
+  INVALID_JWT_SIGNATURE(HttpStatus.UNAUTHORIZED, "AUTH4111", "유효하지 않은 JWT 서명입니다."),
+  EXPIRED_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH4112", "JWT 토큰이 만료되었습니다."),
+  ACCOUNT_DISABLED(HttpStatus.UNAUTHORIZED, "AUTH4113", "비활성화된 계정입니다."),
+  INVALID_TOKEN_TYPE(HttpStatus.UNAUTHORIZED, "AUTH4114", "유효하지 않은 토큰 타입입니다."),
+  MISSING_JWT(HttpStatus.UNAUTHORIZED, "AUTH4115", "JWT 토큰이 없습니다."),
+
+  // 사용자 관련
+  USER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH4111", "존재하지 않는 사용자입니다."),
 
 
   ;

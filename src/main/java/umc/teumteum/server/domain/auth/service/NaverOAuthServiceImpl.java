@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import umc.teumteum.server.domain.auth.converter.AuthConverter;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
+import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
-import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
-import umc.teumteum.server.global.exception.handler.AuthHandler;
+import umc.teumteum.server.domain.auth.exception.AuthHandler;
 
 import java.util.Map;
 
@@ -36,7 +36,7 @@ public class NaverOAuthServiceImpl implements NaverOAuthService {
             Map<String, Object> body = response.getBody();
 
             if (body == null || !body.containsKey("response")) {
-                throw new AuthHandler(ErrorStatus.NAVER_USER_INFO_FAILED);
+                throw new AuthHandler(AuthErrorStatus.NAVER_USER_INFO_FAILED);
             }
 
             Map<String, Object> responseData = (Map<String, Object>) body.get("response");
@@ -46,7 +46,7 @@ public class NaverOAuthServiceImpl implements NaverOAuthService {
             return AuthConverter.toOAuthUserInfo(SocialType.NAVER, socialId, email);
 
         } catch (Exception e) {
-            throw new AuthHandler(ErrorStatus.NAVER_USER_INFO_FAILED);
+            throw new AuthHandler(AuthErrorStatus.NAVER_USER_INFO_FAILED);
         }
     }
 }

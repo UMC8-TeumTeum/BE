@@ -10,12 +10,12 @@ import umc.teumteum.server.domain.auth.converter.AuthConverter;
 import umc.teumteum.server.domain.auth.dto.AuthRequestDTO;
 import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
+import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.service.UserService;
-import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
-import umc.teumteum.server.global.exception.handler.AuthHandler;
-import umc.teumteum.server.global.util.JwtUtil;
+import umc.teumteum.server.domain.auth.exception.AuthHandler;
+import umc.teumteum.server.global.jwt.JwtProvider;
 
 import java.time.Duration;
 
@@ -27,7 +27,7 @@ public class AuthServiceImpl implements AuthService {
     private final KakaoOAuthService kakaoOAuthService;
     private final NaverOAuthService naverOAuthService;
     private final UserService userService;
-    private final JwtUtil jwtUtil;
+    private final JwtProvider jwtProvider;
 
     @Resource(name = "rtRedisTemplate")
     private RedisTemplate<String, String> rtRedisTemplate;
@@ -44,8 +44,8 @@ public class AuthServiceImpl implements AuthService {
         User user = userService.findOrCreateUser(userInfo);
 
         // 3. 토큰 생성
-        String accessToken = jwtUtil.generateAccessToken(user.getId());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getId());
+        String accessToken = jwtProvider.generateAccessToken(user.getId());
+        String refreshToken = jwtProvider.generateRefreshToken(user.getId());
 
         // TODO 기기별 분리 저장 필요
         // 4. 리프레시 토큰 저장
@@ -68,7 +68,7 @@ public class AuthServiceImpl implements AuthService {
             case SocialType.NAVER:
                 return naverOAuthService.getUserInfoWithAccessToken(accessToken);
             default:
-                throw new AuthHandler(ErrorStatus.INVALID_SOCIAL_TYPE);
+                throw new AuthHandler(AuthErrorStatus.INVALID_SOCIAL_TYPE);
         }
     }
 }
