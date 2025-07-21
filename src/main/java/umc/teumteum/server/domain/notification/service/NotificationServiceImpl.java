@@ -36,14 +36,12 @@ public class NotificationServiceImpl implements NotificationService {
   private final S3Util s3Util;
 
   @Override
-  public List<NotificationResponseDto> getNotifications(Long userId) {
-    User user = getUserOrThrow(userId);
+  public List<NotificationResponseDto> getNotifications(User user) {
 
     List<Notification> notifications = notificationRepository.findByUserOrderByCreatedAtDesc(user); //User에 상대방 정보 담겨 있으니까.. 일단 상대방 정보를 기준으로 알림 조회
-
     Map<Long, User> relatedUserMap = resolveRelatedUsers(notifications);
-
     return NotificationConverter.toNotificationResponse(notifications, relatedUserMap, s3Util);
+
   }
 
   private User getUserOrThrow(Long userId) {
