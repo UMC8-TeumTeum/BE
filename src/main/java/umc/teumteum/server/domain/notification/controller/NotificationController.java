@@ -26,7 +26,7 @@ public class NotificationController {
       summary = "알림 목록 조회",
       description = "로그인한 사용자의 알림 목록을 조회합니다."
   )
-  public ApiResponse<Object> getNotifications(){
+  public ApiResponse<List<NotificationResponseDto>> getNotifications(){
     // TODO : 인증 도입시, userId 부분 교체 예정
     Long userId = 1L;
     List<NotificationResponseDto> notifications = notificationServiceImpl.getNotifications(userId);

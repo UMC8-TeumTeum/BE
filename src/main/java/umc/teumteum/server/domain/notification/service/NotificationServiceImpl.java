@@ -1,16 +1,13 @@
 package umc.teumteum.server.domain.notification.service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
-import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.notification.converter.NotificationConverter;
 import umc.teumteum.server.domain.notification.dto.NotificationResponseDto;
 import umc.teumteum.server.domain.notification.entity.Notification;
@@ -35,7 +32,6 @@ public class NotificationServiceImpl implements NotificationService {
   private final TeumResponseRepository teumResponseRepository;
   private final TeumRequestRepository teumRequestRepository;
   private final FriendRepository friendRepository;
-  private final ScheduleRepository scheduleRepository;
 
   private final S3Util s3Util;
 
@@ -43,7 +39,7 @@ public class NotificationServiceImpl implements NotificationService {
   public List<NotificationResponseDto> getNotifications(Long userId) {
     User user = getUserOrThrow(userId);
 
-    List<Notification> notifications = notificationRepository.findByUserOrderByCreatedAtDesc(user);
+    List<Notification> notifications = notificationRepository.findByUserOrderByCreatedAtDesc(user); //User에 상대방 정보 담겨 있으니까.. 일단 상대방 정보를 기준으로 알림 조회
 
     Map<Long, User> relatedUserMap = resolveRelatedUsers(notifications);
 
@@ -61,6 +57,7 @@ public class NotificationServiceImpl implements NotificationService {
     Map<RelatedEntityType, List<Notification>> grouped = notifications.stream()
         .collect(Collectors.groupingBy(n -> n.getType().getRelatedEntityType()));
 
+    // 틈 응답들 (틈 수락,틈 거절,틈 제안)
     if (grouped.containsKey(RelatedEntityType.TEUM_RESPONSE)) {
       List<Long> ids = grouped.get(RelatedEntityType.TEUM_RESPONSE).stream()
           .map(Notification::getRelatedId).toList();
@@ -68,6 +65,7 @@ public class NotificationServiceImpl implements NotificationService {
       responses.forEach(r -> result.put(r.getId(), r.getReceiverUser()));
     }
 
+    // 틈 요청
     if (grouped.containsKey(RelatedEntityType.TEUM_REQUEST)) {
       List<Long> ids = grouped.get(RelatedEntityType.TEUM_REQUEST).stream()
           .map(Notification::getRelatedId).toList();
@@ -75,11 +73,19 @@ public class NotificationServiceImpl implements NotificationService {
       requests.forEach(r -> result.put(r.getId(), r.getUser()));
     }
 
-    if (grouped.containsKey(RelatedEntityType.FRIEND)) {
-      List<Long> ids = grouped.get(RelatedEntityType.FRIEND).stream()
+    // 요청 수락했다가 취소된 경우
+    if(grouped.containsKey(RelatedEntityType.SCHEDULE)) {
+      List<Long> ids = grouped.get(RelatedEntityType.SCHEDULE).stream()
           .map(Notification::getRelatedId).toList();
+      List<TeumResponse> responses = teumResponseRepository.findAllById(ids);
+      responses.forEach(r -> result.put(r.getId(), r.getReceiverUser()));
+    }
+
+    if (grouped.containsKey(RelatedEntityType.FRIEND)) {
+      List<Long> ids = grouped.get(RelatedEntityType.FRIEND).stream() //친구 ID를 저장해야됨. 그리고 팔로워Id를 조회해야됨
+          .map(Notification::getRelatedId).toList();                  //친구 ID를 조회
       List<Friend> friends = friendRepository.findAllById(ids);
-      friends.forEach(f -> result.put(f.getId(), f.getFollowing()));
+      friends.forEach(f -> result.put(f.getId(), f.getFollower()));
     }
 
     return result;
