@@ -53,14 +53,12 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional
-    public Long createRequest(TeumRequestDto dto) {
-        User sender = getUserOrThrow(dto.getSenderUserId());
-
-        TeumRequest request = TeumConverter.toTeumRequest(dto, sender);
+    public Long createRequest(TeumRequestDto dto, User user) {
+        TeumRequest request = TeumConverter.toTeumRequest(dto, user);
 
         List<TeumResponse> responses = TeumConverter.toTeumResponses(
                 dto.getReceiverUserIds(),
-                sender.getId(),
+                user.getId(),
                 request,
                 this::getUserOrThrow
         );

@@ -9,12 +9,13 @@ import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumExitResponseDto
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
+import umc.teumteum.server.domain.user.entity.User;
 
 import java.util.List;
 
 public interface TeumService {
 
-    Long createRequest(TeumRequestDto requestDto);
+    Long createRequest(TeumRequestDto requestDto, User user);
 
     Long createResendRequest(Long parentRequestId, TeumResendRequestDto resendRequestDto);
 

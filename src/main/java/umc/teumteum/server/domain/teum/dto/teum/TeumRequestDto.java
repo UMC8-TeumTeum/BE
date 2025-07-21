@@ -44,7 +44,4 @@ public class TeumRequestDto {
     @Schema(description = "수신자 ID 배열", example = "[0, 1]")
     private List<Long> receiverUserIds;
 
-    @NotNull
-    @Schema(description = "(임시) 요청자 ID", example = "1")
-    private Long senderUserId;
 }

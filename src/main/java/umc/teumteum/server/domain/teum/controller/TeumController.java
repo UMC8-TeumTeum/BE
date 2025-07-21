@@ -40,10 +40,12 @@ public class TeumController {
             description = "틈 요청을 전송합니다."
     )
     @PostMapping(value = "/request", consumes = "application/json", produces = "application/json")
-    public ApiResponse<Long> createTeumRequest(@RequestBody @Valid TeumRequestDto requestDto) {
-        Long id = teumService.createRequest(requestDto);
+    public ApiResponse<Long> createTeumRequest(
+            @RequestBody @Valid TeumRequestDto requestDto,
+            @CurrentUser @Parameter(hidden = true) User user
+    ) {
+        Long id = teumService.createRequest(requestDto, user);
         return ApiResponse.of(TeumSuccessStatus._TEUM_REQUEST_CREATED, id);
-
     }
 
     @Operation(
