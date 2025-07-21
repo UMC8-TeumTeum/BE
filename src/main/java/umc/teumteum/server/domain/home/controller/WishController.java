@@ -38,9 +38,10 @@ public class WishController {
     @PostMapping(value = "", consumes = "application/json", produces = "application/json")
     @Operation(summary = "위시 등록 API",description = "새로운 위시를 생성하는 API입니다.")
     public ApiResponse<String> createWish(
-            @RequestBody @Valid WishRequestDTO request
+            @RequestBody @Valid WishRequestDTO request,
+            @CurrentUser @Parameter(hidden = true) User user
             ){
-        homeService.createWish(request);
+        homeService.createWish(request,user);
         return ApiResponse.of(HomeSuccessStatus._WISH_CREATED, null);
     }
 
@@ -56,8 +57,9 @@ public class WishController {
     @Operation(summary = "특정 위시 정보 수정 API",description = "특정위시의 상세정보를 수정하는 API입니다.")
     public ApiResponse<String> updateWish(
             @Parameter(name= "wishId", description = "수정할 위시 ID", example = "123") @PathVariable("wishId") Long wishId,
-            @RequestBody @Valid WishRequestDTO request){
-        homeService.updateWishInfo(request, wishId);
+            @RequestBody @Valid WishRequestDTO request,
+            @CurrentUser @Parameter(hidden = true) User user){
+        homeService.updateWishInfo(request, wishId, user);
         return ApiResponse.of(HomeSuccessStatus._WISH_UPDATED, null);
     }
 

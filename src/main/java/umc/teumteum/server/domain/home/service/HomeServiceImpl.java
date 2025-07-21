@@ -159,9 +159,8 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public void createWish(WishRequestDTO dto) {
+    public void createWish(WishRequestDTO dto,User user) {
         // Wish 등록
-        User user = userRepository.getReferenceById(dto.getUserId()); // 시큐리티 적용후 변경 예정
 
         // 카테고리 ID 유효성 검사
         List<Category> categories = categoryRepository.findAllById(dto.getCategories());
@@ -207,10 +206,8 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public void updateWishInfo(WishRequestDTO dto, Long wishId) {
+    public void updateWishInfo(WishRequestDTO dto, Long wishId, User user) {
         // Wish 수정
-        User user = userRepository.getReferenceById(dto.getUserId()); // 시큐리티 적용후 변경 예정
-
         Wish wish = wishRepository.findById(wishId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
 

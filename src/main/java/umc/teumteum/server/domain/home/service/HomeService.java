@@ -23,7 +23,7 @@ public interface HomeService {
     void deleteTodo(Long scheduleId);
 
     // Wish 등록
-    void createWish(WishRequestDTO dto);
+    void createWish(WishRequestDTO dto,User user);
 
     // Wish 조회
     WishInfoResponseDTO getWishInfo(Long wishId);
@@ -32,7 +32,7 @@ public interface HomeService {
     void deleteWishByIds(WishDeleteRequestDTO dto);
 
     // Wish 수정
-    void updateWishInfo(WishRequestDTO dto, Long wishId);
+    void updateWishInfo(WishRequestDTO dto, Long wishId,User user);
 
     // Wishlist 조회
     WishlistResponseDTO getWishlist(String duration, Integer page, User user);
