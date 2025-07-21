@@ -56,19 +56,6 @@ public class AuthController {
     }
 
 
-    @Profile("dev")
-    @Operation(
-            summary = "개발용 액세스 토큰 발급",
-            description = "개발 진행 과정에서의 테스트를 위한 액세스 토큰을 발급합니다."
-    )
-    @PostMapping(value = "/dev-token", produces = "application/json")
-    public ApiResponse<AuthResponseDTO.DevTokenResponse> generateDevAccessToken() {
-        AuthResponseDTO.DevTokenResponse response = authService.generateDevAccessToken();
-
-        return ApiResponse.of(AuthSuccessStatus.DEV_TOKEN_ISSUED, response);
-    }
-
-
 //    @GetMapping(value = "/test/jwt", produces = "application/json")
 //    public ApiResponse<Long> getUser(
 //            @CurrentUser @Parameter(hidden = true) User user
