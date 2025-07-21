@@ -10,6 +10,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
@@ -17,7 +18,7 @@ import umc.teumteum.server.global.exception.handler.GlobalHandler;
 @RequiredArgsConstructor
 public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     // @CurrentUser 어노테이션이 붙었는지 + 파라미터 타입이 Long인지 검사
     @Override
@@ -41,7 +42,7 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
         // 3. userId로 DB에서 조회해서 반환
         Long userId = Long.parseLong(user.getUsername());
 
-        return userRepository.findById(userId)
+        return userService.findUser(userId)
                 .orElseThrow(() -> new GlobalHandler(ErrorStatus.USER_NOT_FOUND));
     }
 }

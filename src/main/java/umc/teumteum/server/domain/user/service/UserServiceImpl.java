@@ -123,4 +123,11 @@ public class UserServiceImpl implements UserService {
                     return userRepository.save(devUser);
                 });
     }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<User> findUser(Long userId) {
+        return userRepository.findById(userId);
+    }
 }

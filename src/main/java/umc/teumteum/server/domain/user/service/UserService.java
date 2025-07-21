@@ -6,6 +6,7 @@ import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserService {
     List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long requesterId);
@@ -21,4 +22,6 @@ public interface UserService {
     String determineUserNextStep(User user);
 
     User createDevUser();
+
+    Optional<User> findUser(Long userId);
 }
