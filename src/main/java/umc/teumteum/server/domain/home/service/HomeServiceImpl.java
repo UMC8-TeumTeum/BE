@@ -1,6 +1,10 @@
 package umc.teumteum.server.domain.home.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.converter.ScheduleConverter;
@@ -10,6 +14,7 @@ import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
+import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.entity.mapping.WishCategory;
 import umc.teumteum.server.domain.home.exception.status.HomeErrorStatus;
@@ -249,5 +254,36 @@ public class HomeServiceImpl implements HomeService {
             } // 카테고리까지 동일하다면 중복
         }
         return false;
+    }
+
+    @Override
+    public WishlistResponseDTO getWishlist(String duration, Integer page, User user) {
+        // Wishlist 조회
+        System.out.println("user = " + user);
+        // 페이징 조건:  page는 1부터, pageSize = 10, 정렬조건 = 최신순
+        int pageSize = 10;
+        Pageable pageable = PageRequest.of(page-1, pageSize, Sort.by("createdAt").descending());
+        Slice<Wish> wishes;
+
+        // duration 조건 분기
+        if("all".equals(duration)){
+            wishes = wishRepository.findAllByUser(user, pageable);
+        } else {
+            EstimatedDuration estimatedDuration = EstimatedDuration.from(duration); // enum 타입으로
+            if (estimatedDuration == null) {
+                throw new HomeException(HomeErrorStatus._INVALID_DURATION); // 잘못된 enum 타입
+            }
+            wishes = wishRepository.findAllByUserAndEstimatedDuration(user, estimatedDuration, pageable);
+        }
+
+        // DTO 변환
+        return wishConverter.toWishlistResponseDTO(
+                wishes.getContent(),
+                page,
+                pageSize,
+                wishes.hasNext(),
+                wishes.isFirst(),
+                wishes.isLast()
+        );
     }
 }
