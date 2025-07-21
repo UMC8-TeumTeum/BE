@@ -1,5 +1,6 @@
 package umc.teumteum.server.global.resolver;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -7,17 +8,23 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
+import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 
+@RequiredArgsConstructor
 public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {
+
+    private final UserService userService;
 
     // @CurrentUser 어노테이션이 붙었는지 + 파라미터 타입이 Long인지 검사
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return parameter.hasParameterAnnotation(CurrentUser.class) &&
-                parameter.getParameterType().equals(Long.class);
+                parameter.getParameterType().equals(User.class);
     }
 
     // 인증된 사용자 정보에서 userId를 꺼내 Long 타입으로 반환
@@ -32,6 +39,10 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
             throw new GlobalHandler(ErrorStatus._UNAUTHORIZED);
         }
 
-        return Long.parseLong(user.getUsername());
+        // 3. userId로 DB에서 조회해서 반환
+        Long userId = Long.parseLong(user.getUsername());
+
+        return userService.findUser(userId)
+                .orElseThrow(() -> new GlobalHandler(ErrorStatus.USER_NOT_FOUND));
     }
 }

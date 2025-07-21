@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.user.converter.UserConverter;
 import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
@@ -16,10 +17,8 @@ import umc.teumteum.server.domain.user.repository.AgreementRepository;
 import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 
-import java.util.AbstractMap;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +68,7 @@ public class UserServiceImpl implements UserService {
 
     // 소셜 로그인 시, 사용자 조회 (없으면 생성)
     @Override
+    @Transactional
     public User findOrCreateUser(OAuthUserInfo userInfo) {
 
         SocialType socialType = userInfo.getSocialType();
@@ -90,6 +90,7 @@ public class UserServiceImpl implements UserService {
 
     // 소셜 로그인 시, 사용자 다음 화면 결정
     @Override
+    @Transactional(readOnly = true)
     public String determineUserNextStep(User user) {
         // 1. 약관 동의 체크 -> 없으면 약관 동의 화면
         Agreement agreement = agreementRepository.findByUser(user)
@@ -107,5 +108,26 @@ public class UserServiceImpl implements UserService {
 
         // 3. 메인 화면
         return "MAIN";
+    }
+
+    @Override
+    @Transactional
+    public User createDevUser() {
+        return userRepository.findByEmail("teumteum@kakao.com")
+                .orElseGet(() -> {
+                    User devUser = User.builder()
+                            .email("teumteum@kakao.com")
+                            .socialId(UUID.randomUUID().toString())
+                            .socialType(SocialType.KAKAO)
+                            .build();
+                    return userRepository.save(devUser);
+                });
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<User> findUser(Long userId) {
+        return userRepository.findById(userId);
     }
 }

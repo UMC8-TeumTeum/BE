@@ -6,15 +6,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.auth.converter.AuthConverter;
 import umc.teumteum.server.domain.auth.dto.AuthRequestDTO;
 import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
+import umc.teumteum.server.domain.auth.exception.AuthHandler;
 import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.service.UserService;
-import umc.teumteum.server.domain.auth.exception.AuthHandler;
 import umc.teumteum.server.global.jwt.JwtProvider;
 
 import java.time.Duration;
@@ -36,6 +37,7 @@ public class AuthServiceImpl implements AuthService {
     private long refreshExpirationMs;
 
     @Override
+    @Transactional
     public AuthResponseDTO.LoginResponse socialLogin(String socialType, AuthRequestDTO.SocialLoginRequest request) {
         // 1. 소셜 로그인 - 사용자 정보 불러오기
         OAuthUserInfo userInfo = getUserInfo(SocialType.valueOf(socialType.toUpperCase()), request.getAccessToken());
@@ -70,5 +72,19 @@ public class AuthServiceImpl implements AuthService {
             default:
                 throw new AuthHandler(AuthErrorStatus.INVALID_SOCIAL_TYPE);
         }
+    }
+
+
+    @Override
+    @Transactional
+    public AuthResponseDTO.DevTokenResponse generateDevAccessToken() {
+        // 1. 더미 사용자 조회 (없으면 생성)
+        User masterUser = userService.createDevUser();
+
+        // 2. 액세스 토큰 발급
+        String accessToken = jwtProvider.generateAccessToken(masterUser.getId());
+
+        // 3. converter 작업
+        return AuthConverter.toDevTokenResponse(accessToken);
     }
 }

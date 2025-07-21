@@ -16,4 +16,12 @@ public class AuthResponseDTO {
         private String refreshToken;    // 리프레시토큰
         private String nextStep;        // 다음 화면 단계
     }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DevTokenResponse {
+        private String accessToken;     // 액세스토큰
+    }
 }
