@@ -56,9 +56,10 @@ public class TeumController {
     public ApiResponse<TeumResendResponseDto> createResendRequest(
             @Parameter(name = "parentRequestId", description = "재요청을 생성할 기준이 되는 기존 요청 ID", example = "1")
             @PathVariable("parentRequestId") Long parentRequestId,
-            @RequestBody TeumResendRequestDto resendRequestDto
+            @RequestBody TeumResendRequestDto resendRequestDto,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        Long id = teumService.createResendRequest(parentRequestId, resendRequestDto);
+        Long id = teumService.createResendRequest(parentRequestId, resendRequestDto, user);
         return ApiResponse.of(TeumSuccessStatus._TEUM_REQUEST_CREATED, new TeumResendResponseDto(id));
     }
 

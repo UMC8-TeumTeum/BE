@@ -71,16 +71,15 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional
-    public Long createResendRequest(Long parentRequestId, TeumResendRequestDto dto) {
+    public Long createResendRequest(Long parentRequestId, TeumResendRequestDto dto, User user) {
         TeumRequest parent = findActiveRequestOrThrow(parentRequestId);
 
         validateResendableRequest(parent);
-        validateResender(parent, dto.getSenderUserId());
+        validateResender(parent, user.getId());
         validateTimeOrder(dto.getStartTime(), dto.getEndTime());
 
-        User resender = getUserOrThrow(dto.getSenderUserId());
+        TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, user); // ✅ User 객체 직접 전달
 
-        TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, resender);
         TeumResponse newResponse = TeumConverter.toResendTeumResponse(newRequest, parent.getUser());
         newRequest.getTeumResponses().add(newResponse);
 

@@ -17,7 +17,7 @@ public interface TeumService {
 
     Long createRequest(TeumRequestDto requestDto, User user);
 
-    Long createResendRequest(Long parentRequestId, TeumResendRequestDto resendRequestDto);
+    Long createResendRequest(Long parentRequestId, TeumResendRequestDto resendRequestDto, User user);
 
     Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, Pageable pageable);
 
