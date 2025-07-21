@@ -159,8 +159,9 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     public List<String> getScheduledTeumsOfMonth(Long userId, String month) {
-        // TODO: 약속된 틈의 날짜 리스트 조회 로직 추후 구현
-        return List.of();
+        List<ScheduleStatus> validStatuses = List.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED);
+        List<LocalDate> dates = scheduleRepository.findScheduledTeumsByMonth(userId, validStatuses, month);
+        return TeumConverter.toDateStringList(dates);
     }
 
     @Override

@@ -21,6 +21,8 @@ import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.exception.status.TeumSuccessStatus;
 import umc.teumteum.server.domain.teum.service.TeumService;
+import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 import java.util.List;
@@ -135,16 +137,18 @@ public class TeumController {
 
     @Operation(
             summary = "약속된 틈 날짜 리스트 조회",
-            description = "사용자가 참여 중인 틈 중, 지정한 월에 약속된 틈이 있는 날짜만 리스트로 반환합니다."
+            description = "사용자가 참여 중인 틈 중, 지정한 월에 약속된 틈이 있는 날짜만 리스트로 반환합니다.",
+            security = @SecurityRequirement(name = "JWT")
     )
     @GetMapping(value = "/scheduled/calendar", produces = "application/json")
     public ApiResponse<List<String>> getTeumDatesOfMonth(
             @Parameter(description = "조회할 연월 (YYYY-MM)", example = "2025-05")
-            @RequestParam("month") String month
+            @RequestParam("month") String month,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        return ApiResponse.onSuccess(null);
+        List<String> dates = teumService.getScheduledTeumsOfMonth(user.getId(), month);
+        return ApiResponse.of(TeumSuccessStatus._SCHEDULED_CALENDAR_LOADED, dates);
     }
-
 
     @Operation(
             summary = "특정 날짜의 약속된 틈 조회",

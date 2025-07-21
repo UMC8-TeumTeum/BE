@@ -205,5 +205,11 @@ public class TeumConverter {
         return available;
     }
 
+    public static List<String> toDateStringList(List<LocalDate> dates) {
+        return dates.stream()
+                .map(LocalDate::toString)
+                .toList();
+    }
+
 
 }
