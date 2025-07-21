@@ -23,4 +23,11 @@ public class AuthConverter {
                 .build()
                 ;
     }
+
+    public static AuthResponseDTO.DevTokenResponse toDevTokenResponse(String accessToken) {
+        return AuthResponseDTO.DevTokenResponse.builder()
+                .accessToken(accessToken)
+                .build()
+                ;
+    }
 }

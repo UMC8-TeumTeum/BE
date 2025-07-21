@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.auth.dto.AuthRequestDTO;
 import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
@@ -52,6 +53,19 @@ public class AuthController {
     ) {
         // TODO: 토큰 재발급 로직 구현
         return null;
+    }
+
+
+    @Profile("dev")
+    @Operation(
+            summary = "개발용 액세스 토큰 발급",
+            description = "개발 진행 과정에서의 테스트를 위한 액세스 토큰을 발급합니다."
+    )
+    @PostMapping(value = "/dev-token", produces = "application/json")
+    public ApiResponse<AuthResponseDTO.DevTokenResponse> generateDevAccessToken() {
+        AuthResponseDTO.DevTokenResponse response = authService.generateDevAccessToken();
+
+        return ApiResponse.of(AuthSuccessStatus.DEV_TOKEN_ISSUED, response);
     }
 
 

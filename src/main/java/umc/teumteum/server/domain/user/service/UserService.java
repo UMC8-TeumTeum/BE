@@ -19,4 +19,6 @@ public interface UserService {
     User findOrCreateUser(OAuthUserInfo userInfo);
 
     String determineUserNextStep(User user);
+
+    User createDevUser();
 }
