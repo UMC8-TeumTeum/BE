@@ -40,14 +40,16 @@ public class OnboardingController {
 
 
     @Operation(
-            summary = "온보딩 닉네임과 분야/직종 저장",
+            summary = "온보딩 닉네임과 분야/직종 등록",
             description = "온보딩 과정에서 닉네임과 분야/직종 정보를 저장합니다."
     )
     @PostMapping(value = "/onboarding/nickname-job", produces = "application/json")
     public ApiResponse<Object> saveNicknameAndJob(
+            @RequestBody @Valid UserRequestDTO.NicknameJobRequest request,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        // TODO: 온보딩 닉네임과 분야/직종 저장 로직 구현
-        return null;
+        userService.saveNicknameAndJob(request, user);
+        return ApiResponse.of(UserSuccessStatus.NICKNAME_JOB_SAVED, null);
     }
 
 

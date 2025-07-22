@@ -2,6 +2,9 @@ package umc.teumteum.server.domain.user.entity;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -120,5 +123,10 @@ public class User extends BaseEntity {
 
     public void updateStep(UserStep step) {
         this.step = step;
+    }
+
+    public void updateNicknameAndJob(String nickname, String jobField) {
+        this.nickname = nickname;
+        this.job = jobField;
     }
 }

@@ -142,4 +142,27 @@ public class UserServiceImpl implements UserService {
         // 5. 사용자 step 변경
         user.updateStep(UserStep.ONBOARDING);
     }
+
+
+    // 온보딩 - 닉네임 & 분야/직종 등록
+    @Override
+    @Transactional
+    public void saveNicknameAndJob(UserRequestDTO.NicknameJobRequest request, User user) {
+        // 1. 닉네임 중복 여부 확인
+        // 기존 닉네임이 null이면(=처음 닉네임 등록) 단순 중복 체크
+        if (user.getNickname() == null) {
+            if (userRepository.existsByNickname(request.getNickname())) {
+                throw new UserHandler(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+            }
+        }
+        // 기존 닉네임이 있으면(=온보딩 중단으로 인한 닉네임 재등록) 본인 닉네임 이외와 중복 체크
+        else {
+            if (!request.getNickname().equals(user.getNickname()) && userRepository.existsByNickname(request.getNickname())) {
+                throw new UserHandler(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+            }
+        }
+
+        // 2. 닉네임과 분야/직종 수정
+        user.updateNicknameAndJob(request.getNickname(), request.getJobField());
+    }
 }
