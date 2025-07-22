@@ -11,7 +11,6 @@ import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
 import umc.teumteum.server.domain.user.dto.UserRequestDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.Agreement;
-import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
@@ -120,12 +119,15 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void saveAgreement(UserRequestDTO.AgreeRequest request, User user) {
-        // 1. 기존 동의 이력이 있는지 확인
+        // 1. 사용자 step 확인
+        validateOnboardingStep(user, UserStep.AGREEMENT);
+
+        // 2. 기존 동의 이력이 있는지 확인
         if (agreementRepository.existsByUser(user)) {
             throw new UserHandler(UserErrorStatus.AGREEMENT_ALREADY_EXISTS);
         }
 
-        // 2. 필수 항목 동의 여부 확인
+        // 3. 필수 항목 동의 여부 확인
         if (!request.getTosConsent()) {
             throw new UserHandler(UserErrorStatus.TOS_CONSENT_NOT_AGREED);
         }
@@ -133,13 +135,13 @@ public class UserServiceImpl implements UserService {
             throw new UserHandler(UserErrorStatus.PRIVACY_CONSENT_NOT_AGREED);
         }
 
-        // 3. Entity 변환
+        // 4. Entity 변환
         Agreement agreement = AgreementConverter.toAgreement(request, user);
 
-        // 4. 저장
+        // 5. 저장
         agreementRepository.save(agreement);
 
-        // 5. 사용자 step 변경
+        // 6. 사용자 step 변경
         user.updateStep(UserStep.ONBOARDING);
     }
 
@@ -148,7 +150,10 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void saveNicknameAndJob(UserRequestDTO.NicknameJobRequest request, User user) {
-        // 1. 닉네임 중복 여부 확인
+        // 1. 사용자 step 확인
+        validateOnboardingStep(user, UserStep.ONBOARDING);
+
+        // 2. 닉네임 중복 여부 확인
         // 기존 닉네임이 null이면(=처음 닉네임 등록) 단순 중복 체크
         if (user.getNickname() == null) {
             if (userRepository.existsByNickname(request.getNickname())) {
@@ -162,7 +167,15 @@ public class UserServiceImpl implements UserService {
             }
         }
 
-        // 2. 닉네임과 분야/직종 수정
+        // 3. 닉네임과 분야/직종 수정
         user.updateNicknameAndJob(request.getNickname(), request.getJobField());
+    }
+
+
+    // 사용자의 step을 확인
+    private void validateOnboardingStep(User user, UserStep expectedStep) {
+        if (user.getStep() == null || !user.getStep().equals(expectedStep)) {
+            throw new UserHandler(UserErrorStatus.INVALID_STEP);
+        }
     }
 }
