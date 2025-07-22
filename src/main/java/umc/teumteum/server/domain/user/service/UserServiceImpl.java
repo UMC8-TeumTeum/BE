@@ -33,14 +33,14 @@ public class UserServiceImpl implements UserService {
     private final RemindAlarmRepository remindAlarmRepository;
 
     @Override
-    public List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long requesterId) {
+    public List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long userId) {
         String keywordLower = keyword.toLowerCase();
         LevenshteinDistance distanceCalculator = LevenshteinDistance.getDefaultInstance();
 
         Comparator<Map.Entry<User, Integer>> byDistance = Comparator.comparingInt(Map.Entry::getValue);
 
         return userRepository.findByNicknameContaining(keyword).stream()
-                .filter(user -> !user.getId().equals(requesterId))
+                .filter(user -> !user.getId().equals(userId))
                 .map(user -> Map.entry(user,
                         distanceCalculator.apply(keywordLower, user.getNickname().toLowerCase())))
                 .sorted(byDistance)

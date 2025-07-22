@@ -7,8 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
+import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.exception.status.UserSuccessStatus;
 import umc.teumteum.server.domain.user.service.UserService;
+import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 import java.util.List;
@@ -29,9 +31,9 @@ public class UserController {
     @GetMapping("/search")
     public ApiResponse<List<UserSearchResponseDto>> searchByNickname(
             @RequestParam("keyword") String keyword,
-            @RequestParam("userId") Long userId
+            @Parameter(hidden = true) @CurrentUser User user
     ) {
-        List<UserSearchResponseDto> results = userService.searchUsersByKeyword(keyword, userId);
+        List<UserSearchResponseDto> results = userService.searchUsersByKeyword(keyword, user.getId());
         return ApiResponse.of(UserSuccessStatus._USER_FOUND, results);
     }
 
