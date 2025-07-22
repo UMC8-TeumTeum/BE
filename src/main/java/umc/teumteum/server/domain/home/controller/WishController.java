@@ -6,11 +6,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import umc.teumteum.server.domain.home.dto.WishDeleteRequestDTO;
-import umc.teumteum.server.domain.home.dto.WishInfoResponseDTO;
-import umc.teumteum.server.domain.home.dto.WishRequestDTO;
+import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDTO;
+import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDTO;
+import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
 import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
 import umc.teumteum.server.domain.home.service.HomeService;
+import umc.teumteum.server.domain.home.dto.response.WishlistResponseDTO;
+import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 @RestController
@@ -23,18 +26,22 @@ public class WishController {
 
     @GetMapping(value = "/wishlist", produces = "application/json")
     @Operation(summary = "위시리스트 정보 조회 API",description = "위시 목록을 조회하는 API입니다. query string으로 조회 기간과 page 번호를 입력주세요.")
-    public ApiResponse<String> getWishlist(
+    public ApiResponse<WishlistResponseDTO> getWishlist(
             @Parameter(name= "duration", description = "조회기간 (all | 10m | 20m | 30m | 1h)", example = "30m") @RequestParam("duration") String duration,
-            @Parameter(name= "page", description = "페이지 번호는 1부터 시작", example = "1") @RequestParam("page") Long page){
-        return ApiResponse.onSuccess(null);
+            @Parameter(name= "page", description = "페이지 번호는 1부터 시작", example = "1") @RequestParam("page") Integer page,
+            @CurrentUser @Parameter(hidden = true) User user){
+
+        WishlistResponseDTO response = homeService.getWishlist(duration, page, user);
+        return ApiResponse.of(HomeSuccessStatus._WISHLIST_LOADED, response);
     }
 
     @PostMapping(value = "", consumes = "application/json", produces = "application/json")
     @Operation(summary = "위시 등록 API",description = "새로운 위시를 생성하는 API입니다.")
     public ApiResponse<String> createWish(
-            @RequestBody @Valid WishRequestDTO request
+            @RequestBody @Valid WishRequestDTO request,
+            @CurrentUser @Parameter(hidden = true) User user
             ){
-        homeService.createWish(request);
+        homeService.createWish(request,user);
         return ApiResponse.of(HomeSuccessStatus._WISH_CREATED, null);
     }
 
@@ -50,8 +57,9 @@ public class WishController {
     @Operation(summary = "특정 위시 정보 수정 API",description = "특정위시의 상세정보를 수정하는 API입니다.")
     public ApiResponse<String> updateWish(
             @Parameter(name= "wishId", description = "수정할 위시 ID", example = "123") @PathVariable("wishId") Long wishId,
-            @RequestBody @Valid WishRequestDTO request){
-        homeService.updateWishInfo(request, wishId);
+            @RequestBody @Valid WishRequestDTO request,
+            @CurrentUser @Parameter(hidden = true) User user){
+        homeService.updateWishInfo(request, wishId, user);
         return ApiResponse.of(HomeSuccessStatus._WISH_UPDATED, null);
     }
 

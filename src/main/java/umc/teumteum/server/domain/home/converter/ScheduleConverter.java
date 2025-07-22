@@ -1,8 +1,8 @@
 package umc.teumteum.server.domain.home.converter;
 
 import org.springframework.stereotype.Component;
-import umc.teumteum.server.domain.home.dto.TodoRequestDTO;
-import umc.teumteum.server.domain.home.dto.TodoInfoResponseDTO;
+import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
+import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDTO;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;

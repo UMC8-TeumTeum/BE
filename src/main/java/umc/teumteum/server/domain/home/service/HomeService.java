@@ -1,6 +1,13 @@
 package umc.teumteum.server.domain.home.service;
 
-import umc.teumteum.server.domain.home.dto.*;
+import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
+import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDTO;
+import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
+import umc.teumteum.server.domain.home.dto.response.TodoIdResponseDTO;
+import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDTO;
+import umc.teumteum.server.domain.home.dto.response.WishlistResponseDTO;
+import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDTO;
+import umc.teumteum.server.domain.user.entity.User;
 
 public interface HomeService {
     // Todo 등록
@@ -16,7 +23,7 @@ public interface HomeService {
     void deleteTodo(Long scheduleId);
 
     // Wish 등록
-    void createWish(WishRequestDTO dto);
+    void createWish(WishRequestDTO dto,User user);
 
     // Wish 조회
     WishInfoResponseDTO getWishInfo(Long wishId);
@@ -25,5 +32,8 @@ public interface HomeService {
     void deleteWishByIds(WishDeleteRequestDTO dto);
 
     // Wish 수정
-    void updateWishInfo(WishRequestDTO dto, Long wishId);
+    void updateWishInfo(WishRequestDTO dto, Long wishId,User user);
+
+    // Wishlist 조회
+    WishlistResponseDTO getWishlist(String duration, Integer page, User user);
 }
