@@ -91,10 +91,9 @@ public class TeumController {
     public ApiResponse<Long> updateReadStatus(
             @Parameter(name = "responseId", description = "응답 ID", example = "1")
             @PathVariable("responseId") Long responseId,
-            @Parameter(name = "userId", description = "현재 사용자 ID", example = "2")
-            @RequestParam("userId") Long userId
+            @Parameter(hidden = true) @CurrentUser User user
     ) {
-        Long id = teumService.updateReadStatus(responseId, userId);
+        Long id = teumService.updateReadStatus(responseId, user.getId());
         return ApiResponse.of(TeumSuccessStatus._TEUM_READ_SUCCESS, id);
     }
 
