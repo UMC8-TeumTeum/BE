@@ -15,6 +15,7 @@ import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.UserRole;
 import umc.teumteum.server.domain.user.entity.enums.UserStatus;
+import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.global.common.BaseEntity;
 
 import java.time.LocalDateTime;
@@ -65,6 +66,11 @@ public class User extends BaseEntity {
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
+    @Column(name = "step", nullable = false)
+    private UserStep step = UserStep.AGREEMENT;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private UserStatus status = UserStatus.ACTIVE;
 
@@ -111,4 +117,8 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Wish> wishes;
 
+
+    public void updateStep(UserStep step) {
+        this.step = step;
+    }
 }

@@ -2,22 +2,25 @@ package umc.teumteum.server.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.similarity.LevenshteinDistance;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
+import umc.teumteum.server.domain.user.converter.AgreementConverter;
 import umc.teumteum.server.domain.user.converter.UserConverter;
 import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
+import umc.teumteum.server.domain.user.dto.UserRequestDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.Agreement;
 import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.domain.user.entity.enums.UserStep;
+import umc.teumteum.server.domain.user.exception.UserHandler;
+import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.AgreementRepository;
 import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -88,28 +91,8 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
-    // 소셜 로그인 시, 사용자 다음 화면 결정
-    @Override
-    @Transactional(readOnly = true)
-    public String determineUserNextStep(User user) {
-        // 1. 약관 동의 체크 -> 없으면 약관 동의 화면
-        Agreement agreement = agreementRepository.findByUser(user)
-                .orElse(null);
-        if (agreement == null) {
-            return "AGREEMENT";
-        }
 
-        // 2. 리마인드 알림 체크 -> 없으면 온보딩 화면
-        RemindAlarm remindAlarm = remindAlarmRepository.findByUser(user)
-                .orElse(null);
-        if (remindAlarm == null) {
-            return "ONBOARDING";
-        }
-
-        // 3. 메인 화면
-        return "MAIN";
-    }
-
+    // 개발용 액세스 토큰 사용자 생성
     @Override
     @Transactional
     public User createDevUser() {
@@ -125,9 +108,38 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    // Resolver 사용자 조회
     @Override
     @Transactional(readOnly = true)
     public Optional<User> findUser(Long userId) {
         return userRepository.findById(userId);
+    }
+
+
+    // 온보딩 - 약관 동의
+    @Override
+    @Transactional
+    public void saveAgreement(UserRequestDTO.AgreeRequest request, User user) {
+        // 1. 기존 동의 이력이 있는지 확인
+        if (agreementRepository.existsByUser(user)) {
+            throw new UserHandler(UserErrorStatus.AGREEMENT_ALREADY_EXISTS);
+        }
+
+        // 2. 필수 항목 동의 여부 확인
+        if (!request.getTosConsent()) {
+            throw new UserHandler(UserErrorStatus.TOS_CONSENT_NOT_AGREED);
+        }
+        if (!request.getPrivacyConsent()) {
+            throw new UserHandler(UserErrorStatus.PRIVACY_CONSENT_NOT_AGREED);
+        }
+
+        // 3. Entity 변환
+        Agreement agreement = AgreementConverter.toAgreement(request, user);
+
+        // 4. 저장
+        agreementRepository.save(agreement);
+
+        // 5. 사용자 step 변경
+        user.updateStep(UserStep.ONBOARDING);
     }
 }
