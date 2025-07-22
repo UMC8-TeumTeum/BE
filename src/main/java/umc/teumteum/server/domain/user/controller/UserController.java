@@ -31,7 +31,7 @@ public class UserController {
             summary = "온보딩 약관 동의",
             description = "온보딩 과정에서 약관 동의 정보를 저장합니다."
     )
-    @PostMapping(value = "/onboarding/terms", produces = "application/json")
+    @PostMapping(value = "/onboarding/agreement", produces = "application/json")
     public ApiResponse<Object> saveTerms(
     ) {
         // TODO: 온보딩 약관 동의 저장 로직 구현
