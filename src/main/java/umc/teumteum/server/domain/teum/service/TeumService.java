@@ -33,7 +33,7 @@ public interface TeumService {
 
     ScheduledTeumExitResponseDto exitScheduledTeum(Long teumId, Long userId);
 
-    AvailableTimeResponseDto getAvailableTime(AvailableTimeRequestDto requestDto);
+    AvailableTimeResponseDto getAvailableTime(User user, AvailableTimeRequestDto requestDto);
 
     SharedTeumResponseDto getSharedTeumStats(Long userId, Long friendId);
 }

@@ -189,14 +189,15 @@ public class TeumController {
 
     @Operation(
             summary = "공통 가능한 시간대 조회",
-            description = "지정된 사용자들(userIds)의 특정 날짜에 대해 공통으로 가능한 시간대를 반환합니다."
+            description = "현재 로그인 사용자와 지정된 사용자들 간의 특정 날짜에 대해 공통 가능한 시간대를 반환합니다."
     )
     @PostMapping(value = "/available-time", consumes = "application/json", produces = "application/json")
     public ApiResponse<AvailableTimeResponseDto> getAvailableTime(
+            @Parameter(hidden = true) @CurrentUser User user,
             @RequestBody AvailableTimeRequestDto requestDto
     ) {
         return ApiResponse.of(TeumSuccessStatus._AVAILABLE_TIME_LOADED,
-                teumService.getAvailableTime(requestDto));
+                teumService.getAvailableTime(user, requestDto));
     }
 
     @Operation(
