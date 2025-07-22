@@ -105,11 +105,10 @@ public class TeumController {
     public ApiResponse<TeumStatusUpdateResponseDto> updateResponseStatus(
             @Parameter(name = "responseId", description = "응답 ID", example = "1")
             @PathVariable("responseId") Long responseId,
-            @Parameter(name = "userId", description = "현재 사용자 ID", example = "2")
-            @RequestParam("userId") Long userId,
+            @Parameter(hidden = true) @CurrentUser User user,
             @RequestBody TeumStatusUpdateRequestDto requestDto
     ) {
-        TeumStatusUpdateResponseDto result = teumService.updateResponseStatus(responseId, userId, requestDto);
+        TeumStatusUpdateResponseDto result = teumService.updateResponseStatus(responseId, user.getId(), requestDto);
         return ApiResponse.of(TeumSuccessStatus._TEUM_STATUS_UPDATED, result);
     }
 
