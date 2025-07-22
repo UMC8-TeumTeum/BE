@@ -10,7 +10,12 @@ import umc.teumteum.server.global.apiPayload.code.ReasonDto;
 @AllArgsConstructor
 public enum UserSuccessStatus implements BaseCode {
 
-    _USER_FOUND(HttpStatus.OK, "USER2000", "사용자 조회 성공");
+    _USER_FOUND(HttpStatus.OK, "USER2001", "사용자 조회 성공"),
+
+
+    // 사용자 온보딩
+    AGREEMENT_SAVED(HttpStatus.OK, "ONBOARDING2001", "약관 동의가 성공적으로 완료되었습니다."),
+    ;
 
     private final HttpStatus httpStatus;
     private final String code;

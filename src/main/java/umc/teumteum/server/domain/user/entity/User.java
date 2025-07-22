@@ -117,4 +117,8 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Wish> wishes;
 
+
+    public void updateStep(UserStep step) {
+        this.step = step;
+    }
 }
