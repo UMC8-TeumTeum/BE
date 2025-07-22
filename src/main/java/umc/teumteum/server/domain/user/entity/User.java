@@ -15,6 +15,7 @@ import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.UserRole;
 import umc.teumteum.server.domain.user.entity.enums.UserStatus;
+import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.global.common.BaseEntity;
 
 import java.time.LocalDateTime;
@@ -62,6 +63,11 @@ public class User extends BaseEntity {
 
     @Column(name = "profile_image_key")
     private String profileImageKey;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "step", nullable = false)
+    private UserStep step = UserStep.AGREEMENT;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
