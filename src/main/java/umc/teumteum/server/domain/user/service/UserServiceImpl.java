@@ -120,7 +120,12 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void saveAgreement(UserRequestDTO.AgreeRequest request, User user) {
-        // 1. 필수 항목 동의 여부 확인
+        // 1. 기존 동의 이력이 있는지 확인
+        if (agreementRepository.existsByUser(user)) {
+            throw new UserHandler(UserErrorStatus.AGREEMENT_ALREADY_EXISTS);
+        }
+
+        // 2. 필수 항목 동의 여부 확인
         if (!request.getTosConsent()) {
             throw new UserHandler(UserErrorStatus.TOS_CONSENT_NOT_AGREED);
         }
@@ -128,13 +133,13 @@ public class UserServiceImpl implements UserService {
             throw new UserHandler(UserErrorStatus.PRIVACY_CONSENT_NOT_AGREED);
         }
 
-        // 2. Entity 변환
+        // 3. Entity 변환
         Agreement agreement = AgreementConverter.toAgreement(request, user);
 
-        // 3. 저장
+        // 4. 저장
         agreementRepository.save(agreement);
 
-        // 4. 사용자 step 변경
+        // 5. 사용자 step 변경
         user.updateStep(UserStep.ONBOARDING);
     }
 }

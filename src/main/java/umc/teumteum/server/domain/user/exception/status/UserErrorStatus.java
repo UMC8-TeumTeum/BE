@@ -14,8 +14,9 @@ public enum UserErrorStatus implements BaseErrorCode {
 
 
     // 사용자 온보딩
-    TOS_CONSENT_NOT_AGREED(HttpStatus.BAD_REQUEST, "USER4001", "서비스 이용약관은 필수 동의 항목입니다."),
-    PRIVACY_CONSENT_NOT_AGREED(HttpStatus.BAD_REQUEST, "USER4002", "개인정보 수집 및 이용은 필수 동의 항목입니다."),
+    TOS_CONSENT_NOT_AGREED(HttpStatus.BAD_REQUEST, "ONBOARDING4001", "서비스 이용약관은 필수 동의 항목입니다."),
+    PRIVACY_CONSENT_NOT_AGREED(HttpStatus.BAD_REQUEST, "ONBOARDING4002", "개인정보 수집 및 이용은 필수 동의 항목입니다."),
+    AGREEMENT_ALREADY_EXISTS(HttpStatus.CONFLICT, "ONBOARDING4091", "이미 약관에 동의한 사용자입니다."),
     ;
 
     private final HttpStatus httpStatus;
