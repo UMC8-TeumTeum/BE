@@ -91,28 +91,6 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
-    // 소셜 로그인 시, 사용자 다음 화면 결정
-    @Override
-    @Transactional(readOnly = true)
-    public String determineUserNextStep(User user) {
-        // 1. 약관 동의 체크 -> 없으면 약관 동의 화면
-        Agreement agreement = agreementRepository.findByUser(user)
-                .orElse(null);
-        if (agreement == null) {
-            return "AGREEMENT";
-        }
-
-        // 2. 리마인드 알림 체크 -> 없으면 온보딩 화면
-        RemindAlarm remindAlarm = remindAlarmRepository.findByUser(user)
-                .orElse(null);
-        if (remindAlarm == null) {
-            return "ONBOARDING";
-        }
-
-        // 3. 메인 화면
-        return "MAIN";
-    }
-
 
     // 개발용 액세스 토큰 사용자 생성
     @Override

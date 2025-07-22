@@ -56,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
         rtRedisTemplate.opsForValue().set(key, refreshToken, refreshDuration);
 
         // 5. 다음 단계 결정
-        String nextStep = userService.determineUserNextStep(user);
+        String nextStep = String.valueOf(user.getStep());
 
         // 6. converter 작업
         return AuthConverter.toLoginResponse(accessToken, refreshToken, nextStep);
