@@ -37,7 +37,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus.INVALID_PARENT_REQUEST;
 
@@ -53,14 +55,12 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional
-    public Long createRequest(TeumRequestDto dto) {
-        User sender = getUserOrThrow(dto.getSenderUserId());
-
-        TeumRequest request = TeumConverter.toTeumRequest(dto, sender);
+    public Long createRequest(TeumRequestDto dto, User user) {
+        TeumRequest request = TeumConverter.toTeumRequest(dto, user);
 
         List<TeumResponse> responses = TeumConverter.toTeumResponses(
                 dto.getReceiverUserIds(),
-                sender.getId(),
+                user.getId(),
                 request,
                 this::getUserOrThrow
         );
@@ -73,16 +73,15 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional
-    public Long createResendRequest(Long parentRequestId, TeumResendRequestDto dto) {
+    public Long createResendRequest(Long parentRequestId, TeumResendRequestDto dto, User user) {
         TeumRequest parent = findActiveRequestOrThrow(parentRequestId);
 
         validateResendableRequest(parent);
-        validateResender(parent, dto.getSenderUserId());
+        validateResender(parent, user.getId());
         validateTimeOrder(dto.getStartTime(), dto.getEndTime());
 
-        User resender = getUserOrThrow(dto.getSenderUserId());
+        TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, user); // ✅ User 객체 직접 전달
 
-        TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, resender);
         TeumResponse newResponse = TeumConverter.toResendTeumResponse(newRequest, parent.getUser());
         newRequest.getTeumResponses().add(newResponse);
 
@@ -183,18 +182,17 @@ public class TeumServiceImpl implements TeumService {
     }
 
     @Override
-    public AvailableTimeResponseDto getAvailableTime(AvailableTimeRequestDto requestDto) {
-        Long requesterId = requestDto.getRequesterId();
-        if (!requestDto.getUserIds().contains(requesterId)) {
-            throw new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE);
-        }
-
+    public AvailableTimeResponseDto getAvailableTime(User user, AvailableTimeRequestDto requestDto) {
         LocalDate date = LocalDate.parse(requestDto.getDate());
-        List<TimeSlot> scheduledSlots = new ArrayList<>();
         DayOfWeek targetDay = date.getDayOfWeek();
+        List<TimeSlot> scheduledSlots = new ArrayList<>();
 
-        for (Long userId : requestDto.getUserIds()) {
-            User user = getUserOrThrow(userId);
+        // 요청자 ID 자동 포함
+        Set<Long> userIdSet = new HashSet<>(requestDto.getUserIds());
+        userIdSet.add(user.getId());
+
+        for (Long userId : userIdSet) {
+            User targetUser = getUserOrThrow(userId);
 
             // 일반 일정
             List<Schedule> schedules = scheduleRepository.findByUserIdAndDateAndStatus(
@@ -206,8 +204,8 @@ public class TeumServiceImpl implements TeumService {
                     .forEach(scheduledSlots::add);
 
             // 수면 시간
-            LocalTime sleep = user.getSleepTime();
-            LocalTime wake = user.getWakeTime();
+            LocalTime sleep = targetUser.getSleepTime();
+            LocalTime wake = targetUser.getWakeTime();
             if (sleep != null && wake != null) {
                 if (sleep.isBefore(wake)) {
                     scheduledSlots.add(new TimeSlot(sleep.toString(), wake.toString()));
@@ -218,13 +216,14 @@ public class TeumServiceImpl implements TeumService {
             }
 
             // 반복 일정
-            for (Routine routine : user.getRoutines()) {
+            for (Routine routine : targetUser.getRoutines()) {
                 if (routine.getWeekday().matches(targetDay)) {
                     LocalDateTime routineStart = LocalDateTime.of(date, routine.getStartTime());
                     LocalDateTime routineEnd = LocalDateTime.of(date, routine.getEndTime());
 
                     boolean isRoutineDeleted = scheduleRepository.existsDeletedRoutineInstance(
-                            userId, date, routineStart, routineEnd);
+                            userId, date, routineStart, routineEnd
+                    );
 
                     if (!isRoutineDeleted) {
                         scheduledSlots.add(new TimeSlot(

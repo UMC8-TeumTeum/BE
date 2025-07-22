@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
-    List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long requesterId);
+    List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long userId);
 
     List<PublicTodoResponseDto> getRecentPublicTodos(Long userId);
 

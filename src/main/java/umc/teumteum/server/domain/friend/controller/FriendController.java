@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.exception.status.FriendSuccessStatus;
 import umc.teumteum.server.domain.friend.service.FriendService;
+import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 import java.util.List;
@@ -72,44 +74,43 @@ public class FriendController {
 
     @Operation(
             summary = "팔로잉 목록 조회",
-            description = "내가 팔로우한 유저 목록을 조회합니다."
+            description = "현재 로그인한 사용자가 팔로우한 유저 목록을 조회합니다."
     )
-    @GetMapping(value = "/{userId}/followings", produces = "application/json")
+    @GetMapping(value = "/followings", produces = "application/json")
     public ApiResponse<List<FollowingUserResponseDto>> getFollowingsByUser(
-            @Parameter(description = "조회할 유저의 ID") @PathVariable("userId") Long userId,
+            @Parameter(hidden = true) @CurrentUser User user,
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        List<FollowingUserResponseDto> response = friendService.getFollowingsByUser(userId, page, size);
+        List<FollowingUserResponseDto> response = friendService.getFollowingsByUser(user.getId(), page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
     @Operation(
             summary = "팔로워 목록 조회",
-            description = "특정 유저를 팔로우한 유저 목록을 조회합니다."
+            description = "현재 로그인한 사용자를 팔로우한 유저 목록을 조회합니다."
     )
-    @GetMapping(value = "/{userId}/followers", produces = "application/json")
+    @GetMapping(value = "/followers", produces = "application/json")
     public ApiResponse<List<FollowerUserResponseDto>> getFollowersByUser(
-            @Parameter(description = "조회할 유저의 ID") @PathVariable("userId") Long userId,
+            @Parameter(hidden = true) @CurrentUser User user,
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        List<FollowerUserResponseDto> response = friendService.getFollowersByUser(userId, page, size);
+        List<FollowerUserResponseDto> response = friendService.getFollowersByUser(user.getId(), page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
     @Operation(
             summary = "친구 프로필 조회",
-            description = "지정한 친구(userId)의 프로필 정보를 반환합니다. 인증 미적용 상태에서는 loginUserId도 파라미터로 전달해야 합니다."
+            description = "지정한 친구(userId)의 프로필 정보를 반환합니다."
     )
     @GetMapping(value = "/{userId}/profile", produces = "application/json")
     public ApiResponse<FriendProfileResponseDto> getFriendProfile(
+            @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "조회할 친구 ID", example = "2")
-            @PathVariable("userId") Long targetUserId,
-            @Parameter(name = "loginUserId", description = "현재 로그인한 유저 ID", example = "1")
-            @RequestParam("loginUserId") Long loginUserId
+            @PathVariable("userId") Long targetUserId
     ) {
-        FriendProfileResponseDto response = friendService.getFriendProfile(loginUserId, targetUserId);
+        FriendProfileResponseDto response = friendService.getFriendProfile(loginUser.getId(), targetUserId);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
@@ -119,10 +120,12 @@ public class FriendController {
     )
     @GetMapping(value = "/{userId}/teum-time", produces = "application/json")
     public ApiResponse<Long> getFriendTeumTime(
-            @Parameter(name = "userId", description = "조회할 친구 ID") @PathVariable("userId") Long userId
+            @Parameter(hidden = true) @CurrentUser User loginUser,
+            @Parameter(name = "userId", description = "조회할 친구 ID") @PathVariable("userId") Long targetUserId
     ) {
-        Long result = friendService.getFriendTeumTime(userId);
+        Long result = friendService.getFriendTeumTime(loginUser.getId(), targetUserId);
         return ApiResponse.of(FriendSuccessStatus.GET_FRIEND_TEUM_TIME_SUCCESS, result);
     }
+
 
 }

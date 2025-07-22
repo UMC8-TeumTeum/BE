@@ -9,14 +9,15 @@ import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumExitResponseDto
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
+import umc.teumteum.server.domain.user.entity.User;
 
 import java.util.List;
 
 public interface TeumService {
 
-    Long createRequest(TeumRequestDto requestDto);
+    Long createRequest(TeumRequestDto requestDto, User user);
 
-    Long createResendRequest(Long parentRequestId, TeumResendRequestDto resendRequestDto);
+    Long createResendRequest(Long parentRequestId, TeumResendRequestDto resendRequestDto, User user);
 
     Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, Pageable pageable);
 
@@ -32,7 +33,7 @@ public interface TeumService {
 
     ScheduledTeumExitResponseDto exitScheduledTeum(Long teumId, Long userId);
 
-    AvailableTimeResponseDto getAvailableTime(AvailableTimeRequestDto requestDto);
+    AvailableTimeResponseDto getAvailableTime(User user, AvailableTimeRequestDto requestDto);
 
     SharedTeumResponseDto getSharedTeumStats(Long userId, Long friendId);
 }

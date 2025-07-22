@@ -40,10 +40,12 @@ public class TeumController {
             description = "틈 요청을 전송합니다."
     )
     @PostMapping(value = "/request", consumes = "application/json", produces = "application/json")
-    public ApiResponse<Long> createTeumRequest(@RequestBody @Valid TeumRequestDto requestDto) {
-        Long id = teumService.createRequest(requestDto);
+    public ApiResponse<Long> createTeumRequest(
+            @RequestBody @Valid TeumRequestDto requestDto,
+            @CurrentUser @Parameter(hidden = true) User user
+    ) {
+        Long id = teumService.createRequest(requestDto, user);
         return ApiResponse.of(TeumSuccessStatus._TEUM_REQUEST_CREATED, id);
-
     }
 
     @Operation(
@@ -54,9 +56,10 @@ public class TeumController {
     public ApiResponse<TeumResendResponseDto> createResendRequest(
             @Parameter(name = "parentRequestId", description = "재요청을 생성할 기준이 되는 기존 요청 ID", example = "1")
             @PathVariable("parentRequestId") Long parentRequestId,
-            @RequestBody TeumResendRequestDto resendRequestDto
+            @RequestBody TeumResendRequestDto resendRequestDto,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        Long id = teumService.createResendRequest(parentRequestId, resendRequestDto);
+        Long id = teumService.createResendRequest(parentRequestId, resendRequestDto, user);
         return ApiResponse.of(TeumSuccessStatus._TEUM_REQUEST_CREATED, new TeumResendResponseDto(id));
     }
 
@@ -66,7 +69,7 @@ public class TeumController {
     )
     @GetMapping("/request/received")
     public ApiResponse<Page<TeumReceivedResponseDto>> getReceivedTeumRequests(
-            @Parameter(description = "조회할 유저의 ID") @RequestParam(name = "userId") Long userId,
+            @Parameter(hidden = true) @CurrentUser User user,
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
@@ -77,7 +80,7 @@ public class TeumController {
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        return ApiResponse.onSuccess(teumService.getReceivedRequests(userId, pageable));
+        return ApiResponse.onSuccess(teumService.getReceivedRequests(user.getId(), pageable));
     }
 
     @Operation(
@@ -88,10 +91,9 @@ public class TeumController {
     public ApiResponse<Long> updateReadStatus(
             @Parameter(name = "responseId", description = "응답 ID", example = "1")
             @PathVariable("responseId") Long responseId,
-            @Parameter(name = "userId", description = "현재 사용자 ID", example = "2")
-            @RequestParam("userId") Long userId
+            @Parameter(hidden = true) @CurrentUser User user
     ) {
-        Long id = teumService.updateReadStatus(responseId, userId);
+        Long id = teumService.updateReadStatus(responseId, user.getId());
         return ApiResponse.of(TeumSuccessStatus._TEUM_READ_SUCCESS, id);
     }
 
@@ -103,11 +105,10 @@ public class TeumController {
     public ApiResponse<TeumStatusUpdateResponseDto> updateResponseStatus(
             @Parameter(name = "responseId", description = "응답 ID", example = "1")
             @PathVariable("responseId") Long responseId,
-            @Parameter(name = "userId", description = "현재 사용자 ID", example = "2")
-            @RequestParam("userId") Long userId,
+            @Parameter(hidden = true) @CurrentUser User user,
             @RequestBody TeumStatusUpdateRequestDto requestDto
     ) {
-        TeumStatusUpdateResponseDto result = teumService.updateResponseStatus(responseId, userId, requestDto);
+        TeumStatusUpdateResponseDto result = teumService.updateResponseStatus(responseId, user.getId(), requestDto);
         return ApiResponse.of(TeumSuccessStatus._TEUM_STATUS_UPDATED, result);
     }
 
@@ -188,14 +189,15 @@ public class TeumController {
 
     @Operation(
             summary = "공통 가능한 시간대 조회",
-            description = "지정된 사용자들(userIds)의 특정 날짜에 대해 공통으로 가능한 시간대를 반환합니다."
+            description = "현재 로그인 사용자와 지정된 사용자들 간의 특정 날짜에 대해 공통 가능한 시간대를 반환합니다."
     )
     @PostMapping(value = "/available-time", consumes = "application/json", produces = "application/json")
     public ApiResponse<AvailableTimeResponseDto> getAvailableTime(
+            @Parameter(hidden = true) @CurrentUser User user,
             @RequestBody AvailableTimeRequestDto requestDto
     ) {
         return ApiResponse.of(TeumSuccessStatus._AVAILABLE_TIME_LOADED,
-                teumService.getAvailableTime(requestDto));
+                teumService.getAvailableTime(user, requestDto));
     }
 
     @Operation(
