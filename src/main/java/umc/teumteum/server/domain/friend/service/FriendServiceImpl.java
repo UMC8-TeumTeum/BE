@@ -98,18 +98,15 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     public FriendProfileResponseDto getFriendProfile(Long loginUserId, Long targetUserId) {
-        if (loginUserId.equals(targetUserId)) {
-            throw new GlobalHandler(FriendErrorStatus.CANNOT_VIEW_SELF);
-        }
-
-        User loginUser = getUserOrThrow(loginUserId);
+        validateNotSelf(loginUserId, targetUserId);
         User targetUser = getUserOrThrow(targetUserId);
 
-        Optional<Friend> followRelationOpt = friendRepository
-                .findByFollowerIdAndFollowingId(loginUser.getId(), targetUser.getId());
+        Optional<Friend> followRelationOpt =
+                friendRepository.findByFollowerIdAndFollowingId(loginUserId, targetUser.getId());
 
         return friendConverter.toFriendProfileResponse(targetUser, followRelationOpt.orElse(null));
     }
+
 
     @Override
     public Long getFriendTeumTime(Long loginUserId, Long targetUserId) {
