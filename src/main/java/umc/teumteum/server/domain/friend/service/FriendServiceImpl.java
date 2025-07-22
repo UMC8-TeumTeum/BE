@@ -112,11 +112,14 @@ public class FriendServiceImpl implements FriendService {
     }
 
     @Override
-    public Long getFriendTeumTime(Long userId) {
-        User user = getUserOrThrow(userId);
-        List<Schedule> schedules = scheduleRepository.findByUserIdAndIncludeTeumIsTrue(userId);
+    public Long getFriendTeumTime(Long loginUserId, Long targetUserId) {
+        validateNotSelf(loginUserId, targetUserId);
+        validateUserExists(loginUserId);
+
+        List<Schedule> schedules = scheduleRepository.findByUserIdAndIncludeTeumIsTrue(targetUserId);
         return friendConverter.calculateTeumTime(schedules);
     }
+
 
     /**
      * 주어진 ID에 해당하는 User를 조회합니다.
@@ -136,6 +139,12 @@ public class FriendServiceImpl implements FriendService {
     private void validateUserExists(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new GlobalHandler(UserErrorStatus.USER_NOT_FOUND);
+        }
+    }
+
+    private void validateNotSelf(Long loginUserId, Long targetUserId) {
+        if (loginUserId.equals(targetUserId)) {
+            throw new GlobalHandler(FriendErrorStatus.CANNOT_VIEW_SELF);
         }
     }
 

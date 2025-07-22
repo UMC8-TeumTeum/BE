@@ -121,10 +121,12 @@ public class FriendController {
     )
     @GetMapping(value = "/{userId}/teum-time", produces = "application/json")
     public ApiResponse<Long> getFriendTeumTime(
-            @Parameter(name = "userId", description = "조회할 친구 ID") @PathVariable("userId") Long userId
+            @Parameter(hidden = true) @CurrentUser User loginUser,
+            @Parameter(name = "userId", description = "조회할 친구 ID") @PathVariable("userId") Long targetUserId
     ) {
-        Long result = friendService.getFriendTeumTime(userId);
+        Long result = friendService.getFriendTeumTime(loginUser.getId(), targetUserId);
         return ApiResponse.of(FriendSuccessStatus.GET_FRIEND_TEUM_TIME_SUCCESS, result);
     }
+
 
 }
