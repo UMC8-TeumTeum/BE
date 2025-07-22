@@ -8,4 +8,6 @@ import java.util.Optional;
 
 public interface AgreementRepository extends JpaRepository<Agreement, Long> {
     Optional<Agreement> findByUser(User user);
+
+    boolean existsByUser(User user);
 }

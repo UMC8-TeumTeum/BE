@@ -27,6 +27,7 @@ public class Agreement extends BaseEntity {
     @Column(name = "tos_consent", nullable = false)
     private Boolean tosConsent = true;
 
+    @Builder.Default
     @Column(name = "privacy_consent", nullable = false)
     private Boolean privacyConsent = true;
 
