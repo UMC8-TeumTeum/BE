@@ -20,6 +20,9 @@ public class NotificationResponseDto {
   @Schema(description = "알림 타입 (TEUM_REQUEST, FOLLOW 등)", example = "TEUM_REQUEST")
   private String type;
 
+  @Schema(description = "요청,응답,친구 Id", example = "2")
+  private Long relatedId;
+
   @Schema(description = "알림 내용", example = "친구와의 요청에 새로운 소식이 있어요")
   private String content;
 

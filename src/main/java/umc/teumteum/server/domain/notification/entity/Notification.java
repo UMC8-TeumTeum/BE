@@ -28,7 +28,7 @@ import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
 public class Notification extends BaseEntity {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -36,14 +36,17 @@ public class Notification extends BaseEntity {
   private User user;
 
   @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
   private NotificationType type;
 
+  @Column(nullable = false)
   private  String content;
 
   @Builder.Default
   @Column(name = "is_read", nullable = false)
   private Boolean isRead = false;
 
+  @Column(nullable = false)
   private Long relatedId; // 알림과 연관된 도메인의 식별자입니다. NotificationType에 따라 의미가 달라집니다.
 
 }

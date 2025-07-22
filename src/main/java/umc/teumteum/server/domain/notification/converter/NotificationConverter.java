@@ -15,21 +15,18 @@ public class NotificationConverter {
 
     return notifications.stream()
         .map(n -> {
-          User friend = relatedUserMap.get(n.getRelatedId());
+          User friend = relatedUserMap.get(n.getId());
 
           return NotificationResponseDto.builder()
               .id(n.getId())
               .type(n.getType().name())
+              .relatedId(n.getRelatedId())
               .content(n.getContent())
               .isRead(n.getIsRead())
               .createdAt(n.getCreatedAt())
-              .friendId(friend != null ? friend.getId() : null)
-              .friendNickname(friend != null ? friend.getNickname() : null)
-              .firendProfileImage(
-                  friend != null && friend.getProfileImageKey() != null
-                      ? s3Util.toPresignedUrl(friend.getProfileImageKey(), Duration.ofMinutes(30))
-                      : null
-              )
+              .friendId(friend.getId())
+              .friendNickname(friend.getNickname())
+              .firendProfileImage(s3Util.toPresignedUrl(friend.getProfileImageKey(),Duration.ofMinutes(30)))
               .build();
         })
         .toList();
