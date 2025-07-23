@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
+import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.exception.status.UserSuccessStatus;
@@ -85,10 +86,11 @@ public class UserController {
         description = "사용자의 프로필, 이름, 직업 분야, 아이디 등 마이페이지에 필요한 정보를 조회합니다."
     )
     @GetMapping(value = "/mypage", produces = "application/json")
-    public ApiResponse<Object> getMypageInfo(
+    public ApiResponse<UserResponseDTO.MyPageDTO> getMypageInfo(
+        @Parameter(hidden = true) @CurrentUser User user
     ) {
-        // TODO: 마이페이지 화면(프로필,이름,직업분야, 내 아이디) 조회 로직 구현
-        return null;
+        UserResponseDTO.MyPageDTO response = userService.getMyPage(user);
+        return ApiResponse.of(UserSuccessStatus._USER_FOUND, response);
     }
 
 
