@@ -13,8 +13,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
+import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumExitResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
@@ -180,16 +180,18 @@ public class TeumController {
     }
 
     @Operation(
-            summary = "약속된 틈 나가기",
-            description = "현재 로그인한 사용자가 참여 중인 틈(teumId)에서 나갑니다. 마지막 참여자가 나갈 경우 틈은 cancelled 상태로 변경됩니다."
+            summary = "약속된 틈 취소",
+            description = "본인의 약속된 틈을 취소합니다. 마지막 1인이 남을 경우 자동으로 같이 취소됩니다."
     )
-    @DeleteMapping(value = "/scheduled/{teumId}/exit", produces = "application/json")
-    public ApiResponse<ScheduledTeumExitResponseDto> exitScheduledTeum(
-            @Parameter(name = "teumId", description = "나갈 틈 ID", example = "1")
-            @PathVariable("teumId") Long teumId
+    @PatchMapping("/scheduled/{scheduleId}/cancel")
+    public ApiResponse<ScheduledTeumCancelResponseDto> cancelScheduledTeum(
+            @PathVariable("scheduleId") Long scheduleId,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        return ApiResponse.onSuccess(null);
+        ScheduledTeumCancelResponseDto result = teumService.cancelScheduledTeum(scheduleId, user.getId());
+        return ApiResponse.of(TeumSuccessStatus._SCHEDULED_CANCELLED, result);
     }
+
 
     @Operation(
             summary = "공통 가능한 시간대 조회",
