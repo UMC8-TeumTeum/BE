@@ -15,8 +15,8 @@ import umc.teumteum.server.domain.teum.converter.TeumConverter;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
+import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumExitResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
@@ -185,9 +185,41 @@ public class TeumServiceImpl implements TeumService {
     }
 
     @Override
-    public ScheduledTeumExitResponseDto exitScheduledTeum(Long teumId, Long userId) {
-        // TODO: 약속된 틈 취소 로직 추후 구현
-        return null;
+    @Transactional
+    public ScheduledTeumCancelResponseDto cancelScheduledTeum(Long scheduleId, Long userId) {
+        Schedule schedule = getScheduleOrThrow(scheduleId);
+        validateScheduleOwner(schedule, userId);
+        validateScheduleTypeIsTeum(schedule);
+
+        if (schedule.getStatus() != ScheduleStatus.ACTIVE) {
+            throw new GeneralException(TeumErrorStatus.TEUM_SCHEDULE_NOT_FOUND);
+        }
+
+        TeumRequest request = schedule.getTeumRequest();
+        if (request == null) {
+            throw new GeneralException(TeumErrorStatus.TEUM_REQUEST_NOT_FOUND);
+        }
+
+        // 본인 스케줄을 CANCELLED 처리
+        schedule.cancel();
+        List<Long> cancelledUserIds = new ArrayList<>();
+        cancelledUserIds.add(userId);
+
+        // 해당 틈 요청과 연결된 다른 ACTIVE 스케줄이 있는지 조회
+        List<Schedule> activeSchedules = scheduleRepository.findByTeumRequestAndStatusIn(
+                request, List.of(ScheduleStatus.ACTIVE)
+        );
+
+        // 한 명만 남아 있다면, 그 사람 스케줄도 같이 취소
+        if (activeSchedules.size() == 1) {
+            Schedule lastOne = activeSchedules.getFirst();
+            lastOne.cancel();
+            cancelledUserIds.add(lastOne.getUser().getId());
+        }
+
+        return ScheduledTeumCancelResponseDto.builder()
+                .cancelledUserIds(cancelledUserIds)
+                .build();
     }
 
     @Override
