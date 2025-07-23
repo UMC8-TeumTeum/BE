@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
 import umc.teumteum.server.domain.user.dto.UserRequestDTO;
+import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 
@@ -28,4 +29,6 @@ public interface UserService {
     void saveAgreement(UserRequestDTO.AgreeRequest request, User user);
 
     void saveNicknameAndJob(UserRequestDTO.NicknameJobRequest request, User user);
+
+    UserResponseDTO.MyPageDTO getMyPage(User user);
 }

@@ -2,6 +2,7 @@ package umc.teumteum.server.domain.user.converter;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
@@ -21,5 +22,15 @@ public class UserConverter {
                 s3Util.toPresignedUrl(user.getProfileImageKey(), Duration.ofMinutes(30)),
                 user.getJob()
         );
+    }
+
+    public static UserResponseDTO.MyPageDTO toMyPageDTO(User user, String profileImageUrl) {
+        return UserResponseDTO.MyPageDTO.builder()
+            .userId(user.getId())
+            .nickname(user.getNickname())
+            .profileImageUrl(profileImageUrl)
+            .job(user.getJob())
+            .build();
+
     }
 }
