@@ -291,7 +291,7 @@ public class TeumServiceImpl implements TeumService {
 
     private void validateScheduleTypeIsTeum(Schedule schedule) {
         if (schedule.getType() != ScheduleType.TEUM) {
-            throw new GlobalHandler(TeumErrorStatus.TEUM_REQUEST_NOT_FOUND);
+            throw new GlobalHandler(TeumErrorStatus.TEUM_SCHEDULE_NOT_FOUND);
         }
     }
 
