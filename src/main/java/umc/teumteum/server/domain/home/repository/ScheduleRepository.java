@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
+import umc.teumteum.server.domain.teum.entity.TeumRequest;
 
 
 import java.time.LocalDate;
@@ -59,6 +60,19 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("statuses") List<ScheduleStatus> statuses,
             @Param("yearMonth") String yearMonth
     );
+
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.teumRequest = :teumRequest
+      AND s.status IN :statuses
+      AND s.type = 'TEUM'
+      AND s.isDeleted = false
+""")
+    List<Schedule> findByTeumRequestAndStatusIn(
+            @Param("teumRequest") TeumRequest teumRequest,
+            @Param("statuses") List<ScheduleStatus> statuses
+    );
+
 
 
 }
