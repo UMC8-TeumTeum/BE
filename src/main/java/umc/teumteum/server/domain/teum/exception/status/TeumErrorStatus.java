@@ -12,7 +12,8 @@ public enum TeumErrorStatus implements BaseErrorCode {
 
     TEUM_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "TEUM4040", "존재하지 않는 틈 요청입니다."),
     TEUM_RESPONSE_NOT_FOUND(HttpStatus.NOT_FOUND, "TEUM4041", "존재하지 않는 틈 응답입니다."),
-    USER_NOT_ELIGIBLE(HttpStatus.FORBIDDEN, "TEUM4030", "요청 또는 응답에 대한 권한이 없습니다."),
+    TEUM_SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "TEUM4042", "약속된 틈이 존재하지 않습니다."),
+    USER_NOT_ELIGIBLE(HttpStatus.FORBIDDEN, "TEUM4030", "정보에 대한 권한이 없습니다."),
     INVALID_TEUM_TIME(HttpStatus.BAD_REQUEST, "TEUM4001", "시작 시간과 종료 시간이 유효하지 않습니다."),
     DUPLICATE_RECEIVER(HttpStatus.CONFLICT, "TEUM4090", "수신자 목록에 중복된 사용자가 포함되어 있습니다."),
     CANNOT_REQUEST_SELF(HttpStatus.CONFLICT, "TEUM4091", "자기 자신에게 틈 요청을 보낼 수 없습니다."),

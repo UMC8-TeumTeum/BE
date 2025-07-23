@@ -18,15 +18,21 @@ public class S3Util {
     private final S3Presigner s3Presigner;
 
     public String toPresignedUrl(String key, Duration duration) {
+        if (key == null || key.isBlank()) {
+            return null;
+        }
+
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-            .bucket(bucketName)
-            .key(key).build();
+                .bucket(bucketName)
+                .key(key)
+                .build();
 
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-            .signatureDuration(duration)
-            .getObjectRequest(getObjectRequest)
-            .build();
+                .signatureDuration(duration)
+                .getObjectRequest(getObjectRequest)
+                .build();
 
         return s3Presigner.presignGetObject(presignRequest).url().toString();
     }
+
 }

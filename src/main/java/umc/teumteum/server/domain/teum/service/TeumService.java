@@ -29,7 +29,7 @@ public interface TeumService {
 
     List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, String date);
 
-    ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long teumId, Long userId);
+    ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long scheduleId, Long userId);
 
     ScheduledTeumExitResponseDto exitScheduledTeum(Long teumId, Long userId);
 

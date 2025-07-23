@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 
 import java.util.List;
@@ -31,9 +32,9 @@ public class ScheduledTeumDetailResponseDto {
     @Schema(description = "종료 시간", example = "00:00")
     private String endTime;
 
+    @Schema(description = "스케줄 상태", example = "ACTIVE")
+    private ScheduleStatus status;
+
     @Schema(description = "참여자 목록")
     private List<ParticipantDto> participants;
-
-    @Schema(description = "이미 지난 틈 여부", example = "false")
-    private boolean isPast;
 }

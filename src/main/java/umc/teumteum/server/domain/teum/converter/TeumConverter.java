@@ -6,6 +6,7 @@ import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
+import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumReceivedResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumRequestDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumResendRequestDto;
@@ -27,6 +28,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class TeumConverter {
 
@@ -211,5 +213,26 @@ public class TeumConverter {
                 .toList();
     }
 
+    public static ScheduledTeumDetailResponseDto toScheduledTeumDetailDto(
+            Schedule baseSchedule,
+            List<Schedule> relatedSchedules,
+            S3Util s3Util
+    ) {
+        return ScheduledTeumDetailResponseDto.builder()
+                .teumId(baseSchedule.getTeumRequest().getId())
+                .title(baseSchedule.getTitle())
+                .date(baseSchedule.getDate().toString())
+                .startTime(baseSchedule.getStartTime().toLocalTime().toString())
+                .endTime(baseSchedule.getEndTime().toLocalTime().toString())
+                .status(baseSchedule.getStatus())
+                .participants(relatedSchedules.stream()
+                        .map(s -> {
+                            var u = s.getUser();
+                            String presignedUrl = s3Util.toPresignedUrl(u.getProfileImageKey(), Duration.ofMinutes(30));
+                            return new ParticipantDto(u.getId(), u.getNickname(), presignedUrl);
+                        })
+                        .collect(Collectors.toList()))
+                .build();
+    }
 
 }

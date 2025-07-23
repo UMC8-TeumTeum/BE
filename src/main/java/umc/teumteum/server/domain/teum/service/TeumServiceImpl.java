@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
@@ -28,8 +29,10 @@ import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
 import umc.teumteum.server.domain.teum.repository.TeumResponseRepository;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
+import umc.teumteum.server.global.exception.handler.GlobalHandler;
 import umc.teumteum.server.global.util.S3Util;
 
 import java.time.DayOfWeek;
@@ -169,10 +172,16 @@ public class TeumServiceImpl implements TeumService {
         return List.of();
     }
 
-    @Override
-    public ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long teumId, Long userId) {
-        // TODO: 약속된 틈 상세 조회 로직 추후 구현
-        return null;
+    public ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long scheduleId, Long userId) {
+        Schedule schedule = getScheduleOrThrow(scheduleId);
+        validateScheduleAccessible(schedule, userId);
+
+        List<Schedule> relatedSchedules = scheduleRepository.findByTeumRequestAndStatusIn(
+                schedule.getTeumRequest(),
+                List.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED)
+        );
+
+        return TeumConverter.toScheduledTeumDetailDto(schedule, relatedSchedules, s3Util);
     }
 
     @Override
@@ -247,9 +256,54 @@ public class TeumServiceImpl implements TeumService {
         return null;
     }
 
+    /**
+     * 주어진 ID에 해당하는 User를 조회합니다.
+     * - User 객체 자체가 필요한 경우에 사용합니다.
+     * - 존재하지 않으면 예외를 던집니다.
+     */
     private User getUserOrThrow(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE));
+    }
+
+    /**
+     * 주어진 ID에 해당하는 User가 존재하는지만 확인합니다.
+     * - 객체 자체가 필요하지 않고, 존재 여부만 확인할 때 사용합니다.
+     * - 존재하지 않으면 예외를 던집니다.
+     */
+    private void validateUserExists(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new GlobalHandler(UserErrorStatus.USER_NOT_FOUND);
+        }
+    }
+
+    private void validateScheduleAccessible(Schedule schedule, Long userId) {
+        validateScheduleOwner(schedule, userId);
+        validateScheduleTypeIsTeum(schedule);
+        validateScheduleStatusValid(schedule);
+    }
+
+    private void validateScheduleOwner(Schedule schedule, Long userId) {
+        if (!schedule.getUser().getId().equals(userId)) {
+            throw new GlobalHandler(TeumErrorStatus.USER_NOT_ELIGIBLE);
+        }
+    }
+
+    private void validateScheduleTypeIsTeum(Schedule schedule) {
+        if (schedule.getType() != ScheduleType.TEUM) {
+            throw new GlobalHandler(TeumErrorStatus.TEUM_SCHEDULE_NOT_FOUND);
+        }
+    }
+
+    private void validateScheduleStatusValid(Schedule schedule) {
+        if (!(schedule.getStatus() == ScheduleStatus.ACTIVE || schedule.getStatus() == ScheduleStatus.COMPLETED)) {
+            throw new GlobalHandler(TeumErrorStatus.TEUM_SCHEDULE_NOT_FOUND);
+        }
+    }
+
+    private Schedule getScheduleOrThrow(Long scheduleId) {
+        return scheduleRepository.findById(scheduleId)
+            .orElseThrow(() -> new GlobalHandler(TeumErrorStatus.TEUM_SCHEDULE_NOT_FOUND));
     }
 
     private TeumResponse getResponseOrThrow(Long responseId) {

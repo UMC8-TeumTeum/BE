@@ -165,14 +165,18 @@ public class TeumController {
 
     @Operation(
             summary = "약속된 틈 상세 조회",
-            description = "사용자가 참여 중인 틈(teumId)에 대한 상세 정보를 조회합니다. 과거 여부도 함께 반환됩니다."
+            description = "사용자가 참여 중인 약속된 틈(scheduleId)에 대한 상세 정보를 조회합니다."
     )
-    @GetMapping(value = "/scheduled/{teumId}", produces = "application/json")
-    public ApiResponse<ScheduledTeumDetailResponseDto> getTeumDetail(
-            @Parameter(name = "teumId", description = "상세 정보를 조회할 틈 ID", example = "1")
-            @PathVariable("teumId") Long teumId
+    @GetMapping(value = "/scheduled/{scheduleId}", produces = "application/json")
+    public ApiResponse<ScheduledTeumDetailResponseDto> getScheduledTeumDetail(
+            @Parameter(name = "scheduleId", description = "사용자 본인의 약속된 틈 일정 ID", example = "300")
+            @PathVariable("scheduleId") Long scheduleId,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        return ApiResponse.onSuccess(null);
+        return ApiResponse.of(
+                TeumSuccessStatus._SCHEDULED_DETAIL_LOADED,
+                teumService.getScheduledTeumDetail(scheduleId, user.getId())
+        );
     }
 
     @Operation(
