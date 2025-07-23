@@ -1,5 +1,6 @@
 package umc.teumteum.server.domain.notification.service;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,13 @@ public class NotificationServiceImpl implements NotificationService {
 
     List<Notification> notifications = notificationRepository.findByUserOrderByCreatedAtDesc(user); //User에 상대방 정보 담겨 있으니까.. 일단 상대방 정보를 기준으로 알림 조회
     Map<Long, User> relatedUserMap = resolveRelatedUsers(notifications);
-    return NotificationConverter.toNotificationResponse(notifications, relatedUserMap, s3Util);
+    return notifications.stream()
+        .map(n -> {
+          User friend = relatedUserMap.get(n.getId());
+          String profileImageUrl = s3Util.toPresignedUrl(friend.getProfileImageKey(), Duration.ofMinutes(30));
+          return NotificationConverter.toDto(n, friend, profileImageUrl);
+        })
+        .toList();
 
   }
 
