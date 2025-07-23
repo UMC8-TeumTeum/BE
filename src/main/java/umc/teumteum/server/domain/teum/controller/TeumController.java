@@ -170,11 +170,14 @@ public class TeumController {
     @GetMapping(value = "/scheduled/{teumId}", produces = "application/json")
     public ApiResponse<ScheduledTeumDetailResponseDto> getTeumDetail(
             @Parameter(name = "teumId", description = "상세 정보를 조회할 틈 ID", example = "1")
-            @PathVariable("teumId") Long teumId
+            @PathVariable("teumId") Long teumId,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        return ApiResponse.onSuccess(null);
+        return ApiResponse.of(
+                TeumSuccessStatus._SCHEDULED_DETAIL_LOADED,
+                teumService.getScheduledTeumDetail(teumId, user.getId())
+        );
     }
-
     @Operation(
             summary = "약속된 틈 나가기",
             description = "현재 로그인한 사용자가 참여 중인 틈(teumId)에서 나갑니다. 마지막 참여자가 나갈 경우 틈은 cancelled 상태로 변경됩니다."
