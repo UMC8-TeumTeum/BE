@@ -93,4 +93,8 @@ public class Schedule extends BaseEntity {
         this.isPublic = dto.getIsPublic();
         this.includeTeum = dto.getIncludeTeum();
     }
+
+    public void cancel() {
+        this.status = ScheduleStatus.CANCELLED;
+    }
 }
