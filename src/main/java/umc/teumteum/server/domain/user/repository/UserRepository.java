@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.data.jpa.repository.JpaRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 
 import java.util.Optional;
 import java.util.List;
@@ -18,4 +19,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
 
     boolean existsByNickname(String nickname);
+
+    List<User> findByStatus(UserStatus status);
 }

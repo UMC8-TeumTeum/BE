@@ -6,10 +6,13 @@ import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
+import umc.teumteum.server.domain.user.entity.Routine;
+import umc.teumteum.server.domain.user.entity.User;
 
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
@@ -72,6 +75,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("teumRequest") TeumRequest teumRequest,
             @Param("statuses") List<ScheduleStatus> statuses
     );
+
+    boolean existsByUserAndDateAndRoutineAndIsDeletedTrue(User user, LocalDate today, Routine routine);
+
 
 
 
