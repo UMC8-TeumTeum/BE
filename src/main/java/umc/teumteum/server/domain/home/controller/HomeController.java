@@ -9,12 +9,15 @@ import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
 import umc.teumteum.server.domain.home.dto.response.TodoIdResponseDTO;
 import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDTO;
-import umc.teumteum.server.domain.home.dto.response.TodyTeumResponseDTO;
+import umc.teumteum.server.domain.home.dto.response.TodayScheduleResponseDTO;
 import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
 import umc.teumteum.server.domain.home.service.HomeService;
+import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,11 +34,12 @@ public class HomeController {
     }
 
     @GetMapping(value = "/today", produces = "application/json")
-    @Operation(summary = "오늘의 빈틈 조회 API",description = "오늘의 빈틈 시간을 조회하는 API입니다. query string으로 am 또는 pm을 입력주세요.")
-    public ApiResponse<TodyTeumResponseDTO> getTodayTeum(
-            @Parameter(name = "period", description = "조회 시간대 (오전: am, 오후: pm)", example = "am")
-            @RequestParam("period") String period){
-        return ApiResponse.onSuccess(null);
+    @Operation(summary = "오늘의 빈틈 조회 API",description = "오늘의 빈틈 시간을 조회하는 API입니다. query string으로 오늘 날짜를 입력해주세요.")
+    public ApiResponse<List<TodayScheduleResponseDTO>> getTodayTeum(
+            @Parameter(name = "date", description = "조회할 날짜", example = "2025-07-24") @RequestParam("date") LocalDate date,
+            @CurrentUser @Parameter(hidden = true) User user){
+        List<TodayScheduleResponseDTO> response = homeService.getTodaySchedule(date,user);
+        return ApiResponse.of(HomeSuccessStatus._TODAY_SCHEDULE,response);
     }
 
     @GetMapping(value = "/calendar", produces = "application/json")

@@ -12,10 +12,7 @@ import umc.teumteum.server.domain.home.converter.WishConverter;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
 import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDTO;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
-import umc.teumteum.server.domain.home.dto.response.TodoIdResponseDTO;
-import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDTO;
-import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDTO;
-import umc.teumteum.server.domain.home.dto.response.WishlistResponseDTO;
+import umc.teumteum.server.domain.home.dto.response.*;
 import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
@@ -36,6 +33,8 @@ import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.S3Util;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -288,5 +287,66 @@ public class HomeServiceImpl implements HomeService {
                 wishes.isFirst(),
                 wishes.isLast()
         );
+    }
+
+    @Override
+    public List<TodayScheduleResponseDTO> getTodaySchedule(LocalDate today, User user) {
+        // 오늘의 시간표 조회
+        List<TodayScheduleResponseDTO> sleepAndTodo = new ArrayList<>(); // 수면패턴과 투두를 등록한 배열
+
+        // 1. 수면 패턴 등록
+        LocalTime sleepTime = user.getSleepTime();
+        LocalTime wakeTime = user.getWakeTime();
+
+        if(sleepTime != null && wakeTime != null){
+            if(sleepTime.isAfter(wakeTime)){
+                // 자정 이전에 자는 경우
+                sleepAndTodo.add(new TodayScheduleResponseDTO(LocalTime.MIDNIGHT,wakeTime,"SLEEP"));
+                sleepAndTodo.add(new TodayScheduleResponseDTO(sleepTime,LocalTime.of(23,59),"SLEEP"));
+            } else{
+                // 자정 이후에 자는 경우
+                sleepAndTodo.add(new TodayScheduleResponseDTO(sleepTime,wakeTime,"SLEEP"));
+            }
+        }
+
+        // 2. 스케줄 정보 등록
+        List<Schedule> schedules = scheduleRepository.findByUserAndDateAndIsDeletedFalseOrderByStartTime(user, today);
+
+        for (Schedule schedule : schedules) {
+            sleepAndTodo.add(TodayScheduleResponseDTO.builder()
+                    .startTime(schedule.getStartTime().toLocalTime())
+                    .endTime(schedule.getEndTime().toLocalTime())
+                    .type("TODO")
+                    .build());
+        }
+
+        // 4. sleepAndTodo startTime 기준 정렬
+        sleepAndTodo.sort(Comparator.comparing(TodayScheduleResponseDTO::getStartTime));
+
+        // 4. EMPTY 채우기
+        List<TodayScheduleResponseDTO> result = new ArrayList<>(); // 응답 배열
+        LocalTime pointer = LocalTime.MIDNIGHT;
+
+        for (TodayScheduleResponseDTO dto : sleepAndTodo) {
+
+            if (pointer.isBefore(dto.getStartTime())) {
+                // 빈틈이 존재하면 EMPTY 추가
+                result.add(new TodayScheduleResponseDTO(pointer, dto.getStartTime(), "EMPTY"));
+            }
+
+            result.add(dto);
+
+            if (dto.getEndTime().isAfter(pointer)) {
+                // 포인터 뒤에 일정이 있다면 포인터 갱신
+                pointer = dto.getEndTime();
+            }
+        }
+
+        // 5. 남은 시간 마지막 EMPTY 채우기
+        if (pointer.isBefore(LocalTime.of(23,59))) {
+            result.add(new TodayScheduleResponseDTO(pointer, LocalTime.of(23,59), "EMPTY"));
+        }
+
+        return result;
     }
 }

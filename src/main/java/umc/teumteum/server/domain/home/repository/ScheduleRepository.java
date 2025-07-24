@@ -12,7 +12,6 @@ import umc.teumteum.server.domain.user.entity.User;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
@@ -78,6 +77,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     boolean existsByUserAndDateAndRoutineAndIsDeletedTrue(User user, LocalDate today, Routine routine);
 
+    List<Schedule> findByUserAndDateAndIsDeletedFalseOrderByStartTime(User user, LocalDate date);
 
 
 

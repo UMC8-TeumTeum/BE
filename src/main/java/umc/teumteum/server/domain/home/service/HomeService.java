@@ -3,11 +3,11 @@ package umc.teumteum.server.domain.home.service;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
 import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDTO;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
-import umc.teumteum.server.domain.home.dto.response.TodoIdResponseDTO;
-import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDTO;
-import umc.teumteum.server.domain.home.dto.response.WishlistResponseDTO;
-import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDTO;
+import umc.teumteum.server.domain.home.dto.response.*;
 import umc.teumteum.server.domain.user.entity.User;
+
+import java.time.LocalDate;
+import java.util.List;
 
 public interface HomeService {
     // Todo 등록
@@ -36,4 +36,7 @@ public interface HomeService {
 
     // Wishlist 조회
     WishlistResponseDTO getWishlist(String duration, Integer page, User user);
+
+    // 오늘의 시간표 조회
+    List<TodayScheduleResponseDTO> getTodaySchedule(LocalDate today, User user);
 }
