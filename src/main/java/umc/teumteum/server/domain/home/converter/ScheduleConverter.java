@@ -2,9 +2,12 @@ package umc.teumteum.server.domain.home.converter;
 
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
+import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDTO;
+import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
 import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDTO;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
+import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.user.entity.User;
 
@@ -56,6 +59,19 @@ public class ScheduleConverter {
                         .map(ScheduleReminder::getReminderTime)
                         .toList())
                 .profileUrl(profileUrls)
+                .build();
+    }
+
+    // Wish -> Schedule entity
+    public Schedule toScheduleFromWish(Wish wish, WishAssignRequestDTO dto) {
+        return Schedule.builder()
+                .user(wish.getUser())
+                .title(wish.getTitle())
+                .description(wish.getContent())
+                .type(ScheduleType.WISH)
+                .date(dto.getDate())
+                .startTime(LocalDateTime.of(dto.getDate(), dto.getStartTime()))
+                .endTime(LocalDateTime.of(dto.getDate(), dto.getEndTime()))
                 .build();
     }
 }
