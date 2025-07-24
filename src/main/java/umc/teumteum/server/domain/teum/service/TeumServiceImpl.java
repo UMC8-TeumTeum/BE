@@ -167,10 +167,28 @@ public class TeumServiceImpl implements TeumService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, String date) {
-        // TODO: 특정 날짜의 약속된 틈 조회 로직 추후 구현
-        return List.of();
+        LocalDate targetDate = LocalDate.parse(date);
+
+        List<Schedule> schedules = scheduleRepository.findByUserIdAndDateAndStatusIn(
+                userId,
+                targetDate,
+                List.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED)
+        );
+
+        if (schedules.isEmpty()) {
+            throw new GeneralException(TeumErrorStatus.TEUM_SCHEDULE_NOT_FOUND);
+        }
+
+        return schedules.stream()
+                .map(schedule -> {
+                    validateScheduleAccessible(schedule, userId);
+                    return TeumConverter.toScheduledTeumResponseDto(schedule);
+                })
+                .toList();
     }
+
 
     public ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long scheduleId, Long userId) {
         Schedule schedule = getScheduleOrThrow(scheduleId);

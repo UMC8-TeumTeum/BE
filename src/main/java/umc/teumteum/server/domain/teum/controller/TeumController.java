@@ -158,9 +158,11 @@ public class TeumController {
     @GetMapping(value = "/scheduled", produces = "application/json")
     public ApiResponse<List<ScheduledTeumResponseDto>> getScheduledTeums(
             @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2025-05-02")
-            @RequestParam("date") String date
+            @RequestParam("date") String date,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        return ApiResponse.onSuccess(null);
+        List<ScheduledTeumResponseDto> result = teumService.getScheduledTeums(user.getId(), date);
+        return ApiResponse.of(TeumSuccessStatus._SCHEDULED_LIST_LOADED, result);
     }
 
     @Operation(

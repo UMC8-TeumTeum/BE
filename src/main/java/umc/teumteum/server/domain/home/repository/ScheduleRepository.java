@@ -73,6 +73,18 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("statuses") List<ScheduleStatus> statuses
     );
 
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.date = :date
+      AND s.status IN :statuses
+      AND s.isDeleted = false
+""")
+    List<Schedule> findByUserIdAndDateAndStatusIn(
+            @Param("userId") Long userId,
+            @Param("date") LocalDate date,
+            @Param("statuses") List<ScheduleStatus> statuses
+    );
 
 
 }

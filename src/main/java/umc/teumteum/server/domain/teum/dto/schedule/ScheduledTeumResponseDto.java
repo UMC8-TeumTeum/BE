@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
+
+import java.util.List;
 
 @Getter
 @Builder
@@ -22,9 +25,6 @@ public class ScheduledTeumResponseDto {
     @Schema(description = "날짜", example = "YYYY-MM-DD")
     private String date;
 
-    @Schema(description = "시작 시간", example = "00:00")
-    private String startTime;
-
-    @Schema(description = "종료 시간", example = "00:00")
-    private String endTime;
+    @Schema(description = "시간대")
+    private List<TimeSlot> time;
 }
