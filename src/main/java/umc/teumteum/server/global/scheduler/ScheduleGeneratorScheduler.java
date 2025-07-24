@@ -31,35 +31,16 @@ public class ScheduleGeneratorScheduler {
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
 //    @Scheduled(cron = "0 0/1 * * * *", zone = "Asia/Seoul")
     public void schedule() {
-        log.info("[00:00] 반복일정, 수면패턴 스케줄 테이블에 등록 시작");
+        log.info("[00:00] 반복일정 스케줄 테이블에 등록 시작");
 
         List<User> users = userRepository.findByStatus(UserStatus.ACTIVE);
 
         LocalDate today = LocalDate.now();
-        LocalDate tomorrow = today.plusDays(1);
 
         for (User user : users) {
             List<Schedule> schedulesToInsert = new ArrayList<>();
             /**
-             * 1. user 테이블의 수면 등록
-             * 등록해야할 정보
-             * user, title(YYYY-MM-DD 수면패턴), type=SLEEP,
-             * date(YYYY-MM-DD), startTime(오늘날짜 + user.sleep_time), endTime(오늘날짜+1 + + user.wake_time)
-             */
-
-            Schedule sleepSchedule = Schedule.builder()
-                    .user(user)
-                    .title(today + " 수면패턴")
-                    .type(ScheduleType.SLEEP)
-                    .date(today)
-                    .startTime(LocalDateTime.of(today, user.getSleepTime()))
-                    .endTime(LocalDateTime.of(tomorrow, user.getWakeTime()))
-                    .build();
-
-            schedulesToInsert.add(sleepSchedule);
-
-            /**
-             * 2. routine 테이블의 반복일정 등록
+             * routine 테이블의 반복일정 등록
              * 조회방식: 오늘요일 = routine.weekday
              * 이미 스케줄 테이블에 삭제된 루틴으로 저장된 경우 스킵
              * 등록해야할 정보
