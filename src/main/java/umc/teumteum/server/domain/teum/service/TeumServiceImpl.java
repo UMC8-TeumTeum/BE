@@ -171,24 +171,27 @@ public class TeumServiceImpl implements TeumService {
     public List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, String date) {
         LocalDate targetDate = LocalDate.parse(date);
 
-        List<Schedule> schedules = scheduleRepository.findByUserIdAndDateAndStatusIn(
-                userId,
-                targetDate,
-                List.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED)
+        List<Schedule> allSchedules = scheduleRepository.findByUserIdAndDateAndStatusIn(
+                userId, targetDate, List.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED)
         );
 
-        if (schedules.isEmpty()) {
+        List<Schedule> teumSchedules = allSchedules.stream()
+                .filter(schedule -> schedule.getType() == ScheduleType.TEUM)
+                .toList();
+
+        if (teumSchedules.isEmpty()) {
             throw new GeneralException(TeumErrorStatus.TEUM_SCHEDULE_NOT_FOUND);
         }
 
-        return schedules.stream()
+        return teumSchedules.stream()
                 .map(schedule -> {
-                    validateScheduleAccessible(schedule, userId);
+                    validateScheduleOwner(schedule, userId);
+                    validateScheduleStatusValid(schedule);
                     return TeumConverter.toScheduledTeumResponseDto(schedule);
                 })
                 .toList();
-    }
 
+    }
 
     public ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long scheduleId, Long userId) {
         Schedule schedule = getScheduleOrThrow(scheduleId);
