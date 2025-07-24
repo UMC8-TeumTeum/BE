@@ -33,7 +33,7 @@ public class HomeController {
         return ApiResponse.onSuccess(null);
     }
 
-    @GetMapping(value = "/today", produces = "application/json")
+    @GetMapping(value = "/teum", produces = "application/json")
     @Operation(summary = "오늘의 빈틈 조회 API",description = "오늘의 빈틈 시간을 조회하는 API입니다. query string으로 오늘 날짜를 입력해주세요.")
     public ApiResponse<List<TodayScheduleResponseDTO>> getTodayTeum(
             @Parameter(name = "date", description = "조회할 날짜", example = "2025-07-24") @RequestParam("date") LocalDate date,
