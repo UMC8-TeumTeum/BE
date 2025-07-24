@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.converter.ScheduleConverter;
 import umc.teumteum.server.domain.home.converter.WishConverter;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
+import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDTO;
 import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDTO;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
 import umc.teumteum.server.domain.home.dto.response.*;
@@ -34,6 +35,7 @@ import umc.teumteum.server.global.util.S3Util;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -348,5 +350,33 @@ public class HomeServiceImpl implements HomeService {
         }
 
         return result;
+    }
+
+    @Override
+    public void assignWish(Long wishId, WishAssignRequestDTO dto, User user) {
+        // 위시 투두 등록
+
+        // 1. 위시 조회
+        Wish wish = wishRepository.findById(wishId)
+                .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
+
+        // 2. 중복 스케줄 체크
+        LocalDate date = dto.getDate();
+        LocalDateTime startTime = LocalDateTime.of(date,dto.getStartTime());
+        LocalDateTime endTime = LocalDateTime.of(date,dto.getEndTime());
+
+        boolean hasConflict = scheduleRepository.existsConflictSchedule(
+                user.getId(), date, startTime, endTime
+        );
+
+        if (hasConflict && !dto.getIsForce()) {
+            // force가 false고 일정이 겹치면 예외
+            throw new HomeException(HomeErrorStatus._SCHEDULE_CONFLICT);
+        }
+
+        // 3. 스케줄 생성 & 위시 삭제
+        Schedule schedule = scheduleConverter.toScheduleFromWish(wish,dto);
+        scheduleRepository.save(schedule);
+        wishRepository.delete(wish);
     }
 }

@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDTO;
 import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDTO;
 import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDTO;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
@@ -88,8 +89,11 @@ public class WishController {
     @PostMapping(value = "/{wishId}/assign", consumes = "application/json", produces = "application/json")
     @Operation(summary = "위시 투두 등록 API",description = "위시를 투두로 등록하는 API입니다.")
     public ApiResponse<String> assignWish(
-            @Parameter(name= "wishId", description = "투두로 등록할 위시 ID", example = "123") @PathVariable("wishId") Long wishId){
-        return ApiResponse.onSuccess(null);
+            @Parameter(name= "wishId", description = "투두로 등록할 위시 ID", example = "123") @PathVariable("wishId") Long wishId,
+            @RequestBody @Valid WishAssignRequestDTO request,
+            @CurrentUser @Parameter(hidden = true) User user){
+        homeService.assignWish(wishId, request, user);
+        return ApiResponse.of(HomeSuccessStatus._WISH_ASSIGNED,null);
     }
 
 }

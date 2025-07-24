@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.home.service;
 
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
+import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDTO;
 import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDTO;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
 import umc.teumteum.server.domain.home.dto.response.*;
@@ -39,4 +40,7 @@ public interface HomeService {
 
     // 오늘의 시간표 조회
     List<TodayScheduleResponseDTO> getTodaySchedule(LocalDate today, User user);
+
+    // Wish 투두 등록
+    void assignWish(Long wishId, WishAssignRequestDTO dto, User user);
 }
