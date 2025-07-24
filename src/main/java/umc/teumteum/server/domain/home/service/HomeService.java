@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface HomeService {
     // Todo 등록
-    TodoIdResponseDTO createTodo(TodoRequestDTO dto);
+    TodoIdResponseDTO createTodo(TodoRequestDTO dto,User user);
 
     // Todo(Schedule) 조회
     TodoInfoResponseDTO getTodoInfo(Long scheduleId);

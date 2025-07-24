@@ -56,7 +56,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public TodoIdResponseDTO createTodo(TodoRequestDTO dto) {
+    public TodoIdResponseDTO createTodo(TodoRequestDTO dto, User user) {
         // Todo 등록
         // 종료 시간이 시작 시간보다 빠르면 예외 발생
         if (dto.getEndTime().isBefore(dto.getStartTime())){
@@ -64,7 +64,7 @@ public class HomeServiceImpl implements HomeService {
         }
 
         // 스케줄 저장
-        Schedule schedule = scheduleConverter.toSchedule(dto);
+        Schedule schedule = scheduleConverter.toSchedule(dto,user);
         Schedule savedSchedule = scheduleRepository.save(schedule);
 
         // 스케줄 리마인드 알림 저장
@@ -361,9 +361,9 @@ public class HomeServiceImpl implements HomeService {
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
 
         // 2. 중복 스케줄 체크
-        LocalDate date = dto.getDate();
-        LocalDateTime startTime = LocalDateTime.of(date,dto.getStartTime());
-        LocalDateTime endTime = LocalDateTime.of(date,dto.getEndTime());
+        LocalDate date = dto.getStartTime().toLocalDate();
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
 
         boolean hasConflict = scheduleRepository.existsConflictSchedule(
                 user.getId(), date, startTime, endTime

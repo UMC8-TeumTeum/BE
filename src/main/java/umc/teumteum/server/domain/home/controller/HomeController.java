@@ -66,8 +66,9 @@ public class HomeController {
     @PostMapping(value = "/todo",consumes = "application/json", produces = "application/json")
     @Operation(summary = "투두 등록 API",description = "새로운 투두를 등록 API입니다.")
     public ApiResponse<TodoIdResponseDTO> createTodo(
-            @RequestBody @Valid TodoRequestDTO request){
-        TodoIdResponseDTO response = homeService.createTodo(request);
+            @RequestBody @Valid TodoRequestDTO request,
+            @CurrentUser @Parameter(hidden = true) User user){
+        TodoIdResponseDTO response = homeService.createTodo(request, user);
         return ApiResponse.of(HomeSuccessStatus._TODO_CREATED,response);
     }
 

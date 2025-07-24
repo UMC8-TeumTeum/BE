@@ -1,14 +1,11 @@
 package umc.teumteum.server.domain.home.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
@@ -16,16 +13,12 @@ import java.util.List;
 public class WishAssignRequestDTO {
 
     @NotNull
-    @Schema(description = "날짜", example = "2025-07-24")
-    private LocalDate date;
+    @Schema(description = "시작 시간", example = "2025-07-24T10:00")
+    private LocalDateTime startTime;
 
     @NotNull
-    @Schema(description = "시작시간", example = "09:00")
-    private LocalTime startTime;
-
-    @NotNull
-    @Schema(description = "종료시간", example = "10:00")
-    private LocalTime endTime;
+    @Schema(description = "종료 시간", example = "2025-07-24T11:00")
+    private LocalDateTime endTime;
 
     @NotNull
     @Schema(description = "강제 등록 여부", example = "false")
