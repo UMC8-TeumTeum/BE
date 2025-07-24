@@ -14,7 +14,8 @@ public enum HomeErrorStatus implements BaseErrorCode {
     _SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "HOME4041", "해당 정보를 찾을 수 없습니다."),
     _CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND,"HOME4042","해당 카테고리를 찾을 수 없습니다."),
     _WISH_NOT_FOUND(HttpStatus.NOT_FOUND,"HOME4043","해당 위시 정보를 찾을 수 없습니다."),
-    _WISH_CONFLICT(HttpStatus.CONFLICT, "HOME4091","이미 동일한 위시가 존재합니다.")
+    _WISH_CONFLICT(HttpStatus.CONFLICT, "HOME4091","이미 동일한 위시가 존재합니다."),
+    _SCHEDULE_CONFLICT(HttpStatus.CONFLICT, "HOME4092","해당 시간에 스케줄이 존재합니다.")
     ;
     private final HttpStatus httpStatus;
     private final String code;
