@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -17,24 +18,18 @@ import java.util.List;
 public class TodoRequestDTO {
 
     @NotBlank
-    @Schema(description = "투두 제목", example = "string")
+    @Schema(description = "투두 제목", example = "자료구조 공부하기")
     private String title;
 
     @NotNull
-    @Schema(description = "날짜", example = "2025-07-15")
-    private LocalDate date;
+    @Schema(description = "시작 시간", example = "2025-07-24T10:00")
+    private LocalDateTime startTime;
 
     @NotNull
-    @Schema(description = "시작 시간", example = "09:00")
-    @JsonFormat(pattern = "HH:mm")
-    private LocalTime startTime;
+    @Schema(description = "종료 시간", example = "2025-07-24T11:00")
+    private LocalDateTime endTime;
 
-    @NotNull
-    @Schema(description = "종료 시간", example = "10:00")
-    @JsonFormat(pattern = "HH:mm")
-    private LocalTime endTime;
-
-    @Schema(description = "상세 설명", example = "string")
+    @Schema(description = "상세 설명", example = "linked list 공부하기")
     private String description;
 
     @NotNull
@@ -47,7 +42,4 @@ public class TodoRequestDTO {
 
     @Schema(description = "리마인드 알림 목록", example = "[1, 3, 5, 10, 30]")
     private List<Integer> remindAlarm;
-
-    @Schema(description = "회원 ID", example = "1")
-    private Long userId;
 }

@@ -8,6 +8,7 @@ import lombok.Getter;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -23,16 +24,11 @@ public class TodoInfoResponseDTO {
     @Schema(description = "투두 제목", example = "string")
     private String title;
 
-    @Schema(description = "날짜", example = "2025-07-15")
-    private LocalDate date;
+    @Schema(description = "시작 시간", example = "2025-07-24T10:00")
+    private LocalDateTime startTime;
 
-    @Schema(description = "시작 시간", example = "10:00")
-    @JsonFormat(pattern = "HH:mm")
-    private LocalTime startTime;
-
-    @Schema(description = "종료 시간", example = "10:00")
-    @JsonFormat(pattern = "HH:mm")
-    private LocalTime endTime;
+    @Schema(description = "종료 시간", example = "2025-07-24T10:00")
+    private LocalDateTime endTime;
 
     @Schema(description = "상세 설명", example = "string")
     private String description;

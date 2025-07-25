@@ -1,10 +1,12 @@
 package umc.teumteum.server.domain.home.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import umc.teumteum.server.global.util.CustomEndTimeSerializer;
 
 import java.time.LocalTime;
 
@@ -19,7 +21,7 @@ public class TodayScheduleResponseDTO {
     private LocalTime startTime;
 
     @Schema(description = "종료 시간", example = "10:00")
-    @JsonFormat(pattern = "HH:mm")
+    @JsonSerialize(using = CustomEndTimeSerializer.class)
     private LocalTime endTime;
 
     @Schema(description = "타입", example = "TODO | SLEEP | EMPTY")

@@ -86,9 +86,9 @@ public class Schedule extends BaseEntity {
 
     public void updateField(TodoRequestDTO dto) {
         this.title = dto.getTitle();
-        this.date = dto.getDate();
-        this.startTime = LocalDateTime.of(dto.getDate(), dto.getStartTime());
-        this.endTime = LocalDateTime.of(dto.getDate(), dto.getEndTime());
+        this.date = dto.getStartTime().toLocalDate();
+        this.startTime = dto.getStartTime();
+        this.endTime = dto.getEndTime();
         this.description = dto.getDescription();
         this.isPublic = dto.getIsPublic();
         this.includeTeum = dto.getIncludeTeum();
