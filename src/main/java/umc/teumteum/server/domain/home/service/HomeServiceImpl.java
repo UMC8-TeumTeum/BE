@@ -56,7 +56,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public TodoIdResponseDTO createTodo(TodoRequestDTO dto) {
+    public TodoIdResponseDTO createTodo(TodoRequestDTO dto, User user) {
         // Todo 등록
         // 종료 시간이 시작 시간보다 빠르면 예외 발생
         if (dto.getEndTime().isBefore(dto.getStartTime())){
@@ -64,7 +64,7 @@ public class HomeServiceImpl implements HomeService {
         }
 
         // 스케줄 저장
-        Schedule schedule = scheduleConverter.toSchedule(dto);
+        Schedule schedule = scheduleConverter.toSchedule(dto,user);
         Schedule savedSchedule = scheduleRepository.save(schedule);
 
         // 스케줄 리마인드 알림 저장
@@ -292,7 +292,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public List<TodayScheduleResponseDTO> getTodaySchedule(LocalDate today, User user) {
+    public List<TodayScheduleResponseDTO> getTodaySchedule(LocalDate date, User user) {
         // 오늘의 시간표 조회
         List<TodayScheduleResponseDTO> sleepAndTodo = new ArrayList<>(); // 수면패턴과 투두를 등록한 배열
 
@@ -304,7 +304,7 @@ public class HomeServiceImpl implements HomeService {
             if(sleepTime.isAfter(wakeTime)){
                 // 자정 이전에 자는 경우
                 sleepAndTodo.add(new TodayScheduleResponseDTO(LocalTime.MIDNIGHT,wakeTime,"SLEEP"));
-                sleepAndTodo.add(new TodayScheduleResponseDTO(sleepTime,LocalTime.of(23,59),"SLEEP"));
+                sleepAndTodo.add(new TodayScheduleResponseDTO(sleepTime,LocalTime.MAX,"SLEEP"));
             } else{
                 // 자정 이후에 자는 경우
                 sleepAndTodo.add(new TodayScheduleResponseDTO(sleepTime,wakeTime,"SLEEP"));
@@ -312,17 +312,29 @@ public class HomeServiceImpl implements HomeService {
         }
 
         // 2. 스케줄 정보 등록
-        List<Schedule> schedules = scheduleRepository.findByUserAndDateAndIsDeletedFalseOrderByStartTime(user, today);
+        LocalDateTime today = date.atStartOfDay(); // 오늘 자정
+        LocalDateTime tomorrow = date.plusDays(1).atStartOfDay(); // 내일 자정
+
+        // 다음날 자정보다 먼저 시작하는 일정 & 오늘 자정보다 늦게 끝나는 일정
+        List<Schedule> schedules = scheduleRepository.findSchedulesOnDate(user, today, tomorrow);
 
         for (Schedule schedule : schedules) {
+            // 시작날짜가 어제인 경우
+            LocalTime start = schedule.getStartTime().isBefore(today)?
+                    LocalTime.MIDNIGHT : schedule.getStartTime().toLocalTime();
+
+            // 종료날짜가 내일인 경우
+            LocalTime end = schedule.getEndTime().isAfter(tomorrow)?
+                    LocalTime.MAX : schedule.getEndTime().toLocalTime();
+
             sleepAndTodo.add(TodayScheduleResponseDTO.builder()
-                    .startTime(schedule.getStartTime().toLocalTime())
-                    .endTime(schedule.getEndTime().toLocalTime())
+                    .startTime(start)
+                    .endTime(end)
                     .type("TODO")
                     .build());
         }
 
-        // 4. sleepAndTodo startTime 기준 정렬
+        // 3. sleepAndTodo startTime 기준 정렬
         sleepAndTodo.sort(Comparator.comparing(TodayScheduleResponseDTO::getStartTime));
 
         // 4. EMPTY 채우기
@@ -345,8 +357,8 @@ public class HomeServiceImpl implements HomeService {
         }
 
         // 5. 남은 시간 마지막 EMPTY 채우기
-        if (pointer.isBefore(LocalTime.of(23,59))) {
-            result.add(new TodayScheduleResponseDTO(pointer, LocalTime.of(23,59), "EMPTY"));
+        if (pointer.isBefore(LocalTime.MAX)) {
+            result.add(new TodayScheduleResponseDTO(pointer, LocalTime.MAX, "EMPTY"));
         }
 
         return result;
@@ -361,9 +373,9 @@ public class HomeServiceImpl implements HomeService {
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
 
         // 2. 중복 스케줄 체크
-        LocalDate date = dto.getDate();
-        LocalDateTime startTime = LocalDateTime.of(date,dto.getStartTime());
-        LocalDateTime endTime = LocalDateTime.of(date,dto.getEndTime());
+        LocalDate date = dto.getStartTime().toLocalDate();
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
 
         boolean hasConflict = scheduleRepository.existsConflictSchedule(
                 user.getId(), date, startTime, endTime

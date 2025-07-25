@@ -19,17 +19,17 @@ import java.util.stream.Collectors;
 public class ScheduleConverter {
 
     // TodoRequestDTO -> Schedule
-    public Schedule toSchedule(TodoRequestDTO dto) {
+    public Schedule toSchedule(TodoRequestDTO dto,User user) {
         return Schedule.builder()
                 .title(dto.getTitle())
-                .date(dto.getDate())
-                .startTime(LocalDateTime.of(dto.getDate(), dto.getStartTime()))
-                .endTime(LocalDateTime.of(dto.getDate(), dto.getEndTime()))
+                .date(dto.getStartTime().toLocalDate())
+                .startTime(dto.getStartTime())
+                .endTime(dto.getEndTime())
                 .description(dto.getDescription())
                 .isPublic(dto.getIsPublic())
                 .includeTeum(dto.getIncludeTeum())
                 .type(ScheduleType.TODO)
-                .user(User.builder().id(dto.getUserId()).build()) // 임시 유저
+                .user(user)
                 .build();
     }
 
@@ -49,9 +49,8 @@ public class ScheduleConverter {
         return TodoInfoResponseDTO.builder()
                 .type(schedule.getType())
                 .title(schedule.getTitle())
-                .date(schedule.getDate())
-                .startTime(schedule.getStartTime().toLocalTime())
-                .endTime(schedule.getEndTime().toLocalTime())
+                .startTime(schedule.getStartTime())
+                .endTime(schedule.getEndTime())
                 .description(schedule.getDescription())
                 .isPublic(schedule.getIsPublic())
                 .includeTeum(schedule.getIncludeTeum())
@@ -69,9 +68,9 @@ public class ScheduleConverter {
                 .title(wish.getTitle())
                 .description(wish.getContent())
                 .type(ScheduleType.WISH)
-                .date(dto.getDate())
-                .startTime(LocalDateTime.of(dto.getDate(), dto.getStartTime()))
-                .endTime(LocalDateTime.of(dto.getDate(), dto.getEndTime()))
+                .date(dto.getStartTime().toLocalDate())
+                .startTime(dto.getStartTime())
+                .endTime(dto.getEndTime())
                 .build();
     }
 }
