@@ -16,6 +16,7 @@ import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 
 import java.time.Duration;
@@ -63,8 +64,7 @@ public class FriendServiceImpl implements FriendService {
     // 사용자가 팔로우한 유저 목록을 정렬 후 페이징하여 반환
     @Override
     @Transactional(readOnly = true)
-    public Slice<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size) {
-        validateUserExists(userId);
+    public PagingResponseDto<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size) {
 
         Pageable pageable = PageRequest.of(
                 Math.max(page - 1, 0),
@@ -78,15 +78,13 @@ public class FriendServiceImpl implements FriendService {
                 .map(friendConverter::toFollowingUserResponse)
                 .collect(Collectors.toList());
 
-        return new SliceImpl<>(dtoList, pageable, slice.hasNext());
+        return new PagingResponseDto<>(dtoList, slice.hasNext());
     }
-
 
     // 사용자를 팔로우한 유저 목록을 정렬 후 페이징하여 반환
     @Override
     @Transactional(readOnly = true)
-    public Slice<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size) {
-        validateUserExists(userId);
+    public PagingResponseDto<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size) {
 
         Pageable pageable = PageRequest.of(
                 Math.max(page - 1, 0),
@@ -94,13 +92,13 @@ public class FriendServiceImpl implements FriendService {
                 Sort.by("follower.nickname").ascending()
         );
 
-        Slice<Friend> friends = friendRepository.findByFollowingId(userId, pageable);
+        Slice<Friend> slice = friendRepository.findByFollowingId(userId, pageable);
 
-        List<FollowerUserResponseDto> dtoList = friends.getContent().stream()
+        List<FollowerUserResponseDto> dtoList = slice.getContent().stream()
                 .map(friendConverter::toFollowerUserResponse)
                 .collect(Collectors.toList());
 
-        return new SliceImpl<>(dtoList, pageable, friends.hasNext());
+        return new PagingResponseDto<>(dtoList, slice.hasNext());
     }
 
     @Override
