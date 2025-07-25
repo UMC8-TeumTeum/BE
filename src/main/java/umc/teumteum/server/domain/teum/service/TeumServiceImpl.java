@@ -1,10 +1,7 @@
 package umc.teumteum.server.domain.teum.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.entity.Schedule;
@@ -98,19 +95,27 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, Pageable pageable) {
+    public Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, int page, int size) {
         getUserOrThrow(userId);
 
-        LocalDate today = LocalDate.now();
-        LocalTime now = LocalTime.now();
+        int pageIndex = Math.max(page - 1, 0);
 
-        Page<TeumResponse> page = teumResponseRepository.findValidPendingResponses(userId, today, now, pageable);
+        Sort sort = Sort.by(
+                Sort.Order.asc("readAt"),
+                Sort.Order.desc("createdAt")
+        );
 
-        List<TeumReceivedResponseDto> dtoList = page.getContent().stream()
+        Pageable pageable = PageRequest.of(pageIndex, size, sort);
+
+        Page<TeumResponse> pageData = teumResponseRepository.findValidPendingResponses(
+                userId, LocalDate.now(), LocalTime.now(), pageable
+        );
+
+        List<TeumReceivedResponseDto> dtoList = pageData.getContent().stream()
                 .map(response -> TeumConverter.toReceivedResponseDto(response, s3Util))
                 .toList();
 
-        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
+        return new PageImpl<>(dtoList, pageable, pageData.getTotalElements());
     }
 
     @Override

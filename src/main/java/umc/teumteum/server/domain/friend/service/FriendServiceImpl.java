@@ -1,5 +1,6 @@
 package umc.teumteum.server.domain.friend.service;
 
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 
 import java.time.Duration;
@@ -61,39 +63,42 @@ public class FriendServiceImpl implements FriendService {
 
     // 사용자가 팔로우한 유저 목록을 정렬 후 페이징하여 반환
     @Override
-    public List<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size) {
-        validateUserExists(userId);
+    @Transactional(readOnly = true)
+    public PagingResponseDto<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size) {
 
-        List<Friend> followings = friendRepository.findByFollowerId(userId);
+        Pageable pageable = PageRequest.of(
+                Math.max(page - 1, 0),
+                size,
+                Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.asc("following.nickname"))
+        );
 
-        List<FollowingUserResponseDto> sortedList = friendConverter.toFollowingUserResponseList(followings).stream()
-                .sorted(Comparator
-                        .comparing(FollowingUserResponseDto::getIsFavorite).reversed()
-                        .thenComparing(FollowingUserResponseDto::getNickname))
+        Slice<Friend> slice = friendRepository.findByFollowerId(userId, pageable);
+
+        List<FollowingUserResponseDto> dtoList = slice.getContent().stream()
+                .map(friendConverter::toFollowingUserResponse)
                 .collect(Collectors.toList());
 
-        return paginate(sortedList, page, size);
+        return new PagingResponseDto<>(dtoList, slice.hasNext());
     }
 
     // 사용자를 팔로우한 유저 목록을 정렬 후 페이징하여 반환
     @Override
-    public List<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size) {
-        validateUserExists(userId);
+    @Transactional(readOnly = true)
+    public PagingResponseDto<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size) {
 
-        List<Friend> followers = friendRepository.findByFollowingId(userId);
+        Pageable pageable = PageRequest.of(
+                Math.max(page - 1, 0),
+                size,
+                Sort.by("follower.nickname").ascending()
+        );
 
-        List<FollowerUserResponseDto> sortedList = friendConverter.toFollowerUserResponseList(followers).stream()
-                .sorted(Comparator.comparing(FollowerUserResponseDto::getNickname))
+        Slice<Friend> slice = friendRepository.findByFollowingId(userId, pageable);
+
+        List<FollowerUserResponseDto> dtoList = slice.getContent().stream()
+                .map(friendConverter::toFollowerUserResponse)
                 .collect(Collectors.toList());
 
-        return paginate(sortedList, page, size);
-    }
-
-    // 리스트를 페이지 단위로 잘라서 반환
-    private <T> List<T> paginate(List<T> list, int page, int size) {
-        int start = page * size;
-        int end = Math.min(start + size, list.size());
-        return (start >= list.size()) ? List.of() : list.subList(start, end);
+        return new PagingResponseDto<>(dtoList, slice.hasNext());
     }
 
     @Override
