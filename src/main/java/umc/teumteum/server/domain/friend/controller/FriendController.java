@@ -95,9 +95,9 @@ public class FriendController {
     )
     @GetMapping("/followers")
     public ApiResponse<Slice<FollowerUserResponseDto>> getFollowersByUser(
-            @CurrentUser User user,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size
+            @Parameter(hidden = true) @CurrentUser User user,
+            @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1") int page,
+            @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
         Slice<FollowerUserResponseDto> response = friendService.getFollowersByUser(user.getId(), page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
