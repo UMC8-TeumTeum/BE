@@ -62,19 +62,25 @@ public class FriendServiceImpl implements FriendService {
 
     // 사용자가 팔로우한 유저 목록을 정렬 후 페이징하여 반환
     @Override
-    public List<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size) {
+    @Transactional(readOnly = true)
+    public Slice<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size) {
         validateUserExists(userId);
 
-        List<Friend> followings = friendRepository.findByFollowerId(userId);
+        Pageable pageable = PageRequest.of(
+                Math.max(page - 1, 0),
+                size,
+                Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.asc("following.nickname"))
+        );
 
-        List<FollowingUserResponseDto> sortedList = friendConverter.toFollowingUserResponseList(followings).stream()
-                .sorted(Comparator
-                        .comparing(FollowingUserResponseDto::getIsFavorite).reversed()
-                        .thenComparing(FollowingUserResponseDto::getNickname))
+        Slice<Friend> slice = friendRepository.findByFollowerId(userId, pageable);
+
+        List<FollowingUserResponseDto> dtoList = slice.getContent().stream()
+                .map(friendConverter::toFollowingUserResponse)
                 .collect(Collectors.toList());
 
-        return paginate(sortedList, page, size);
+        return new SliceImpl<>(dtoList, pageable, slice.hasNext());
     }
+
 
     // 사용자를 팔로우한 유저 목록을 정렬 후 페이징하여 반환
     @Override
@@ -95,13 +101,6 @@ public class FriendServiceImpl implements FriendService {
                 .collect(Collectors.toList());
 
         return new SliceImpl<>(dtoList, pageable, friends.hasNext());
-    }
-
-    // 리스트를 페이지 단위로 잘라서 반환
-    private <T> List<T> paginate(List<T> list, int page, int size) {
-        int start = page * size;
-        int end = Math.min(start + size, list.size());
-        return (start >= list.size()) ? List.of() : list.subList(start, end);
     }
 
     @Override

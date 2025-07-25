@@ -80,12 +80,12 @@ public class FriendController {
             description = "현재 로그인한 사용자가 팔로우한 유저 목록을 조회합니다."
     )
     @GetMapping(value = "/followings", produces = "application/json")
-    public ApiResponse<List<FollowingUserResponseDto>> getFollowingsByUser(
+    public ApiResponse<Slice<FollowingUserResponseDto>> getFollowingsByUser(
             @Parameter(hidden = true) @CurrentUser User user,
-            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
+            @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        List<FollowingUserResponseDto> response = friendService.getFollowingsByUser(user.getId(), page, size);
+        Slice<FollowingUserResponseDto> response = friendService.getFollowingsByUser(user.getId(), page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
