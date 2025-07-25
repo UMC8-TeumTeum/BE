@@ -77,8 +77,17 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     boolean existsByUserAndDateAndRoutineAndIsDeletedTrue(User user, LocalDate today, Routine routine);
 
-    List<Schedule> findByUserAndDateAndIsDeletedFalseOrderByStartTime(User user, LocalDate date);
-
-
+    @Query("""
+    SELECT s
+    FROM Schedule s
+    WHERE s.user = :user
+      AND s.isDeleted = false
+      AND s.startTime < :startOfTomorrow
+      AND s.endTime > :startOfToday
+    ORDER BY s.startTime ASC
+""")
+    List<Schedule> findSchedulesOnDate(@Param("user") User user,
+                                       @Param("startOfToday") LocalDateTime startOfToday,
+                                       @Param("startOfTomorrow") LocalDateTime startOfTomorrow);
 
 }

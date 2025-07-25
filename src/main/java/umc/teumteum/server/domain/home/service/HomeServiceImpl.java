@@ -292,7 +292,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public List<TodayScheduleResponseDTO> getTodaySchedule(LocalDate today, User user) {
+    public List<TodayScheduleResponseDTO> getTodaySchedule(LocalDate date, User user) {
         // 오늘의 시간표 조회
         List<TodayScheduleResponseDTO> sleepAndTodo = new ArrayList<>(); // 수면패턴과 투두를 등록한 배열
 
@@ -312,17 +312,29 @@ public class HomeServiceImpl implements HomeService {
         }
 
         // 2. 스케줄 정보 등록
-        List<Schedule> schedules = scheduleRepository.findByUserAndDateAndIsDeletedFalseOrderByStartTime(user, today);
+        LocalDateTime today = date.atStartOfDay(); // 오늘 자정
+        LocalDateTime tomorrow = date.plusDays(1).atStartOfDay(); // 내일 자정
+
+        // 다음날 자정보다 먼저 시작하는 일정 & 오늘 자정보다 늦게 끝나는 일정
+        List<Schedule> schedules = scheduleRepository.findSchedulesOnDate(user, today, tomorrow);
 
         for (Schedule schedule : schedules) {
+            // 시작날짜가 어제인 경우
+            LocalTime start = schedule.getStartTime().isBefore(today)?
+                    LocalTime.MIDNIGHT : schedule.getStartTime().toLocalTime();
+
+            // 종료날짜가 내일인 경우
+            LocalTime end = schedule.getEndTime().isAfter(tomorrow)?
+                    LocalTime.of(23, 59) : schedule.getEndTime().toLocalTime();
+
             sleepAndTodo.add(TodayScheduleResponseDTO.builder()
-                    .startTime(schedule.getStartTime().toLocalTime())
-                    .endTime(schedule.getEndTime().toLocalTime())
+                    .startTime(start)
+                    .endTime(end)
                     .type("TODO")
                     .build());
         }
 
-        // 4. sleepAndTodo startTime 기준 정렬
+        // 3. sleepAndTodo startTime 기준 정렬
         sleepAndTodo.sort(Comparator.comparing(TodayScheduleResponseDTO::getStartTime));
 
         // 4. EMPTY 채우기
