@@ -18,6 +18,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -28,8 +30,8 @@ public class ScheduleGeneratorScheduler {
     private final ScheduleRepository scheduleRepository;
     private final RoutineRepository routineRepository;
 
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
-//    @Scheduled(cron = "0 0/1 * * * *", zone = "Asia/Seoul")
+//    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0/1 * * * *", zone = "Asia/Seoul")
     public void schedule() {
         log.info("[00:00] 반복일정 스케줄 테이블에 등록 시작");
 
@@ -46,15 +48,22 @@ public class ScheduleGeneratorScheduler {
              * 등록해야할 정보
              * user, routine, title = routine.title, description = routine.description, type=ROUTINE,
              * date(YYYY-MM-DD), startTime(오늘날짜 + routine.startTIme), endTIme(오늘날짜 + routine.endTime)
+             * & schedule reminder 정보
              */
 
             Weekday todayWeekday = Weekday.valueOf(today.getDayOfWeek().name());
+            // 루틴 테이블 조회
             List<Routine> routines = routineRepository.findByUserAndWeekday(user, todayWeekday);
+
+            // Schedule 테이블에서 삭제된 루틴 조회
+            List<Routine> deletedRoutines = scheduleRepository.findDeletedRoutinesByUserAndDate(user,today);
+            Set<Long> deletedRoutineIds = deletedRoutines.stream()
+                    .map(Routine::getId)
+                    .collect(Collectors.toSet());
 
             for (Routine routine : routines) {
                 // 삭제된 반복일정이라면 스킵
-                boolean deletedRoutine = scheduleRepository.existsByUserAndDateAndRoutineAndIsDeletedTrue(user, today, routine);
-                if (deletedRoutine) continue;
+                if (deletedRoutineIds.contains(routine.getId())) continue;
 
                 Schedule routineSchedule = Schedule.builder()
                         .user(user)
