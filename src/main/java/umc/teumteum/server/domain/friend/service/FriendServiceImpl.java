@@ -1,5 +1,6 @@
 package umc.teumteum.server.domain.friend.service;
 
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,16 +78,23 @@ public class FriendServiceImpl implements FriendService {
 
     // 사용자를 팔로우한 유저 목록을 정렬 후 페이징하여 반환
     @Override
-    public List<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size) {
+    @Transactional(readOnly = true)
+    public Slice<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size) {
         validateUserExists(userId);
 
-        List<Friend> followers = friendRepository.findByFollowingId(userId);
+        Pageable pageable = PageRequest.of(
+                Math.max(page - 1, 0),
+                size,
+                Sort.by("follower.nickname").ascending()
+        );
 
-        List<FollowerUserResponseDto> sortedList = friendConverter.toFollowerUserResponseList(followers).stream()
-                .sorted(Comparator.comparing(FollowerUserResponseDto::getNickname))
+        Slice<Friend> friends = friendRepository.findByFollowingId(userId, pageable);
+
+        List<FollowerUserResponseDto> dtoList = friends.getContent().stream()
+                .map(friendConverter::toFollowerUserResponse)
                 .collect(Collectors.toList());
 
-        return paginate(sortedList, page, size);
+        return new SliceImpl<>(dtoList, pageable, friends.hasNext());
     }
 
     // 리스트를 페이지 단위로 잘라서 반환
