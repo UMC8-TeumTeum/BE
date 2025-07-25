@@ -304,7 +304,7 @@ public class HomeServiceImpl implements HomeService {
             if(sleepTime.isAfter(wakeTime)){
                 // 자정 이전에 자는 경우
                 sleepAndTodo.add(new TodayScheduleResponseDTO(LocalTime.MIDNIGHT,wakeTime,"SLEEP"));
-                sleepAndTodo.add(new TodayScheduleResponseDTO(sleepTime,LocalTime.of(23,59),"SLEEP"));
+                sleepAndTodo.add(new TodayScheduleResponseDTO(sleepTime,LocalTime.MAX,"SLEEP"));
             } else{
                 // 자정 이후에 자는 경우
                 sleepAndTodo.add(new TodayScheduleResponseDTO(sleepTime,wakeTime,"SLEEP"));
@@ -325,7 +325,7 @@ public class HomeServiceImpl implements HomeService {
 
             // 종료날짜가 내일인 경우
             LocalTime end = schedule.getEndTime().isAfter(tomorrow)?
-                    LocalTime.of(23, 59) : schedule.getEndTime().toLocalTime();
+                    LocalTime.MAX : schedule.getEndTime().toLocalTime();
 
             sleepAndTodo.add(TodayScheduleResponseDTO.builder()
                     .startTime(start)
@@ -357,8 +357,8 @@ public class HomeServiceImpl implements HomeService {
         }
 
         // 5. 남은 시간 마지막 EMPTY 채우기
-        if (pointer.isBefore(LocalTime.of(23,59))) {
-            result.add(new TodayScheduleResponseDTO(pointer, LocalTime.of(23,59), "EMPTY"));
+        if (pointer.isBefore(LocalTime.MAX)) {
+            result.add(new TodayScheduleResponseDTO(pointer, LocalTime.MAX, "EMPTY"));
         }
 
         return result;
