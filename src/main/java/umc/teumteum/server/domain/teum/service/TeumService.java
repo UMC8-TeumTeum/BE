@@ -19,7 +19,7 @@ public interface TeumService {
 
     Long createResendRequest(Long parentRequestId, TeumResendRequestDto resendRequestDto, User user);
 
-    Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, Pageable pageable);
+    Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, int page, int size);
 
     Long updateReadStatus(Long responseId, Long userId);
 
