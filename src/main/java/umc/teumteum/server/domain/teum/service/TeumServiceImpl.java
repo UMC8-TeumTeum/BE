@@ -184,11 +184,7 @@ public class TeumServiceImpl implements TeumService {
         }
 
         return teumSchedules.stream()
-                .map(schedule -> {
-                    validateScheduleOwner(schedule, userId);
-                    validateScheduleStatusValid(schedule);
-                    return TeumConverter.toScheduledTeumResponseDto(schedule);
-                })
+                .map(TeumConverter::toScheduledTeumResponseDto)
                 .toList();
 
     }
