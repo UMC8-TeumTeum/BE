@@ -70,7 +70,7 @@ public class TeumController {
     @GetMapping("/request/received")
     public ApiResponse<Page<TeumReceivedResponseDto>> getReceivedTeumRequests(
             @Parameter(hidden = true) @CurrentUser User user,
-            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
+            @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
         Sort sort = Sort.by(
@@ -78,7 +78,8 @@ public class TeumController {
                 Sort.Order.desc("createdAt")
         );
 
-        Pageable pageable = PageRequest.of(page, size, sort);
+        int pageIndex = Math.max(page - 1, 0);
+        Pageable pageable = PageRequest.of(pageIndex, size, sort);
 
         return ApiResponse.onSuccess(teumService.getReceivedRequests(user.getId(), pageable));
     }
