@@ -15,7 +15,7 @@ public interface FriendService {
 
     FavoriteResponseDto updateFavorite(Long userId, Boolean isFavorite);
 
-    List<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size);
+    Slice<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size);
 
     Slice<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size);
 
