@@ -15,6 +15,7 @@ import umc.teumteum.server.domain.friend.service.FriendService;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
+import umc.teumteum.server.global.dto.PagingResponseDto;
 
 import java.util.List;
 
@@ -80,12 +81,12 @@ public class FriendController {
             description = "현재 로그인한 사용자가 팔로우한 유저 목록을 조회합니다."
     )
     @GetMapping(value = "/followings", produces = "application/json")
-    public ApiResponse<Slice<FollowingUserResponseDto>> getFollowingsByUser(
+    public ApiResponse<PagingResponseDto<FollowingUserResponseDto>> getFollowingsByUser(
             @Parameter(hidden = true) @CurrentUser User user,
             @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        Slice<FollowingUserResponseDto> response = friendService.getFollowingsByUser(user.getId(), page, size);
+        PagingResponseDto<FollowingUserResponseDto> response = friendService.getFollowingsByUser(user.getId(), page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
@@ -94,12 +95,12 @@ public class FriendController {
             description = "현재 로그인한 사용자를 팔로우한 유저 목록을 조회합니다."
     )
     @GetMapping("/followers")
-    public ApiResponse<Slice<FollowerUserResponseDto>> getFollowersByUser(
+    public ApiResponse<PagingResponseDto<FollowerUserResponseDto>> getFollowersByUser(
             @Parameter(hidden = true) @CurrentUser User user,
             @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        Slice<FollowerUserResponseDto> response = friendService.getFollowersByUser(user.getId(), page, size);
+        PagingResponseDto<FollowerUserResponseDto> response = friendService.getFollowersByUser(user.getId(), page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
