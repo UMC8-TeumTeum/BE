@@ -5,6 +5,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.exception.status.FriendSuccessStatus;
@@ -90,13 +93,13 @@ public class FriendController {
             summary = "팔로워 목록 조회",
             description = "현재 로그인한 사용자를 팔로우한 유저 목록을 조회합니다."
     )
-    @GetMapping(value = "/followers", produces = "application/json")
-    public ApiResponse<List<FollowerUserResponseDto>> getFollowersByUser(
-            @Parameter(hidden = true) @CurrentUser User user,
-            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(name = "page", defaultValue = "0") int page,
-            @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
+    @GetMapping("/followers")
+    public ApiResponse<Slice<FollowerUserResponseDto>> getFollowersByUser(
+            @CurrentUser User user,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        List<FollowerUserResponseDto> response = friendService.getFollowersByUser(user.getId(), page, size);
+        Slice<FollowerUserResponseDto> response = friendService.getFollowersByUser(user.getId(), page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 

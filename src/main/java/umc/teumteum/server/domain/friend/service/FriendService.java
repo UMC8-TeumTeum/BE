@@ -1,5 +1,7 @@
 package umc.teumteum.server.domain.friend.service;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import umc.teumteum.server.domain.friend.dto.*;
 
 import java.util.List;
@@ -15,7 +17,7 @@ public interface FriendService {
 
     List<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size);
 
-    List<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size);
+    Slice<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size);
 
     FriendProfileResponseDto getFriendProfile(Long loginUserId, Long targetUserId);
 
