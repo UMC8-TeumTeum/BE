@@ -78,6 +78,21 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     boolean existsByUserAndDateAndRoutineAndIsDeletedTrue(User user, LocalDate today, Routine routine);
 
+    List<Schedule> findByUserAndDateAndIsDeletedFalseOrderByStartTime(User user, LocalDate date);
+
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.date = :date
+      AND s.status IN :statuses
+      AND s.isDeleted = false
+""")
+    List<Schedule> findByUserIdAndDateAndStatusIn(
+            @Param("userId") Long userId,
+            @Param("date") LocalDate date,
+            @Param("statuses") List<ScheduleStatus> statuses
+    );
+
     @Query("""
     SELECT s
     FROM Schedule s
@@ -91,6 +106,13 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
                                        @Param("startOfToday") LocalDateTime startOfToday,
                                        @Param("startOfTomorrow") LocalDateTime startOfTomorrow);
 
+
     List<Schedule> findByUserIdAndDate(Long id, LocalDate now);
+
+    @Query("""
+    SELECT s.routine FROM Schedule s
+    WHERE s.user = :user AND s.date = :date AND s.isDeleted = true AND s.routine IS NOT NULL""")
+    List<Routine> findDeletedRoutinesByUserAndDate(@Param("user") User user, @Param("date") LocalDate date);
+
 
 }

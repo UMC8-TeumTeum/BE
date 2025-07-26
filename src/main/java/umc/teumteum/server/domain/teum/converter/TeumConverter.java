@@ -7,6 +7,7 @@ import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
+import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumReceivedResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumRequestDto;
 import umc.teumteum.server.domain.teum.dto.teum.TeumResendRequestDto;
@@ -60,7 +61,6 @@ public class TeumConverter {
                             .receiverUser(receiver)
                             .status(ResponseStatus.PENDING)
                             .readAt(null)
-                            .message("")
                             .build();
                 })
                 .toList();
@@ -117,7 +117,6 @@ public class TeumConverter {
                 .teumRequest(request)
                 .receiverUser(newReceiver)
                 .status(ResponseStatus.PENDING)
-                .message("")
                 .readAt(null)
                 .build();
     }
@@ -234,5 +233,18 @@ public class TeumConverter {
                         .collect(Collectors.toList()))
                 .build();
     }
+
+    public static ScheduledTeumResponseDto toScheduledTeumResponseDto(Schedule schedule) {
+        return ScheduledTeumResponseDto.builder()
+                .teumId(schedule.getId())
+                .title(schedule.getTitle())
+                .date(schedule.getDate().toString())
+                .time(List.of(new TimeSlot(
+                        schedule.getStartTime().toLocalTime().toString(),
+                        schedule.getEndTime().toLocalTime().toString()
+                )))
+                .build();
+    }
+
 
 }
