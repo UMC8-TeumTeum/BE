@@ -114,5 +114,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     WHERE s.user = :user AND s.date = :date AND s.isDeleted = true AND s.routine IS NOT NULL""")
     List<Routine> findDeletedRoutinesByUserAndDate(@Param("user") User user, @Param("date") LocalDate date);
 
+    List<Schedule> findAllByUserAndIncludeTeumTrueAndEndTimeBefore(User user, LocalDateTime now);
 
 }

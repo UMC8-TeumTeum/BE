@@ -1,5 +1,6 @@
 package umc.teumteum.server.domain.home.service;
 
+import java.time.Duration;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDto;
@@ -48,5 +49,5 @@ public interface HomeService {
     List<CategoryResponseDto> getCategory();
 
     // 빈틈 시간 조회
-    void getTeaumTime(User user);
+    HomeResponseDto.TeumTimeDto getTeaumTime(User user);
 }
