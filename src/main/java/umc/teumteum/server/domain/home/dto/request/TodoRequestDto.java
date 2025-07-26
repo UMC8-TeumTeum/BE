@@ -1,21 +1,18 @@
 package umc.teumteum.server.domain.home.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 @Getter
 @NoArgsConstructor
 @Schema(title = "TodoRequestDTO : 투두 등록/수정 DTO")
-public class TodoRequestDTO {
+public class TodoRequestDto {
 
     @NotBlank
     @Schema(description = "투두 제목", example = "자료구조 공부하기")

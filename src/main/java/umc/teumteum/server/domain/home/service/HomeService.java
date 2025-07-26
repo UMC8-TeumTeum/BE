@@ -1,9 +1,9 @@
 package umc.teumteum.server.domain.home.service;
 
-import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
-import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDTO;
-import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDTO;
-import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
+import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
+import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
+import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDto;
+import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.dto.response.*;
 import umc.teumteum.server.domain.user.entity.User;
 
@@ -12,35 +12,38 @@ import java.util.List;
 
 public interface HomeService {
     // Todo 등록
-    TodoIdResponseDTO createTodo(TodoRequestDTO dto,User user);
+    TodoIdResponseDto createTodo(TodoRequestDto dto, User user);
 
     // Todo(Schedule) 조회
-    TodoInfoResponseDTO getTodoInfo(Long scheduleId);
+    TodoInfoResponseDto getTodoInfo(Long scheduleId);
 
     // Todo(Schedule) 수정
-    TodoIdResponseDTO updateTodoInfo(TodoRequestDTO dto, Long scheduleId);
+    TodoIdResponseDto updateTodoInfo(TodoRequestDto dto, Long scheduleId);
 
     // Todo(Schedule) 삭제
     void deleteTodo(Long scheduleId);
 
     // Wish 등록
-    void createWish(WishRequestDTO dto,User user);
+    void createWish(WishRequestDto dto, User user);
 
     // Wish 조회
-    WishInfoResponseDTO getWishInfo(Long wishId);
+    WishInfoResponseDto getWishInfo(Long wishId);
 
     // Wish 삭제
-    void deleteWishByIds(WishDeleteRequestDTO dto);
+    void deleteWishByIds(WishDeleteRequestDto dto);
 
     // Wish 수정
-    void updateWishInfo(WishRequestDTO dto, Long wishId,User user);
+    void updateWishInfo(WishRequestDto dto, Long wishId, User user);
 
     // Wishlist 조회
-    WishlistResponseDTO getWishlist(String duration, Integer page, User user);
+    WishlistResponseDto getWishlist(String duration, Integer page, User user);
 
     // 오늘의 시간표 조회
-    List<TodayScheduleResponseDTO> getTodaySchedule(LocalDate today, User user);
+    List<TodayScheduleResponseDto> getTodaySchedule(LocalDate today, User user);
 
     // Wish 투두 등록
-    void assignWish(Long wishId, WishAssignRequestDTO dto, User user);
+    void assignWish(Long wishId, WishAssignRequestDto dto, User user);
+
+    // 카테고리 정보 조회
+    List<CategoryResponseDto> getCategory();
 }

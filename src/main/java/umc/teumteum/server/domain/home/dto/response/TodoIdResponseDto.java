@@ -9,7 +9,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 @Schema(title = "TodoIdResponseDTO : 투두 등록 응답 DTO")
-public class TodoIdResponseDTO {
+public class TodoIdResponseDto {
 
     @Schema(description = "todoId" , example = "1")
     private Long todoId;

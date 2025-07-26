@@ -14,7 +14,7 @@ import java.time.LocalTime;
 @Builder
 @AllArgsConstructor
 @Schema(title = "TeumResponse : 빈틈시간 조회 응답 DTO")
-public class TodayScheduleResponseDTO {
+public class TodayScheduleResponseDto {
 
     @Schema(description = "시작 시간", example = "10:00")
     @JsonFormat(pattern = "HH:mm")
