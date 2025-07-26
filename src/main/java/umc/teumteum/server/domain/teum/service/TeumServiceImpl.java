@@ -152,17 +152,29 @@ public class TeumServiceImpl implements TeumService {
 
         if (isAccepted) {
             TeumRequest request = response.getTeumRequest();
+
+            // 이미 해당 요청에 대해 생성된 스케줄이 있는지 확인
+            boolean hasExistingSchedules = !request.getSchedules().isEmpty();
+
             User receiver = response.getReceiverUser();
+            Schedule receiverSchedule = TeumConverter.toScheduleFromTeumRequest(request, receiver);
+            scheduleRepository.save(receiverSchedule);
 
-            Schedule schedule = TeumConverter.toScheduleFromTeumRequest(request, receiver);
-            scheduleRepository.save(schedule);
+            // 스케줄이 처음 생성되는 경우에만 요청자도 생성
+            if (!hasExistingSchedules) {
+                User requester = request.getUser();
+                Schedule requesterSchedule = TeumConverter.toScheduleFromTeumRequest(request, requester);
+                scheduleRepository.save(requesterSchedule);
+            }
 
-            teumId = schedule.getId();
+            // 수신자 본인 스케줄 ID 반환
+            teumId = receiverSchedule.getId();
         }
 
-        return TeumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
 
+        return TeumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
     }
+
 
     @Override
     public List<String> getScheduledTeumsOfMonth(Long userId, String month) {
