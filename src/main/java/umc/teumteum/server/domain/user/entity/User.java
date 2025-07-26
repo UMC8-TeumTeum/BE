@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.Wish;
-import umc.teumteum.server.domain.notification.controller.entity.Notification;
+import umc.teumteum.server.domain.notification.entity.Notification;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
