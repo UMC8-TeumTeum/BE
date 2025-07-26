@@ -153,15 +153,12 @@ public class TeumServiceImpl implements TeumService {
         if (isAccepted) {
             TeumRequest request = response.getTeumRequest();
 
-            // 이미 해당 요청에 대해 생성된 스케줄이 있는지 확인
-            boolean hasExistingSchedules = !request.getSchedules().isEmpty();
-
             User receiver = response.getReceiverUser();
             Schedule receiverSchedule = TeumConverter.toScheduleFromTeumRequest(request, receiver);
             scheduleRepository.save(receiverSchedule);
 
-            // 스케줄이 처음 생성되는 경우에만 요청자도 생성
-            if (!hasExistingSchedules) {
+            // 스케줄이 없는 경우에만 요청자에게 생성
+            if (request.getSchedules().isEmpty()) {
                 User requester = request.getUser();
                 Schedule requesterSchedule = TeumConverter.toScheduleFromTeumRequest(request, requester);
                 scheduleRepository.save(requesterSchedule);
