@@ -355,4 +355,11 @@ public class HomeServiceImpl implements HomeService {
         scheduleRepository.save(schedule);
         wishRepository.delete(wish);
     }
+
+    @Override
+    public List<CategoryResponseDto> getCategory() {
+        // 카테고리 정보 조회
+        List<Category> categories = categoryRepository.findAll();
+        return wishConverter.toCategoryResponseDTO(categories);
+    }
 }

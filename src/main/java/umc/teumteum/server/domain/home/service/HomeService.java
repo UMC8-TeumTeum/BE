@@ -43,4 +43,7 @@ public interface HomeService {
 
     // Wish 투두 등록
     void assignWish(Long wishId, WishAssignRequestDto dto, User user);
+
+    // 카테고리 정보 조회
+    List<CategoryResponseDto> getCategory();
 }
