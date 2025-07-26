@@ -10,4 +10,6 @@ import java.util.List;
 
 public interface RoutineRepository extends JpaRepository<Routine, Long> {
     List<Routine> findByUserAndWeekday(User user, Weekday weekday);
+
+    void deleteByUser(User user);
 }

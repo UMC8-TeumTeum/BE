@@ -4,14 +4,24 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.user.converter.AgreementConverter;
+import umc.teumteum.server.domain.user.converter.RoutineConverter;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.entity.Agreement;
+import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
-import umc.teumteum.server.domain.user.exception.UserHandler;
+import umc.teumteum.server.domain.user.exception.OnboardingHandler;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.AgreementRepository;
+import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.global.dto.TimeRange;
+import umc.teumteum.server.global.util.TimeUtil;
+
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,25 +29,28 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     private final UserRepository userRepository;
     private final AgreementRepository agreementRepository;
+    private final RoutineRepository routineRepository;
+    private final TimeUtil timeUtil;
+
 
     // 온보딩 - 약관 동의
     @Override
     @Transactional
-    public void saveAgreement(OnboardingRequestDto.AgreeRequest request, User user) {
+    public void saveAgreements(OnboardingRequestDto.AgreeRequest request, User user) {
         // 1. 사용자 step 확인
         validateOnboardingStep(user, UserStep.AGREEMENT);
 
         // 2. 기존 동의 이력이 있는지 확인
         if (agreementRepository.existsByUser(user)) {
-            throw new UserHandler(UserErrorStatus.AGREEMENT_ALREADY_EXISTS);
+            throw new OnboardingHandler(UserErrorStatus.AGREEMENT_ALREADY_EXISTS);
         }
 
         // 3. 필수 항목 동의 여부 확인
         if (!request.getTosConsent()) {
-            throw new UserHandler(UserErrorStatus.TOS_CONSENT_NOT_AGREED);
+            throw new OnboardingHandler(UserErrorStatus.TOS_CONSENT_NOT_AGREED);
         }
         if (!request.getPrivacyConsent()) {
-            throw new UserHandler(UserErrorStatus.PRIVACY_CONSENT_NOT_AGREED);
+            throw new OnboardingHandler(UserErrorStatus.PRIVACY_CONSENT_NOT_AGREED);
         }
 
         // 4. Entity 변환
@@ -62,13 +75,13 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 기존 닉네임이 null이면(=처음 닉네임 등록) 단순 중복 체크
         if (user.getNickname() == null) {
             if (userRepository.existsByNickname(request.getNickname())) {
-                throw new UserHandler(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+                throw new OnboardingHandler(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
             }
         }
         // 기존 닉네임이 있으면(=온보딩 중단으로 인한 닉네임 재등록) 본인 닉네임 이외와 중복 체크
         else {
             if (!request.getNickname().equals(user.getNickname()) && userRepository.existsByNickname(request.getNickname())) {
-                throw new UserHandler(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+                throw new OnboardingHandler(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
             }
         }
 
@@ -77,6 +90,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
 
+    // 온보딩 - 수면패턴 등록
     @Override
     @Transactional
     public void saveSleepPattern(OnboardingRequestDto.SleepPatternRequest request, User user) {
@@ -88,10 +102,129 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
 
+    // 온보딩 - 반복일정 등록
+    @Override
+    @Transactional
+    public void saveRoutines(OnboardingRequestDto.RoutineListRequest request, User user) {
+        // 1. 사용자 step 확인
+        validateOnboardingStep(user, UserStep.ONBOARDING);
+
+        // 2. 단일 일정 내에서 시작&종료시간 확인
+        request.getRoutine().forEach(this::validateSingleRoutineTimeRange);
+
+        // 3. 반복 일정끼리의 충돌 확인
+        validateRoutineTimeConflicts(request.getRoutine());
+
+        // 4. 수면패턴과의 충돌 확인
+        validateSleepPatternConflicts(request.getRoutine(), user);
+
+        // 5. 반복 일정 저장 (온보딩 중단으로 인해 기존 반복 일정이 있을 수 있으므로 삭제 필요)
+        List<Routine> newRoutines = RoutineConverter.toRoutineList(request.getRoutine(), user);
+
+        routineRepository.deleteByUser(user);
+        routineRepository.saveAll(newRoutines);
+    }
+
+
+
+
     // 사용자의 step을 확인
     private void validateOnboardingStep(User user, UserStep expectedStep) {
         if (user.getStep() == null || !user.getStep().equals(expectedStep)) {
-            throw new UserHandler(UserErrorStatus.INVALID_STEP);
+            throw new OnboardingHandler(UserErrorStatus.INVALID_STEP);
+        }
+    }
+
+
+    // 단일 일정의 시작시간과 종료시간이 올바른 범위인지 검증
+    private void validateSingleRoutineTimeRange(OnboardingRequestDto.RoutineDTO routine) {
+        LocalTime startTime = routine.getStartTime();
+        LocalTime endTime = routine.getEndTime();
+
+        // 1. 종료시간 00:00의 경우 무조건 허용 (=다음날 자정에 종료를 의미)
+        if (endTime.equals(LocalTime.MIDNIGHT)) {
+            return;
+        }
+
+        // 2. 기본 유효성 검증 (시작시간 < 종료시간)
+        if (!startTime.isBefore(endTime)) {
+            // ex) 13:00~03:00, 10:00~10:00 등이 해당
+            throw new OnboardingHandler(UserErrorStatus.INVALID_TIME_RANGE);
+        }
+    }
+
+
+    // 반복일정끼리의 충돌 확인
+    private void validateRoutineTimeConflicts(List<OnboardingRequestDto.RoutineDTO> routines) {
+        // 1. 요일별로 그룹핑해서 일정이 2개 이상인 요일만 충돌 검증
+        routines.stream()
+                .collect(Collectors.groupingBy(OnboardingRequestDto.RoutineDTO::getWeekday))
+                .values().stream()
+                .filter(dayRoutines -> dayRoutines.size() > 1)
+                .forEach(dayRoutines -> {
+
+                    // 2. RoutineDTO를 TimeRange로 변환
+                    List<TimeRange> timeRanges = dayRoutines.stream()
+                            .map(TimeRange::from)
+                            .collect(Collectors.toList())
+                            ;
+
+                    // 3. 같은 요일 내에서의 시간 충돌 검증
+                    timeUtil.validateTimeRangeConflicts(timeRanges, UserErrorStatus.ROUTINE_TIME_CONFLICT);
+                });
+    }
+
+
+    // 수면패턴과 반복일정 간의 충돌 확인
+    private void validateSleepPatternConflicts(List<OnboardingRequestDto.RoutineDTO> routines, User user) {
+        // 1. 수면패턴이 저장되어 있는지 확인 (선택입력이기 때문)
+        if (user.getSleepTime() == null && user.getWakeTime() == null) {
+            return;
+        }
+
+        // 2. 요일별로 그룹핑해서 반복일정과 수면패턴을 합쳐서 일정이 2개 이상인 요일만 충돌 검증
+        // (반복일정없이 수면패턴이 2개로 나뉜 경우에도 일정 2개로 판단하기 때문에 검증 진행함)
+        routines.stream()
+                .collect(Collectors.groupingBy(OnboardingRequestDto.RoutineDTO::getWeekday))
+                .values().stream()
+                .map(dayRoutines -> {
+
+                    List<TimeRange> allTimeRanges = new ArrayList<>();
+
+                    // 반복일정들 추가
+                    allTimeRanges.addAll(dayRoutines.stream()
+                            .map(TimeRange::from)
+                            .toList());
+
+                    // 수면패턴 추가
+                    allTimeRanges.addAll(getSleepTimeRanges(user.getSleepTime(), user.getWakeTime()));
+
+                    return allTimeRanges;
+
+                })
+                .filter(allTimeRanges -> allTimeRanges.size() > 1)
+                .forEach(allTimeRanges -> timeUtil.validateTimeRangeConflicts(allTimeRanges, UserErrorStatus.ROUTINE_SLEEP_CONFLICT));
+    }
+
+
+    // 수면패턴을 TimeRange 리스트로 변환
+    private List<TimeRange> getSleepTimeRanges(LocalTime sleepTime, LocalTime wakeTime) {
+        // 1. 하루 전체 수면 (ex. 00:00~00:00)
+        if (sleepTime.equals(LocalTime.MIDNIGHT) && wakeTime.equals(LocalTime.MIDNIGHT)) {
+            return List.of(TimeRange.of(LocalTime.MIDNIGHT, LocalTime.MAX));
+        }
+
+        // 2. 같은 날 안에서 종료되는 경우 (ex. 06:00~14:00)
+        if (sleepTime.isBefore(wakeTime)) {
+            return List.of(TimeRange.of(sleepTime, wakeTime));
+        }
+
+        // 3. 다른 날까지 이어지는 경우 (ex. 22:00~08:00)
+        else {
+            return List.of(
+                    TimeRange.of(sleepTime, LocalTime.MIDNIGHT),
+                    TimeRange.of(LocalTime.MIDNIGHT, wakeTime)
+            );
         }
     }
 }
