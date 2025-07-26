@@ -26,9 +26,5 @@ public interface UserService {
 
     Optional<User> findUser(Long userId);
 
-    void saveAgreement(UserRequestDTO.AgreeRequest request, User user);
-
-    void saveNicknameAndJob(UserRequestDTO.NicknameJobRequest request, User user);
-
     UserResponseDTO.MyPageDTO getMyPage(User user);
 }

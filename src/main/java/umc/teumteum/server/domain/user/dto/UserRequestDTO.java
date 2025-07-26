@@ -1,5 +1,6 @@
 package umc.teumteum.server.domain.user.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,6 +10,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalTime;
 
 public class UserRequestDTO {
 
@@ -35,6 +38,7 @@ public class UserRequestDTO {
         private Boolean marketingConsent;
     }
 
+
     @Getter
     @Builder
     @NoArgsConstructor
@@ -51,5 +55,23 @@ public class UserRequestDTO {
         @Size(max = 10, message = "분야/직종은 최대 10자까지 가능합니다")
         @Schema(description = "사용자의 분야/직종 (최대 10자)", example = "개발자")
         private String jobField;
+    }
+
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SleepPatternRequest {
+
+        @NotNull(message = "취침 시간은 필수 입력입니다")
+        @Schema(description = "취침 시간", example = "02:00")
+        @JsonFormat(pattern = "HH:mm")
+        private LocalTime startTime;
+
+        @NotNull(message = "기상 시간은 필수 입력입니다")
+        @Schema(description = "기상 시간", example = "11:30")
+        @JsonFormat(pattern = "HH:mm")
+        private LocalTime endTime;
     }
 }

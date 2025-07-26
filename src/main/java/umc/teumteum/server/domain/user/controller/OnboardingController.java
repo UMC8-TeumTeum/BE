@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import umc.teumteum.server.domain.user.dto.UserRequestDTO;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.exception.status.UserSuccessStatus;
+import umc.teumteum.server.domain.user.service.OnboardingService;
 import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
@@ -24,6 +25,7 @@ import umc.teumteum.server.global.apiPayload.ApiResponse;
 public class OnboardingController {
 
     private final UserService userService;
+    private final OnboardingService onboardingService;
 
     @Operation(
             summary = "온보딩 약관 동의",
@@ -34,7 +36,7 @@ public class OnboardingController {
             @RequestBody @Valid UserRequestDTO.AgreeRequest request,
             @CurrentUser @Parameter(hidden = true) User user
             ) {
-        userService.saveAgreement(request, user);
+        onboardingService.saveAgreement(request, user);
         return ApiResponse.of(UserSuccessStatus.AGREEMENT_SAVED, null);
     }
 
@@ -48,7 +50,7 @@ public class OnboardingController {
             @RequestBody @Valid UserRequestDTO.NicknameJobRequest request,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
-        userService.saveNicknameAndJob(request, user);
+        onboardingService.saveNicknameAndJob(request, user);
         return ApiResponse.of(UserSuccessStatus.NICKNAME_JOB_SAVED, null);
     }
 
@@ -66,6 +68,20 @@ public class OnboardingController {
 
 
     @Operation(
+            summary = "온보딩 수면 패턴 등록",
+            description = "온보딩 과정에서 수면 패턴(취침시간/기상시간)을 저장합니다."
+    )
+    @PostMapping(value = "/onboarding/sleep-pattern", produces = "application/json")
+    public ApiResponse<Object> saveSleepPattern(
+            @RequestBody @Valid UserRequestDTO.SleepPatternRequest request,
+            @CurrentUser @Parameter(hidden = true) User user
+    ) {
+        onboardingService.saveSleepPattern(request, user);
+        return ApiResponse.of(UserSuccessStatus.SLEEP_PATTERN_SAVED, null);
+    }
+
+
+    @Operation(
             summary = "온보딩 요일별 반복 일정 등록",
             description = "온보딩 과정에서 요일별 반복 일정을 저장합니다."
     )
@@ -73,18 +89,6 @@ public class OnboardingController {
     public ApiResponse<Object> saveRoutine(
     ) {
         // TODO: 온보딩 루틴 저장 로직 구현
-        return null;
-    }
-
-
-    @Operation(
-            summary = "온보딩 수면 패턴 등록",
-            description = "온보딩 과정에서 수면 패턴(취침시간/기상시간)을 저장합니다."
-    )
-    @PostMapping(value = "/onboarding/sleep-pattern", produces = "application/json")
-    public ApiResponse<Object> saveSleepPattern(
-    ) {
-        // TODO: 온보딩 수면 패턴 저장 로직 구현
         return null;
     }
 

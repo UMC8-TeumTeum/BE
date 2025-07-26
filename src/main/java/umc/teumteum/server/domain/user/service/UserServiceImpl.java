@@ -119,73 +119,9 @@ public class UserServiceImpl implements UserService {
     }
 
 
-    // 온보딩 - 약관 동의
-    @Override
-    @Transactional
-    public void saveAgreement(UserRequestDTO.AgreeRequest request, User user) {
-        // 1. 사용자 step 확인
-        validateOnboardingStep(user, UserStep.AGREEMENT);
-
-        // 2. 기존 동의 이력이 있는지 확인
-        if (agreementRepository.existsByUser(user)) {
-            throw new UserHandler(UserErrorStatus.AGREEMENT_ALREADY_EXISTS);
-        }
-
-        // 3. 필수 항목 동의 여부 확인
-        if (!request.getTosConsent()) {
-            throw new UserHandler(UserErrorStatus.TOS_CONSENT_NOT_AGREED);
-        }
-        if (!request.getPrivacyConsent()) {
-            throw new UserHandler(UserErrorStatus.PRIVACY_CONSENT_NOT_AGREED);
-        }
-
-        // 4. Entity 변환
-        Agreement agreement = AgreementConverter.toAgreement(request, user);
-
-        // 5. 저장
-        agreementRepository.save(agreement);
-
-        // 6. 사용자 step 변경
-        user.updateStep(UserStep.ONBOARDING);
-    }
-
-
-    // 온보딩 - 닉네임 & 분야/직종 등록
-    @Override
-    @Transactional
-    public void saveNicknameAndJob(UserRequestDTO.NicknameJobRequest request, User user) {
-        // 1. 사용자 step 확인
-        validateOnboardingStep(user, UserStep.ONBOARDING);
-
-        // 2. 닉네임 중복 여부 확인
-        // 기존 닉네임이 null이면(=처음 닉네임 등록) 단순 중복 체크
-        if (user.getNickname() == null) {
-            if (userRepository.existsByNickname(request.getNickname())) {
-                throw new UserHandler(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
-            }
-        }
-        // 기존 닉네임이 있으면(=온보딩 중단으로 인한 닉네임 재등록) 본인 닉네임 이외와 중복 체크
-        else {
-            if (!request.getNickname().equals(user.getNickname()) && userRepository.existsByNickname(request.getNickname())) {
-                throw new UserHandler(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
-            }
-        }
-
-        // 3. 닉네임과 분야/직종 수정
-        user.updateNicknameAndJob(request.getNickname(), request.getJobField());
-    }
-
     @Override
     public UserResponseDTO.MyPageDTO getMyPage(User user) {
         String profileImageUrl = s3Util.toPresignedUrl(user.getProfileImageKey(), Duration.ofMinutes(30));
         return UserConverter.toMyPageDTO(user, profileImageUrl);
-    }
-
-
-    // 사용자의 step을 확인
-    private void validateOnboardingStep(User user, UserStep expectedStep) {
-        if (user.getStep() == null || !user.getStep().equals(expectedStep)) {
-            throw new UserHandler(UserErrorStatus.INVALID_STEP);
-        }
     }
 }
