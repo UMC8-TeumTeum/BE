@@ -169,11 +169,6 @@ public class HomeServiceImpl implements HomeService {
             throw new HomeException(HomeErrorStatus._CATEGORY_NOT_FOUND);
         }
 
-        // 동일한 wish가 이미 존재하는지 확인
-        if (isDuplicateWish(user, dto, null)) {
-            throw new HomeException(HomeErrorStatus._WISH_CONFLICT);
-        }
-
         // Wish & Wish Category 저장
         Wish wish = wishConverter.toWish(dto,user);
         List<WishCategory> wishCategories = wishConverter.toWishCategories(wish,categories);
@@ -218,11 +213,6 @@ public class HomeServiceImpl implements HomeService {
             throw new HomeException(HomeErrorStatus._CATEGORY_NOT_FOUND);
         }
 
-        // 동일한 wish가 이미 존재하는지 확인
-        if (isDuplicateWish(user, dto, wishId)) {
-            throw new HomeException(HomeErrorStatus._WISH_CONFLICT);
-        }
-
         wish.getWishCategories().clear(); // 기존 wish category 정보 제거
         // 새로운 WishCategory 저장 & Wish 필드 업데이트
         List<WishCategory> wishCategories = wishConverter.toWishCategories(wish, categories);
@@ -233,31 +223,6 @@ public class HomeServiceImpl implements HomeService {
                 dto.getEstimatedDuration()
         );
 
-    }
-
-    private boolean isDuplicateWish(User user, WishRequestDTO dto, Long currentWishId) {
-        // 중복 검사
-        // user, title, content, duration이 같은 wish
-        List<Wish> candidates = wishRepository.findByUserAndTitleAndContentAndEstimatedDuration(
-                user, dto.getTitle(), dto.getContent(), dto.getEstimatedDuration()
-        );
-
-        for (Wish candidate : candidates) {
-            // 현재 wish id(자기자신) 제외
-            if (currentWishId != null && currentWishId.equals(candidate.getId())) continue;
-
-            // 카테고리 ID 목록 비교
-            Set<Long> dtoCategoryIds = new HashSet<>(dto.getCategories());
-
-            Set<Long> candidateCategoryIds = candidate.getWishCategories().stream()
-                    .map(wc -> wc.getCategory().getId())
-                    .collect(Collectors.toSet());
-
-            if (dtoCategoryIds.equals(candidateCategoryIds)) {
-                return true;
-            } // 카테고리까지 동일하다면 중복
-        }
-        return false;
     }
 
     @Override
