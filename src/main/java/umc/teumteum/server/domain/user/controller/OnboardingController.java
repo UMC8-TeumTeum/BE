@@ -29,7 +29,7 @@ public class OnboardingController {
 
     @Operation(
             summary = "온보딩 약관 동의",
-            description = "온보딩 과정에서 약관 동의 정보를 저장합니다."
+            description = "온보딩 과정에서 약관 동의 정보를 등록합니다."
     )
     @PostMapping(value = "/onboarding/agreement", produces = "application/json")
     public ApiResponse<Object> saveTerms(
@@ -43,7 +43,7 @@ public class OnboardingController {
 
     @Operation(
             summary = "온보딩 닉네임과 분야/직종 등록",
-            description = "온보딩 과정에서 닉네임과 분야/직종 정보를 저장합니다."
+            description = "온보딩 과정에서 닉네임과 분야/직종 정보를 등록합니다."
     )
     @PostMapping(value = "/onboarding/nickname-job", produces = "application/json")
     public ApiResponse<Object> saveNicknameAndJob(
@@ -57,7 +57,7 @@ public class OnboardingController {
 
     @Operation(
             summary = "온보딩 프로필 이미지 등록",
-            description = "온보딩 과정에서 S3에 업로드된 프로필 이미지의 키를 저장합니다."
+            description = "온보딩 과정에서 S3에 업로드된 프로필 이미지의 키를 등록합니다."
     )
     @PostMapping(value = "/onboarding/profile-image", produces = "application/json")
     public ApiResponse<Object> saveProfileImageKey(
@@ -69,7 +69,7 @@ public class OnboardingController {
 
     @Operation(
             summary = "온보딩 수면 패턴 등록",
-            description = "온보딩 과정에서 수면 패턴(취침시간/기상시간)을 저장합니다."
+            description = "온보딩 과정에서 수면 패턴(취침시간/기상시간)을 등록합니다."
     )
     @PostMapping(value = "/onboarding/sleep-pattern", produces = "application/json")
     public ApiResponse<Object> saveSleepPattern(
@@ -83,7 +83,7 @@ public class OnboardingController {
 
     @Operation(
             summary = "온보딩 요일별 반복 일정 등록",
-            description = "온보딩 과정에서 요일별 반복 일정을 저장합니다."
+            description = "온보딩 과정에서 요일별 반복 일정을 등록합니다."
     )
     @PostMapping(value = "/onboarding/routine", produces = "application/json")
     public ApiResponse<Object> saveRoutine(
@@ -95,7 +95,7 @@ public class OnboardingController {
 
     @Operation(
             summary = "온보딩 리마인드 알림 설정 등록",
-            description = "온보딩 과정에서 리마인드 알림 시간 설정(1분 전/3분 전/5분 전/10분 전/30분 전)을 저장합니다."
+            description = "온보딩 과정에서 리마인드 알림 시간 설정(1분 전/3분 전/5분 전/10분 전/30분 전)을 등록합니다."
     )
     @PostMapping(value = "/onboarding/reminder", produces = "application/json")
     public ApiResponse<Object> saveReminder(

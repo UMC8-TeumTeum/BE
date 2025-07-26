@@ -80,7 +80,11 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Override
     @Transactional
     public void saveSleepPattern(OnboardingRequestDto.SleepPatternRequest request, User user) {
+        // 1. 사용자 step 확인
+        validateOnboardingStep(user, UserStep.ONBOARDING);
 
+        // 2. 수면패턴 수정 (온보딩 중단으로 인한 재등록도 처리 가능)
+        user.updateSleepPattern(request.getSleepTime(), request.getWakeTime());
     }
 
 

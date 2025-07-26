@@ -65,13 +65,13 @@ public class OnboardingRequestDto {
     public static class SleepPatternRequest {
 
         @NotNull(message = "취침 시간은 필수 입력입니다")
-        @Schema(description = "취침 시간", example = "02:00")
         @JsonFormat(pattern = "HH:mm")
-        private LocalTime startTime;
+        @Schema(description = "취침 시간", example = "02:00")
+        private LocalTime sleepTime;
 
         @NotNull(message = "기상 시간은 필수 입력입니다")
-        @Schema(description = "기상 시간", example = "11:30")
         @JsonFormat(pattern = "HH:mm")
-        private LocalTime endTime;
+        @Schema(description = "기상 시간", example = "11:30")
+        private LocalTime wakeTime;
     }
 }
