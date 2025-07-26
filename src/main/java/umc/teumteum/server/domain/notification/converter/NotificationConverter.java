@@ -1,17 +1,15 @@
 package umc.teumteum.server.domain.notification.converter;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import umc.teumteum.server.domain.notification.dto.NotificationResponseDto;
+import umc.teumteum.server.domain.notification.dto.NotificationResponseDto.NotificationDto;
 import umc.teumteum.server.domain.notification.entity.Notification;
 import umc.teumteum.server.domain.user.entity.User;
-import umc.teumteum.server.global.util.S3Util;
 
 public class NotificationConverter {
 
-  public static NotificationResponseDto toDto(Notification n, User friend, String profileImageUrl) {
-    return NotificationResponseDto.builder()
+  public static NotificationResponseDto.NotificationDto toNotificationDto(Notification n, User friend, String profileImageUrl) {
+    return NotificationResponseDto.NotificationDto.builder()
         .id(n.getId())
         .type(n.getType().name())
         .relatedId(n.getRelatedId())
@@ -21,6 +19,15 @@ public class NotificationConverter {
         .friendId(friend.getId())
         .friendNickname(friend.getNickname())
         .firendProfileImage(profileImageUrl)
+        .build();
+  }
+
+  public static NotificationResponseDto.SliceResponseDto toSliceResponseDto(List<NotificationDto> notificationList, boolean hasNext, int page, int size) {
+    return NotificationResponseDto.SliceResponseDto.builder()
+        .content(notificationList)
+        .hasNext(hasNext)
+        .currentPage(page)
+        .size(size)
         .build();
   }
 }
