@@ -31,9 +31,6 @@ public class TeumResponse extends BaseEntity {
     @JoinColumn(name = "receiver_user_id", nullable = false)
     private User receiverUser;
 
-    @Column(name = "message", nullable = false, columnDefinition = "TEXT")
-    private String message;
-
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)

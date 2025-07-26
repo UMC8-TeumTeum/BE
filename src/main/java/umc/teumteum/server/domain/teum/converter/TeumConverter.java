@@ -60,7 +60,6 @@ public class TeumConverter {
                             .receiverUser(receiver)
                             .status(ResponseStatus.PENDING)
                             .readAt(null)
-                            .message("")
                             .build();
                 })
                 .toList();
@@ -117,7 +116,6 @@ public class TeumConverter {
                 .teumRequest(request)
                 .receiverUser(newReceiver)
                 .status(ResponseStatus.PENDING)
-                .message("")
                 .readAt(null)
                 .build();
     }
