@@ -6,10 +6,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
-import umc.teumteum.server.domain.home.dto.response.TodoIdResponseDTO;
-import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDTO;
-import umc.teumteum.server.domain.home.dto.response.TodayScheduleResponseDTO;
+import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
+import umc.teumteum.server.domain.home.dto.response.TodoIdResponseDto;
+import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDto;
+import umc.teumteum.server.domain.home.dto.response.TodayScheduleResponseDto;
 import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
 import umc.teumteum.server.domain.home.service.HomeService;
 import umc.teumteum.server.domain.user.entity.User;
@@ -35,10 +35,10 @@ public class HomeController {
 
     @GetMapping(value = "/teum", produces = "application/json")
     @Operation(summary = "오늘의 빈틈 조회 API",description = "오늘의 빈틈 시간을 조회하는 API입니다. query string으로 오늘 날짜를 입력해주세요.")
-    public ApiResponse<List<TodayScheduleResponseDTO>> getTodayTeum(
+    public ApiResponse<List<TodayScheduleResponseDto>> getTodayTeum(
             @Parameter(name = "date", description = "조회할 날짜", example = "2025-07-24") @RequestParam("date") LocalDate date,
             @CurrentUser @Parameter(hidden = true) User user){
-        List<TodayScheduleResponseDTO> response = homeService.getTodaySchedule(date,user);
+        List<TodayScheduleResponseDto> response = homeService.getTodaySchedule(date,user);
         return ApiResponse.of(HomeSuccessStatus._TODAY_SCHEDULE,response);
     }
 
@@ -65,27 +65,27 @@ public class HomeController {
 
     @PostMapping(value = "/todo",consumes = "application/json", produces = "application/json")
     @Operation(summary = "투두 등록 API",description = "새로운 투두를 등록 API입니다.")
-    public ApiResponse<TodoIdResponseDTO> createTodo(
-            @RequestBody @Valid TodoRequestDTO request,
+    public ApiResponse<TodoIdResponseDto> createTodo(
+            @RequestBody @Valid TodoRequestDto request,
             @CurrentUser @Parameter(hidden = true) User user){
-        TodoIdResponseDTO response = homeService.createTodo(request, user);
+        TodoIdResponseDto response = homeService.createTodo(request, user);
         return ApiResponse.of(HomeSuccessStatus._TODO_CREATED,response);
     }
 
     @GetMapping(value = "/todo/{todoId}", produces = "application/json")
     @Operation(summary = "특정 투두 정보 조회 API",description = "특정투두의 상세정보를 조회하는 API입니다. path variable로 투두ID를 입력주세요.")
-    public ApiResponse<TodoInfoResponseDTO> getTodo(
+    public ApiResponse<TodoInfoResponseDto> getTodo(
             @Parameter(name= "todoId", description = "조회할 todo ID", example = "123") @PathVariable("todoId") Long todoId){
-        TodoInfoResponseDTO response = homeService.getTodoInfo(todoId);
+        TodoInfoResponseDto response = homeService.getTodoInfo(todoId);
         return ApiResponse.of(HomeSuccessStatus._TODO_LOADED,response);
     }
 
     @PutMapping(value = "/todo/{todoId}",consumes = "application/json", produces = "application/json")
     @Operation(summary = "특정 투두 정보 수정 API",description = "특정투두의 상세정보를 수정하는 API입니다. path variable로 투두ID를 입력주세요.")
-    public ApiResponse<TodoIdResponseDTO> updateTodo(
+    public ApiResponse<TodoIdResponseDto> updateTodo(
             @Parameter(name= "todoId", description = "수정할 todo ID", example = "123") @PathVariable("todoId") Long todoId,
-            @RequestBody @Valid TodoRequestDTO request){
-        TodoIdResponseDTO response = homeService.updateTodoInfo(request,todoId);
+            @RequestBody @Valid TodoRequestDto request){
+        TodoIdResponseDto response = homeService.updateTodoInfo(request,todoId);
         return ApiResponse.of(HomeSuccessStatus._TODO_UPDATED,response);
     }
 

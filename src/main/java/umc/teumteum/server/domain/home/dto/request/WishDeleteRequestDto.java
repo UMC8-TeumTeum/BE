@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(title = "WishDeleteRequestDTO : 위시 삭제 요청 DTO")
-public class WishDeleteRequestDTO {
+public class WishDeleteRequestDto {
 
     @NotEmpty
     @NotNull

@@ -1,9 +1,9 @@
 package umc.teumteum.server.domain.home.converter;
 
 import org.springframework.stereotype.Component;
-import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDTO;
-import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
-import umc.teumteum.server.domain.home.dto.response.WishlistResponseDTO;
+import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDto;
+import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
+import umc.teumteum.server.domain.home.dto.response.WishlistResponseDto;
 import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.mapping.WishCategory;
@@ -15,7 +15,7 @@ import java.util.List;
 public class WishConverter {
 
     // WishRequestDTO -> Wish
-    public Wish toWish(WishRequestDTO dto, User user) {
+    public Wish toWish(WishRequestDto dto, User user) {
         return Wish.builder()
                 .title(dto.getTitle())
                 .content(dto.getContent())
@@ -35,16 +35,16 @@ public class WishConverter {
     }
 
     // Wish -> WishInfoResponseDTO
-    public WishInfoResponseDTO toWishInfoDTO(Wish wish) {
+    public WishInfoResponseDto toWishInfoDTO(Wish wish) {
         // WishCategory에서 Category 정보를 추출
-        List<WishInfoResponseDTO.CategoryDTO> categoryDTOS = wish.getWishCategories().stream()
-                .map(wc -> WishInfoResponseDTO.CategoryDTO.builder()
+        List<WishInfoResponseDto.CategoryDTO> categoryDTOS = wish.getWishCategories().stream()
+                .map(wc -> WishInfoResponseDto.CategoryDTO.builder()
                         .id(wc.getCategory().getId())
                         .name(wc.getCategory().getName())
                         .build())
                 .toList();
 
-        return WishInfoResponseDTO.builder()
+        return WishInfoResponseDto.builder()
                 .title(wish.getTitle())
                 .content(wish.getContent())
                 .estimatedDuration(wish.getEstimatedDuration())
@@ -53,9 +53,9 @@ public class WishConverter {
     }
 
     // wish 엔티티 목록 -> wishDTO 목록
-    public static List<WishlistResponseDTO.WishDTO> toWishDTOList(List<Wish> wishes) {
+    public static List<WishlistResponseDto.WishDTO> toWishDTOList(List<Wish> wishes) {
         return wishes.stream()
-                .map(wish -> WishlistResponseDTO.WishDTO.builder()
+                .map(wish -> WishlistResponseDto.WishDTO.builder()
                         .id(wish.getId())
                         .title(wish.getTitle())
                         .estimatedDuration(wish.getEstimatedDuration())
@@ -64,8 +64,8 @@ public class WishConverter {
     }
 
     // 위시 목록 & 페이지 정보 -> WishlistResponseDTO
-    public WishlistResponseDTO toWishlistResponseDTO(List<Wish> wishes, int pageNumber, int pageSize, boolean hasNext, boolean isFirst, boolean isLast) {
-        return WishlistResponseDTO.builder()
+    public WishlistResponseDto toWishlistResponseDTO(List<Wish> wishes, int pageNumber, int pageSize, boolean hasNext, boolean isFirst, boolean isLast) {
+        return WishlistResponseDto.builder()
                 .wishlist(toWishDTOList(wishes))
                 .pageNumber(pageNumber)
                 .pageSize(pageSize)

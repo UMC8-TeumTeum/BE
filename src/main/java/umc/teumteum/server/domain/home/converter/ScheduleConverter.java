@@ -1,17 +1,15 @@
 package umc.teumteum.server.domain.home.converter;
 
 import org.springframework.stereotype.Component;
-import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
-import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDTO;
-import umc.teumteum.server.domain.home.dto.request.WishRequestDTO;
-import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDTO;
+import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
+import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
+import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDto;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.user.entity.User;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,7 +17,7 @@ import java.util.stream.Collectors;
 public class ScheduleConverter {
 
     // TodoRequestDTO -> Schedule
-    public Schedule toSchedule(TodoRequestDTO dto,User user) {
+    public Schedule toSchedule(TodoRequestDto dto, User user) {
         return Schedule.builder()
                 .title(dto.getTitle())
                 .date(dto.getStartTime().toLocalDate())
@@ -44,9 +42,9 @@ public class ScheduleConverter {
     }
 
     // Schedule -> TodoInfoResponseDTO
-    public TodoInfoResponseDTO toTodoInfoResponse(Schedule schedule, List<ScheduleReminder> reminders, List<String> profileUrls) {
+    public TodoInfoResponseDto toTodoInfoResponse(Schedule schedule, List<ScheduleReminder> reminders, List<String> profileUrls) {
 
-        return TodoInfoResponseDTO.builder()
+        return TodoInfoResponseDto.builder()
                 .type(schedule.getType())
                 .title(schedule.getTitle())
                 .startTime(schedule.getStartTime())
@@ -62,7 +60,7 @@ public class ScheduleConverter {
     }
 
     // Wish -> Schedule entity
-    public Schedule toScheduleFromWish(Wish wish, WishAssignRequestDTO dto) {
+    public Schedule toScheduleFromWish(Wish wish, WishAssignRequestDto dto) {
         return Schedule.builder()
                 .user(wish.getUser())
                 .title(wish.getTitle())
