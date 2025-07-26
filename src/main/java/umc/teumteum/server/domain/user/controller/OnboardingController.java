@@ -9,9 +9,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import umc.teumteum.server.domain.user.dto.UserRequestDTO;
+import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.exception.status.UserSuccessStatus;
+import umc.teumteum.server.domain.user.service.OnboardingService;
 import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
@@ -24,38 +25,39 @@ import umc.teumteum.server.global.apiPayload.ApiResponse;
 public class OnboardingController {
 
     private final UserService userService;
+    private final OnboardingService onboardingService;
 
     @Operation(
             summary = "온보딩 약관 동의",
-            description = "온보딩 과정에서 약관 동의 정보를 저장합니다."
+            description = "온보딩 과정에서 약관 동의 정보를 등록합니다."
     )
     @PostMapping(value = "/onboarding/agreement", produces = "application/json")
     public ApiResponse<Object> saveTerms(
-            @RequestBody @Valid UserRequestDTO.AgreeRequest request,
+            @RequestBody @Valid OnboardingRequestDto.AgreeRequest request,
             @CurrentUser @Parameter(hidden = true) User user
             ) {
-        userService.saveAgreement(request, user);
+        onboardingService.saveAgreement(request, user);
         return ApiResponse.of(UserSuccessStatus.AGREEMENT_SAVED, null);
     }
 
 
     @Operation(
             summary = "온보딩 닉네임과 분야/직종 등록",
-            description = "온보딩 과정에서 닉네임과 분야/직종 정보를 저장합니다."
+            description = "온보딩 과정에서 닉네임과 분야/직종 정보를 등록합니다."
     )
     @PostMapping(value = "/onboarding/nickname-job", produces = "application/json")
     public ApiResponse<Object> saveNicknameAndJob(
-            @RequestBody @Valid UserRequestDTO.NicknameJobRequest request,
+            @RequestBody @Valid OnboardingRequestDto.NicknameJobRequest request,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
-        userService.saveNicknameAndJob(request, user);
+        onboardingService.saveNicknameAndJob(request, user);
         return ApiResponse.of(UserSuccessStatus.NICKNAME_JOB_SAVED, null);
     }
 
 
     @Operation(
             summary = "온보딩 프로필 이미지 등록",
-            description = "온보딩 과정에서 S3에 업로드된 프로필 이미지의 키를 저장합니다."
+            description = "온보딩 과정에서 S3에 업로드된 프로필 이미지의 키를 등록합니다."
     )
     @PostMapping(value = "/onboarding/profile-image", produces = "application/json")
     public ApiResponse<Object> saveProfileImageKey(
@@ -66,8 +68,22 @@ public class OnboardingController {
 
 
     @Operation(
+            summary = "온보딩 수면 패턴 등록",
+            description = "온보딩 과정에서 수면 패턴(취침시간/기상시간)을 등록합니다."
+    )
+    @PostMapping(value = "/onboarding/sleep-pattern", produces = "application/json")
+    public ApiResponse<Object> saveSleepPattern(
+            @RequestBody @Valid OnboardingRequestDto.SleepPatternRequest request,
+            @CurrentUser @Parameter(hidden = true) User user
+    ) {
+        onboardingService.saveSleepPattern(request, user);
+        return ApiResponse.of(UserSuccessStatus.SLEEP_PATTERN_SAVED, null);
+    }
+
+
+    @Operation(
             summary = "온보딩 요일별 반복 일정 등록",
-            description = "온보딩 과정에서 요일별 반복 일정을 저장합니다."
+            description = "온보딩 과정에서 요일별 반복 일정을 등록합니다."
     )
     @PostMapping(value = "/onboarding/routine", produces = "application/json")
     public ApiResponse<Object> saveRoutine(
@@ -78,20 +94,8 @@ public class OnboardingController {
 
 
     @Operation(
-            summary = "온보딩 수면 패턴 등록",
-            description = "온보딩 과정에서 수면 패턴(취침시간/기상시간)을 저장합니다."
-    )
-    @PostMapping(value = "/onboarding/sleep-pattern", produces = "application/json")
-    public ApiResponse<Object> saveSleepPattern(
-    ) {
-        // TODO: 온보딩 수면 패턴 저장 로직 구현
-        return null;
-    }
-
-
-    @Operation(
             summary = "온보딩 리마인드 알림 설정 등록",
-            description = "온보딩 과정에서 리마인드 알림 시간 설정(1분 전/3분 전/5분 전/10분 전/30분 전)을 저장합니다."
+            description = "온보딩 과정에서 리마인드 알림 시간 설정(1분 전/3분 전/5분 전/10분 전/30분 전)을 등록합니다."
     )
     @PostMapping(value = "/onboarding/reminder", produces = "application/json")
     public ApiResponse<Object> saveReminder(
