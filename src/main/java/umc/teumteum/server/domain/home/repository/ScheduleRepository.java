@@ -105,4 +105,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
                                        @Param("startOfToday") LocalDateTime startOfToday,
                                        @Param("startOfTomorrow") LocalDateTime startOfTomorrow);
 
+    @Query("""
+    SELECT s.routine FROM Schedule s
+    WHERE s.user = :user AND s.date = :date AND s.isDeleted = true AND s.routine IS NOT NULL""")
+    List<Routine> findDeletedRoutinesByUserAndDate(@Param("user") User user, @Param("date") LocalDate date);
+
 }
