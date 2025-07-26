@@ -133,10 +133,8 @@ public class TeumConverter {
                 .startTime(start)
                 .endTime(end)
                 .user(receiver)
-                .isPublic(false)
-                .includeTeum(false)
+                .includeTeum(true)
                 .teumRequest(request)
-                .status(ScheduleStatus.ACTIVE)
                 .build();
     }
 
