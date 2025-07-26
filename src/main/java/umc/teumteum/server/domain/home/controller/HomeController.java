@@ -29,7 +29,9 @@ public class HomeController {
 
     @GetMapping(value = "/teum-time", produces = "application/json")
     @Operation(summary = "빈틈 시간 조회 API",description = "지금까지 채운 빈틈 시간 조회 API입니다.")
-    public ApiResponse<String> getTeumTime(){
+    public ApiResponse<String> getTeumTime(
+        @CurrentUser @Parameter(hidden = true) User user){
+        homeService.getTeaumTime(user);
         return ApiResponse.onSuccess(null);
     }
 

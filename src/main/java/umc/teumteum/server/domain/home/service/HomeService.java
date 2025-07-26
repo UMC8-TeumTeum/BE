@@ -46,4 +46,7 @@ public interface HomeService {
 
     // 카테고리 정보 조회
     List<CategoryResponseDto> getCategory();
+
+    // 빈틈 시간 조회
+    void getTeaumTime(User user);
 }

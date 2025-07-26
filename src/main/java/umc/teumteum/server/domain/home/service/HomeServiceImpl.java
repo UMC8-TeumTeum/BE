@@ -362,4 +362,11 @@ public class HomeServiceImpl implements HomeService {
         List<Category> categories = categoryRepository.findAll();
         return wishConverter.toCategoryResponseDTO(categories);
     }
+
+    public void getTeaumTime(User user) {
+
+
+    }
+
+
 }
