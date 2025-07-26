@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import umc.teumteum.server.domain.home.dto.request.TodoRequestDTO;
+import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
@@ -84,7 +84,7 @@ public class Schedule extends BaseEntity {
     @OneToMany(mappedBy = "schedule", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ScheduleReminder> scheduleReminders = new ArrayList<>();
 
-    public void updateField(TodoRequestDTO dto) {
+    public void updateField(TodoRequestDto dto) {
         this.title = dto.getTitle();
         this.date = dto.getStartTime().toLocalDate();
         this.startTime = dto.getStartTime();
