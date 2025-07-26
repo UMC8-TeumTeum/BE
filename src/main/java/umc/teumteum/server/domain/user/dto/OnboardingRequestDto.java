@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
 
-public class UserRequestDTO {
+public class OnboardingRequestDto {
 
     @Getter
     @Builder

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import umc.teumteum.server.domain.user.dto.UserRequestDTO;
+import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.exception.status.UserSuccessStatus;
 import umc.teumteum.server.domain.user.service.OnboardingService;
@@ -33,7 +33,7 @@ public class OnboardingController {
     )
     @PostMapping(value = "/onboarding/agreement", produces = "application/json")
     public ApiResponse<Object> saveTerms(
-            @RequestBody @Valid UserRequestDTO.AgreeRequest request,
+            @RequestBody @Valid OnboardingRequestDto.AgreeRequest request,
             @CurrentUser @Parameter(hidden = true) User user
             ) {
         onboardingService.saveAgreement(request, user);
@@ -47,7 +47,7 @@ public class OnboardingController {
     )
     @PostMapping(value = "/onboarding/nickname-job", produces = "application/json")
     public ApiResponse<Object> saveNicknameAndJob(
-            @RequestBody @Valid UserRequestDTO.NicknameJobRequest request,
+            @RequestBody @Valid OnboardingRequestDto.NicknameJobRequest request,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
         onboardingService.saveNicknameAndJob(request, user);
@@ -73,7 +73,7 @@ public class OnboardingController {
     )
     @PostMapping(value = "/onboarding/sleep-pattern", produces = "application/json")
     public ApiResponse<Object> saveSleepPattern(
-            @RequestBody @Valid UserRequestDTO.SleepPatternRequest request,
+            @RequestBody @Valid OnboardingRequestDto.SleepPatternRequest request,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
         onboardingService.saveSleepPattern(request, user);

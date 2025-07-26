@@ -4,17 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.user.converter.AgreementConverter;
-import umc.teumteum.server.domain.user.converter.UserConverter;
-import umc.teumteum.server.domain.user.dto.UserRequestDTO;
+import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.entity.Agreement;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.domain.user.exception.UserHandler;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.AgreementRepository;
-import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
-import umc.teumteum.server.global.util.S3Util;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +23,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     // 온보딩 - 약관 동의
     @Override
     @Transactional
-    public void saveAgreement(UserRequestDTO.AgreeRequest request, User user) {
+    public void saveAgreement(OnboardingRequestDto.AgreeRequest request, User user) {
         // 1. 사용자 step 확인
         validateOnboardingStep(user, UserStep.AGREEMENT);
 
@@ -57,7 +54,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     // 온보딩 - 닉네임 & 분야/직종 등록
     @Override
     @Transactional
-    public void saveNicknameAndJob(UserRequestDTO.NicknameJobRequest request, User user) {
+    public void saveNicknameAndJob(OnboardingRequestDto.NicknameJobRequest request, User user) {
         // 1. 사용자 step 확인
         validateOnboardingStep(user, UserStep.ONBOARDING);
 
@@ -82,7 +79,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     @Override
     @Transactional
-    public void saveSleepPattern(UserRequestDTO.SleepPatternRequest request, User user) {
+    public void saveSleepPattern(OnboardingRequestDto.SleepPatternRequest request, User user) {
 
     }
 
