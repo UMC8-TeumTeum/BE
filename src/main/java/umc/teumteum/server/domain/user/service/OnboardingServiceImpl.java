@@ -10,6 +10,7 @@ import umc.teumteum.server.domain.user.entity.Agreement;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
+import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.domain.user.exception.OnboardingHandler;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.AgreementRepository;
@@ -20,7 +21,9 @@ import umc.teumteum.server.global.util.TimeUtil;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -110,15 +113,25 @@ public class OnboardingServiceImpl implements OnboardingService {
         validateOnboardingStep(user, UserStep.ONBOARDING);
 
         // 2. 단일 일정 내에서 시작&종료시간 확인
-        request.getRoutine().forEach(this::validateSingleRoutineTimeRange);
+        List<OnboardingRequestDto.RoutineDTO> routines = request.getRoutine();
+        routines.forEach(this::validateSingleRoutineTimeRange);
 
-        // 3. 반복 일정끼리의 충돌 확인
-        validateRoutineTimeConflicts(request.getRoutine());
+        // 3. 요일별로 그룹핑 (EnumMap 사용)
+        Map<Weekday, List<OnboardingRequestDto.RoutineDTO>> routinesByDay =
+                routines.stream()
+                        .collect(Collectors.groupingBy(
+                                OnboardingRequestDto.RoutineDTO::getWeekday,
+                                () -> new EnumMap<>(Weekday.class),
+                                Collectors.toList()
+                        ));
 
-        // 4. 수면패턴과의 충돌 확인
-        validateSleepPatternConflicts(request.getRoutine(), user);
+        // 4. 반복 일정끼리의 충돌 확인
+        validateRoutineConflictsByDay(routinesByDay);
 
-        // 5. 반복 일정 저장 (온보딩 중단으로 인해 기존 반복 일정이 있을 수 있으므로 삭제 필요)
+        // 5. 수면패턴과의 충돌 확인
+        validateSleepPatternConflictsByDay(routinesByDay, user);
+
+        // 6. 반복 일정 저장 (온보딩 중단으로 인해 기존 반복 일정이 있을 수 있으므로 삭제 필요)
         List<Routine> newRoutines = RoutineConverter.toRoutineList(request.getRoutine(), user);
 
         routineRepository.deleteByUser(user);
@@ -155,38 +168,35 @@ public class OnboardingServiceImpl implements OnboardingService {
 
 
     // 반복일정끼리의 충돌 확인
-    private void validateRoutineTimeConflicts(List<OnboardingRequestDto.RoutineDTO> routines) {
-        // 1. 요일별로 그룹핑해서 일정이 2개 이상인 요일만 충돌 검증
-        routines.stream()
-                .collect(Collectors.groupingBy(OnboardingRequestDto.RoutineDTO::getWeekday))
-                .values().stream()
+    private void validateRoutineConflictsByDay(Map<Weekday, List<OnboardingRequestDto.RoutineDTO>> routinesByDay) {
+        routinesByDay.values().stream()
+                // 1. 반복일정 2개 이상인 요일만 충돌 검증
                 .filter(dayRoutines -> dayRoutines.size() > 1)
                 .forEach(dayRoutines -> {
 
-                    // 2. RoutineDTO를 TimeRange로 변환
+                    // 2. 반복일정을 TimeRange로 변환
                     List<TimeRange> timeRanges = dayRoutines.stream()
                             .map(TimeRange::from)
-                            .collect(Collectors.toList())
-                            ;
+                            .collect(Collectors.toList());
 
-                    // 3. 같은 요일 내에서의 시간 충돌 검증
                     timeUtil.validateTimeRangeConflicts(timeRanges, UserErrorStatus.ROUTINE_TIME_CONFLICT);
                 });
+
     }
 
-
     // 수면패턴과 반복일정 간의 충돌 확인
-    private void validateSleepPatternConflicts(List<OnboardingRequestDto.RoutineDTO> routines, User user) {
-        // 1. 수면패턴이 저장되어 있는지 확인 (선택입력이기 때문)
+    private void validateSleepPatternConflictsByDay(Map<Weekday, List<OnboardingRequestDto.RoutineDTO>> routinesByDay, User user) {
+        // 1. 수면패턴 저장 여부 확인 (선택입력이기 때문)
         if (user.getSleepTime() == null && user.getWakeTime() == null) {
             return;
         }
 
-        // 2. 요일별로 그룹핑해서 반복일정과 수면패턴을 합쳐서 일정이 2개 이상인 요일만 충돌 검증
-        // (반복일정없이 수면패턴이 2개로 나뉜 경우에도 일정 2개로 판단하기 때문에 검증 진행함)
-        routines.stream()
-                .collect(Collectors.groupingBy(OnboardingRequestDto.RoutineDTO::getWeekday))
-                .values().stream()
+        // 2. 수면패턴을 TimeRange로 변환
+        List<TimeRange> sleepTimeRanges = getSleepTimeRanges(user.getSleepTime(), user.getWakeTime());
+
+        // 3. 요일별로 반복일정과 수면패턴을 합쳐서 일정이 2개 이상인 요일만 충돌 검증
+        // 수면패턴만 2개인 경우(22:00~00:00 + 00:00~08:00) 에도 검증 진행
+        routinesByDay.values().stream()
                 .map(dayRoutines -> {
 
                     List<TimeRange> allTimeRanges = new ArrayList<>();
@@ -197,13 +207,13 @@ public class OnboardingServiceImpl implements OnboardingService {
                             .toList());
 
                     // 수면패턴 추가
-                    allTimeRanges.addAll(getSleepTimeRanges(user.getSleepTime(), user.getWakeTime()));
+                    allTimeRanges.addAll(sleepTimeRanges);
 
                     return allTimeRanges;
-
                 })
                 .filter(allTimeRanges -> allTimeRanges.size() > 1)
-                .forEach(allTimeRanges -> timeUtil.validateTimeRangeConflicts(allTimeRanges, UserErrorStatus.ROUTINE_SLEEP_CONFLICT));
+                .forEach(allTimeRanges ->
+                        timeUtil.validateTimeRangeConflicts(allTimeRanges, UserErrorStatus.ROUTINE_SLEEP_CONFLICT));
     }
 
 
@@ -211,7 +221,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     private List<TimeRange> getSleepTimeRanges(LocalTime sleepTime, LocalTime wakeTime) {
         // 1. 하루 전체 수면 (ex. 00:00~00:00)
         if (sleepTime.equals(LocalTime.MIDNIGHT) && wakeTime.equals(LocalTime.MIDNIGHT)) {
-            return List.of(TimeRange.of(LocalTime.MIDNIGHT, LocalTime.MAX));
+            return List.of(TimeRange.of(LocalTime.MIDNIGHT, LocalTime.MIDNIGHT));
         }
 
         // 2. 같은 날 안에서 종료되는 경우 (ex. 06:00~14:00)
