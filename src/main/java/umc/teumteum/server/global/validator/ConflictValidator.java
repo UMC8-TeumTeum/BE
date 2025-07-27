@@ -7,6 +7,9 @@ import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.exception.status.HomeErrorStatus;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
+import umc.teumteum.server.domain.teum.entity.TeumRequest;
+import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
+import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.exception.GeneralException;
 
@@ -20,6 +23,7 @@ import java.util.List;
 public class ConflictValidator {
 
     private final ScheduleRepository scheduleRepository;
+    private final TeumRequestRepository teumRequestRepository;
 
     /**
      * 단일 사용자에 대한 Teum 시간 중복 검증 로직
@@ -64,9 +68,17 @@ public class ConflictValidator {
         }
     }
 
-
     private void checkWithTeumRequests(User user, LocalDate date, LocalTime startTime, LocalTime endTime) {
-        // TODO: 확정되지 않은 ACTIVE TeumRequest && 시간 겹침 검사
+        List<TeumRequest> conflicts = teumRequestRepository.findConflictingTeumRequest(
+                user,
+                date,
+                startTime,
+                endTime
+        );
+
+        if (!conflicts.isEmpty()) {
+            throw new GeneralException(TeumErrorStatus.TEUM_REQUEST_CONFLICT);
+        }
     }
 
     private void checkWithRoutines(User user, LocalDate date, LocalTime startTime, LocalTime endTime) {
