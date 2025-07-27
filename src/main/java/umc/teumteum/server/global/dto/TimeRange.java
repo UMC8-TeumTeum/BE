@@ -12,12 +12,12 @@ public class TimeRange {
     private final LocalTime startTime;
     private final LocalTime endTime;
 
-    // RoutineDTO에서 변환
+    // RoutineDTO에서 TimeRange로 변환
     public static TimeRange from(OnboardingRequestDto.RoutineDTO routine) {
         return new TimeRange(routine.getStartTime(), routine.getEndTime());
     }
 
-    // 수면패턴에서 변환
+    // [시작&종료] 일정을 TimeRange로 변환
     public static TimeRange of(LocalTime startTime, LocalTime endTime) {
         return new TimeRange(startTime, endTime);
     }
