@@ -17,7 +17,7 @@ public enum TeumErrorStatus implements BaseErrorCode {
     INVALID_TEUM_TIME(HttpStatus.BAD_REQUEST, "TEUM4001", "시작 시간과 종료 시간이 유효하지 않습니다."),
     DUPLICATE_RECEIVER(HttpStatus.CONFLICT, "TEUM4090", "수신자 목록에 중복된 사용자가 포함되어 있습니다."),
     CANNOT_REQUEST_SELF(HttpStatus.CONFLICT, "TEUM4091", "자기 자신에게 틈 요청을 보낼 수 없습니다."),
-    SCHEDULE_CONFLICT(HttpStatus.CONFLICT, "TEUM4092", "이미 해당 시간에 다른 스케줄이 존재합니다."),
+    TEUM_REQUEST_CONFLICT(HttpStatus.CONFLICT, "TEUM4092", "해당 시간에 틈 요청이 존재합니다."),
     REQUEST_ALREADY_CLOSED(HttpStatus.BAD_REQUEST, "TEUM4002", "이미 마감된 요청입니다."),
     INVALID_PARENT_REQUEST(HttpStatus.BAD_REQUEST, "TEUM4003", "재요청의 기준이 되는 요청이 올바르지 않습니다."),
     REQUEST_NOT_ONE_TO_ONE(HttpStatus.BAD_REQUEST, "TEUM4004", "재요청은 수신자가 1명인 요청에 대해서만 가능합니다."),
