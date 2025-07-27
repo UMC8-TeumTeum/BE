@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @Schema(title = "WishInfoResponseDTO : 위시 정보 조회 응답 DTO")
-public class WishInfoResponseDTO {
+public class WishInfoResponseDto {
     @Schema(description = "위시 제목", example = "string")
     private String title;
 

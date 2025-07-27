@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @Schema(title = "WishAssignRequestDTO : 위시 투두 등록 요청 DTO")
-public class WishAssignRequestDTO {
+public class WishAssignRequestDto {
 
     @NotNull
     @Schema(description = "시작 시간", example = "2025-07-24T10:00")

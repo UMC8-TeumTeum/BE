@@ -13,7 +13,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(title = "WishRequestDTO : 위시 등록 DTO")
-public class WishRequestDTO {
+public class WishRequestDto {
 
     @NotBlank
     @Schema(description = "위시 제목", example = "string")

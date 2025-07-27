@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @Schema(title = "WishlistResponseDTO : 위시리스트 조회 응답 DTO")
-public class WishlistResponseDTO {
+public class WishlistResponseDto {
 
     @Schema(description = "위시 목록", example = "[{ id: 1, title: 'string', estimatedDuration: '10m' }]")
     private List<WishDTO> wishlist;

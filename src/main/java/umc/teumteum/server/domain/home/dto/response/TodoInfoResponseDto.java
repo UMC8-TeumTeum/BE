@@ -1,22 +1,19 @@
 package umc.teumteum.server.domain.home.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 @Getter
 @Builder
 @AllArgsConstructor
 @Schema(title = "TodoInfoResponseDTO : 투두 정보 조회 응답 DTO")
-public class TodoInfoResponseDTO {
+public class TodoInfoResponseDto {
 
     @Schema(description = "투두 타입", example = "TODO | WISH | TEUM | AI")
     private ScheduleType type;
