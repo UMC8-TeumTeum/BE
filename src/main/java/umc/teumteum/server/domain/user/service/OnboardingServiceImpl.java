@@ -43,12 +43,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 1. 사용자 step 확인
         validateOnboardingStep(user, UserStep.AGREEMENT);
 
-        // 2. 기존 동의 이력이 있는지 확인
-        if (agreementRepository.existsByUser(user)) {
-            throw new OnboardingHandler(UserErrorStatus.AGREEMENT_ALREADY_EXISTS);
-        }
-
-        // 3. 필수 항목 동의 여부 확인
+        // 2. 필수 항목 동의 여부 확인
         if (!request.getTosConsent()) {
             throw new OnboardingHandler(UserErrorStatus.TOS_CONSENT_NOT_AGREED);
         }
@@ -56,13 +51,13 @@ public class OnboardingServiceImpl implements OnboardingService {
             throw new OnboardingHandler(UserErrorStatus.PRIVACY_CONSENT_NOT_AGREED);
         }
 
-        // 4. Entity 변환
+        // 3. Entity 변환
         Agreement agreement = AgreementConverter.toAgreement(request, user);
 
-        // 5. 저장
+        // 4. 저장
         agreementRepository.save(agreement);
 
-        // 6. 사용자 step 변경
+        // 5. 사용자 step 변경
         user.updateStep(UserStep.ONBOARDING);
     }
 
