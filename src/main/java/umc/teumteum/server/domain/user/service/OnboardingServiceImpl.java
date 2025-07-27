@@ -165,7 +165,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     // 반복일정끼리의 충돌 확인
     private void validateRoutineConflictsByDay(Map<Weekday, List<OnboardingRequestDto.RoutineDTO>> routinesByDay) {
         routinesByDay.values().stream()
-                // 1. 반복일정 2개 이상인 요일만 충돌 검증
+                // 1. 반복일정 2개 이상일 때만 충돌 검증
                 .filter(dayRoutines -> dayRoutines.size() > 1)
                 .forEach(dayRoutines -> {
 
@@ -176,7 +176,6 @@ public class OnboardingServiceImpl implements OnboardingService {
 
                     timeUtil.validateTimeRangeConflicts(timeRanges, UserErrorStatus.ROUTINE_TIME_CONFLICT);
                 });
-
     }
 
     // 수면패턴과 반복일정 간의 충돌 확인
@@ -189,14 +188,13 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 2. 수면패턴을 TimeRange로 변환
         List<TimeRange> sleepTimeRanges = getSleepTimeRanges(user.getSleepTime(), user.getWakeTime());
 
-        // 3. 요일별로 반복일정과 수면패턴을 합쳐서 일정이 2개 이상인 요일만 충돌 검증
-        // 수면패턴만 2개인 경우(22:00~00:00 + 00:00~08:00) 에도 검증 진행
+        // 3. 반복일정과 수면패턴 시간 충돌 검증
         routinesByDay.values().stream()
                 .map(dayRoutines -> {
 
                     List<TimeRange> allTimeRanges = new ArrayList<>();
 
-                    // 반복일정들 추가
+                    // 반복일정 추가
                     allTimeRanges.addAll(dayRoutines.stream()
                             .map(TimeRange::from)
                             .toList());
@@ -206,7 +204,6 @@ public class OnboardingServiceImpl implements OnboardingService {
 
                     return allTimeRanges;
                 })
-                .filter(allTimeRanges -> allTimeRanges.size() > 1)
                 .forEach(allTimeRanges ->
                         timeUtil.validateTimeRangeConflicts(allTimeRanges, UserErrorStatus.ROUTINE_SLEEP_CONFLICT));
     }
