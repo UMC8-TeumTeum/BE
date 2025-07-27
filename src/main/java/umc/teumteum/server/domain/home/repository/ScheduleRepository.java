@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
@@ -114,5 +115,24 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     WHERE s.user = :user AND s.date = :date AND s.isDeleted = true AND s.routine IS NOT NULL""")
     List<Routine> findDeletedRoutinesByUserAndDate(@Param("user") User user, @Param("date") LocalDate date);
 
+    /**
+     * 사용자 일정 중 다음 조건을 모두 만족하는 일정들을 조회:
+     * - 해당 사용자(user)의 일정이며
+     * - 일정 타입이 TODO, WISH, AI 중 하나이며
+     * - 요청된 시간 범위(start ~ end)와 겹치는 일정
+     */
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user = :user
+      AND s.type IN :types
+      AND s.startTime < :end
+      AND s.endTime > :start
+""")
+    List<Schedule> findConflictingSchedules(
+            @Param("user") User user,
+            @Param("types") List<ScheduleType> types,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 
 }
