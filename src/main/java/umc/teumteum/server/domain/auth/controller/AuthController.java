@@ -48,8 +48,8 @@ public class AuthController {
             summary = "토큰 재발급",
             description = "리프레시 토큰을 사용하여 새로운 액세스 토큰&리프레시 토큰을 발급받습니다."
     )
-    @PostMapping(value = "/refresh", produces = "application/json")
-    public ApiResponse<Object> refreshToken(
+    @PostMapping(value = "/reissue", produces = "application/json")
+    public ApiResponse<Object> reissueToken(
     ) {
         // TODO: 토큰 재발급 로직 구현
         return null;
