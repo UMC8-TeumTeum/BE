@@ -120,19 +120,29 @@ public class ConflictValidator {
     }
 
 
-    private void checkWithSleepPattern(User user, LocalDate date, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    private void checkWithSleepPattern(User user, LocalDate date, LocalDateTime requestStart, LocalDateTime requestEnd) {
         LocalTime sleepTime = user.getSleepTime();
         LocalTime wakeTime = user.getWakeTime();
 
-        LocalDateTime sleepStart = LocalDateTime.of(date, sleepTime);
-        LocalDateTime sleepEnd = sleepTime.isBefore(wakeTime)
+        // 수면 시간은 이전 날짜 기준으로도 체크 필요
+        // 1) 오늘 기준 수면 시간
+        LocalDateTime sleepStartToday = LocalDateTime.of(date, sleepTime);
+        LocalDateTime sleepEndToday = sleepTime.isBefore(wakeTime)
                 ? LocalDateTime.of(date, wakeTime)
-                : LocalDateTime.of(date.plusDays(1), wakeTime);  // 자정 넘기는 경우 다음 날로
+                : LocalDateTime.of(date.plusDays(1), wakeTime);
 
-        if (isOverlapping(startDateTime, endDateTime, sleepStart, sleepEnd)) {
+        // 2) 전날 기준 수면 시간 (자정 넘긴 부분 때문에)
+        LocalDateTime sleepStartPrev = LocalDateTime.of(date.minusDays(1), sleepTime);
+        LocalDateTime sleepEndPrev = sleepTime.isBefore(wakeTime)
+                ? LocalDateTime.of(date.minusDays(1), wakeTime)
+                : LocalDateTime.of(date, wakeTime);
+
+        if (isOverlapping(requestStart, requestEnd, sleepStartToday, sleepEndToday)
+                || isOverlapping(requestStart, requestEnd, sleepStartPrev, sleepEndPrev)) {
             throw new GeneralException(ConflictErrorStatus.SLEEP_PATTERN_CONFLICT);
         }
     }
+
 
     /**
      * 두 시간 구간이 겹치는지 여부를 반환
