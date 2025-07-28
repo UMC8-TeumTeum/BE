@@ -116,4 +116,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     List<Schedule> findAllByUserAndIncludeTeumTrueAndEndTimeBefore(User user, LocalDateTime now);
 
+    @Query("SELECT s FROM Schedule s JOIN FETCH s.user WHERE s.date = :date")
+    List<Schedule> findAllByDateWithUser(@Param("date") LocalDate today);
 }
