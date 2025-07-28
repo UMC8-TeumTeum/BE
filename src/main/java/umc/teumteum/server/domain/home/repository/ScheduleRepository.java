@@ -149,4 +149,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("date") LocalDate date
     );
 
+    boolean existsByTeumRequestAndUser(TeumRequest teumRequest, User user);
+
 }

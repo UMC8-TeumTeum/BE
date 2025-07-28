@@ -203,9 +203,9 @@ public class TeumServiceImpl implements TeumService {
             Schedule receiverSchedule = TeumConverter.toScheduleFromTeumRequest(request, receiver);
             scheduleRepository.save(receiverSchedule);
 
-            // 스케줄이 없는 경우에만 요청자에게도 생성
-            if (request.getSchedules().isEmpty()) {
-                User requester = request.getUser();
+            // 요청자 본인의 스케줄이 없는 경우에만 생성
+            User requester = request.getUser();
+            if (!scheduleRepository.existsByTeumRequestAndUser(request, requester)) {
                 Schedule requesterSchedule = TeumConverter.toScheduleFromTeumRequest(request, requester);
                 scheduleRepository.save(requesterSchedule);
             }
