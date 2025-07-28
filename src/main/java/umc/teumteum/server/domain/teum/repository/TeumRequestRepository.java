@@ -18,10 +18,11 @@ public interface TeumRequestRepository extends JpaRepository<TeumRequest, Long> 
                                      @Param("nowTime") java.time.LocalTime nowTime);
 
     /**
-     * 사용자와 관련된 ACTIVE 상태의 TeumRequest 중
-     * - 틈 요청에서 파생된 약속된 틈이 없으며
-     * - 날짜가 일치하고
-     * - 시간대가 겹치는 요청들을 조회
+     * 다음 조건을 모두 만족하는 TeumRequest들을 조회:
+     * - 요청자 또는 수신자가 해당 사용자(user)인 요청
+     * - 상태가 ACTIVE이고 아직 약속된 스케줄이 없음 (schedules.isEmpty)
+     * - 요청 날짜(date)가 지정한 날짜와 일치
+     * → 시간 겹침 여부는 자바에서 별도 검사
      */
     @Query("""
     SELECT tr FROM TeumRequest tr
@@ -30,14 +31,11 @@ public interface TeumRequestRepository extends JpaRepository<TeumRequest, Long> 
       AND (tr.user = :user OR r.receiverUser = :user)
       AND tr.schedules IS EMPTY
       AND tr.date = :date
-      AND FUNCTION('TIME', tr.startTime) < :end
-      AND FUNCTION('TIME', tr.endTime) > :start
 """)
-    List<TeumRequest> findConflictingTeumRequest(
+    List<TeumRequest> findTeumRequestsByUserAndDate(
             @Param("user") User user,
-            @Param("date") LocalDate date,
-            @Param("start") LocalTime start,
-            @Param("end") LocalTime end
+            @Param("date") LocalDate date
     );
+
 
 }

@@ -38,7 +38,7 @@ public class ConflictValidator {
         LocalDateTime endDateTime = LocalDateTime.of(date, endTime);
 
         checkWithSchedules(user, startDateTime, endDateTime);
-        checkWithTeumRequests(user, date, startTime, endTime);
+        checkWithTeumRequests(user, startDateTime, endDateTime);
         checkWithRoutines(user, date, startDateTime, endDateTime);
         checkWithSleepPattern(user, date, startDateTime, endDateTime);
     }
@@ -71,16 +71,16 @@ public class ConflictValidator {
         }
     }
 
-    private void checkWithTeumRequests(User user, LocalDate date, LocalTime startTime, LocalTime endTime) {
-        List<TeumRequest> conflicts = teumRequestRepository.findConflictingTeumRequest(
-                user,
-                date,
-                startTime,
-                endTime
-        );
+    private void checkWithTeumRequests(User user, LocalDateTime requestStart, LocalDateTime requestEnd) {
+        List<TeumRequest> requests = teumRequestRepository.findRelatedTeumRequestsByUserAndDate(user, requestStart.toLocalDate());
 
-        if (!conflicts.isEmpty()) {
-            throw new GeneralException(TeumErrorStatus.TEUM_REQUEST_CONFLICT);
+        for (TeumRequest request : requests) {
+            LocalDateTime teumStart = LocalDateTime.of(request.getDate(), request.getStartTime());
+            LocalDateTime teumEnd = LocalDateTime.of(request.getDate(), request.getEndTime());
+
+            if (isOverlapping(requestStart, requestEnd, teumStart, teumEnd)) {
+                throw new GeneralException(TeumErrorStatus.TEUM_REQUEST_CONFLICT);
+            }
         }
     }
 
