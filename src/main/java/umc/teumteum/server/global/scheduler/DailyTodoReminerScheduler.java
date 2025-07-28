@@ -14,6 +14,7 @@ import umc.teumteum.server.domain.fcm.repository.FcmTokenRepository;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.notification.dto.NotificationPayload;
 import umc.teumteum.server.global.notification.sender.FcmNotificationSender;
@@ -24,7 +25,6 @@ import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
 @RequiredArgsConstructor
 public class DailyTodoReminerScheduler {
 
-  private final UserRepository userRepository;
   private final ScheduleRepository scheduleRepository;
   private final FcmNotificationSender fcmNotificationSender;
   private final FcmTokenRepository fcmTokenRepository;
@@ -42,10 +42,12 @@ public class DailyTodoReminerScheduler {
     List<Schedule> schedules = scheduleRepository.findAllByDateWithUser(today);
     // 2. 유저 별로 스케줄 묶기
     Map<User, List<Schedule>> scheduleMap = schedules.stream().collect(Collectors.groupingBy(Schedule::getUser));
-    // 3. 유저 리스트 추출
+    // 3. 활성화 상태의 유저 리스트 추출
     List<User> users = List.copyOf(scheduleMap.keySet());
+    List<User> activeUsers = users.stream().filter(user -> user.getStatus() == UserStatus.ACTIVE)
+        .toList();
     // 4. 유저 토큰 조회
-    List<FcmToken> allTokens = fcmTokenRepository.findActiveTokensByUsers(users);
+    List<FcmToken> allTokens = fcmTokenRepository.findActiveTokensByUsers(activeUsers);
     Map<Long, List<FcmToken>> tokenMap = allTokens.stream()
         .collect(Collectors.groupingBy(token -> token.getUser().getId()));
 
