@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
+import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
 import umc.teumteum.server.domain.home.dto.response.TodoIdResponseDto;
 import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDto;
 import umc.teumteum.server.domain.home.dto.response.TodayScheduleResponseDto;
@@ -29,8 +30,10 @@ public class HomeController {
 
     @GetMapping(value = "/teum-time", produces = "application/json")
     @Operation(summary = "빈틈 시간 조회 API",description = "지금까지 채운 빈틈 시간 조회 API입니다.")
-    public ApiResponse<String> getTeumTime(){
-        return ApiResponse.onSuccess(null);
+    public ApiResponse<HomeResponseDto.TeumTimeDto> getTeumTime(
+            @CurrentUser @Parameter(hidden = true) User user){
+        HomeResponseDto.TeumTimeDto response = homeService.getTeaumTime(user);
+        return ApiResponse.of(HomeSuccessStatus._TEUMTIME_LOADED, response);
     }
 
     @GetMapping(value = "/teum", produces = "application/json")
