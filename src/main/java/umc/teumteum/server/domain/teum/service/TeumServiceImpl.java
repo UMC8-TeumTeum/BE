@@ -165,13 +165,16 @@ public class TeumServiceImpl implements TeumService {
     @Override
     @Transactional
     public TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto) {
+        // 응답 조회 및 권한 검증
         TeumResponse response = getResponseOrThrow(responseId);
         validateReceiver(response, userId);
 
+        // 이미 처리된 응답인 경우 예외
         if (response.getStatus() != ResponseStatus.PENDING) {
             throw new GeneralException(TeumErrorStatus.REQUEST_ALREADY_CLOSED);
         }
 
+        // 요청된 응답 상태 유효성 검증
         ResponseStatus newStatus;
         try {
             newStatus = ResponseStatus.valueOf(requestDto.getStatus().toUpperCase());
@@ -179,6 +182,7 @@ public class TeumServiceImpl implements TeumService {
             throw new GeneralException(TeumErrorStatus.INVALID_RESPONSE_STATUS);
         }
 
+        // 상태 변경 적용
         response.changeStatus(newStatus);
 
         boolean isAccepted = newStatus == ResponseStatus.ACCEPTED;
@@ -186,12 +190,20 @@ public class TeumServiceImpl implements TeumService {
 
         if (isAccepted) {
             TeumRequest request = response.getTeumRequest();
-
             User receiver = response.getReceiverUser();
+
+            // 수락 시 응답자 개인 일정 충돌 검증
+            LocalDate date = request.getDate();
+            LocalTime startTime = request.getStartTime();
+            LocalTime endTime = request.getEndTime();
+
+            conflictValidator.validateTeum(receiver, date, startTime, endTime);
+
+            // 수신자(응답자) 일정 생성
             Schedule receiverSchedule = TeumConverter.toScheduleFromTeumRequest(request, receiver);
             scheduleRepository.save(receiverSchedule);
 
-            // 스케줄이 없는 경우에만 요청자에게 생성
+            // 스케줄이 없는 경우에만 요청자에게도 생성
             if (request.getSchedules().isEmpty()) {
                 User requester = request.getUser();
                 Schedule requesterSchedule = TeumConverter.toScheduleFromTeumRequest(request, requester);
@@ -202,9 +214,9 @@ public class TeumServiceImpl implements TeumService {
             teumId = receiverSchedule.getId();
         }
 
-
         return TeumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
     }
+
 
 
     @Override
