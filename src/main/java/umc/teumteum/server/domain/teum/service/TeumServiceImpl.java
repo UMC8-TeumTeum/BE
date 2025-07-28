@@ -31,6 +31,7 @@ import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 import umc.teumteum.server.global.util.S3Util;
+import umc.teumteum.server.global.validator.ConflictValidator;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -48,6 +49,7 @@ import static umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus.I
 public class TeumServiceImpl implements TeumService {
 
     private final S3Util s3Util;
+    private final ConflictValidator conflictValidator;
     private final UserRepository userRepository;
     private final TeumRequestRepository teumRequestRepository;
     private final TeumResponseRepository teumResponseRepository;
@@ -56,8 +58,26 @@ public class TeumServiceImpl implements TeumService {
     @Override
     @Transactional
     public Long createRequest(TeumRequestDto dto, User user) {
-        TeumRequest request = TeumConverter.toTeumRequest(dto, user);
+        // 시간 순서 검증
+        validateTimeOrder(dto.getStartTime(), dto.getEndTime());
 
+        // 날짜 및 시간 파싱
+        LocalDate date = LocalDate.parse(dto.getDate());
+        LocalTime startTime = LocalTime.parse(dto.getStartTime());
+        LocalTime endTime = LocalTime.parse(dto.getEndTime());
+
+        // 모든 사용자 조회 (요청자 + 수신자)
+        List<User> receivers = dto.getReceiverUserIds().stream()
+                .map(this::getUserOrThrow)
+                .toList();
+        List<User> allParticipants = new ArrayList<>(receivers);
+        allParticipants.add(user);
+
+        // Validator 호출
+        conflictValidator.validateTeumForUsers(allParticipants, date, startTime, endTime);
+
+        // 요청 객체 생성 및 저장
+        TeumRequest request = TeumConverter.toTeumRequest(dto, user);
         List<TeumResponse> responses = TeumConverter.toTeumResponses(
                 dto.getReceiverUserIds(),
                 user.getId(),
@@ -74,17 +94,27 @@ public class TeumServiceImpl implements TeumService {
     @Override
     @Transactional
     public Long createResendRequest(Long parentRequestId, TeumResendRequestDto dto, User user) {
+        // 원본 요청 확인 및 권한 검증
         TeumRequest parent = findActiveRequestOrThrow(parentRequestId);
-
         validateResendableRequest(parent);
         validateResender(parent, user.getId());
+
+        // 시간 순서 검증
         validateTimeOrder(dto.getStartTime(), dto.getEndTime());
 
-        TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, user); // ✅ User 객체 직접 전달
+        // 시간 충돌 검증 (날짜는 부모 요청 기준)
+        LocalDate date = parent.getDate();
+        LocalTime startTime = LocalTime.parse(dto.getStartTime());
+        LocalTime endTime = LocalTime.parse(dto.getEndTime());
 
+        conflictValidator.validateTeum(user, date, startTime, endTime);
+
+        // 요청 및 응답 생성
+        TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, user);
         TeumResponse newResponse = TeumConverter.toResendTeumResponse(newRequest, parent.getUser());
         newRequest.getTeumResponses().add(newResponse);
 
+        // 원래 요청 상태 변경
         TeumResponse originalResponse = parent.getTeumResponses().getFirst();
         originalResponse.changeStatus(ResponseStatus.RESEND);
 
