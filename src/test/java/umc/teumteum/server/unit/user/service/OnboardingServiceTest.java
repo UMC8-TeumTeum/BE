@@ -1,4 +1,4 @@
-package umc.teumteum.server.service;
+package umc.teumteum.server.unit.user.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
