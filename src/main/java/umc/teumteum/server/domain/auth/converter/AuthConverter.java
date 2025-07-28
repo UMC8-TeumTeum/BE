@@ -3,6 +3,7 @@ package umc.teumteum.server.domain.auth.converter;
 import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.domain.user.entity.enums.UserStep;
 
 public class AuthConverter {
 
@@ -15,7 +16,7 @@ public class AuthConverter {
                 ;
     }
 
-    public static AuthResponseDTO.LoginResponse toLoginResponse(String accessToken, String refreshToken, String nextStep) {
+    public static AuthResponseDTO.LoginResponse toLoginResponse(String accessToken, String refreshToken, UserStep nextStep) {
         return AuthResponseDTO.LoginResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)

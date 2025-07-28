@@ -30,6 +30,9 @@ import java.util.List;
 @AllArgsConstructor
 @Table(name = "user")
 public class User extends BaseEntity {
+
+    public static final String DEFAULT_PROFILE_IMAGE = "default.svg";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -61,8 +64,9 @@ public class User extends BaseEntity {
     @Column(name = "job")
     private String job;
 
+    @Builder.Default
     @Column(name = "profile_image_name")
-    private String profileImageName;
+    private String profileImageName = DEFAULT_PROFILE_IMAGE;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
@@ -130,5 +134,9 @@ public class User extends BaseEntity {
     public void updateSleepPattern(LocalTime sleepTime, LocalTime wakeTime) {
         this.sleepTime = sleepTime;
         this.wakeTime = wakeTime;
+    }
+
+    public void updateProfileImageName(String profileImageName) {
+        this.profileImageName = profileImageName;
     }
 }

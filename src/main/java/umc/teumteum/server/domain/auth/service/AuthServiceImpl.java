@@ -16,9 +16,11 @@ import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.UserStatus;
+import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.jwt.JwtProvider;
+import umc.teumteum.server.global.util.S3Util;
 
 import java.time.Duration;
 
@@ -31,6 +33,7 @@ public class AuthServiceImpl implements AuthService {
     private final NaverOAuthService naverOAuthService;
     private final UserService userService;
     private final JwtProvider jwtProvider;
+    private final S3Util s3Util;
 
     @Resource(name = "rtRedisTemplate")
     private RedisTemplate<String, String> rtRedisTemplate;
@@ -62,8 +65,18 @@ public class AuthServiceImpl implements AuthService {
         Duration refreshDuration = Duration.ofMillis(refreshExpirationMs);
         rtRedisTemplate.opsForValue().set(key, refreshToken, refreshDuration);
 
-        // 6. 다음 단계 결정
-        String nextStep = String.valueOf(user.getStep());
+        // 6. 온보딩 중단 예외 고려
+        UserStep nextStep = user.getStep();
+        if (nextStep == UserStep.ONBOARDING) {
+            // 기본 이미지가 아닌 업로드된 이미지가 있다면 S3에서 삭제 후 초기화
+            String currentProfileImage = user.getProfileImageName();
+            boolean isCustomImage = !User.DEFAULT_PROFILE_IMAGE.equals(currentProfileImage);
+
+            if (isCustomImage) {
+                s3Util.deleteObject("profile/" + currentProfileImage);
+                user.updateProfileImageName(User.DEFAULT_PROFILE_IMAGE);
+            }
+        }
 
         // 7. converter 작업
         return AuthConverter.toLoginResponse(accessToken, refreshToken, nextStep);
