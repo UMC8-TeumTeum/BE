@@ -115,7 +115,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDTO.MyPageDTO getMyPage(User user) {
-        String profileImageUrl = s3Util.toPresignedUrl(user.getProfileImageKey(), Duration.ofMinutes(30));
+        String profileImageUrl = s3Util.toPresignedUrl("profile/" + user.getProfileImageName(), Duration.ofMinutes(30));
         return UserConverter.toMyPageDTO(user, profileImageUrl);
     }
 }

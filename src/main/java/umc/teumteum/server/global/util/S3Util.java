@@ -15,6 +15,9 @@ public class S3Util {
     @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
 
+    @Value("${cloud.aws.s3.bucket-path}")
+    private String bucketPath;
+
     private final S3Presigner s3Presigner;
 
     public String toPresignedUrl(String key, Duration duration) {
@@ -24,7 +27,7 @@ public class S3Util {
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucketName)
-                .key(key)
+                .key(bucketPath + key)
                 .build();
 
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()

@@ -19,7 +19,7 @@ public class UserConverter {
         return new UserSearchResponseDto(
                 user.getId(),
                 user.getNickname(),
-                s3Util.toPresignedUrl(user.getProfileImageKey(), Duration.ofMinutes(30)),
+                s3Util.toPresignedUrl("profile/" + user.getProfileImageName(), Duration.ofMinutes(30)),
                 user.getJob()
         );
     }

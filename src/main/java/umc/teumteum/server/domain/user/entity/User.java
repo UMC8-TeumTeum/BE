@@ -2,10 +2,6 @@ package umc.teumteum.server.domain.user.entity;
 
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -65,8 +61,8 @@ public class User extends BaseEntity {
     @Column(name = "job")
     private String job;
 
-    @Column(name = "profile_image_key")
-    private String profileImageKey;
+    @Column(name = "profile_image_name")
+    private String profileImageName;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
