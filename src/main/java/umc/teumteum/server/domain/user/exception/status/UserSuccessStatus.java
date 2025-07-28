@@ -17,6 +17,7 @@ public enum UserSuccessStatus implements BaseCode {
     AGREEMENT_SAVED(HttpStatus.OK, "ONBOARDING2001", "약관 동의가 완료되었습니다."),
     NICKNAME_JOB_SAVED(HttpStatus.OK, "ONBOARDING2002", "닉네임과 분야/직종 등록이 완료되었습니다."),
     SLEEP_PATTERN_SAVED(HttpStatus.OK, "ONBOARDING2003", "수면 패턴 등록이 완료되었습니다."),
+    ROUTINE_SAVED(HttpStatus.OK, "ONBOARDING2004", "요일별 반복 일정 등록이 완료되었습니다."),
 
     ;
 

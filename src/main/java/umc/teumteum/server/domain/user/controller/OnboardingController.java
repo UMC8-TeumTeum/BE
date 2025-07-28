@@ -31,12 +31,12 @@ public class OnboardingController {
             summary = "온보딩 약관 동의",
             description = "온보딩 과정에서 약관 동의 정보를 등록합니다."
     )
-    @PostMapping(value = "/onboarding/agreement", produces = "application/json")
-    public ApiResponse<Object> saveTerms(
+    @PostMapping(value = "/onboarding/agreements", produces = "application/json")
+    public ApiResponse<Object> saveAgreements(
             @RequestBody @Valid OnboardingRequestDto.AgreeRequest request,
             @CurrentUser @Parameter(hidden = true) User user
             ) {
-        onboardingService.saveAgreement(request, user);
+        onboardingService.saveAgreements(request, user);
         return ApiResponse.of(UserSuccessStatus.AGREEMENT_SAVED, null);
     }
 
@@ -85,11 +85,13 @@ public class OnboardingController {
             summary = "온보딩 요일별 반복 일정 등록",
             description = "온보딩 과정에서 요일별 반복 일정을 등록합니다."
     )
-    @PostMapping(value = "/onboarding/routine", produces = "application/json")
-    public ApiResponse<Object> saveRoutine(
+    @PostMapping(value = "/onboarding/routines", produces = "application/json")
+    public ApiResponse<Object> saveRoutines(
+            @RequestBody @Valid OnboardingRequestDto.RoutineListRequest request,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        // TODO: 온보딩 루틴 저장 로직 구현
-        return null;
+        onboardingService.saveRoutines(request, user);
+        return ApiResponse.of(UserSuccessStatus.ROUTINE_SAVED, null);
     }
 
 
@@ -97,7 +99,7 @@ public class OnboardingController {
             summary = "온보딩 리마인드 알림 설정 등록",
             description = "온보딩 과정에서 리마인드 알림 시간 설정(1분 전/3분 전/5분 전/10분 전/30분 전)을 등록합니다."
     )
-    @PostMapping(value = "/onboarding/reminder", produces = "application/json")
+    @PostMapping(value = "/onboarding/reminders", produces = "application/json")
     public ApiResponse<Object> saveReminder(
     ) {
         // TODO: 온보딩 리마인드 알림 설정 저장 로직 구현
