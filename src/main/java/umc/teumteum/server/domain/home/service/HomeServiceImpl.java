@@ -393,9 +393,9 @@ public class HomeServiceImpl implements HomeService {
             if(!validTypes.contains(schedule.getType())){
                 continue;
             }
-            // 4-2. 만약 TEUM 이라면 ACTIVE인지, COMPLETED 상태인지 확인 (CANCLE 상태이면 틈 시간에 포함하지 않음)
+            // 4-2. 만약 TEUM 이라면 COMPLETED 상태인지 확인 (CANCLE 상태이면 틈 시간에 포함하지 않음)
             if (schedule.getType() == ScheduleType.TEUM) {
-                if(!(schedule.getStatus() == ScheduleStatus.ACTIVE || schedule.getStatus() == ScheduleStatus.COMPLETED)){
+                if(schedule.getStatus() != ScheduleStatus.COMPLETED){
                     continue;
                 }
 
