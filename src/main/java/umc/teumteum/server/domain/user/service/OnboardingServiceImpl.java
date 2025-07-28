@@ -211,22 +211,15 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     // 수면패턴을 TimeRange 리스트로 변환
     private List<TimeRange> getSleepTimeRanges(LocalTime sleepTime, LocalTime wakeTime) {
-        // 1. 하루 전체 수면 (ex. 00:00~00:00)
-        if (sleepTime.equals(LocalTime.MIDNIGHT) && wakeTime.equals(LocalTime.MIDNIGHT)) {
-            return List.of(TimeRange.of(LocalTime.MIDNIGHT, LocalTime.MIDNIGHT));
-        }
-
-        // 2. 같은 날 안에서 종료되는 경우 (ex. 06:00~14:00)
-        if (sleepTime.isBefore(wakeTime)) {
-            return List.of(TimeRange.of(sleepTime, wakeTime));
-        }
-
-        // 3. 다른 날까지 이어지는 경우 (ex. 22:00~08:00)
-        else {
+        // 1. 다음 날까지 이어지는 수면 (ex. 22:00~08:00)
+        if (sleepTime.isAfter(wakeTime) && !wakeTime.equals(LocalTime.MIDNIGHT)) {
             return List.of(
                     TimeRange.of(sleepTime, LocalTime.MIDNIGHT),
                     TimeRange.of(LocalTime.MIDNIGHT, wakeTime)
             );
         }
+
+        // 2. 같은 날 안에서 끝나는 수면 (ex. 06:00~14:00, 18:00~00:00, 00:00~00:00)
+        return List.of(TimeRange.of(sleepTime, wakeTime));
     }
 }
