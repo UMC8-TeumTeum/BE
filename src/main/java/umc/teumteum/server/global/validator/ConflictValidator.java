@@ -14,6 +14,7 @@ import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.global.exception.GeneralException;
+import umc.teumteum.server.global.validator.exception.status.ConflictErrorStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -63,7 +64,7 @@ public class ConflictValidator {
 
         for (Schedule schedule : schedules) {
             if (isOverlapping(requestStart, requestEnd, schedule.getStartTime(), schedule.getEndTime())) {
-                throw new GeneralException(HomeErrorStatus._SCHEDULE_CONFLICT);
+                throw new GeneralException(ConflictErrorStatus.SCHEDULE_CONFLICT);
             }
         }
     }
@@ -76,7 +77,7 @@ public class ConflictValidator {
             LocalDateTime teumEnd = LocalDateTime.of(request.getDate(), request.getEndTime());
 
             if (isOverlapping(requestStart, requestEnd, teumStart, teumEnd)) {
-                throw new GeneralException(TeumErrorStatus.TEUM_REQUEST_CONFLICT);
+                throw new GeneralException(ConflictErrorStatus.TEUM_REQUEST_CONFLICT);
             }
         }
     }
@@ -105,12 +106,12 @@ public class ConflictValidator {
 
                 // 반복 일정이 생성 예정 상태 → 충돌
                 if (existing.isEmpty()) {
-                    throw new GeneralException(HomeErrorStatus._SCHEDULE_CONFLICT);
+                    throw new GeneralException(ConflictErrorStatus.ROUTINE_CONFLICT);
                 }
 
                 // Schedule이 존재하되 isDeleted == false면 → 충돌
                 if (!existing.get().getIsDeleted()) {
-                    throw new GeneralException(HomeErrorStatus._SCHEDULE_CONFLICT);
+                    throw new GeneralException(ConflictErrorStatus.ROUTINE_CONFLICT);
                 }
 
                 // Schedule이 존재하되 isDeleted == true면 -> 충돌 아님
@@ -129,7 +130,7 @@ public class ConflictValidator {
                 : LocalDateTime.of(date.plusDays(1), wakeTime);  // 자정 넘기는 경우 다음 날로
 
         if (isOverlapping(startDateTime, endDateTime, sleepStart, sleepEnd)) {
-            throw new GeneralException(HomeErrorStatus._SCHEDULE_CONFLICT);
+            throw new GeneralException(ConflictErrorStatus.SLEEP_PATTERN_CONFLICT);
         }
     }
 
