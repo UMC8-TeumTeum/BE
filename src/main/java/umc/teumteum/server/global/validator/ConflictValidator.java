@@ -10,13 +10,16 @@ import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
+import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.global.exception.GeneralException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Component
@@ -36,7 +39,7 @@ public class ConflictValidator {
 
         checkWithSchedules(user, startDateTime, endDateTime);
         checkWithTeumRequests(user, date, startTime, endTime);
-        checkWithRoutines(user, date, startTime, endTime);
+        checkWithRoutines(user, date, startDateTime, endDateTime);
         checkWithSleepPattern(user, date, startDateTime, endDateTime);
     }
 
@@ -81,9 +84,43 @@ public class ConflictValidator {
         }
     }
 
-    private void checkWithRoutines(User user, LocalDate date, LocalTime startTime, LocalTime endTime) {
-        // TODO: 반복 일정 루틴 + 루틴 ID 기반 Schedule 조회 + isDeleted 여부로 충돌 판단
+    private void checkWithRoutines(User user, LocalDate date, LocalDateTime requestStart, LocalDateTime requestEnd) {
+        Weekday weekday = Weekday.from(date.getDayOfWeek());
+
+        List<Routine> routines = user.getRoutines().stream()
+                .filter(r -> r.getWeekday() == weekday)
+                .toList();
+
+        for (Routine routine : routines) {
+            LocalTime routineStartTime = routine.getStartTime();
+            LocalTime routineEndTime = routine.getEndTime();
+
+            // 루틴 시간 → LocalDateTime으로 조합 (자정 넘김 고려)
+            LocalDateTime routineStart = LocalDateTime.of(date, routineStartTime);
+            LocalDateTime routineEnd = routineStartTime.isBefore(routineEndTime)
+                    ? LocalDateTime.of(date, routineEndTime)
+                    : LocalDateTime.of(date.plusDays(1), routineEndTime);
+
+            // 시간 겹치는지 판단
+            if (isOverlapping(requestStart, requestEnd, routineStart, routineEnd)) {
+                // 해당 루틴 기반 스케줄이 있는지 조회
+                Optional<Schedule> existing = scheduleRepository.findByUserAndRoutineAndDate(user, routine, date);
+
+                // 반복 일정이 생성 예정 상태 → 충돌
+                if (existing.isEmpty()) {
+                    throw new GeneralException(HomeErrorStatus._SCHEDULE_CONFLICT);
+                }
+
+                // Schedule이 존재하되 isDeleted == false면 → 충돌
+                if (!existing.get().getIsDeleted()) {
+                    throw new GeneralException(HomeErrorStatus._SCHEDULE_CONFLICT);
+                }
+
+                // Schedule이 존재하되 isDeleted == true면 -> 충돌 아님
+            }
+        }
     }
+
 
     private void checkWithSleepPattern(User user, LocalDate date, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         LocalTime sleepTime = user.getSleepTime();

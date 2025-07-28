@@ -14,6 +14,7 @@ import umc.teumteum.server.domain.user.entity.User;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByUserIdAndIncludeTeumIsTrue(Long userId);
@@ -133,6 +134,24 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("types") List<ScheduleType> types,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
+    );
+
+    /**
+     * 사용자 일정 중 다음 조건을 모두 만족하는 일정 조회:
+     * - 해당 사용자(user)의 루틴으로 생성된 일정이며
+     * - 주어진 날짜(date)에 생성된 일정
+     * - 반복 일정(Routine)의 실제 스케줄 인스턴스 존재 여부 확인에 사용
+     */
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user = :user
+      AND s.routine = :routine
+      AND s.date = :date
+""")
+    Optional<Schedule> findByUserAndRoutineAndDate(
+            @Param("user") User user,
+            @Param("routine") Routine routine,
+            @Param("date") LocalDate date
     );
 
 }
