@@ -2,19 +2,20 @@ package umc.teumteum.server.domain.user.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.user.entity.enums.Weekday;
 
 import java.time.LocalTime;
+import java.util.List;
 
 public class OnboardingRequestDto {
 
+    // 온보딩 - 약관 동의
     @Getter
     @Builder
     @NoArgsConstructor
@@ -39,6 +40,7 @@ public class OnboardingRequestDto {
     }
 
 
+    // 온보딩 - 닉네임 & 분야/직종
     @Getter
     @Builder
     @NoArgsConstructor
@@ -58,6 +60,7 @@ public class OnboardingRequestDto {
     }
 
 
+    // 온보딩 - 수면패턴
     @Getter
     @Builder
     @NoArgsConstructor
@@ -73,5 +76,51 @@ public class OnboardingRequestDto {
         @JsonFormat(pattern = "HH:mm")
         @Schema(description = "기상 시간", example = "11:30")
         private LocalTime wakeTime;
+    }
+
+
+    // 온보딩 - 반복 일정
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RoutineListRequest {
+
+        @NotEmpty(message = "최소 1개 이상의 반복 일정이 필요합니다")
+        @Valid
+        @Schema(description = "반복 일정 목록")
+        private List<RoutineDTO> routine;
+    }
+
+
+    // 온보딩 - 반복 일정 세부
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RoutineDTO {
+
+        @NotBlank(message = "제목은 필수 입력입니다")
+        @Schema(description = "제목", example = "매주 산책")
+        private String title;
+
+        @Schema(description = "상세 내용", example = "한강에서 산책")
+        private String description;
+
+        @NotNull(message = "요일은 필수 입력입니다")
+        @Schema(description = "반복 요일", example = "WEDNESDAY",
+                allowableValues = {"MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"})
+        private Weekday weekday;
+
+        @NotNull(message = "시작 시간은 필수 입력입니다")
+        @JsonFormat(pattern = "HH:mm")
+        @Schema(description = "시작 시간 (HH:mm 형식)", example = "13:00")
+        private LocalTime startTime;
+
+
+        @NotNull(message = "종료 시간은 필수 입력입니다")
+        @JsonFormat(pattern = "HH:mm")
+        @Schema(description = "종료 시간 (HH:mm 형식)", example = "00:00")
+        private LocalTime endTime;
     }
 }
