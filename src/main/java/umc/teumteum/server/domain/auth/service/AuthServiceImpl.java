@@ -17,6 +17,7 @@ import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
+import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.jwt.JwtProvider;
@@ -34,6 +35,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserService userService;
     private final JwtProvider jwtProvider;
     private final S3Util s3Util;
+    private final RoutineRepository routineRepository;
 
     @Resource(name = "rtRedisTemplate")
     private RedisTemplate<String, String> rtRedisTemplate;
@@ -51,7 +53,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userService.findOrCreateUser(userInfo);
 
         // 3. 사용자 status 확인
-        if (user.getStatus().equals(UserStatus.INACTIVE)) {
+        if (user.getStatus() == UserStatus.INACTIVE) {
             throw new AuthHandler(ErrorStatus.INACTIVE_USER);
         }
 
@@ -65,10 +67,11 @@ public class AuthServiceImpl implements AuthService {
         Duration refreshDuration = Duration.ofMillis(refreshExpirationMs);
         rtRedisTemplate.opsForValue().set(key, refreshToken, refreshDuration);
 
-        // 6. 온보딩 중단 예외 고려
+        // 6. 다음 전환할 화면
         UserStep nextStep = user.getStep();
+        // 온보딩 중단 예외 고려
         if (nextStep == UserStep.ONBOARDING) {
-            // 기본 이미지가 아닌 업로드된 이미지가 있다면 S3에서 삭제 후 초기화
+            // 1) 기본 이미지가 아닌 업로드된 이미지가 있다면 S3에서 삭제 후 초기화
             String currentProfileImage = user.getProfileImageName();
             boolean isCustomImage = !User.DEFAULT_PROFILE_IMAGE.equals(currentProfileImage);
 
@@ -76,6 +79,12 @@ public class AuthServiceImpl implements AuthService {
                 s3Util.deleteObject("profile/" + currentProfileImage);
                 user.updateProfileImageName(User.DEFAULT_PROFILE_IMAGE);
             }
+
+            // 2) 수면패턴 초기화
+            user.clearSleepPattern();
+
+            // 3) 반복일정 초기화
+            routineRepository.deleteByUser(user);
         }
 
         // 7. converter 작업

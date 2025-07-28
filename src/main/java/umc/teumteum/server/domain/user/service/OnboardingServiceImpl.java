@@ -95,7 +95,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 1. 사용자 step 확인
         validateOnboardingStep(user, UserStep.ONBOARDING);
 
-        // 2. 수면패턴 수정 (온보딩 중단으로 인한 재등록도 처리 가능)
+        // 2. 수면패턴 수정
         user.updateSleepPattern(request.getSleepTime(), request.getWakeTime());
     }
 
@@ -126,10 +126,8 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 5. 수면패턴과의 충돌 확인
         validateSleepPatternConflictsByDay(routinesByDay, user);
 
-        // 6. 반복 일정 저장 (온보딩 중단으로 인해 기존 반복 일정이 있을 수 있으므로 삭제 필요)
+        // 6. 반복 일정 저장
         List<Routine> newRoutines = RoutineConverter.toRoutineList(request.getRoutine(), user);
-
-        routineRepository.deleteByUser(user);
         routineRepository.saveAll(newRoutines);
     }
 

@@ -139,4 +139,9 @@ public class User extends BaseEntity {
     public void updateProfileImageName(String profileImageName) {
         this.profileImageName = profileImageName;
     }
+
+    public void clearSleepPattern() {
+        this.sleepTime = null;
+        this.wakeTime = null;
+    }
 }
