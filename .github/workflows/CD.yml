@@ -55,37 +55,51 @@ jobs:
           username: ${{ secrets.BASTION_USERNAME }}
           key: ${{ secrets.BASTION_PRIVATE_KEY }}
           script: |
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/teumteum.pem ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }} << EOF
+              docker system prune -af
+            
+              docker rm -f spring-app 2>dev/null || true
+              docker rm -f redis-container 2>dev/null || true
+                    
+              docker network inspect app-net > /dev/null 2>&1 || docker network create app-net
+              docker volume inspect redis-data > /dev/null 2>&1 || docker volume create redis-data
+                    
               docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest
-            
-              docker stop spring-app || true && docker rm spring-app || true
-              docker stop redis-container || true && docker rm redis-container || true
-            
-              docker network create app-net || true
+          
 
-              docker run -d --name redis-container \
-              --network app-net \
-              -p ${{ secrets.REDIS_PORT }}:${{ secrets.REDIS_PORT }} \
-              redis:${{ secrets.REDIS_VERSION }} \
-              redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}
+              docker run -d --restart unless-stopped \
+                --name redis-container \
+                --network app-net \
+                -p ${{ secrets.REDIS_PORT }}:${{ secrets.REDIS_PORT }} \
+                -v redis-data:/data \
+                redis:${{ secrets.REDIS_VERSION }} \
+                redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}
               
-              docker run -d --name spring-app \
-              --network app-net \
-              -p ${{ secrets.SPRINGBOOT_PORT }}:${{ secrets.SPRINGBOOT_PORT }} \
-              -e FIREBASE_CREDENTIALS_JSON='${{ secrets.FIREBASE_CREDENTIALS_JSON }}' \
-              -e SPRINGBOOT_PORT=${{ secrets.SPRINGBOOT_PORT }} \
-              -e SPRING_REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
-              -e DB_URL=${{ secrets.DB_URL }} \
-              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
-              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              -e AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }} \
-              -e AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }} \
-              -e S3_BUCKET=${{ secrets.S3_BUCKET }} \
-              -e S3_PREFIX=${{ secrets.S3_PREFIX }} \
-              ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest
-
-            EOF
-
+              docker run -d --restart unless-stopped \
+                --name spring-app \
+                --network app-net \
+                -p ${{ secrets.SPRINGBOOT_PORT }}:${{ secrets.SPRINGBOOT_PORT }} \
+                -e FIREBASE_CREDENTIALS_JSON="${{ secrets.FIREBASE_CREDENTIALS_JSON }}" \
+                -e SPRINGBOOT_PORT=${{ secrets.SPRINGBOOT_PORT }} \
+                -e SPRING_REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
+                -e DB_URL=${{ secrets.DB_URL }} \
+                -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+                -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+                -e AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }} \
+                -e AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }} \
+                -e S3_BUCKET=${{ secrets.S3_BUCKET }} \
+                -e S3_PREFIX=${{ secrets.S3_PREFIX }} \
+                ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest
+            
+              docker system df
+            
+              echo "디스크 사용량 검사"
+              USAGE=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
+              if [ "$USAGE" -ge 80 ]; then
+                  echo "디스크 사용량 ${USAGE}% - 경고 알림"
+                  HOST=${{ secrets.APP_EC2_PRIVATE_IP }}
+                  curl -X POST -H "Content-Type: application/json" \
+                    -d "{\"content\": \"EC2 디스크 사용량 경고\\nHOST: ${HOST}\\nUsage: ${USAGE}%\\n→ 디스크 정리 또는 스토리지 확장 필요\"}" \
+                    ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Notify on Discord(Success)
         if: success()
@@ -98,6 +112,9 @@ jobs:
             • Repo: `${{ github.repository }}`
             • Branch: `${{ github.ref_name }}`
             • Commit: `${{ github.sha }}`
+            • Docker Image: `${{ secrets.DOCKER_USERNAME }}/${{secrets.DOCKER_REPO}}::latest`
+            • [View commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            • [Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
       - name: Notify on Discord(Fail)
         if: failure()
@@ -110,6 +127,8 @@ jobs:
             • Repo: `${{ github.repository }}`
             • Branch: `${{ github.ref_name }}`
             • Commit: `${{ github.sha }}`
+            • [View commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            • [Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
             → 로그 확인 필요!
 
 
