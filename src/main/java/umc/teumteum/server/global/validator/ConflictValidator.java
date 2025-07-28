@@ -72,7 +72,7 @@ public class ConflictValidator {
     }
 
     private void checkWithTeumRequests(User user, LocalDateTime requestStart, LocalDateTime requestEnd) {
-        List<TeumRequest> requests = teumRequestRepository.findRelatedTeumRequestsByUserAndDate(user, requestStart.toLocalDate());
+        List<TeumRequest> requests = teumRequestRepository.findTeumRequestsByUserAndDate(user, requestStart.toLocalDate());
 
         for (TeumRequest request : requests) {
             LocalDateTime teumStart = LocalDateTime.of(request.getDate(), request.getStartTime());
