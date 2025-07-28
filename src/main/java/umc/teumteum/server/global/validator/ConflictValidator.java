@@ -56,18 +56,15 @@ public class ConflictValidator {
     // TODO: 다른 일정에서의 중복 검증 로직 추가
 
     // 내부 충돌 검사 메서드들
-    private void checkWithSchedules(User user, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    private void checkWithSchedules(User user, LocalDateTime requestStart, LocalDateTime requestEnd) {
         List<ScheduleType> types = List.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI);
 
-        List<Schedule> conflicts = scheduleRepository.findConflictingSchedules(
-                user,
-                types,
-                startDateTime,
-                endDateTime
-        );
+        List<Schedule> schedules = scheduleRepository.findSchedulesByUserAndType(user, types);
 
-        if (!conflicts.isEmpty()) {
-            throw new GeneralException(HomeErrorStatus._SCHEDULE_CONFLICT);
+        for (Schedule schedule : schedules) {
+            if (isOverlapping(requestStart, requestEnd, schedule.getStartTime(), schedule.getEndTime())) {
+                throw new GeneralException(HomeErrorStatus._SCHEDULE_CONFLICT);
+            }
         }
     }
 

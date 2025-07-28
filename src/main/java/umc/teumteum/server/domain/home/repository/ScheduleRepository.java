@@ -117,23 +117,18 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Routine> findDeletedRoutinesByUserAndDate(@Param("user") User user, @Param("date") LocalDate date);
 
     /**
-     * 사용자 일정 중 다음 조건을 모두 만족하는 일정들을 조회:
+     * 사용자 일정 중 다음 조건을 모두 만족하는 일정 조회:
      * - 해당 사용자(user)의 일정이며
-     * - 일정 타입이 TODO, WISH, AI 중 하나이며
-     * - 요청된 시간 범위(start ~ end)와 겹치는 일정
+     * - 일정 타입이 TODO, WISH, AI 중 하나
      */
     @Query("""
     SELECT s FROM Schedule s
     WHERE s.user = :user
       AND s.type IN :types
-      AND s.startTime < :end
-      AND s.endTime > :start
 """)
-    List<Schedule> findConflictingSchedules(
+    List<Schedule> findSchedulesByUserAndType(
             @Param("user") User user,
-            @Param("types") List<ScheduleType> types,
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end
+            @Param("types") List<ScheduleType> types
     );
 
     /**
