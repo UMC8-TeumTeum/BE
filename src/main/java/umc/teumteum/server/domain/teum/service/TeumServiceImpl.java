@@ -102,19 +102,22 @@ public class TeumServiceImpl implements TeumService {
         // 시간 순서 검증
         validateTimeOrder(dto.getStartTime(), dto.getEndTime());
 
-        // 시간 충돌 검증 (날짜는 부모 요청 기준)
+        // 시간 충돌 검증 (요청자 + 수신자 모두)
         LocalDate date = parent.getDate();
         LocalTime startTime = LocalTime.parse(dto.getStartTime());
         LocalTime endTime = LocalTime.parse(dto.getEndTime());
 
-        conflictValidator.validateTeum(user, date, startTime, endTime);
+        User originalSender = parent.getUser();  // 부모 요청의 작성자 → 이번 재요청의 수신자
+
+        List<User> participants = List.of(user, originalSender);
+        conflictValidator.validateTeumForUsers(participants, date, startTime, endTime);
 
         // 요청 및 응답 생성
         TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, user);
-        TeumResponse newResponse = TeumConverter.toResendTeumResponse(newRequest, parent.getUser());
+        TeumResponse newResponse = TeumConverter.toResendTeumResponse(newRequest, originalSender);
         newRequest.getTeumResponses().add(newResponse);
 
-        // 원래 요청 상태 변경
+        // 응답 상태 변경
         TeumResponse originalResponse = parent.getTeumResponses().getFirst();
         originalResponse.changeStatus(ResponseStatus.RESEND);
 
@@ -122,6 +125,7 @@ public class TeumServiceImpl implements TeumService {
 
         return newRequest.getId();
     }
+
 
     @Override
     @Transactional(readOnly = true)
