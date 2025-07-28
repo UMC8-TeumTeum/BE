@@ -1,8 +1,10 @@
 package umc.teumteum.server.domain.home.converter;
 
+import java.time.Duration;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
+import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
 import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDto;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
@@ -70,5 +72,31 @@ public class ScheduleConverter {
                 .startTime(dto.getStartTime())
                 .endTime(dto.getEndTime())
                 .build();
+    }
+
+    // Duration -> TeumTimeDto
+    public HomeResponseDto.TeumTimeDto toTeumTimeDto(Duration duration) {
+        if (duration == null) {
+            return HomeResponseDto.TeumTimeDto.builder()
+                .totalMinutes(0L)
+                .days(0)
+                .hours(0)
+                .minutes(0)
+                .build();
+        }
+
+        long totalMinutes = duration.toMinutes();
+        int days = (int) (totalMinutes / (60 * 24));
+        int hours = (int) ((totalMinutes % (60 * 24)) / 60);
+        int minutes = (int) (totalMinutes % 60);
+
+        return HomeResponseDto.TeumTimeDto.builder()
+            .totalMinutes(totalMinutes)
+            .days(days)
+            .hours(hours)
+            .minutes(minutes)
+            .build();
+
+
     }
 }

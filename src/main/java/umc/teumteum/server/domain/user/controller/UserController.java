@@ -94,16 +94,4 @@ public class UserController {
     }
 
 
-    @Operation(
-        summary = "마이페이지 정보 (지금까지 채운 빈틈) 조회",
-        description = "사용자가 지금까지 채운 빈틈 시간 정보를 조회합니다."
-    )
-    @GetMapping(value = "/mypage/teum", produces = "application/json")
-    public ApiResponse<Object> getMypageTeum(
-    ) {
-        // TODO: 마이페이지 "지금까지 채운 빈틈" 조회 로직 구현
-        return null;
-
-    }
-
 }

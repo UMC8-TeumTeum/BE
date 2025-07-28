@@ -19,6 +19,7 @@ import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.entity.mapping.WishCategory;
 import umc.teumteum.server.domain.home.exception.status.HomeErrorStatus;
@@ -362,4 +363,57 @@ public class HomeServiceImpl implements HomeService {
         List<Category> categories = categoryRepository.findAll();
         return wishConverter.toCategoryResponseDTO(categories);
     }
+
+    @Override
+    public HomeResponseDto.TeumTimeDto getTeaumTime(User user) {
+        // 채움(AI), 위시, 투두, 틈약속 모두 Schedule에 저장됨.
+        // 요청을 보낸 시간 이전의 schedule의 enddate들만 확인.. (활동을 수행했다고 판정하는 기준)
+        // schedule의 includeTeum을 확인해야함
+        // 그리고 startTime ~ endTime을 계산
+
+        // 1. 현재 시간 조회
+        LocalDateTime now = LocalDateTime.now();
+
+        // 2. endDateTime이 현재 시간 이전이고 && 해당 유저에 해당하는 스케줄들 조회 && IncludeTeaum이 True
+        List<Schedule> scheduleList = scheduleRepository.findAllByUserAndIncludeTeumTrueAndEndTimeBefore(user, now);
+
+        // 3. 수면패턴과 반복일정은 틈 시간조회에 포함 대상이 아니므로, 제외하기 위해 Set을 만듬.
+        Set<ScheduleType> validTypes = Set.of(
+            ScheduleType.TEUM,
+            ScheduleType.WISH,
+            ScheduleType.AI,
+            ScheduleType.TODO
+        );
+
+        // 4. 시간 계산
+        Duration totalDuration = Duration.ZERO;
+
+        for (Schedule schedule : scheduleList) {
+            // 4-1. 의미 있는 스케줄 타입만 처리
+            if(!validTypes.contains(schedule.getType())){
+                continue;
+            }
+            // 4-2. 만약 TEUM 이라면 COMPLETED 상태인지 확인 (CANCLE 상태이면 틈 시간에 포함하지 않음)
+            if (schedule.getType() == ScheduleType.TEUM) {
+                if(schedule.getStatus() != ScheduleStatus.COMPLETED){
+                    continue;
+                }
+
+            // 4-3. 만약 TEUM 이 아니라면 -> (AI, WISH, TODO, TEUM 라면) ACTIVE 상태의 스케줄만 체크
+            }else{
+                if(schedule.getStatus() != ScheduleStatus.ACTIVE){
+                    continue;
+                }
+            }
+
+            Duration duration = Duration.between(schedule.getStartTime(), schedule.getEndTime());
+            totalDuration = totalDuration.plus(duration);
+
+        }
+        return scheduleConverter.toTeumTimeDto(totalDuration);
+
+
+    }
+
+
 }

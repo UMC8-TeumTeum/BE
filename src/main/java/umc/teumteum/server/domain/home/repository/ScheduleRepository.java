@@ -150,5 +150,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     );
 
     boolean existsByTeumRequestAndUser(TeumRequest teumRequest, User user);
+           
+    List<Schedule> findAllByUserAndIncludeTeumTrueAndEndTimeBefore(User user, LocalDateTime now);
 
 }
