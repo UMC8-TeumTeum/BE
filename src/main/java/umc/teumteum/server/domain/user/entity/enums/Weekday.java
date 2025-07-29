@@ -15,4 +15,8 @@ public enum Weekday {
     public boolean matches(DayOfWeek dayOfWeek) {
         return this.name().equalsIgnoreCase(dayOfWeek.name());
     }
+
+    public static Weekday from(DayOfWeek dayOfWeek) {
+        return Weekday.valueOf(dayOfWeek.name());
+    }
 }

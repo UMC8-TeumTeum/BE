@@ -31,6 +31,7 @@ import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 import umc.teumteum.server.global.util.S3Util;
+import umc.teumteum.server.global.validator.ConflictValidator;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -48,6 +49,7 @@ import static umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus.I
 public class TeumServiceImpl implements TeumService {
 
     private final S3Util s3Util;
+    private final ConflictValidator conflictValidator;
     private final UserRepository userRepository;
     private final TeumRequestRepository teumRequestRepository;
     private final TeumResponseRepository teumResponseRepository;
@@ -56,8 +58,26 @@ public class TeumServiceImpl implements TeumService {
     @Override
     @Transactional
     public Long createRequest(TeumRequestDto dto, User user) {
-        TeumRequest request = TeumConverter.toTeumRequest(dto, user);
+        // 시간 순서 검증
+        validateTimeOrder(dto.getStartTime(), dto.getEndTime());
 
+        // 날짜 및 시간 파싱
+        LocalDate date = LocalDate.parse(dto.getDate());
+        LocalTime startTime = LocalTime.parse(dto.getStartTime());
+        LocalTime endTime = LocalTime.parse(dto.getEndTime());
+
+        // 모든 사용자 조회 (요청자 + 수신자)
+        List<User> receivers = dto.getReceiverUserIds().stream()
+                .map(this::getUserOrThrow)
+                .toList();
+        List<User> allParticipants = new ArrayList<>(receivers);
+        allParticipants.add(user);
+
+        // Validator 호출
+        conflictValidator.validateTeumForUsers(allParticipants, date, startTime, endTime);
+
+        // 요청 객체 생성 및 저장
+        TeumRequest request = TeumConverter.toTeumRequest(dto, user);
         List<TeumResponse> responses = TeumConverter.toTeumResponses(
                 dto.getReceiverUserIds(),
                 user.getId(),
@@ -74,17 +94,30 @@ public class TeumServiceImpl implements TeumService {
     @Override
     @Transactional
     public Long createResendRequest(Long parentRequestId, TeumResendRequestDto dto, User user) {
+        // 원본 요청 확인 및 권한 검증
         TeumRequest parent = findActiveRequestOrThrow(parentRequestId);
-
         validateResendableRequest(parent);
         validateResender(parent, user.getId());
+
+        // 시간 순서 검증
         validateTimeOrder(dto.getStartTime(), dto.getEndTime());
 
-        TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, user); // ✅ User 객체 직접 전달
+        // 시간 충돌 검증 (요청자 + 수신자 모두)
+        LocalDate date = parent.getDate();
+        LocalTime startTime = LocalTime.parse(dto.getStartTime());
+        LocalTime endTime = LocalTime.parse(dto.getEndTime());
 
-        TeumResponse newResponse = TeumConverter.toResendTeumResponse(newRequest, parent.getUser());
+        User originalSender = parent.getUser();  // 부모 요청의 작성자 → 이번 재요청의 수신자
+
+        List<User> participants = List.of(user, originalSender);
+        conflictValidator.validateTeumForUsers(participants, date, startTime, endTime);
+
+        // 요청 및 응답 생성
+        TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, user);
+        TeumResponse newResponse = TeumConverter.toResendTeumResponse(newRequest, originalSender);
         newRequest.getTeumResponses().add(newResponse);
 
+        // 응답 상태 변경
         TeumResponse originalResponse = parent.getTeumResponses().getFirst();
         originalResponse.changeStatus(ResponseStatus.RESEND);
 
@@ -92,6 +125,7 @@ public class TeumServiceImpl implements TeumService {
 
         return newRequest.getId();
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -131,13 +165,16 @@ public class TeumServiceImpl implements TeumService {
     @Override
     @Transactional
     public TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto) {
+        // 응답 조회 및 권한 검증
         TeumResponse response = getResponseOrThrow(responseId);
         validateReceiver(response, userId);
 
+        // 이미 처리된 응답인 경우 예외
         if (response.getStatus() != ResponseStatus.PENDING) {
             throw new GeneralException(TeumErrorStatus.REQUEST_ALREADY_CLOSED);
         }
 
+        // 요청된 응답 상태 유효성 검증
         ResponseStatus newStatus;
         try {
             newStatus = ResponseStatus.valueOf(requestDto.getStatus().toUpperCase());
@@ -145,6 +182,7 @@ public class TeumServiceImpl implements TeumService {
             throw new GeneralException(TeumErrorStatus.INVALID_RESPONSE_STATUS);
         }
 
+        // 상태 변경 적용
         response.changeStatus(newStatus);
 
         boolean isAccepted = newStatus == ResponseStatus.ACCEPTED;
@@ -152,14 +190,22 @@ public class TeumServiceImpl implements TeumService {
 
         if (isAccepted) {
             TeumRequest request = response.getTeumRequest();
-
             User receiver = response.getReceiverUser();
+
+            // 수락 시 응답자 개인 일정 충돌 검증
+            LocalDate date = request.getDate();
+            LocalTime startTime = request.getStartTime();
+            LocalTime endTime = request.getEndTime();
+
+            conflictValidator.validateTeum(receiver, date, startTime, endTime);
+
+            // 수신자(응답자) 일정 생성
             Schedule receiverSchedule = TeumConverter.toScheduleFromTeumRequest(request, receiver);
             scheduleRepository.save(receiverSchedule);
 
-            // 스케줄이 없는 경우에만 요청자에게 생성
-            if (request.getSchedules().isEmpty()) {
-                User requester = request.getUser();
+            // 요청자 본인의 스케줄이 없는 경우에만 생성
+            User requester = request.getUser();
+            if (!scheduleRepository.existsByTeumRequestAndUser(request, requester)) {
                 Schedule requesterSchedule = TeumConverter.toScheduleFromTeumRequest(request, requester);
                 scheduleRepository.save(requesterSchedule);
             }
@@ -168,9 +214,9 @@ public class TeumServiceImpl implements TeumService {
             teumId = receiverSchedule.getId();
         }
 
-
         return TeumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
     }
+
 
 
     @Override

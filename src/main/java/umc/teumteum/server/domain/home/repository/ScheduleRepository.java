@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
@@ -13,6 +14,7 @@ import umc.teumteum.server.domain.user.entity.User;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByUserIdAndIncludeTeumIsTrue(Long userId);
@@ -114,6 +116,41 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     WHERE s.user = :user AND s.date = :date AND s.isDeleted = true AND s.routine IS NOT NULL""")
     List<Routine> findDeletedRoutinesByUserAndDate(@Param("user") User user, @Param("date") LocalDate date);
 
+    /**
+     * 사용자 일정 중 다음 조건을 모두 만족하는 일정 조회:
+     * - 해당 사용자(user)의 일정이며
+     * - 일정 타입이 TODO, WISH, AI 중 하나
+     */
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user = :user
+      AND s.type IN :types
+""")
+    List<Schedule> findSchedulesByUserAndType(
+            @Param("user") User user,
+            @Param("types") List<ScheduleType> types
+    );
+
+    /**
+     * 사용자 일정 중 다음 조건을 모두 만족하는 일정 조회:
+     * - 해당 사용자(user)의 루틴으로 생성된 일정이며
+     * - 주어진 날짜(date)에 생성된 일정
+     * - 반복 일정(Routine)의 실제 스케줄 인스턴스 존재 여부 확인에 사용
+     */
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user = :user
+      AND s.routine = :routine
+      AND s.date = :date
+""")
+    Optional<Schedule> findByUserAndRoutineAndDate(
+            @Param("user") User user,
+            @Param("routine") Routine routine,
+            @Param("date") LocalDate date
+    );
+
+    boolean existsByTeumRequestAndUser(TeumRequest teumRequest, User user);
+           
     List<Schedule> findAllByUserAndIncludeTeumTrueAndEndTimeBefore(User user, LocalDateTime now);
 
 }
