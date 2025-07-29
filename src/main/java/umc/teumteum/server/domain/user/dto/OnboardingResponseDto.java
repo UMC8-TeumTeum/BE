@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 public class OnboardingResponseDto {
 
-    // 온보딩 - 수면패턴
+    // 온보딩 - 프로필 이미지 업로드용 URl 발급
     @Getter
     @Builder
     @NoArgsConstructor

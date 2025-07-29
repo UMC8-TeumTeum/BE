@@ -93,7 +93,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
 
-    // 온보딩 - 프로필 이미지용 프리사인드 URL 발급
+    // 온보딩 - 프로필 이미지 업로드용 URl 발급
     @Override
     public OnboardingResponseDto.ProfileImagePresignedUrlResponse generateProfileImagePresignedUrl(OnboardingRequestDto.ProfileImagePresignedUrlRequest request, User user) {
         // 1. 사용자 step 확인
