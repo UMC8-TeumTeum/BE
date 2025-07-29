@@ -1,6 +1,5 @@
 package umc.teumteum.server.domain.user.service;
 
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.stereotype.Service;
@@ -12,12 +11,11 @@ import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
-import umc.teumteum.server.domain.user.repository.AgreementRepository;
-import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
-
-import java.util.*;
 import umc.teumteum.server.global.util.S3Util;
+
+import java.time.Duration;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -25,8 +23,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserConverter userConverter;
     private final UserRepository userRepository;
-    private final AgreementRepository agreementRepository;
-    private final RemindAlarmRepository remindAlarmRepository;
     private final S3Util s3Util;
 
     @Override
@@ -115,7 +111,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDTO.MyPageDTO getMyPage(User user) {
-        String profileImageUrl = s3Util.toPresignedUrl(user.getProfileImageKey(), Duration.ofMinutes(30));
+        String profileImageUrl = s3Util.toPresignedUrl("profile/" + user.getProfileImageName(), Duration.ofMinutes(30));
         return UserConverter.toMyPageDTO(user, profileImageUrl);
     }
 }

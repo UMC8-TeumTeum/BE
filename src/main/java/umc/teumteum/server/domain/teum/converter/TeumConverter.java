@@ -3,7 +3,6 @@ package umc.teumteum.server.domain.teum.converter;
 import java.time.Duration;
 
 import umc.teumteum.server.domain.home.entity.Schedule;
-import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
@@ -81,7 +80,7 @@ public class TeumConverter {
                 .senderUser(ParticipantDto.builder()
                         .userId(sender.getId())
                         .nickname(sender.getNickname())
-                        .profileImageUrl(s3Util.toPresignedUrl(sender.getProfileImageKey(),
+                        .profileImageUrl(s3Util.toPresignedUrl("profile/" + sender.getProfileImageName(),
                             Duration.ofMinutes(30)))
                         .build())
                 .date(request.getDate().toString())
@@ -225,7 +224,7 @@ public class TeumConverter {
                 .participants(relatedSchedules.stream()
                         .map(s -> {
                             var u = s.getUser();
-                            String presignedUrl = s3Util.toPresignedUrl(u.getProfileImageKey(), Duration.ofMinutes(30));
+                            String presignedUrl = s3Util.toPresignedUrl("profile/" + u.getProfileImageName(), Duration.ofMinutes(30));
                             return new ParticipantDto(u.getId(), u.getNickname(), presignedUrl);
                         })
                         .collect(Collectors.toList()))

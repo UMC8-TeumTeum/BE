@@ -21,12 +21,12 @@ public enum ErrorStatus implements BaseErrorCode {
   EMPTY_JWT_CLAIMS(HttpStatus.BAD_REQUEST, "AUTH4103", "JWT 클레임이 비어 있습니다."),
   INVALID_JWT_SIGNATURE(HttpStatus.UNAUTHORIZED, "AUTH4111", "유효하지 않은 JWT 서명입니다."),
   EXPIRED_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH4112", "JWT 토큰이 만료되었습니다."),
-  ACCOUNT_DISABLED(HttpStatus.UNAUTHORIZED, "AUTH4113", "비활성화된 계정입니다."),
   INVALID_TOKEN_TYPE(HttpStatus.UNAUTHORIZED, "AUTH4114", "유효하지 않은 토큰 타입입니다."),
   MISSING_JWT(HttpStatus.UNAUTHORIZED, "AUTH4115", "JWT 토큰이 없습니다."),
 
   // 사용자 관련
   USER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH4111", "존재하지 않는 사용자입니다."),
+  INACTIVE_USER(HttpStatus.FORBIDDEN, "AUTH4131", "비활성화된 사용자입니다."),
 
 
   // 회원 관련

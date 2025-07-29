@@ -70,7 +70,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
         // 2. 사용자 인증 과정 예외
         if (ex instanceof DisabledException) {
-            return ErrorStatus.ACCOUNT_DISABLED;
+            return ErrorStatus.INACTIVE_USER;
         }
         if (ex instanceof UsernameNotFoundException) {
             return ErrorStatus.USER_NOT_FOUND;

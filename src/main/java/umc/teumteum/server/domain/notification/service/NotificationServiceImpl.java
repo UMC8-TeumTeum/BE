@@ -46,7 +46,7 @@ public class NotificationServiceImpl implements NotificationService {
         .filter(n->isValidNotification(n, relatedUserMap))
         .map(n-> {
           User friend = relatedUserMap.get(n.getId());
-          String profileImageUrl = s3Util.toPresignedUrl(friend.getProfileImageKey(), Duration.ofMinutes(30));
+          String profileImageUrl = s3Util.toPresignedUrl("profile/" + friend.getProfileImageName(), Duration.ofMinutes(30));
           return NotificationConverter.toNotificationDto(n, friend, profileImageUrl);
         })
         .toList();

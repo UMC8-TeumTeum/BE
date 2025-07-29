@@ -2,10 +2,6 @@ package umc.teumteum.server.domain.user.entity;
 
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -34,6 +30,9 @@ import java.util.List;
 @AllArgsConstructor
 @Table(name = "user")
 public class User extends BaseEntity {
+
+    public static final String DEFAULT_PROFILE_IMAGE = "default.svg";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -65,8 +64,9 @@ public class User extends BaseEntity {
     @Column(name = "job")
     private String job;
 
-    @Column(name = "profile_image_key")
-    private String profileImageKey;
+    @Builder.Default
+    @Column(name = "profile_image_name")
+    private String profileImageName = DEFAULT_PROFILE_IMAGE;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
@@ -134,5 +134,14 @@ public class User extends BaseEntity {
     public void updateSleepPattern(LocalTime sleepTime, LocalTime wakeTime) {
         this.sleepTime = sleepTime;
         this.wakeTime = wakeTime;
+    }
+
+    public void updateProfileImageName(String profileImageName) {
+        this.profileImageName = profileImageName;
+    }
+
+    public void clearSleepPattern() {
+        this.sleepTime = null;
+        this.wakeTime = null;
     }
 }

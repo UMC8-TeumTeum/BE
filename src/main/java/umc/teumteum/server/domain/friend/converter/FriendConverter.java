@@ -22,7 +22,7 @@ public class FriendConverter {
 
     public FollowingUserResponseDto toFollowingUserResponse(Friend friend) {
         User following = friend.getFollowing();
-        String imageUrl = s3Util.toPresignedUrl(following.getProfileImageKey(), Duration.ofMinutes(30));
+        String imageUrl = s3Util.toPresignedUrl("profile/" + following.getProfileImageName(), Duration.ofMinutes(30));
 
         return new FollowingUserResponseDto(
                 following.getId(),
@@ -40,7 +40,7 @@ public class FriendConverter {
 
     public FollowerUserResponseDto toFollowerUserResponse(Friend friend) {
         User follower = friend.getFollower();
-        String imageUrl = s3Util.toPresignedUrl(follower.getProfileImageKey(), Duration.ofMinutes(30));
+        String imageUrl = s3Util.toPresignedUrl("profile/" + follower.getProfileImageName(), Duration.ofMinutes(30));
 
         return new FollowerUserResponseDto(
                 follower.getId(),
@@ -56,7 +56,7 @@ public class FriendConverter {
     }
 
     public FriendProfileResponseDto toFriendProfileResponse(User targetUser, Friend followRelation) {
-        String imageUrl = s3Util.toPresignedUrl(targetUser.getProfileImageKey(), Duration.ofMinutes(30));
+        String imageUrl = s3Util.toPresignedUrl("profile/" + targetUser.getProfileImageName(), Duration.ofMinutes(30));
 
         return FriendProfileResponseDto.builder()
                 .userId(targetUser.getId())

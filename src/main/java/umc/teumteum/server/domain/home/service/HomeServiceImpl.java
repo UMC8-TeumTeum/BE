@@ -89,8 +89,8 @@ public class HomeServiceImpl implements HomeService {
         if(schedule.getType() == ScheduleType.TEUM){ // TEUM 타입인 경우
             profileUrls = getTeumProfileUrls(schedule);
         } else{
-            String profileImageKey = schedule.getUser().getProfileImageKey();
-            profileUrls = profileImageKey != null ? List.of(s3Util.toPresignedUrl(profileImageKey, Duration.ofMinutes(30))) : List.of();
+            String profileImageName = schedule.getUser().getProfileImageName();
+            profileUrls = profileImageName != null ? List.of(s3Util.toPresignedUrl("profile/" + profileImageName, Duration.ofMinutes(30))) : List.of();
         }
 
         return scheduleConverter.toTodoInfoResponse(schedule,reminders, profileUrls);
@@ -117,9 +117,9 @@ public class HomeServiceImpl implements HomeService {
         userIds.add(requestUserId);
 
         return userRepository.findAllById(userIds).stream()
-                .map(User::getProfileImageKey)
+                .map(User::getProfileImageName)
                 .filter(Objects::nonNull)
-                .map(key -> s3Util.toPresignedUrl(key, Duration.ofMinutes(30)))
+                .map(name -> s3Util.toPresignedUrl("profile/" + name, Duration.ofMinutes(30)))
                 .toList();
     }
 
