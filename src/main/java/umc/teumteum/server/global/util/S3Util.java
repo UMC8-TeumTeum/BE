@@ -7,8 +7,10 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 @Component
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ public class S3Util {
     private final S3Presigner s3Presigner;
     private final S3Client s3Client;
 
+    // GET용 프리사인드 URL 발급
     public String toPresignedUrl(String key, Duration duration) {
         if (key == null || key.isBlank()) {
             return null;
@@ -41,6 +44,30 @@ public class S3Util {
         return s3Presigner.presignGetObject(presignRequest).url().toString();
     }
 
+    // PUT용 프리사인드 URL 발급
+    public String toUploadPresignedUrl(String key, String contentType, Duration duration) {
+        if (key == null || key.isBlank()) {
+            return null;
+        }
+
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(bucketPath + key)
+                .contentType(contentType)
+                .build()
+                ;
+
+        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+                .signatureDuration(duration)
+                .putObjectRequest(putObjectRequest)
+                .build()
+                ;
+
+        return s3Presigner.presignPutObject(presignRequest).url().toString();
+    }
+
+
+    // S3 객체 삭제
     public void deleteObject(String key) {
         if (key == null || key.isBlank()) {
             return;

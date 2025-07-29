@@ -65,6 +65,19 @@ public class OnboardingRequestDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class ProfileImagePresignedUrlRequest {
+
+        @NotBlank
+        @Schema(description = "업로드할 파일의 MIME 타입", example = "image/png")
+        private String contentType;
+    }
+
+
+    // 온보딩 - 수면패턴
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SleepPatternRequest {
 
         @NotNull(message = "취침 시간은 필수 입력입니다")
