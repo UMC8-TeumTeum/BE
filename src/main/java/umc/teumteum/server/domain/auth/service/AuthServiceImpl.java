@@ -76,7 +76,15 @@ public class AuthServiceImpl implements AuthService {
             boolean isCustomImage = !User.DEFAULT_PROFILE_IMAGE.equals(currentProfileImage);
 
             if (isCustomImage) {
-                s3Util.deleteObject("profile/" + currentProfileImage);
+                try {
+                    s3Util.deleteObject("profile/" + currentProfileImage);
+                } catch (Exception e) {
+                    // 삭제 실패 시 로그
+                    log.error("S3 프로필 이미지 삭제 실패 - userId : {}, imageName : {}, error : {}",
+                            user.getId(), currentProfileImage, e.getMessage());
+                }
+
+                // 삭제 성공/실패와 관계없이 DB 프로필 이미지명 초기화
                 user.updateProfileImageName(User.DEFAULT_PROFILE_IMAGE);
             }
 

@@ -1,7 +1,6 @@
 package umc.teumteum.server.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.user.converter.AgreementConverter;
