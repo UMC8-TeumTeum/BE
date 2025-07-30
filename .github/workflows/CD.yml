@@ -55,10 +55,11 @@ jobs:
           username: ${{ secrets.BASTION_USERNAME }}
           key: ${{ secrets.BASTION_PRIVATE_KEY }}
           script: |
+              export PATH="/usr/bin:$PATH"
               docker system prune -af
             
-              docker rm -f spring-app 2>dev/null || true
-              docker rm -f redis-container 2>dev/null || true
+              docker rm -f spring-app 2>/dev/null || true
+              docker rm -f redis-container 2>/dev/null || true
                     
               docker network inspect app-net > /dev/null 2>&1 || docker network create app-net
               docker volume inspect redis-data > /dev/null 2>&1 || docker volume create redis-data
