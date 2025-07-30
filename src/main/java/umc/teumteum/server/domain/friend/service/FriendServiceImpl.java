@@ -117,8 +117,6 @@ public class FriendServiceImpl implements FriendService {
         validateNotSelf(loginUserId, targetUserId);
         validateUserExists(targetUserId);
 
-        LocalDateTime now = LocalDateTime.now();
-
         List<ScheduleType> targetTypes = List.of(
                 ScheduleType.AI,
                 ScheduleType.WISH,
@@ -126,7 +124,11 @@ public class FriendServiceImpl implements FriendService {
                 ScheduleType.TEUM
         );
 
-        List<Schedule> rawSchedules = scheduleRepository.findSchedulesForTeumTime(targetUserId, now, targetTypes);
+        List<Schedule> rawSchedules = scheduleRepository.findSchedulesForTeumTime(
+                targetUserId,
+                LocalDateTime.now(),
+                targetTypes
+        );
 
         List<Schedule> filtered = rawSchedules.stream()
                 .filter(s ->
@@ -138,6 +140,7 @@ public class FriendServiceImpl implements FriendService {
         long totalMinutes = friendConverter.calculateTeumTime(filtered);
         return friendConverter.toFriendTeumTimeResponse(totalMinutes);
     }
+
 
     /**
      * 주어진 ID에 해당하는 User를 조회합니다.
