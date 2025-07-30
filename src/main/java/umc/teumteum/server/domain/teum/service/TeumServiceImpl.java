@@ -454,7 +454,8 @@ public class TeumServiceImpl implements TeumService {
 
     private void validateTimeOrder(String startTime, String endTime) {
         LocalTime start = LocalTime.parse(startTime);
-        LocalTime end = LocalTime.parse(endTime);
+        LocalTime end = endTime.equals("00:00") ? LocalTime.MAX : LocalTime.parse(endTime);
+
         if (!start.isBefore(end)) {
             throw new GeneralException(TeumErrorStatus.INVALID_TEUM_TIME);
         }
