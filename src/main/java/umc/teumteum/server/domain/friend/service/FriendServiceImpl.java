@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import umc.teumteum.server.domain.friend.controller.FriendController;
 import umc.teumteum.server.domain.friend.converter.FriendConverter;
 import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.entity.Friend;
@@ -21,9 +20,7 @@ import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;

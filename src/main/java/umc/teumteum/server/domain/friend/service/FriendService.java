@@ -1,7 +1,5 @@
 package umc.teumteum.server.domain.friend.service;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 
