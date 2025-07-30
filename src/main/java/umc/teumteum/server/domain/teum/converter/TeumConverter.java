@@ -161,6 +161,7 @@ public class TeumConverter {
                 .build();
     }
 
+    // TimeSlot 변환 (Schedule → TimeSlot)
     public TimeSlot fromSchedule(Schedule schedule) {
         LocalDate startDate = schedule.getStartTime().toLocalDate();
         LocalDate endDate = schedule.getEndTime().toLocalDate();
@@ -179,7 +180,7 @@ public class TeumConverter {
         );
     }
 
-
+    // 바쁜 시간대 병합 (겹치거나 인접한 TimeSlot 병합)
     public List<TimeSlot> mergeScheduledTimeSlots(List<TimeSlot> slots) {
         if (slots.isEmpty()) return List.of();
 
@@ -207,6 +208,7 @@ public class TeumConverter {
         return merged;
     }
 
+    // 병합된 바쁜 시간대를 반전하여 비어 있는 시간 구간(available)을 계산
     public List<TimeSlot> invertScheduledToAvailable(List<TimeSlot> scheduledSlots) {
         List<TimeSlot> available = new ArrayList<>();
         LocalTime startOfDay = LocalTime.MIN;
@@ -221,6 +223,7 @@ public class TeumConverter {
             LocalTime scheduledStart = timeUtil.parseTimeForCompare(scheduled.getStart());
             LocalTime scheduledEnd = timeUtil.parseTimeForCompare(scheduled.getEnd());
 
+            // 비어 있는 구간 발견 시 추가
             if (current.isBefore(scheduledStart)) {
                 available.add(new TimeSlot(
                         current.format(DateTimeFormatter.ofPattern("HH:mm")),
@@ -228,11 +231,13 @@ public class TeumConverter {
                 ));
             }
 
+            // 다음 시작 위치 업데이트
             if (current.isBefore(scheduledEnd)) {
                 current = scheduledEnd;
             }
         }
 
+        // 하루의 끝까지 비어 있다면 마지막 구간 추가
         if (current.isBefore(endOfDay)) {
             available.add(new TimeSlot(
                     current.format(DateTimeFormatter.ofPattern("HH:mm")),

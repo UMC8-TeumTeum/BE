@@ -47,10 +47,12 @@ public class TimeUtil {
         return formatEndTime(convertEndTime(endTime));
     }
 
+    // 비교용 (병합/반전용) - 24:00만 LocalTime.MAX로 처리
     public LocalTime parseTimeForCompare(String time) {
         return "24:00".equals(time) ? LocalTime.MAX : LocalTime.parse(time);
     }
 
+    // 정렬용 - 00:00 → MIN, 24:00 → MAX
     public LocalTime parseTimeForSort(String time) {
         return switch (time) {
             case "24:00" -> LocalTime.MAX;

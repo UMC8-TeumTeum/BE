@@ -301,6 +301,7 @@ public class TeumServiceImpl implements TeumService {
                 .build();
     }
 
+    // 공통 가능한 시간대 계산
     @Override
     public AvailableTimeResponseDto getAvailableTime(User user, AvailableTimeRequestDto requestDto) {
         LocalDate date = LocalDate.parse(requestDto.getDate());
@@ -322,7 +323,6 @@ public class TeumServiceImpl implements TeumService {
                     .filter(schedule -> schedule.getStartTime().toLocalDate().isEqual(date))
                     .filter(schedule -> !Boolean.TRUE.equals(schedule.getIsDeleted()))
                     .map(teumConverter::fromSchedule)
-                    .peek(slot -> log.info("Scheduled TimeSlot for user {}: {} ~ {}", userId, slot.getStart(), slot.getEnd()))
                     .forEach(scheduledSlots::add);
 
             // 수면 시간
@@ -365,9 +365,6 @@ public class TeumServiceImpl implements TeumService {
         // 리스트 복사 후 정렬 (정렬 보장)
         List<TimeSlot> sortedAvailable = new ArrayList<>(cleanAvailable);
         sortedAvailable.sort(Comparator.comparing(slot -> timeUtil.parseTimeForSort(slot.getStart())));
-
-        sortedAvailable.forEach(slot ->
-                log.info("최종 Available (정렬됨): {} ~ {}", slot.getStart(), slot.getEnd()));
 
         return new AvailableTimeResponseDto(date.toString(), sortedAvailable);
     }
