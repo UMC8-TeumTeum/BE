@@ -332,7 +332,7 @@ public class TeumServiceImpl implements TeumService {
                 if (sleep.isBefore(wake)) {
                     scheduledSlots.add(new TimeSlot(sleep.toString(), wake.toString()));
                 } else {
-                    scheduledSlots.add(new TimeSlot(sleep.toString(), "23:59"));
+                    scheduledSlots.add(new TimeSlot(sleep.toString(), "24:00"));
                     scheduledSlots.add(new TimeSlot("00:00", wake.toString()));
                 }
             }
