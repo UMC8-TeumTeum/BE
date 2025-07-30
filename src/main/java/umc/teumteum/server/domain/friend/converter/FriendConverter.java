@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.friend.dto.FollowerUserResponseDto;
 import umc.teumteum.server.domain.friend.dto.FollowingUserResponseDto;
 import umc.teumteum.server.domain.friend.dto.FriendProfileResponseDto;
+import umc.teumteum.server.domain.friend.dto.FriendTeumTimeResponseDto;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.user.entity.User;
@@ -73,5 +74,13 @@ public class FriendConverter {
                 .mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes())
                 .sum();
     }
+
+    public FriendTeumTimeResponseDto toFriendTeumTimeResponse(long totalMinutes) {
+        int days = (int) (totalMinutes / (60 * 24));
+        int hours = (int) ((totalMinutes % (60 * 24)) / 60);
+        int minutes = (int) (totalMinutes % 60);
+        return new FriendTeumTimeResponseDto(days, hours, minutes, totalMinutes);
+    }
+
 
 }
