@@ -20,9 +20,6 @@ jobs:
       - name: Update Git Submodules
         run: git submodule update --init --recursive
 
-      - name: Write Firebase credentials to file
-        run: echo "${{ secrets.FIREBASE_CREDENTIALS_JSON }}" > config/firebase-adminsdk.json
-
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -79,7 +76,7 @@ jobs:
                 --name spring-app \
                 --network app-net \
                 -p ${{ secrets.SPRINGBOOT_PORT }}:${{ secrets.SPRINGBOOT_PORT }} \
-                -e FIREBASE_CREDENTIALS_JSON="${{ secrets.FIREBASE_CREDENTIALS_JSON }}" \
+                -e FIREBASE_CREDENTIALS_BASE64=${{ secrets.FIREBASE_CREDENTIALS_BASE64 }} \
                 -e SPRINGBOOT_PORT=${{ secrets.SPRINGBOOT_PORT }} \
                 -e SPRING_REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
                 -e DB_URL=${{ secrets.DB_URL }} \

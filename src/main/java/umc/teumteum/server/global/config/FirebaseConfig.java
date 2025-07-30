@@ -6,8 +6,10 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.FirebaseMessaging;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Base64;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -28,21 +30,22 @@ public class FirebaseConfig {
       FirebaseOptions options;
 
       if ("prod".equals(activeProfile)) {
-        String json = System.getenv("FIREBASE_CREDENTIALS_JSON");
-        if (json == null || json.isBlank()) {
-          throw new IllegalStateException("FIREBASE_CREDENTIALS_JSON is not set");
+        String base64 = System.getenv("FIREBASE_CREDENTIALS_BASE64");
+        if (base64 == null || base64.isBlank()) {
+          throw new IllegalStateException("FIREBASE_CREDENTIALS_BASE64 is not set");
         }
+
+        byte[] decoded = Base64.getDecoder().decode(base64);
 
         File temp = new File("config/firebase-adminsdk.json");
         temp.getParentFile().mkdirs();
-        try (FileWriter writer = new FileWriter(temp)) {
-          writer.write(json);
+        try (FileOutputStream fos = new FileOutputStream(temp)) {
+          fos.write(decoded);
         }
 
         options = FirebaseOptions.builder()
             .setCredentials(GoogleCredentials.fromStream(new FileInputStream(temp)))
             .build();
-
       } else {
         FileInputStream account = new FileInputStream(firebaseConfigPath);
         options = FirebaseOptions.builder()
