@@ -9,6 +9,7 @@ import umc.teumteum.server.domain.user.converter.AgreementConverter;
 import umc.teumteum.server.domain.user.converter.OnboardingConverter;
 import umc.teumteum.server.domain.user.converter.RoutineConverter;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
+import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.entity.Agreement;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
@@ -20,14 +21,13 @@ import umc.teumteum.server.domain.user.repository.AgreementRepository;
 import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.TimeRange;
+import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,9 +37,14 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final UserRepository userRepository;
     private final AgreementRepository agreementRepository;
     private final RoutineRepository routineRepository;
-    private final TimeUtil timeUtil;
     private final ScheduleRepository scheduleRepository;
 
+    private final TimeUtil timeUtil;
+    private final S3Util s3Util;
+
+    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp", "image/svg+xml"
+    );
 
     // 온보딩 - 약관 동의
     @Override
@@ -93,6 +98,56 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
 
+    // 온보딩 - 프로필 이미지 업로드용 URl 발급
+    @Override
+    public OnboardingResponseDto.ProfileImagePresignedUrlResponse generateProfileImagePresignedUrl(OnboardingRequestDto.ProfileImagePresignedUrlRequest request, User user) {
+        // 1. 사용자 step 확인
+        validateOnboardingStep(user, UserStep.ONBOARDING);
+
+        // 2. Content-Type 검증
+        String contentType = request.getContentType().toLowerCase();
+        if (!ALLOWED_IMAGE_TYPES.contains(contentType)) {
+            throw new OnboardingHandler(UserErrorStatus.UNSUPPORTED_IMAGE_FORMAT);
+        }
+
+        // 3. 확장자 추출
+        String extension = contentType.substring(contentType.lastIndexOf("/") + 1);
+        // svg+xml의 경우 svg로 변환
+        if ("svg+xml".equals(extension)) {
+            extension = "svg";
+        }
+
+        // 4. 파일명(UUID) 생성
+        String fileName = UUID.randomUUID() + "." + extension;
+
+        // 5. S3 Key 구성 (profile/{fileName})
+        String key = "profile/" + fileName;
+
+        // 6. Presigned URL 생성
+        String presignedUrl = s3Util.toUploadPresignedUrl(key, contentType, Duration.ofMinutes(30));
+
+        // 7. TODO S3 업로드 예정인 파일이름 REDIS에 저장
+
+        // 8. 응답 DTO 반환
+        return OnboardingConverter.toProfileImagePresignedUrlResponse(presignedUrl, fileName);
+    }
+
+
+    // 온보딩 - 프로필 이미지 등록
+    @Override
+    @Transactional
+    public void saveProfileImage(OnboardingRequestDto.ProfileImageRequest request, User user) {
+        // 1. 사용자 step 확인
+        validateOnboardingStep(user, UserStep.ONBOARDING);
+
+        // 2. TODO REDIS 조회하여 비교
+        // throw new OnboardingHandler(UserErrorStatus.INVALID_IMAGE_NAME);
+
+        // 2. 사용자 프로필 이미지 이름 업데이트
+        user.updateProfileImageName(request.getFileName());
+    }
+
+
     // 온보딩 - 수면패턴 등록
     @Override
     @Transactional
@@ -139,7 +194,6 @@ public class OnboardingServiceImpl implements OnboardingService {
         List<Schedule> routineSchedules = OnboardingConverter.toScheduleList(newRoutines, user, LocalDate.now());
         scheduleRepository.saveAll(routineSchedules);
     }
-
 
 
 

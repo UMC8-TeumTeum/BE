@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
+import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.exception.status.UserSuccessStatus;
 import umc.teumteum.server.domain.user.service.OnboardingService;
@@ -56,14 +57,31 @@ public class OnboardingController {
 
 
     @Operation(
+            summary = "온보딩 프로필 이미지 업로드용 Presigned URL 발급",
+            description = "온보딩 과정에서 프로필 이미지를 S3에 직접 업로드할 수 있는 Presigned URL을 발급합니다."
+    )
+    @PostMapping(value = "/onboarding/profile-image/presigned-url", produces = "application/json")
+    public ApiResponse<OnboardingResponseDto.ProfileImagePresignedUrlResponse> getProfileImagePresignedUrl(
+            @RequestBody @Valid OnboardingRequestDto.ProfileImagePresignedUrlRequest request,
+            @CurrentUser @Parameter(hidden = true) User user
+    ) {
+        OnboardingResponseDto.ProfileImagePresignedUrlResponse response =
+                onboardingService.generateProfileImagePresignedUrl(request, user);
+        return ApiResponse.of(UserSuccessStatus.PRESIGNED_URL_ISSUED, response);
+    }
+
+
+    @Operation(
             summary = "온보딩 프로필 이미지 등록",
-            description = "온보딩 과정에서 S3에 업로드된 프로필 이미지의 키를 등록합니다."
+            description = "온보딩 과정에서 S3에 업로드된 프로필 이미지의 파일명을 등록합니다."
     )
     @PostMapping(value = "/onboarding/profile-image", produces = "application/json")
     public ApiResponse<Object> saveProfileImageKey(
+            @RequestBody @Valid OnboardingRequestDto.ProfileImageRequest request,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        // TODO: 온보딩 프로필 이미지 키 저장 로직 구현
-        return null;
+        onboardingService.saveProfileImage(request, user);
+        return ApiResponse.of(UserSuccessStatus.PROFILE_IMAGE_SAVED, null);
     }
 
 

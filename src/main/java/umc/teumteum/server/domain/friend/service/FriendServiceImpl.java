@@ -5,13 +5,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import umc.teumteum.server.domain.friend.controller.FriendController;
 import umc.teumteum.server.domain.friend.converter.FriendConverter;
 import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
 import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
@@ -19,8 +20,7 @@ import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 
-import java.time.Duration;
-import java.util.Comparator;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -112,14 +112,33 @@ public class FriendServiceImpl implements FriendService {
         return friendConverter.toFriendProfileResponse(targetUser, followRelationOpt.orElse(null));
     }
 
-
     @Override
-    public Long getFriendTeumTime(Long loginUserId, Long targetUserId) {
+    public FriendTeumTimeResponseDto getFriendTeumTime(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
-        validateUserExists(loginUserId);
+        validateUserExists(targetUserId);
 
-        List<Schedule> schedules = scheduleRepository.findByUserIdAndIncludeTeumIsTrue(targetUserId);
-        return friendConverter.calculateTeumTime(schedules);
+        List<ScheduleType> targetTypes = List.of(
+                ScheduleType.AI,
+                ScheduleType.WISH,
+                ScheduleType.TODO,
+                ScheduleType.TEUM
+        );
+
+        List<Schedule> rawSchedules = scheduleRepository.findSchedulesForTeumTime(
+                targetUserId,
+                LocalDateTime.now(),
+                targetTypes
+        );
+
+        List<Schedule> filtered = rawSchedules.stream()
+                .filter(s ->
+                        (s.getType() == ScheduleType.TEUM && s.getStatus() == ScheduleStatus.COMPLETED) ||
+                                (s.getType() != ScheduleType.TEUM && s.getStatus() == ScheduleStatus.ACTIVE)
+                )
+                .collect(Collectors.toList());
+
+        long totalMinutes = friendConverter.calculateTeumTime(filtered);
+        return friendConverter.toFriendTeumTimeResponse(totalMinutes);
     }
 
 
