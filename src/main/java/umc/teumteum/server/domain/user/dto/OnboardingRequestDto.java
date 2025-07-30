@@ -60,6 +60,19 @@ public class OnboardingRequestDto {
     }
 
 
+    // 온보딩 - 프로필 이미지 업로드용 URl 발급
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProfileImagePresignedUrlRequest {
+
+        @NotBlank
+        @Schema(description = "업로드할 파일의 MIME 타입", example = "image/png")
+        private String contentType;
+    }
+
+
     // 온보딩 - 수면패턴
     @Getter
     @Builder
