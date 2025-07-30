@@ -102,6 +102,10 @@ jobs:
                     -d "{\"content\": \"EC2 디스크 사용량 경고\\nHOST: ${HOST}\\nUsage: ${USAGE}%\\n→ 디스크 정리 또는 스토리지 확장 필요\"}" \
                     ${{ secrets.DISCORD_WEBHOOK }}
 
+              fi
+  
+              EOF
+
       - name: Notify on Discord(Success)
         if: success()
         uses: Ilshidur/action-discord@master
