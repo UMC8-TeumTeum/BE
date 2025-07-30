@@ -169,16 +169,23 @@ public class TeumConverter {
         LocalTime startTime = schedule.getStartTime().toLocalTime();
         LocalTime endTime = schedule.getEndTime().toLocalTime();
 
-        // end가 00:00이고 날짜가 다음 날이면 → 24:00으로 표시
-        String end = (endTime.equals(LocalTime.MIDNIGHT) && !startDate.equals(endDate))
-                ? "24:00"
-                : endTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+        // endDate가 다음 날이면 → 자정(24:00)까지만 포함
+        if (!startDate.isEqual(endDate)) {
+            return new TimeSlot(
+                    startTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                    "24:00"
+            );
+        }
+
+        // 일반적인 하루 안 일정
+        String end = endTime.format(DateTimeFormatter.ofPattern("HH:mm"));
 
         return new TimeSlot(
                 startTime.format(DateTimeFormatter.ofPattern("HH:mm")),
                 end
         );
     }
+
 
     // 바쁜 시간대 병합 (겹치거나 인접한 TimeSlot 병합)
     public List<TimeSlot> mergeScheduledTimeSlots(List<TimeSlot> slots) {
