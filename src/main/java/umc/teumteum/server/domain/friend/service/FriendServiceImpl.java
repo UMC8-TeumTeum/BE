@@ -115,7 +115,6 @@ public class FriendServiceImpl implements FriendService {
         return friendConverter.toFriendProfileResponse(targetUser, followRelationOpt.orElse(null));
     }
 
-
     @Override
     public FriendTeumTimeResponseDto getFriendTeumTime(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
@@ -133,7 +132,10 @@ public class FriendServiceImpl implements FriendService {
         List<Schedule> rawSchedules = scheduleRepository.findSchedulesForTeumTime(targetUserId, now, targetTypes);
 
         List<Schedule> filtered = rawSchedules.stream()
-                .filter(s -> s.getType() != ScheduleType.TEUM || s.getStatus() == ScheduleStatus.COMPLETED)
+                .filter(s ->
+                        (s.getType() == ScheduleType.TEUM && s.getStatus() == ScheduleStatus.COMPLETED) ||
+                                (s.getType() != ScheduleType.TEUM && s.getStatus() == ScheduleStatus.ACTIVE)
+                )
                 .collect(Collectors.toList());
 
         long totalMinutes = friendConverter.calculateTeumTime(filtered);
