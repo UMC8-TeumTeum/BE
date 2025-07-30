@@ -162,32 +162,42 @@ public class TeumConverter {
     }
 
     public TimeSlot fromSchedule(Schedule schedule) {
+        LocalDate startDate = schedule.getStartTime().toLocalDate();
+        LocalDate endDate = schedule.getEndTime().toLocalDate();
+
+        LocalTime startTime = schedule.getStartTime().toLocalTime();
+        LocalTime endTime = schedule.getEndTime().toLocalTime();
+
+        // end가 00:00이고 날짜가 다음 날이면 → 24:00으로 표시
+        String end = (endTime.equals(LocalTime.MIDNIGHT) && !startDate.equals(endDate))
+                ? "24:00"
+                : endTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+
         return new TimeSlot(
-                schedule.getStartTime().toLocalTime().toString(),
-                schedule.getEndTime().toLocalTime().toString()
+                startTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                end
         );
     }
 
-    public List<TimeSlot> mergeScheduledTimeSlots(List<TimeSlot> scheduledSlots) {
-        if (scheduledSlots.isEmpty()) return Collections.emptyList();
 
-        List<TimeSlot> sorted = new ArrayList<>(scheduledSlots);
-        sorted.sort(Comparator.comparing(slot -> LocalTime.parse(slot.getStart())));
+    public List<TimeSlot> mergeScheduledTimeSlots(List<TimeSlot> slots) {
+        if (slots.isEmpty()) return List.of();
+
+        List<TimeSlot> sorted = new ArrayList<>(slots);
+        sorted.sort(Comparator.comparing(slot -> timeUtil.parseTimeForCompare(slot.getStart())));
 
         List<TimeSlot> merged = new ArrayList<>();
         TimeSlot current = sorted.get(0);
 
         for (int i = 1; i < sorted.size(); i++) {
             TimeSlot next = sorted.get(i);
-            LocalTime currEnd = LocalTime.parse(current.getEnd());
-            LocalTime nextStart = LocalTime.parse(next.getStart());
+            LocalTime currEnd = timeUtil.parseTimeForCompare(current.getEnd());
+            LocalTime nextStart = timeUtil.parseTimeForCompare(next.getStart());
+            LocalTime nextEnd = timeUtil.parseTimeForCompare(next.getEnd());
 
             if (!currEnd.isBefore(nextStart)) {
-                current = new TimeSlot(
-                        current.getStart(),
-                        LocalTime.parse(current.getEnd()).isAfter(LocalTime.parse(next.getEnd()))
-                                ? current.getEnd() : next.getEnd()
-                );
+                String newEnd = currEnd.isAfter(nextEnd) ? current.getEnd() : next.getEnd();
+                current = new TimeSlot(current.getStart(), newEnd);
             } else {
                 merged.add(current);
                 current = next;
@@ -202,21 +212,22 @@ public class TeumConverter {
         LocalTime startOfDay = LocalTime.MIN;
         LocalTime endOfDay = LocalTime.MAX;
 
-        // 먼저 scheduled를 시간 순서대로 정렬
         List<TimeSlot> sorted = new ArrayList<>(scheduledSlots);
-        sorted.sort(Comparator.comparing(slot -> LocalTime.parse(slot.getStart())));
+        sorted.sort(Comparator.comparing(slot -> timeUtil.parseTimeForCompare(slot.getStart())));
 
         LocalTime current = startOfDay;
 
         for (TimeSlot scheduled : sorted) {
-            LocalTime scheduledStart = LocalTime.parse(scheduled.getStart());
-            LocalTime scheduledEnd = LocalTime.parse(scheduled.getEnd());
+            LocalTime scheduledStart = timeUtil.parseTimeForCompare(scheduled.getStart());
+            LocalTime scheduledEnd = timeUtil.parseTimeForCompare(scheduled.getEnd());
 
             if (current.isBefore(scheduledStart)) {
-                available.add(new TimeSlot(current.toString(), scheduledStart.toString()));
+                available.add(new TimeSlot(
+                        current.format(DateTimeFormatter.ofPattern("HH:mm")),
+                        scheduledStart.format(DateTimeFormatter.ofPattern("HH:mm"))
+                ));
             }
 
-            // 다음 구간 시작 위치를 scheduledEnd 기준으로 계속 갱신
             if (current.isBefore(scheduledEnd)) {
                 current = scheduledEnd;
             }
@@ -225,7 +236,7 @@ public class TeumConverter {
         if (current.isBefore(endOfDay)) {
             available.add(new TimeSlot(
                     current.format(DateTimeFormatter.ofPattern("HH:mm")),
-                    timeUtil.formatEndTime(endOfDay) // 24:00 처리
+                    timeUtil.formatEndTime(endOfDay)
             ));
         }
 

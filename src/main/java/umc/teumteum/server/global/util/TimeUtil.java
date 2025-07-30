@@ -47,4 +47,16 @@ public class TimeUtil {
         return formatEndTime(convertEndTime(endTime));
     }
 
+    public LocalTime parseTimeForCompare(String time) {
+        return "24:00".equals(time) ? LocalTime.MAX : LocalTime.parse(time);
+    }
+
+    public LocalTime parseTimeForSort(String time) {
+        return switch (time) {
+            case "24:00" -> LocalTime.MAX;
+            case "00:00" -> LocalTime.MIN;
+            default -> LocalTime.parse(time);
+        };
+    }
+
 }
