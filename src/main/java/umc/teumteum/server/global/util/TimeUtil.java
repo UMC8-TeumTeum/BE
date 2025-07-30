@@ -32,8 +32,14 @@ public class TimeUtil {
     }
 
 
-    // 공통 - 종료시간 변환 (종료시간이 00:00인 경우 LocalTime.MAX로 변환 필요)
+    // 공통 - 종료시간 입력 시 변환 (종료시간이 00:00인 경우 LocalTime.MAX로 변환 필요)
     public LocalTime convertEndTime(LocalTime endTime) {
         return endTime.equals(LocalTime.MIDNIGHT) ? LocalTime.MAX : endTime;
     }
+
+    // 공통 - 종료시간 반환 시 변환 (종료시간이 LocalTime.MAX인 경우 24:00로 변환 필요)
+    public String formatEndTime(LocalTime endTime) {
+        return endTime.equals(LocalTime.MAX) ? "24:00" : endTime.toString();
+    }
+
 }
