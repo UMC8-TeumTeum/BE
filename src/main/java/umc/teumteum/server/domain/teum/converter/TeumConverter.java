@@ -26,6 +26,7 @@ import umc.teumteum.server.global.util.TimeUtil;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -93,7 +94,7 @@ public class TeumConverter {
                 .date(request.getDate().toString())
                 .timeSlot(TimeSlot.builder()
                         .start(request.getStartTime().toString())
-                        .end(timeUtil.formatEndTime(request.getEndTime()))
+                        .end(timeUtil.parseAndFormatEndTime(request.getEndTime()))
                         .build())
                 .build();
     }
@@ -128,16 +129,24 @@ public class TeumConverter {
     }
 
     public Schedule toScheduleFromTeumRequest(TeumRequest request, User receiver) {
-        LocalDateTime start = LocalDateTime.of(request.getDate(), request.getStartTime());
-        LocalDateTime end = LocalDateTime.of(request.getDate(), request.getEndTime());
+        LocalDate date = request.getDate();
+        LocalTime start = request.getStartTime();
+        LocalTime end = timeUtil.convertEndTime(request.getEndTime());
+
+        LocalDateTime startDateTime = LocalDateTime.of(date, start);
+
+        // 00:00이 들어와서 LocalTime.MAX로 바뀐 경우 → 다음 날 00:00으로 endTime을 표현
+        LocalDateTime endDateTime = end.equals(LocalTime.MAX)
+                ? LocalDateTime.of(date.plusDays(1), LocalTime.MIDNIGHT)
+                : LocalDateTime.of(date, end);
 
         return Schedule.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .type(ScheduleType.TEUM)
-                .date(request.getDate())
-                .startTime(start)
-                .endTime(end)
+                .date(date)
+                .startTime(startDateTime)
+                .endTime(endDateTime)
                 .user(receiver)
                 .includeTeum(true)
                 .teumRequest(request)
@@ -190,21 +199,34 @@ public class TeumConverter {
 
     public List<TimeSlot> invertScheduledToAvailable(List<TimeSlot> scheduledSlots) {
         List<TimeSlot> available = new ArrayList<>();
-        LocalTime startOfDay = LocalTime.of(0, 0);
-        LocalTime endOfDay = LocalTime.of(23, 59);
+        LocalTime startOfDay = LocalTime.MIN;
+        LocalTime endOfDay = LocalTime.MAX;
 
-        for (TimeSlot scheduled : scheduledSlots) {
+        // 먼저 scheduled를 시간 순서대로 정렬
+        List<TimeSlot> sorted = new ArrayList<>(scheduledSlots);
+        sorted.sort(Comparator.comparing(slot -> LocalTime.parse(slot.getStart())));
+
+        LocalTime current = startOfDay;
+
+        for (TimeSlot scheduled : sorted) {
             LocalTime scheduledStart = LocalTime.parse(scheduled.getStart());
             LocalTime scheduledEnd = LocalTime.parse(scheduled.getEnd());
 
-            if (startOfDay.isBefore(scheduledStart)) {
-                available.add(new TimeSlot(startOfDay.toString(), scheduledStart.toString()));
+            if (current.isBefore(scheduledStart)) {
+                available.add(new TimeSlot(current.toString(), scheduledStart.toString()));
             }
-            startOfDay = scheduledEnd;
+
+            // 다음 구간 시작 위치를 scheduledEnd 기준으로 계속 갱신
+            if (current.isBefore(scheduledEnd)) {
+                current = scheduledEnd;
+            }
         }
 
-        if (startOfDay.isBefore(endOfDay)) {
-            available.add(new TimeSlot(startOfDay.toString(), endOfDay.toString()));
+        if (current.isBefore(endOfDay)) {
+            available.add(new TimeSlot(
+                    current.format(DateTimeFormatter.ofPattern("HH:mm")),
+                    timeUtil.formatEndTime(endOfDay) // 24:00 처리
+            ));
         }
 
         return available;
@@ -226,7 +248,7 @@ public class TeumConverter {
                 .title(baseSchedule.getTitle())
                 .date(baseSchedule.getDate().toString())
                 .startTime(baseSchedule.getStartTime().toLocalTime().toString())
-                .endTime(timeUtil.formatEndTime(baseSchedule.getEndTime().toLocalTime()))
+                .endTime(timeUtil.parseAndFormatEndTime(baseSchedule.getEndTime().toLocalTime()))
                 .status(baseSchedule.getStatus())
                 .participants(relatedSchedules.stream()
                         .map(s -> {
@@ -245,7 +267,7 @@ public class TeumConverter {
                 .date(schedule.getDate().toString())
                 .time(List.of(new TimeSlot(
                         schedule.getStartTime().toLocalTime().toString(),
-                        timeUtil.formatEndTime(schedule.getEndTime().toLocalTime())
+                        timeUtil.parseAndFormatEndTime(schedule.getEndTime().toLocalTime())
                 )))
                 .build();
     }
