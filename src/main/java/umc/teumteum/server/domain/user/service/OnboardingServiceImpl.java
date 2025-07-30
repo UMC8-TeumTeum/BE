@@ -121,8 +121,29 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 6. Presigned URL 생성
         String presignedUrl = s3Util.toUploadPresignedUrl(key, contentType, Duration.ofMinutes(30));
 
-        // 7. 응답 DTO 반환
+
+        // 7. TODO S3 업로드 예정인 파일이름 REDIS에 저장
+
+        // 8. 응답 DTO 반환
         return OnboardingConverter.toProfileImagePresignedUrlResponse(presignedUrl, fileName);
+    }
+
+
+    // 온보딩 - 프로필 이미지 등록
+    @Override
+    @Transactional
+    public void saveProfileImage(OnboardingRequestDto.ProfileImageRequest request, User user) {
+        // 1. 사용자 step 확인
+        validateOnboardingStep(user, UserStep.ONBOARDING);
+
+        // 2. TODO REDIS에서 조회 및 만료 시 삭제
+        // - 1) 사용자가 잘못된 파일명을 전달해주고 이를 DB에 저장한다면 이미지 조회 시 오류가 발생 (파일명 확인 필요)
+        // throw new OnboardingHandler(UserErrorStatus.EXPIRED_OR_INVALID_UPLOAD);
+        // - 2) 프론트에서 S3에 파일을 업로드한 뒤, 해당 API가 호출되지 않으면 S3에 불필요한 파일이 존재하게 됨
+        // REDIS 만료 시 S3 객체 삭제 로직 필요
+
+        // 3. 사용자 프로필 이미지 이름 업데이트
+        user.updateProfileImageName(request.getFileName());
     }
 
 
