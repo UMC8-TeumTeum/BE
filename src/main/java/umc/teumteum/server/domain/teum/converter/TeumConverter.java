@@ -2,6 +2,8 @@ package umc.teumteum.server.domain.teum.converter;
 
 import java.time.Duration;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
@@ -19,6 +21,7 @@ import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 import umc.teumteum.server.global.util.S3Util;
+import umc.teumteum.server.global.util.TimeUtil;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,9 +33,13 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Component
+@RequiredArgsConstructor
 public class TeumConverter {
 
-    public static TeumRequest toTeumRequest(TeumRequestDto dto, User sender) {
+    private final TimeUtil timeUtil;
+
+    public TeumRequest toTeumRequest(TeumRequestDto dto, User sender) {
         return TeumRequest.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
@@ -44,7 +51,7 @@ public class TeumConverter {
                 .build();
     }
 
-    public static List<TeumResponse> toTeumResponses(
+    public List<TeumResponse> toTeumResponses(
             List<Long> receiverUserIds, Long senderId,
             TeumRequest request, Function<Long, User> userFetcher
     ) {
@@ -65,7 +72,7 @@ public class TeumConverter {
                 .toList();
     }
 
-    public static TeumReceivedResponseDto toReceivedResponseDto(TeumResponse response, S3Util s3Util) {
+    public TeumReceivedResponseDto toReceivedResponseDto(TeumResponse response, S3Util s3Util) {
         TeumRequest request = response.getTeumRequest();
         User sender = request.getUser();
 
@@ -86,19 +93,19 @@ public class TeumConverter {
                 .date(request.getDate().toString())
                 .timeSlot(TimeSlot.builder()
                         .start(request.getStartTime().toString())
-                        .end(request.getEndTime().toString())
+                        .end(timeUtil.formatEndTime(request.getEndTime()))
                         .build())
                 .build();
     }
 
 
-    public static List<TeumReceivedResponseDto> toReceivedResponseDtoList(List<TeumResponse> responses, S3Util s3Util) {
+    public List<TeumReceivedResponseDto> toReceivedResponseDtoList(List<TeumResponse> responses, S3Util s3Util) {
         return responses.stream()
                 .map(response -> toReceivedResponseDto(response, s3Util))
                 .toList();
     }
 
-    public static TeumRequest toResendTeumRequest(TeumRequest parent, TeumResendRequestDto dto, User resender) {
+    public TeumRequest toResendTeumRequest(TeumRequest parent, TeumResendRequestDto dto, User resender) {
         return TeumRequest.builder()
                 .title(parent.getTitle())
                 .description(parent.getDescription())
@@ -111,7 +118,7 @@ public class TeumConverter {
                 .build();
     }
 
-    public static TeumResponse toResendTeumResponse(TeumRequest request, User newReceiver) {
+    public TeumResponse toResendTeumResponse(TeumRequest request, User newReceiver) {
         return TeumResponse.builder()
                 .teumRequest(request)
                 .receiverUser(newReceiver)
@@ -120,7 +127,7 @@ public class TeumConverter {
                 .build();
     }
 
-    public static Schedule toScheduleFromTeumRequest(TeumRequest request, User receiver) {
+    public Schedule toScheduleFromTeumRequest(TeumRequest request, User receiver) {
         LocalDateTime start = LocalDateTime.of(request.getDate(), request.getStartTime());
         LocalDateTime end = LocalDateTime.of(request.getDate(), request.getEndTime());
 
@@ -137,7 +144,7 @@ public class TeumConverter {
                 .build();
     }
 
-    public static TeumStatusUpdateResponseDto toStatusUpdateResponseDto(ResponseStatus status, boolean isAccepted, Long teumId) {
+    public TeumStatusUpdateResponseDto toStatusUpdateResponseDto(ResponseStatus status, boolean isAccepted, Long teumId) {
         return TeumStatusUpdateResponseDto.builder()
                 .status(status)
                 .teumCreated(isAccepted)
@@ -145,14 +152,14 @@ public class TeumConverter {
                 .build();
     }
 
-    public static TimeSlot fromSchedule(Schedule schedule) {
+    public TimeSlot fromSchedule(Schedule schedule) {
         return new TimeSlot(
                 schedule.getStartTime().toLocalTime().toString(),
                 schedule.getEndTime().toLocalTime().toString()
         );
     }
 
-    public static List<TimeSlot> mergeScheduledTimeSlots(List<TimeSlot> scheduledSlots) {
+    public List<TimeSlot> mergeScheduledTimeSlots(List<TimeSlot> scheduledSlots) {
         if (scheduledSlots.isEmpty()) return Collections.emptyList();
 
         List<TimeSlot> sorted = new ArrayList<>(scheduledSlots);
@@ -181,7 +188,7 @@ public class TeumConverter {
         return merged;
     }
 
-    public static List<TimeSlot> invertScheduledToAvailable(List<TimeSlot> scheduledSlots) {
+    public List<TimeSlot> invertScheduledToAvailable(List<TimeSlot> scheduledSlots) {
         List<TimeSlot> available = new ArrayList<>();
         LocalTime startOfDay = LocalTime.of(0, 0);
         LocalTime endOfDay = LocalTime.of(23, 59);
@@ -203,13 +210,13 @@ public class TeumConverter {
         return available;
     }
 
-    public static List<String> toDateStringList(List<LocalDate> dates) {
+    public List<String> toDateStringList(List<LocalDate> dates) {
         return dates.stream()
                 .map(LocalDate::toString)
                 .toList();
     }
 
-    public static ScheduledTeumDetailResponseDto toScheduledTeumDetailDto(
+    public ScheduledTeumDetailResponseDto toScheduledTeumDetailDto(
             Schedule baseSchedule,
             List<Schedule> relatedSchedules,
             S3Util s3Util
@@ -219,7 +226,7 @@ public class TeumConverter {
                 .title(baseSchedule.getTitle())
                 .date(baseSchedule.getDate().toString())
                 .startTime(baseSchedule.getStartTime().toLocalTime().toString())
-                .endTime(baseSchedule.getEndTime().toLocalTime().toString())
+                .endTime(timeUtil.formatEndTime(baseSchedule.getEndTime().toLocalTime()))
                 .status(baseSchedule.getStatus())
                 .participants(relatedSchedules.stream()
                         .map(s -> {
@@ -231,14 +238,14 @@ public class TeumConverter {
                 .build();
     }
 
-    public static ScheduledTeumResponseDto toScheduledTeumResponseDto(Schedule schedule) {
+    public ScheduledTeumResponseDto toScheduledTeumResponseDto(Schedule schedule) {
         return ScheduledTeumResponseDto.builder()
                 .teumId(schedule.getId())
                 .title(schedule.getTitle())
                 .date(schedule.getDate().toString())
                 .time(List.of(new TimeSlot(
                         schedule.getStartTime().toLocalTime().toString(),
-                        schedule.getEndTime().toLocalTime().toString()
+                        timeUtil.formatEndTime(schedule.getEndTime().toLocalTime())
                 )))
                 .build();
     }

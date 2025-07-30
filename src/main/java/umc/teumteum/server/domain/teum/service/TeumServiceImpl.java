@@ -54,6 +54,7 @@ public class TeumServiceImpl implements TeumService {
     private final TeumRequestRepository teumRequestRepository;
     private final TeumResponseRepository teumResponseRepository;
     private final ScheduleRepository scheduleRepository;
+    private final TeumConverter teumConverter;
 
     @Override
     @Transactional
@@ -77,8 +78,8 @@ public class TeumServiceImpl implements TeumService {
         conflictValidator.validateTeumForUsers(allParticipants, date, startTime, endTime);
 
         // 요청 객체 생성 및 저장
-        TeumRequest request = TeumConverter.toTeumRequest(dto, user);
-        List<TeumResponse> responses = TeumConverter.toTeumResponses(
+        TeumRequest request = teumConverter.toTeumRequest(dto, user);
+        List<TeumResponse> responses = teumConverter.toTeumResponses(
                 dto.getReceiverUserIds(),
                 user.getId(),
                 request,
@@ -113,8 +114,8 @@ public class TeumServiceImpl implements TeumService {
         conflictValidator.validateTeumForUsers(participants, date, startTime, endTime);
 
         // 요청 및 응답 생성
-        TeumRequest newRequest = TeumConverter.toResendTeumRequest(parent, dto, user);
-        TeumResponse newResponse = TeumConverter.toResendTeumResponse(newRequest, originalSender);
+        TeumRequest newRequest = teumConverter.toResendTeumRequest(parent, dto, user);
+        TeumResponse newResponse = teumConverter.toResendTeumResponse(newRequest, originalSender);
         newRequest.getTeumResponses().add(newResponse);
 
         // 응답 상태 변경
@@ -146,7 +147,7 @@ public class TeumServiceImpl implements TeumService {
         );
 
         List<TeumReceivedResponseDto> dtoList = pageData.getContent().stream()
-                .map(response -> TeumConverter.toReceivedResponseDto(response, s3Util))
+                .map(response -> teumConverter.toReceivedResponseDto(response, s3Util))
                 .toList();
 
         return new PageImpl<>(dtoList, pageable, pageData.getTotalElements());
@@ -200,13 +201,13 @@ public class TeumServiceImpl implements TeumService {
             conflictValidator.validateTeum(receiver, date, startTime, endTime);
 
             // 수신자(응답자) 일정 생성
-            Schedule receiverSchedule = TeumConverter.toScheduleFromTeumRequest(request, receiver);
+            Schedule receiverSchedule = teumConverter.toScheduleFromTeumRequest(request, receiver);
             scheduleRepository.save(receiverSchedule);
 
             // 요청자 본인의 스케줄이 없는 경우에만 생성
             User requester = request.getUser();
             if (!scheduleRepository.existsByTeumRequestAndUser(request, requester)) {
-                Schedule requesterSchedule = TeumConverter.toScheduleFromTeumRequest(request, requester);
+                Schedule requesterSchedule = teumConverter.toScheduleFromTeumRequest(request, requester);
                 scheduleRepository.save(requesterSchedule);
             }
 
@@ -214,7 +215,7 @@ public class TeumServiceImpl implements TeumService {
             teumId = receiverSchedule.getId();
         }
 
-        return TeumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
+        return teumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
     }
 
 
@@ -223,7 +224,7 @@ public class TeumServiceImpl implements TeumService {
     public List<String> getScheduledTeumsOfMonth(Long userId, String month) {
         List<ScheduleStatus> validStatuses = List.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED);
         List<LocalDate> dates = scheduleRepository.findScheduledTeumsByMonth(userId, validStatuses, month);
-        return TeumConverter.toDateStringList(dates);
+        return teumConverter.toDateStringList(dates);
     }
 
     @Override
@@ -244,7 +245,7 @@ public class TeumServiceImpl implements TeumService {
         }
 
         return teumSchedules.stream()
-                .map(TeumConverter::toScheduledTeumResponseDto)
+                .map(teumConverter::toScheduledTeumResponseDto)
                 .toList();
 
     }
@@ -258,7 +259,7 @@ public class TeumServiceImpl implements TeumService {
                 List.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED)
         );
 
-        return TeumConverter.toScheduledTeumDetailDto(schedule, relatedSchedules, s3Util);
+        return teumConverter.toScheduledTeumDetailDto(schedule, relatedSchedules, s3Util);
     }
 
     @Override
@@ -318,7 +319,7 @@ public class TeumServiceImpl implements TeumService {
             );
             schedules.stream()
                     .filter(schedule -> !Boolean.TRUE.equals(schedule.getIsDeleted()))
-                    .map(TeumConverter::fromSchedule)
+                    .map(teumConverter::fromSchedule)
                     .forEach(scheduledSlots::add);
 
             // 수면 시간
@@ -353,8 +354,8 @@ public class TeumServiceImpl implements TeumService {
             }
         }
 
-        List<TimeSlot> merged = TeumConverter.mergeScheduledTimeSlots(scheduledSlots);
-        List<TimeSlot> available = TeumConverter.invertScheduledToAvailable(merged);
+        List<TimeSlot> merged = teumConverter.mergeScheduledTimeSlots(scheduledSlots);
+        List<TimeSlot> available = teumConverter.invertScheduledToAvailable(merged);
 
         return new AvailableTimeResponseDto(date.toString(), available);
     }
