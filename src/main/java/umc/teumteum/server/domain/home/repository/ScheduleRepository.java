@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.home.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.home.entity.Schedule;
@@ -9,7 +10,6 @@ import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
-
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -153,4 +153,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
            
     List<Schedule> findAllByUserAndIncludeTeumTrueAndEndTimeBefore(User user, LocalDateTime now);
 
+
+    @Modifying
+    @Query("delete from Schedule s where s.user = :user")
+    void deleteByUser(@Param("user") User user);
 }
