@@ -12,6 +12,8 @@ import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
 import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
@@ -20,6 +22,7 @@ import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -116,12 +119,26 @@ public class FriendServiceImpl implements FriendService {
     @Override
     public Long getFriendTeumTime(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
-        validateUserExists(loginUserId);
+        validateUserExists(targetUserId);
 
-        List<Schedule> schedules = scheduleRepository.findByUserIdAndIncludeTeumIsTrue(targetUserId);
-        return friendConverter.calculateTeumTime(schedules);
+        LocalDateTime now = LocalDateTime.now();
+
+        List<ScheduleType> targetTypes = List.of(
+                ScheduleType.AI,
+                ScheduleType.WISH,
+                ScheduleType.TODO,
+                ScheduleType.TEUM
+        );
+
+        List<Schedule> rawSchedules = scheduleRepository.findSchedulesForTeumTime(targetUserId, now, targetTypes);
+
+        // TEUM 타입은 COMPLETED 상태인 것만 필터링
+        List<Schedule> filtered = rawSchedules.stream()
+                .filter(s -> s.getType() != ScheduleType.TEUM || s.getStatus() == ScheduleStatus.COMPLETED)
+                .collect(Collectors.toList());
+
+        return friendConverter.calculateTeumTime(filtered);
     }
-
 
     /**
      * 주어진 ID에 해당하는 User를 조회합니다.

@@ -120,7 +120,7 @@ public class FriendController {
 
     @Operation(
             summary = "친구의 빈틈 시간 조회",
-            description = "isIncludeTeumTime == true 인 일정들의 시간을 합산하여 반환합니다."
+            description = "친구의 스케줄 중에서 includeTeum == true 인 일정들의 시간을 합산하여 반환합니다."
     )
     @GetMapping(value = "/{userId}/teum-time", produces = "application/json")
     public ApiResponse<Long> getFriendTeumTime(
