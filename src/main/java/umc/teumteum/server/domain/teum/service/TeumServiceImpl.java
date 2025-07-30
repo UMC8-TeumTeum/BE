@@ -42,6 +42,7 @@ import java.time.LocalTime;
 import java.util.*;
 
 import static umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus.INVALID_PARENT_REQUEST;
+import static umc.teumteum.server.domain.user.entity.enums.UserStatus.ACTIVE;
 
 @Slf4j
 @Service
@@ -315,14 +316,21 @@ public class TeumServiceImpl implements TeumService {
             User targetUser = getUserOrThrow(userId);
 
             // 일반 일정
-            List<Schedule> schedules = scheduleRepository.findByUserIdAndDateAndStatus(
-                    userId, date, ScheduleStatus.ACTIVE
+            LocalDateTime startOfDay = date.atStartOfDay();
+            LocalDateTime endOfDay = LocalDateTime.of(date, LocalTime.MAX);
+
+            List<Schedule> schedules = scheduleRepository.findOverlappingSchedules(
+                    userId, startOfDay, endOfDay, ScheduleStatus.ACTIVE
             );
 
             schedules.stream()
-                    .filter(schedule -> schedule.getStartTime().toLocalDate().isEqual(date))
+                    .filter(schedule ->
+                            !schedule.getEndTime().toLocalDate().isBefore(date) &&
+                                    schedule.getStartTime().toLocalDate().isBefore(date.plusDays(1))
+                    )
                     .filter(schedule -> !Boolean.TRUE.equals(schedule.getIsDeleted()))
-                    .map(teumConverter::fromSchedule)
+                    .map(schedule -> teumConverter.sliceScheduleToDate(schedule, date))
+                    .filter(Objects::nonNull)
                     .forEach(scheduledSlots::add);
 
             // 수면 시간
