@@ -42,4 +42,9 @@ public class TimeUtil {
         return endTime.equals(LocalTime.MAX) ? "24:00" : endTime.toString();
     }
 
+    // 공통 - DB에서 가져온 값을 바로 응답용 문자열로 (통합 처리)
+    public String parseAndFormatEndTime(LocalTime endTime) {
+        return formatEndTime(convertEndTime(endTime));
+    }
+
 }
