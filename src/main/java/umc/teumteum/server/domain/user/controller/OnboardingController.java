@@ -73,13 +73,15 @@ public class OnboardingController {
 
     @Operation(
             summary = "온보딩 프로필 이미지 등록",
-            description = "온보딩 과정에서 S3에 업로드된 프로필 이미지의 파일명를 등록합니다."
+            description = "온보딩 과정에서 S3에 업로드된 프로필 이미지의 파일명을 등록합니다."
     )
     @PostMapping(value = "/onboarding/profile-image", produces = "application/json")
     public ApiResponse<Object> saveProfileImageKey(
+            @RequestBody @Valid OnboardingRequestDto.ProfileImageRequest request,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        // TODO: 온보딩 프로필 이미지 파일명 저장 로직 구현
-        return null;
+        onboardingService.saveProfileImage(request, user);
+        return ApiResponse.of(UserSuccessStatus.PROFILE_IMAGE_SAVED, null);
     }
 
 

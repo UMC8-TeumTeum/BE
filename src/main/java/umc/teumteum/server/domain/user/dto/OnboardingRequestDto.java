@@ -73,6 +73,19 @@ public class OnboardingRequestDto {
     }
 
 
+    // 온보딩 - 프로필 이미지
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProfileImageRequest {
+
+        @NotBlank
+        @Schema(description = "업로드한 파일의 이름", example = "550e8400-e29b.jpg")
+        private String fileName;
+    }
+
+
     // 온보딩 - 수면패턴
     @Getter
     @Builder

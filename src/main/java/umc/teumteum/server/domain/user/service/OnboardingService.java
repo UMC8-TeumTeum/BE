@@ -15,4 +15,6 @@ public interface OnboardingService {
     void saveRoutines(OnboardingRequestDto.RoutineListRequest request, User user);
 
     OnboardingResponseDto.ProfileImagePresignedUrlResponse generateProfileImagePresignedUrl(OnboardingRequestDto.ProfileImagePresignedUrlRequest request, User user);
+
+    void saveProfileImage(OnboardingRequestDto.ProfileImageRequest request, User user);
 }
