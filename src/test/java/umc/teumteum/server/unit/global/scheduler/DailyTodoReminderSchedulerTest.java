@@ -1,4 +1,4 @@
-package umc.teumteum.server.unit.domain.scheduler;
+package umc.teumteum.server.unit.global.scheduler;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,6 +31,7 @@ import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
+import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.UserRole;
@@ -190,10 +192,88 @@ public class DailyTodoReminderSchedulerTest {
         .forEach(token -> verify(fcmNotificationSender, never()).send(eq(token.getToken()),any()));
 
   }
+  @Test
+  @DisplayName("[DailyTodoReminerScheduler] - TC5 유저별 일정이 startTime 순으로 정렬되어 있는지 검증한다.")
+  void DailyTodoReminderScheduler_TC5() {
+    // given
+    when(scheduleRepository.findAllByDateWithUser(LocalDate.now())).thenReturn(schedules);
+    when(fcmTokenRepository.findActiveTokensByUsers(any())).thenReturn(tokens);
+
+    // when
+    scheduler.sendDailyTodos();
+
+    // then
+    long expectedSendCount = tokens.stream()
+        .filter(t -> t.getUser().getStatus() == UserStatus.ACTIVE)
+        .count();
+
+    verify(fcmNotificationSender, times((int) expectedSendCount)).send(anyString(), argThat(payload -> {
+      String content = payload.getContent(); // 예: "09:00 일정1\n10:00 일정2\n11:00 일정3"
+      String[] lines = content.split("\n");
+
+      List<LocalTime> times = new ArrayList<>();
+      for (String line : lines) {
+        String timeStr = line.split(" ")[0]; // "09:00 일정1" → "09:00"
+        times.add(LocalTime.parse(timeStr)); // HH:mm 형식으로 LocalTime 변환
+      }
+
+      return isSorted(times);
+    }));
+  }
+
+  @Test
+  @DisplayName("[DailyTodoReminerScheduler] - TC6 payload 내용(title, content, type, data.userId)을 검증한다.")
+  void DailyTodoReminderScheduler_TC6() {
+    // given
+    when(scheduleRepository.findAllByDateWithUser(LocalDate.now())).thenReturn(schedules);
+    when(fcmTokenRepository.findActiveTokensByUsers(any())).thenReturn(tokens);
+
+    // when
+    scheduler.sendDailyTodos();
+
+    // then
+    long expectedSendCount = tokens.stream()
+        .filter(t -> t.getUser().getStatus() == UserStatus.ACTIVE)
+        .count();
+
+    // ArgumentCaptor로 실제 호출된 payload들 전부 캡처
+    ArgumentCaptor<NotificationPayload> payloadCaptor = ArgumentCaptor.forClass(NotificationPayload.class);
+    verify(fcmNotificationSender, times((int) expectedSendCount)).send(anyString(), payloadCaptor.capture());
+
+    List<NotificationPayload> payloads = payloadCaptor.getAllValues();
+
+    for (NotificationPayload payload : payloads) {
+      // 1. title 확인
+      assert payload.getTitle().equals(NotificationType.DAILY_TODO.getTitle());
+
+      // 2. type 확인
+      assert payload.getType() == NotificationType.DAILY_TODO;
+
+      // 3. data.userId 확인
+      assert payload.getData() != null;
+      assert payload.getData().containsKey("userId");
+      assert payload.getData().get("userId").matches("\\d+");
+
+      // 4. content 확인
+      assert payload.getContent() != null;
+      assert !payload.getContent().isBlank();
+    }
+  }
+
+
 
   private boolean hasSameUserIds(List<User> actual, List<User> expected) {
     Set<Long> actualIds = actual.stream().map(User::getId).collect(Collectors.toSet());
     Set<Long> expectedIds = expected.stream().map(User::getId).collect(Collectors.toSet());
     return actualIds.equals(expectedIds);
+  }
+
+  private boolean isSorted(List<LocalTime> times) {
+    for (int i = 1; i < times.size(); i++) {
+      if (times.get(i - 1).isAfter(times.get(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 }

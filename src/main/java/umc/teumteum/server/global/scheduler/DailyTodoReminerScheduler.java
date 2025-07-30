@@ -53,8 +53,11 @@ public class DailyTodoReminerScheduler {
 
 
     // 5. 유저별 알림 전송
-    for(User user : users) {
-      List<Schedule> userSchedules = scheduleMap.get(user);
+    for(User user : activeUsers) {
+      List<Schedule> userSchedules = scheduleMap.get(user).stream()
+          .sorted((s1, s2) -> s1.getStartTime().compareTo(s2.getStartTime()))
+          .toList();
+
       String content = userSchedules.stream()
           .map(s->s.getStartTime().format(formatter)+" "+s.getTitle())
           .collect(Collectors.joining("\n"));
