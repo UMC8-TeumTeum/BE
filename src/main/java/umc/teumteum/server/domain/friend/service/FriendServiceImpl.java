@@ -117,7 +117,7 @@ public class FriendServiceImpl implements FriendService {
 
 
     @Override
-    public Long getFriendTeumTime(Long loginUserId, Long targetUserId) {
+    public FriendTeumTimeResponseDto getFriendTeumTime(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
         validateUserExists(targetUserId);
 
@@ -132,12 +132,12 @@ public class FriendServiceImpl implements FriendService {
 
         List<Schedule> rawSchedules = scheduleRepository.findSchedulesForTeumTime(targetUserId, now, targetTypes);
 
-        // TEUM 타입은 COMPLETED 상태인 것만 필터링
         List<Schedule> filtered = rawSchedules.stream()
                 .filter(s -> s.getType() != ScheduleType.TEUM || s.getStatus() == ScheduleStatus.COMPLETED)
                 .collect(Collectors.toList());
 
-        return friendConverter.calculateTeumTime(filtered);
+        long totalMinutes = friendConverter.calculateTeumTime(filtered);
+        return friendConverter.toFriendTeumTimeResponse(totalMinutes);
     }
 
     /**
