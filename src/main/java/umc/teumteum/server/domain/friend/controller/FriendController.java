@@ -2,12 +2,8 @@ package umc.teumteum.server.domain.friend.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.exception.status.FriendSuccessStatus;
@@ -120,14 +116,14 @@ public class FriendController {
 
     @Operation(
             summary = "친구의 빈틈 시간 조회",
-            description = "isIncludeTeumTime == true 인 일정들의 시간을 합산하여 반환합니다."
+            description = "친구의 스케줄 중에서 includeTeum == true 인 일정들의 시간을 합산하여 반환합니다."
     )
     @GetMapping(value = "/{userId}/teum-time", produces = "application/json")
-    public ApiResponse<Long> getFriendTeumTime(
+    public ApiResponse<FriendTeumTimeResponseDto> getFriendTeumTime(
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "조회할 친구 ID") @PathVariable("userId") Long targetUserId
     ) {
-        Long result = friendService.getFriendTeumTime(loginUser.getId(), targetUserId);
+        FriendTeumTimeResponseDto result = friendService.getFriendTeumTime(loginUser.getId(), targetUserId);
         return ApiResponse.of(FriendSuccessStatus.GET_FRIEND_TEUM_TIME_SUCCESS, result);
     }
 
