@@ -162,30 +162,27 @@ public class TeumConverter {
     }
 
     // TimeSlot 변환 (Schedule → TimeSlot)
-    public TimeSlot fromSchedule(Schedule schedule) {
-        LocalDate startDate = schedule.getStartTime().toLocalDate();
-        LocalDate endDate = schedule.getEndTime().toLocalDate();
+    public TimeSlot sliceScheduleToDate(Schedule schedule, LocalDate targetDate) {
+        LocalDateTime start = schedule.getStartTime();
+        LocalDateTime end = schedule.getEndTime();
 
-        LocalTime startTime = schedule.getStartTime().toLocalTime();
-        LocalTime endTime = schedule.getEndTime().toLocalTime();
+        LocalDateTime dayStart = LocalDateTime.of(targetDate, LocalTime.MIN);
+        LocalDateTime dayEnd = LocalDateTime.of(targetDate, LocalTime.MAX);
 
-        // endDate가 다음 날이면 → 자정(24:00)까지만 포함
-        if (!startDate.isEqual(endDate)) {
-            return new TimeSlot(
-                    startTime.format(DateTimeFormatter.ofPattern("HH:mm")),
-                    "24:00"
-            );
+        // 잘라낸 시작/종료 시간
+        LocalDateTime slicedStart = start.isBefore(dayStart) ? dayStart : start;
+        LocalDateTime slicedEnd = end.isAfter(dayEnd) ? dayEnd : end;
+
+        if (!slicedStart.isBefore(slicedEnd)) {
+            return null; // 무효한 일정
         }
 
-        // 일반적인 하루 안 일정
-        String end = endTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+        String startStr = slicedStart.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+        String endStr = slicedEnd.toLocalTime().equals(LocalTime.MAX) ? "24:00"
+                : slicedEnd.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"));
 
-        return new TimeSlot(
-                startTime.format(DateTimeFormatter.ofPattern("HH:mm")),
-                end
-        );
+        return new TimeSlot(startStr, endStr);
     }
-
 
     // 바쁜 시간대 병합 (겹치거나 인접한 TimeSlot 병합)
     public List<TimeSlot> mergeScheduledTimeSlots(List<TimeSlot> slots) {
