@@ -88,11 +88,11 @@ public class AuthServiceImpl implements AuthService {
             // 2) 수면패턴 초기화
             user.clearSleepPattern();
 
-            // 3) 반복일정 초기화
-            routineRepository.deleteByUser(user);
-
-            // 4) 스케줄 초기화
+            // 3) 스케줄 초기화 (외래키로 인해 먼저 삭제)
             scheduleRepository.deleteByUser(user);
+
+            // 4) 반복일정 초기화
+            routineRepository.deleteByUser(user);
         }
 
         // 7. converter 작업
