@@ -28,7 +28,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "user")
+@Table(name = "\"user\"")
 public class User extends BaseEntity {
 
     public static final String DEFAULT_PROFILE_IMAGE = "default.svg";
