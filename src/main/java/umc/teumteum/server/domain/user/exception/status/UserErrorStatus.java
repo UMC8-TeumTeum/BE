@@ -18,7 +18,7 @@ public enum UserErrorStatus implements BaseErrorCode {
     TOS_CONSENT_NOT_AGREED(HttpStatus.BAD_REQUEST, "ONBOARDING4002", "서비스 이용약관은 필수 동의 항목입니다."),
     PRIVACY_CONSENT_NOT_AGREED(HttpStatus.BAD_REQUEST, "ONBOARDING4003", "개인정보 수집 및 이용은 필수 동의 항목입니다."),
     UNSUPPORTED_IMAGE_FORMAT(HttpStatus.BAD_REQUEST, "ONBOARDING4004", "지원하지 않는 이미지 형식입니다."),
-    EXPIRED_OR_INVALID_UPLOAD(HttpStatus.BAD_REQUEST, "ONBOARDING4005", "등록 유효시간이 만료되었거나, 발급된 파일명과 일치하지 않는 업로드 요청입니다."),
+    INVALID_IMAGE_NAME(HttpStatus.BAD_REQUEST, "ONBOARDING4005", "잘못된 파일명에 대한 등록 요청입니다."),
     INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "ONBOARDING4006", "시작/종료 시간이 잘못 설정된 반복 일정이 존재합니다."),
     ROUTINE_TIME_CONFLICT(HttpStatus.BAD_REQUEST, "ONBOARDING4007", "반복 일정 간 시간 충돌이 발생했습니다."),
     ROUTINE_SLEEP_CONFLICT(HttpStatus.BAD_REQUEST, "ONBOARDING4008", "수면 패턴과 반복 일정 간 시간 충돌이 발생했습니다."),
