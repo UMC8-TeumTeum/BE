@@ -33,14 +33,12 @@ import umc.teumteum.server.global.exception.handler.GlobalHandler;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.validator.ConflictValidator;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus.INVALID_PARENT_REQUEST;
 
@@ -217,7 +215,25 @@ public class TeumServiceImpl implements TeumService {
         return TeumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
     }
 
+    @Override
+    public List<String> getTeumRequestsOfMonth(Long userId, String month) {
+        YearMonth yearMonth = YearMonth.parse(month);
+        LocalDate start = yearMonth.atDay(1);
+        LocalDate end = yearMonth.atEndOfMonth();
 
+        List<LocalDate> myRequestDates =
+                teumRequestRepository.findMyRequestDates(userId, start, end);
+
+        List<LocalDate> receivedRequestDates =
+                teumResponseRepository.findReceivedRequestDates(userId, start, end);
+
+        List<LocalDate> allDates = Stream.concat(myRequestDates.stream(), receivedRequestDates.stream())
+                .distinct()
+                .sorted()
+                .toList();
+
+        return TeumConverter.toDateStringList(allDates);
+    }
 
     @Override
     public List<String> getScheduledTeumsOfMonth(Long userId, String month) {
