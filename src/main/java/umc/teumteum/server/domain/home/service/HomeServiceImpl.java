@@ -148,12 +148,18 @@ public class HomeServiceImpl implements HomeService {
     public TodoIdResponseDto updateTodoInfo(TodoRequestDto dto, Long scheduleId) {
         // Todo(Schedule) 수정
         if (scheduleId < 0) {
-            // 반복일정은 수정할 수 없음
+            // 1. 미래의 반복일정은 수정할 수 없음
             throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
         }
 
+        // 2. 스케줄 테이블 조회
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
+
+        if (schedule.getType() == ScheduleType.ROUTINE) {
+            // 3. 현재, 과거의 반복일정은 수정할 수 없음
+            throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
+        }
 
         // 스케줄 필드 업데이트
         schedule.updateField(dto);
