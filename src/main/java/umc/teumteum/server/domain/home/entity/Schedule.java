@@ -61,6 +61,10 @@ public class Schedule extends BaseEntity {
     @Column(name = "include_teum", nullable = false)
     private Boolean includeTeum = false;
 
+    @Column(name = "has_alarm", nullable = false)
+    @Builder.Default
+    private Boolean hasAlarm = false;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
