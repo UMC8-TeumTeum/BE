@@ -135,7 +135,7 @@ public class OnboardingRequestDto {
 
         @NotNull(message = "요일은 필수 입력입니다")
         @Schema(description = "반복 요일", example = "WEDNESDAY",
-                allowableValues = {"MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"})
+            allowableValues = {"MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"})
         private Weekday weekday;
 
         @NotNull(message = "시작 시간은 필수 입력입니다")
