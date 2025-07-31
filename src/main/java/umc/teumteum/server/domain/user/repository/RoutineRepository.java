@@ -16,4 +16,7 @@ public interface RoutineRepository extends JpaRepository<Routine, Long> {
     @Modifying
     @Query("delete from Routine r where r.user = :user")
     void deleteByUser(@Param("user") User user);
+
+    @Query("SELECT r FROM Routine r WHERE r.user = :user")
+    List<Routine> findByUser(@Param("user") User user);
 }

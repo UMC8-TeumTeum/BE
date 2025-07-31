@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDate;
+
 public class HomeResponseDto {
 
   @Getter
@@ -20,6 +22,18 @@ public class HomeResponseDto {
     private Integer hours;
     @Schema(description = "분(minutes) 단위", example = "30")
     private Integer minutes;
+  }
+
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  public static class CalendarDto{
+
+    @Schema(description = "날짜", example = "2025-07-31")
+    private LocalDate date;
+
+    @Schema(description = "스케줄 여부", example = "true")
+    private Boolean hasSchedule;
   }
 
 }
