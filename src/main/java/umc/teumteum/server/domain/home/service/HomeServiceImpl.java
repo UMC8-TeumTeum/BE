@@ -37,10 +37,7 @@ import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.S3Util;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -483,5 +480,47 @@ public class HomeServiceImpl implements HomeService {
 
         }
         return scheduleConverter.toCalendarDto(calendarMap,startDate,endDate);
+    }
+
+    @Override
+    public List<HomeResponseDto.TodolistDto> getTodolist(LocalDate date, User user) {
+        // 투두리스트 조회
+
+        // 1. 해당 날짜의 모든 스케줄 조회
+        List<Schedule> allSchedules = scheduleRepository.findByUserAndDate(user,date);
+
+        // 2. 스케줄 테이블 조회 (해당 날짜 & 삭제되지 않음)
+        List<HomeResponseDto.TodolistDto> scheduleDtos = allSchedules.stream()
+                .filter(s -> !s.getIsDeleted())
+                .map(scheduleConverter::toScheduleDto)
+                .toList();
+
+        // 3. 삭제된 루틴 ID
+        Set<Long> deletedRoutineIds = allSchedules.stream()
+                .filter(s-> s.getRoutine() != null && s.getIsDeleted())
+                .map(s->s.getRoutine().getId())
+                .collect(Collectors.toSet());
+
+        // 4. 미래의 경우 반복 루틴 추가 조회
+        LocalDate today = LocalDate.now();
+        List<HomeResponseDto.TodolistDto> routineDtos = new ArrayList<>();
+        if(date.isAfter(today)){
+            // 4-1. 조회 요일
+            Weekday todayWeekday = Weekday.valueOf(date.getDayOfWeek().name());
+            List<Routine> routines = routineRepository.findByUserAndWeekday(user, todayWeekday);
+
+            // 4-2. 삭제되지 않은 루틴에 대해 가상의 ID 생성
+            routineDtos = routines.stream()
+                    .filter(r -> !deletedRoutineIds.contains(r.getId()))
+                    .map(r -> scheduleConverter.toVirtualRoutineDto(r, date))
+                    .toList();
+        }
+
+        // 5. 합쳐서 반환 (시간순 정렬)
+        List<HomeResponseDto.TodolistDto> result = new ArrayList<>();
+        result.addAll(scheduleDtos);
+        result.addAll(routineDtos);
+        result.sort(Comparator.comparing(HomeResponseDto.TodolistDto::getStartTime));
+        return result;
     }
 }

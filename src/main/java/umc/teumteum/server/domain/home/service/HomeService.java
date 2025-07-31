@@ -52,4 +52,7 @@ public interface HomeService {
 
     // 캘린더 스케줄 여부 조회
     List<HomeResponseDto.CalendarDto> getCalendar(LocalDate startDate, LocalDate endDate,User user);
+
+    // 투두리스트 조회
+    List<HomeResponseDto.TodolistDto> getTodolist(LocalDate date,User user);
 }

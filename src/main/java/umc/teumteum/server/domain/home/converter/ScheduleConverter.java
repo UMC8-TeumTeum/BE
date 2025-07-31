@@ -10,6 +10,7 @@ import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 
 import java.time.LocalDate;
@@ -115,6 +116,39 @@ public class ScheduleConverter {
         }
 
         return result;
+    }
+
+    // Schedule -> HomeResponseDto.TodolistDto
+    public HomeResponseDto.TodolistDto toScheduleDto(Schedule schedule) {
+        return HomeResponseDto.TodolistDto.builder()
+                .id(schedule.getId())
+                .title(schedule.getTitle())
+                .startTime(schedule.getStartTime().toLocalTime())
+                .endTime(schedule.getEndTime().toLocalTime())
+                .isPublic(schedule.getIsPublic())
+                .hasAlarm(schedule.getHasAlarm())
+                .type(schedule.getType())
+                .build();
+    }
+
+    // Routine -> HomeResponseDto.TodolistDto
+    public HomeResponseDto.TodolistDto toVirtualRoutineDto(Routine routine,LocalDate date) {
+
+        // 가상의 ID 새성
+        String dateStr = String.format("%04d%02d%02d", date.getYear(), date.getMonthValue(), date.getDayOfMonth());
+        String idStr = dateStr + routine.getId();
+        Long virtualId = -1 * Long.parseLong(idStr);
+
+        return HomeResponseDto.TodolistDto.builder()
+                .id(virtualId)
+                .title(routine.getTitle())
+                .startTime(routine.getStartTime())
+                .endTime(routine.getEndTime())
+                .isPublic(false)
+                .hasAlarm(false)
+                .type(ScheduleType.ROUTINE)
+                .build();
+
     }
 
 }
