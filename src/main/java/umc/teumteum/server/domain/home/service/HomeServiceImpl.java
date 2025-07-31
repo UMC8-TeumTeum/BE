@@ -458,12 +458,16 @@ public class HomeServiceImpl implements HomeService {
             // 4-2. 반복 일정 조회
             List<Routine> routines = routineRepository.findByUser(user);
 
-            // 4-3. 내일부터 endDate까지 날짜 순회
-            for(LocalDate date = today.plusDays(1); !date.isAfter(endDate); date = date.plusDays(1)) {
+            // 4-3. startDate부터 endDate까지 날짜 순회
+            for(LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                // 과거일 경우는 스킵
+                if(date.isBefore(today)) continue;
+
+                // 검증 날짜의 요일
                 Weekday weekday = Weekday.from(date.getDayOfWeek());
 
                 for(Routine routine : routines) {
-                    // 루틴의 요일과 해당 날짜의 요일이 일치하는 경우만 처리
+                    // 루틴의 요일과 검증 날짜의 요일이 일치하는 경우만 처리
                     if(!routine.getWeekday().equals(weekday)) {
                         continue;
                     }
