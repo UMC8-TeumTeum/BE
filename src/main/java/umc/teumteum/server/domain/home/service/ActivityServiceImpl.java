@@ -12,11 +12,13 @@ import umc.teumteum.server.domain.home.converter.WishConverter;
 import umc.teumteum.server.domain.home.dto.request.ActivityRequestDto.OptionRequest;
 import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto;
 import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto.WishResponse;
+import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
 import umc.teumteum.server.domain.home.entity.mapping.WishCategory;
 import umc.teumteum.server.domain.home.exception.HomeException;
 import umc.teumteum.server.domain.home.exception.status.HomeErrorStatus;
+import umc.teumteum.server.domain.home.repository.CategoryRepository;
 import umc.teumteum.server.domain.home.repository.WishCategoryRepository;
 import umc.teumteum.server.domain.home.repository.WishRepository;
 import umc.teumteum.server.domain.user.entity.User;
@@ -28,6 +30,7 @@ public class ActivityServiceImpl implements ActivityService{
   private final WishRepository wishRepository;
   private final WishCategoryRepository wishCategoryRepository;
   private final WishConverter wishConverter;
+  private final CategoryRepository categoryRepository;
 
   @Override
   public WishResponse getMyWish(User user, OptionRequest request) {
@@ -36,15 +39,21 @@ public class ActivityServiceImpl implements ActivityService{
 
     // 1. 시간과 카테고리가 모두 일치하는 경우 (우선순위1)
     List<Wish> priority1 = wishRepository.findByUserAndDurationAndWishCategoriesLike(user, duration, categoryName);
+    System.out.println("🔍 priority1:");
+    priority1.forEach(w -> System.out.println(" - " + w.getId() + ": " + w.getEstimatedDuration()));
 
     // 2. 시간만 OR 카테고리만 일치하는 경우 (우선순위2)
     Set<Wish> priority2Set = new HashSet<>();
 
     List<Wish> durationOnlyList = wishRepository.findByUserAndEstimatedDuration(user, duration);
     priority2Set.addAll(durationOnlyList);
+    System.out.println("🔍 durationOnlyList:");
+    durationOnlyList.forEach(w -> System.out.println(" - " + w.getId() + ": " + w.getEstimatedDuration()));
 
     List<Wish> categoryOnlyList = wishRepository.findByUserAndCategoryLike(user, categoryName);
     priority2Set.addAll(categoryOnlyList);
+    System.out.println("🔍 categoryOnlyList:");
+    categoryOnlyList.forEach(w -> System.out.println(" - " + w.getId() + ": " + w.getEstimatedDuration()));
 
     // 시간 + 카테고리 둘다 만족한 것 제외 (1번에서 구했으니까)
     priority2Set.removeAll(priority1);
@@ -79,9 +88,9 @@ public class ActivityServiceImpl implements ActivityService{
     }
     // 3. 선택한 카테고리 Id가 존재하면 DB에서 name 조회 후 반환
     if (hasCategoryId) {
-      WishCategory category = wishCategoryRepository.findById(request.getCategoryId())
+      Category category = categoryRepository.findById(request.getCategoryId())
           .orElseThrow(() -> new HomeException(HomeErrorStatus._CATEGORY_NOT_FOUND));
-      return category.getCategory().getName();
+      return category.getName();
     }
     // 4. 카테고리가 아예 없으면 예외
     throw new HomeException(HomeErrorStatus._CATEGORY_REQUIRED);
