@@ -35,7 +35,7 @@ public class ScheduleGeneratorScheduler {
     private final ScheduleReminderRepository scheduleReminderRepository;
 
 //    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
-    @Scheduled(cron = "0 0/8 * * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0/17 * * * *", zone = "Asia/Seoul")
     public void schedule() {
         log.info("[00:00] 반복일정 스케줄 테이블에 등록 시작");
 

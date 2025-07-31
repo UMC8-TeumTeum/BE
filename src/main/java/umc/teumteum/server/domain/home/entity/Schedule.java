@@ -101,4 +101,9 @@ public class Schedule extends BaseEntity {
     public void cancel() {
         this.status = ScheduleStatus.CANCELLED;
     }
+
+    // 루틴 삭제 처리
+    public void setIsDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
 }

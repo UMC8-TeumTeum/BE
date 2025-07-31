@@ -172,13 +172,22 @@ public class HomeServiceImpl implements HomeService {
     public void deleteTodo(Long scheduleId) {
         // Todo(Schedule) 삭제
 
+        // 1. 가상 루틴 ID인 경우
         if (scheduleId < 0) {
             // 반복일정 처리
             deleteVirtualRoutine(scheduleId);
             return;
         }
+
+        // 2. 일반 스케줄 조회
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
+
+        // 2-1. 루틴 기반 스케줄일 경우
+        if (schedule.getRoutine() != null) {
+            schedule.setIsDeleted(true);
+            return;
+        }
 
         scheduleRepository.deleteById(scheduleId);
         scheduleReminderRepository.deleteByScheduleId(scheduleId);
