@@ -39,21 +39,15 @@ public class ActivityServiceImpl implements ActivityService{
 
     // 1. 시간과 카테고리가 모두 일치하는 경우 (우선순위1)
     List<Wish> priority1 = wishRepository.findByUserAndDurationAndWishCategoriesLike(user, duration, categoryName);
-    System.out.println("🔍 priority1:");
-    priority1.forEach(w -> System.out.println(" - " + w.getId() + ": " + w.getEstimatedDuration()));
 
     // 2. 시간만 OR 카테고리만 일치하는 경우 (우선순위2)
     Set<Wish> priority2Set = new HashSet<>();
 
     List<Wish> durationOnlyList = wishRepository.findByUserAndEstimatedDuration(user, duration);
     priority2Set.addAll(durationOnlyList);
-    System.out.println("🔍 durationOnlyList:");
-    durationOnlyList.forEach(w -> System.out.println(" - " + w.getId() + ": " + w.getEstimatedDuration()));
 
     List<Wish> categoryOnlyList = wishRepository.findByUserAndCategoryLike(user, categoryName);
     priority2Set.addAll(categoryOnlyList);
-    System.out.println("🔍 categoryOnlyList:");
-    categoryOnlyList.forEach(w -> System.out.println(" - " + w.getId() + ": " + w.getEstimatedDuration()));
 
     // 시간 + 카테고리 둘다 만족한 것 제외 (1번에서 구했으니까)
     priority2Set.removeAll(priority1);
