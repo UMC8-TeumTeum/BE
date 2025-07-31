@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.user.converter.UserConverter;
-import umc.teumteum.server.domain.user.dto.PublicTodoResponseDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
@@ -40,25 +39,6 @@ public class UserServiceImpl implements UserService {
                 .limit(5)
                 .map(entry -> userConverter.toSearchResponseDto(entry.getKey()))
                 .toList();
-    }
-
-
-    @Override
-    public List<PublicTodoResponseDto> getRecentPublicTodos(Long userId) {
-        // TODO : 최근 공개 투두 2개 조회 로직 구현
-        return List.of();
-    }
-
-    @Override
-    public List<PublicTodoResponseDto> getDailyPublicTodos(Long userId, String date) {
-        // TODO : 특정 날짜의 공개 투두 조회 로직 구현
-        return List.of();
-    }
-
-    @Override
-    public List<String> getTodoDatesOfMonth(Long userId, String month) {
-        // TODO : 공개 투두가 있는 날짜 조회 로직 구현
-        return List.of();
     }
 
 

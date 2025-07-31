@@ -3,15 +3,13 @@ package umc.teumteum.server.domain.friend.converter;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import umc.teumteum.server.domain.friend.dto.FollowerUserResponseDto;
-import umc.teumteum.server.domain.friend.dto.FollowingUserResponseDto;
-import umc.teumteum.server.domain.friend.dto.FriendProfileResponseDto;
-import umc.teumteum.server.domain.friend.dto.FriendTeumTimeResponseDto;
+import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -80,6 +78,18 @@ public class FriendConverter {
         int hours = (int) ((totalMinutes % (60 * 24)) / 60);
         int minutes = (int) (totalMinutes % 60);
         return new FriendTeumTimeResponseDto(days, hours, minutes, totalMinutes);
+    }
+
+    public List<FriendPublicTodoResponseDto> toFriendPublicTodoResponse(List<Schedule> schedules) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        return schedules.stream()
+                .map(s -> new FriendPublicTodoResponseDto(
+                        s.getTitle(),
+                        s.getStartTime().format(formatter),
+                        s.getEndTime().format(formatter)
+                ))
+                .collect(Collectors.toList());
     }
 
 

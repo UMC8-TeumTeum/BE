@@ -15,7 +15,6 @@ import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
-import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
@@ -141,6 +140,41 @@ public class FriendServiceImpl implements FriendService {
         return friendConverter.toFriendTeumTimeResponse(totalMinutes);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<FriendPublicTodoResponseDto> getRecentPublicTodos(Long loginUserId, Long targetUserId) {
+        validateNotSelf(loginUserId, targetUserId);
+        validateUserExists(targetUserId);
+
+        List<Schedule> rawSchedules = scheduleRepository.findAllPublicByUserId(targetUserId);
+
+        List<Schedule> filtered = rawSchedules.stream()
+                .filter(s -> {
+                    if (s.getType() == ScheduleType.TEUM) {
+                        return s.getStatus() == ScheduleStatus.ACTIVE || s.getStatus() == ScheduleStatus.COMPLETED;
+                    } else {
+                        return s.getStatus() == ScheduleStatus.ACTIVE &&
+                                List.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI).contains(s.getType());
+                    }
+                })
+                .limit(2)
+                .collect(Collectors.toList());
+
+        return friendConverter.toFriendPublicTodoResponse(filtered);
+    }
+
+    @Override
+    public List<FriendPublicTodoResponseDto> getDailyPublicTodos(Long userId, String date) {
+        // TODO : 특정 날짜의 공개 투두 조회 로직 구현
+        return List.of();
+    }
+
+    @Override
+    public List<String> getTodoDatesOfMonth(Long userId, String month) {
+        // TODO : 공개 투두가 있는 날짜 조회 로직 구현
+        return List.of();
+    }
+
 
     /**
      * 주어진 ID에 해당하는 User를 조회합니다.
@@ -159,7 +193,7 @@ public class FriendServiceImpl implements FriendService {
      */
     private void validateUserExists(Long userId) {
         if (!userRepository.existsById(userId)) {
-            throw new GlobalHandler(UserErrorStatus.USER_NOT_FOUND);
+            throw new GlobalHandler(FriendErrorStatus.USER_NOT_FOUND);
         }
     }
 
