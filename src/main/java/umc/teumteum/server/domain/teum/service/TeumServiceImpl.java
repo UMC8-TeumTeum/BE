@@ -238,9 +238,15 @@ public class TeumServiceImpl implements TeumService {
     @Override
     public List<String> getScheduledTeumsOfMonth(Long userId, String month) {
         List<ScheduleStatus> validStatuses = List.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED);
-        List<LocalDate> dates = scheduleRepository.findScheduledTeumsByMonth(userId, validStatuses, month);
+
+        YearMonth ym = YearMonth.parse(month);
+        LocalDate start = ym.atDay(1);
+        LocalDate end = ym.atEndOfMonth();
+
+        List<LocalDate> dates = scheduleRepository.findScheduledTeumsByDates(userId, validStatuses, start, end);
         return TeumConverter.toDateStringList(dates);
     }
+
 
     @Override
     @Transactional(readOnly = true)
