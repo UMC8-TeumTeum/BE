@@ -33,6 +33,7 @@ import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.S3Util;
+import umc.teumteum.server.global.validator.ConflictValidator;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -53,15 +54,15 @@ public class HomeServiceImpl implements HomeService {
     private final WishRepository wishRepository;
     private final CategoryRepository categoryRepository;
     private final S3Util s3Util;
+    private final ConflictValidator conflictValidator;
 
     @Transactional
     @Override
     public TodoIdResponseDto createTodo(TodoRequestDto dto, User user) {
         // Todo 등록
-        // 종료 시간이 시작 시간보다 빠르면 예외 발생
-        if (dto.getEndTime().isBefore(dto.getStartTime())){
-            throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
-        }
+
+        // 충돌 검사
+        conflictValidator.validateTodo(user,dto.getStartTime(), dto.getEndTime());
 
         // 스케줄 저장
         Schedule schedule = scheduleConverter.toSchedule(dto,user);
@@ -125,15 +126,13 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public TodoIdResponseDto updateTodoInfo(TodoRequestDto dto, Long scheduleId) {
+    public TodoIdResponseDto updateTodoInfo(TodoRequestDto dto, Long scheduleId, User user) {
         // Todo(Schedule) 수정
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
 
-        // 종료 시간이 시작 시간보다 빠르면 예외 발생
-        if (dto.getEndTime().isBefore(dto.getStartTime())) {
-            throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
-        }
+        // 충돌 검사
+        conflictValidator.validateTodo(user,dto.getStartTime(), dto.getEndTime());
 
         // 스케줄 필드 업데이트
         schedule.updateField(dto);
@@ -337,7 +336,11 @@ public class HomeServiceImpl implements HomeService {
         Wish wish = wishRepository.findById(wishId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
 
-        // 2. 중복 스케줄 체크
+        // 2 중복 스케줄 체크
+        // 2-1. 틈 & 수면패턴 중복 검사 -> 등록 불가
+        conflictValidator.validateTodo(user,dto.getStartTime(),dto.getEndTime());
+
+        // 2-2. 스케줄 중복 검사 -> 등록 가능
         LocalDate date = dto.getStartTime().toLocalDate();
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();

@@ -54,7 +54,18 @@ public class ConflictValidator {
         }
     }
 
-    // TODO: 다른 일정에서의 중복 검증 로직 추가
+    /**
+     * TODO 등록 수정시 중복 검증 로직
+     * - 1. 수면패턴과 충돌 여부 검사
+     * - 2. 미확정된 틈 요청 충돌 여부 검사
+     */
+    public void validateTodo(User user, LocalDateTime startTime, LocalDateTime endTime) {
+        LocalDate date = startTime.toLocalDate();
+
+        checkWithTeumRequests(user,startTime,endTime);
+        checkWithSleepPattern(user,date,startTime,endTime);
+    }
+
 
     // 내부 충돌 검사 메서드들
     private void checkWithSchedules(User user, LocalDateTime requestStart, LocalDateTime requestEnd) {
