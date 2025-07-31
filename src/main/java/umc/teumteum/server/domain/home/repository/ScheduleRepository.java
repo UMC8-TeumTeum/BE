@@ -168,7 +168,19 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Query("SELECT s FROM Schedule s JOIN FETCH s.user WHERE s.date = :date")
     List<Schedule> findAllByDateWithUser(@Param("date") LocalDate today);
 
+
     @Modifying
     @Query("delete from Schedule s where s.user = :user")
     void deleteByUser(@Param("user") User user);
+
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.isPublic = true
+      AND s.isDeleted = false
+    ORDER BY s.createdAt DESC
+""")
+    List<Schedule> findAllPublicByUserId(@Param("userId") Long userId);
+
+
 }
