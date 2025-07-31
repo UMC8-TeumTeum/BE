@@ -60,4 +60,12 @@ public class HomeResponseDto {
     private ScheduleType type;
   }
 
+  @Builder
+  @Getter
+  @AllArgsConstructor
+  static public class VirtualRoutineDto {
+    private LocalDate date;
+    private Long routineId;
+  }
+
 }

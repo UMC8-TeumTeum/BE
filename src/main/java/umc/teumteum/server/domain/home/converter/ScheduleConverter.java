@@ -65,6 +65,21 @@ public class ScheduleConverter {
                 .build();
     }
 
+    // Routine -> TodoInfoResponseDTO (미래의 반복일정 조회)
+    public TodoInfoResponseDto toVirtualRoutineInfo(Routine routine,LocalDate date, List<String> profileUrls) {
+        return TodoInfoResponseDto.builder()
+                .type(ScheduleType.ROUTINE)
+                .title(routine.getTitle())
+                .description(routine.getDescription())
+                .startTime(date.atTime(routine.getStartTime()))
+                .endTime(date.atTime(routine.getEndTime()))
+                .isPublic(false)
+                .includeTeum(false)
+                .remindAlarm(List.of())
+                .profileUrl(profileUrls)
+                .build();
+    }
+
     // Wish -> Schedule entity
     public Schedule toScheduleFromWish(Wish wish, WishAssignRequestDto dto) {
         return Schedule.builder()
@@ -131,10 +146,10 @@ public class ScheduleConverter {
                 .build();
     }
 
-    // Routine -> HomeResponseDto.TodolistDto
+    // Routine -> HomeResponseDto.TodolistDto (미래의 일정일 경우)
     public HomeResponseDto.TodolistDto toVirtualRoutineDto(Routine routine,LocalDate date) {
 
-        // 가상의 ID 새성
+        // 가상의 ID 생성
         String dateStr = String.format("%04d%02d%02d", date.getYear(), date.getMonthValue(), date.getDayOfMonth());
         String idStr = dateStr + routine.getId();
         Long virtualId = -1 * Long.parseLong(idStr);

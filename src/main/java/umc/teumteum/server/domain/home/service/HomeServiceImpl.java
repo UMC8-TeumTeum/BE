@@ -38,6 +38,7 @@ import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.S3Util;
 
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -80,6 +81,23 @@ public class HomeServiceImpl implements HomeService {
     @Override
     public TodoInfoResponseDto getTodoInfo(Long scheduleId) {
         // Todo(Schedule) 조회
+        // 가상의 루틴 ID일 경우
+        if(scheduleId<0){
+            // 1. ID 파싱
+            HomeResponseDto.VirtualRoutineDto info = getVirtualRoutine(scheduleId);
+            LocalDate date = info.getDate();
+            Long routineId = info.getRoutineId();
+
+            Routine routine = routineRepository.findById(routineId)
+                    .orElseThrow(() -> new HomeException(HomeErrorStatus._ROUTINE_NOT_FOUND));
+
+            // 프로필 조회
+            String profileImageName = routine.getUser().getProfileImageName();
+            List<String> profileUrls = profileImageName != null ? List.of(s3Util.toPresignedUrl("profile/" + profileImageName, Duration.ofMinutes(30))) : List.of();
+
+            return scheduleConverter.toVirtualRoutineInfo(routine,date,profileUrls);
+        }
+
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
 
@@ -522,5 +540,17 @@ public class HomeServiceImpl implements HomeService {
         result.addAll(routineDtos);
         result.sort(Comparator.comparing(HomeResponseDto.TodolistDto::getStartTime));
         return result;
+    }
+
+    @Override
+    public HomeResponseDto.VirtualRoutineDto getVirtualRoutine(Long virtualId) {
+        // 가상의 루틴 ID 파싱 함수
+        String str = Long.toString(Math.abs(virtualId)); // 음수 제거 후 string으로
+        String strDate = str.substring(0,8); //YYYYMMDD
+        String strRoutine = str.substring(8);
+
+        LocalDate date = LocalDate.parse(strDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
+        Long routineId = Long.parseLong(strRoutine);
+        return new HomeResponseDto.VirtualRoutineDto(date, routineId);
     }
 }

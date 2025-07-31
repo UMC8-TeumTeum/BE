@@ -55,4 +55,7 @@ public interface HomeService {
 
     // 투두리스트 조회
     List<HomeResponseDto.TodolistDto> getTodolist(LocalDate date,User user);
+
+    // 가상의 루틴 ID 파싱
+    HomeResponseDto.VirtualRoutineDto getVirtualRoutine(Long virtualId);
 }
