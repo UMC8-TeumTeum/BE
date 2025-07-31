@@ -147,13 +147,13 @@ public class HomeServiceImpl implements HomeService {
     @Override
     public TodoIdResponseDto updateTodoInfo(TodoRequestDto dto, Long scheduleId) {
         // Todo(Schedule) 수정
+        if (scheduleId < 0) {
+            // 반복일정은 수정할 수 없음
+            throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
+        }
+
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
-
-        // 종료 시간이 시작 시간보다 빠르면 예외 발생
-        if (dto.getEndTime().isBefore(dto.getStartTime())) {
-            throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
-        }
 
         // 스케줄 필드 업데이트
         schedule.updateField(dto);
@@ -171,11 +171,30 @@ public class HomeServiceImpl implements HomeService {
     @Override
     public void deleteTodo(Long scheduleId) {
         // Todo(Schedule) 삭제
+
+        if (scheduleId < 0) {
+            // 반복일정 처리
+            deleteVirtualRoutine(scheduleId);
+            return;
+        }
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
 
         scheduleRepository.deleteById(scheduleId);
         scheduleReminderRepository.deleteByScheduleId(scheduleId);
+    }
+
+    private void deleteVirtualRoutine(Long scheduleId) {
+        // 가상의 루틴 ID 반복일정 삭제시
+        HomeResponseDto.VirtualRoutineDto info = getVirtualRoutine(scheduleId);
+        LocalDate date = info.getDate();
+        Long routineId = info.getRoutineId();
+
+        Routine routine = routineRepository.findById(routineId)
+                .orElseThrow(() -> new HomeException(HomeErrorStatus._ROUTINE_NOT_FOUND));
+
+        Schedule deletedSchedule = scheduleConverter.toDeleteRoutine(routine,date);
+        scheduleRepository.save(deletedSchedule);
     }
 
     @Transactional

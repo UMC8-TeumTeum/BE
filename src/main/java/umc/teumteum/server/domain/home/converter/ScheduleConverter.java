@@ -9,6 +9,7 @@ import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDto;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
@@ -77,6 +78,24 @@ public class ScheduleConverter {
                 .includeTeum(false)
                 .remindAlarm(List.of())
                 .profileUrl(profileUrls)
+                .build();
+    }
+
+    // Routine -> Schedule(isDeleted = true)
+    public Schedule toDeleteRoutine(Routine routine,LocalDate date){
+        return Schedule.builder()
+                .user(routine.getUser())
+                .routine(routine)
+                .title(routine.getTitle())
+                .description(routine.getDescription())
+                .date(date)
+                .startTime(date.atTime(routine.getStartTime()))
+                .endTime(date.atTime(routine.getEndTime()))
+                .isPublic(false)
+                .includeTeum(false)
+                .type(ScheduleType.ROUTINE)
+                .status(ScheduleStatus.ACTIVE)
+                .isDeleted(true)
                 .build();
     }
 
