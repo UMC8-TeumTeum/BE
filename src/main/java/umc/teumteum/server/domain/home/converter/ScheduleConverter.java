@@ -25,6 +25,8 @@ public class ScheduleConverter {
 
     // TodoRequestDTO -> Schedule
     public Schedule toSchedule(TodoRequestDto dto, User user) {
+        boolean hasAlarm = dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty();
+
         return Schedule.builder()
                 .title(dto.getTitle())
                 .date(dto.getStartTime().toLocalDate())
@@ -33,6 +35,7 @@ public class ScheduleConverter {
                 .description(dto.getDescription())
                 .isPublic(dto.getIsPublic())
                 .includeTeum(dto.getIncludeTeum())
+                .hasAlarm(hasAlarm)
                 .type(ScheduleType.TODO)
                 .user(user)
                 .build();

@@ -161,11 +161,14 @@ public class HomeServiceImpl implements HomeService {
             throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
         }
 
-        // 스케줄 필드 업데이트
-        schedule.updateField(dto);
+        // 4. 알림이 업데이트 되었는지 판단
+        boolean hasAlarm = dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty();
 
-        // 스케줄 리마인드 알림 저장
-        if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
+        // 5. 스케줄 필드 업데이트
+        schedule.updateField(dto,hasAlarm);
+
+        // 6. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
+        if (hasAlarm) {
             scheduleReminderRepository.deleteByScheduleId(scheduleId);
             List<ScheduleReminder> reminders = scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm());
             scheduleReminderRepository.saveAll(reminders);
