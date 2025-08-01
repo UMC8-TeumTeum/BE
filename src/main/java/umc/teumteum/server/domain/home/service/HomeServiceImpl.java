@@ -29,7 +29,10 @@ import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
+import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.entity.enums.Weekday;
+import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.S3Util;
@@ -39,6 +42,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +57,7 @@ public class HomeServiceImpl implements HomeService {
     private final WishRepository wishRepository;
     private final CategoryRepository categoryRepository;
     private final S3Util s3Util;
+    private final RoutineRepository routineRepository;
 
     @Transactional
     @Override
@@ -415,5 +420,68 @@ public class HomeServiceImpl implements HomeService {
 
     }
 
+    @Override
+    public List<HomeResponseDto.CalendarDto> getCalendar(LocalDate startDate, LocalDate endDate, User user) {
+        // 캘린더 조회
 
+        // 1. 오늘 날짜 조회 & 날짜별 일정 여부 담을 맵 초기화
+        LocalDate today = LocalDate.now();
+        Map<LocalDate, Boolean> calendarMap = new HashMap<>();
+
+        // 2. Schedule 테이블 조회
+        List<Schedule> schedules = scheduleRepository.findByUserAndDateBetween(user,startDate,endDate);
+
+        // 3. Schedule 기준 true 표시
+        for (Schedule schedule : schedules) {
+            LocalDate date = schedule.getDate();
+            // 3-1. 삭제된 루틴 ->  표시 X
+            if(schedule.getRoutine() != null && schedule.getIsDeleted()) continue;
+            // 3-2. 일정 등록
+            calendarMap.put(date, true);
+        }
+
+
+        // 4. 미래의 경우 반복일정 검증
+        if(endDate.isAfter(today)){
+
+            // 4-1. 스케줄에서 삭제된 날짜의 루틴ID만 모아둠
+            Map<LocalDate, Set<Long>> deletedRoutine = schedules.stream()
+                    .filter(s -> s.getRoutine() != null && s.getIsDeleted())
+                    .collect(Collectors.groupingBy(
+                            Schedule::getDate,
+                            Collectors.mapping(
+                                    s -> s.getRoutine().getId(),
+                                    Collectors.toSet()
+                            )
+                    ));
+
+            // 4-2. 반복 일정 조회
+            List<Routine> routines = routineRepository.findByUser(user);
+
+            // 4-3. startDate부터 endDate까지 날짜 순회
+            for(LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                // 과거일 경우는 스킵
+                if(date.isBefore(today)) continue;
+
+                // 검증 날짜의 요일
+                Weekday weekday = Weekday.from(date.getDayOfWeek());
+
+                for(Routine routine : routines) {
+                    // 루틴의 요일과 검증 날짜의 요일이 일치하는 경우만 처리
+                    if(!routine.getWeekday().equals(weekday)) {
+                        continue;
+                    }
+
+                    // 삭제되지 않은 루틴만 true로
+                    Long routineId = routine.getId();
+                    boolean isDeleted = deletedRoutine.getOrDefault(date,Set.of()).contains(routineId);
+                    if(!isDeleted){
+                        calendarMap.put(date, true);
+                    }
+                }
+            }
+
+        }
+        return scheduleConverter.toCalendarDto(calendarMap,startDate,endDate);
+    }
 }
