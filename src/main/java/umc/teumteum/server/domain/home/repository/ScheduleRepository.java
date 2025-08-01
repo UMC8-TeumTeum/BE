@@ -19,7 +19,19 @@ import java.util.Optional;
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByUserIdAndIncludeTeumIsTrue(Long userId);
 
-    List<Schedule> findByUserIdAndDateAndStatus(Long userId, LocalDate date, ScheduleStatus status);
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.status = :status
+      AND s.endTime >= :startOfDay
+      AND s.startTime < :endOfDay
+""")
+    List<Schedule> findOverlappingSchedules(
+            @Param("userId") Long userId,
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("endOfDay") LocalDateTime endOfDay,
+            @Param("status") ScheduleStatus status
+    );
 
     @Query("""
         SELECT COUNT(s) > 0 FROM Schedule s
