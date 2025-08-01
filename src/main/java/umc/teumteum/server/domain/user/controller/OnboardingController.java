@@ -115,12 +115,15 @@ public class OnboardingController {
 
     @Operation(
             summary = "온보딩 리마인드 알림 설정 등록",
-            description = "온보딩 과정에서 리마인드 알림 시간 설정(1분 전/3분 전/5분 전/10분 전/30분 전)을 등록합니다."
+            description = "온보딩 과정에서 리마인드 알림 시간 설정(1분 전/3분 전/5분 전/10분 전/30분 전)을 등록합니다.<br>" +
+                    "빈 배열로 알림 없음 설정도 가능합니다."
     )
     @PostMapping(value = "/onboarding/reminders", produces = "application/json")
     public ApiResponse<Object> saveReminder(
+            @RequestBody @Valid OnboardingRequestDto.RemindAlarmList request,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        // TODO: 온보딩 리마인드 알림 설정 저장 로직 구현
-        return null;
+        onboardingService.saveRemindAlarms(request, user);
+        return ApiResponse.of(UserSuccessStatus.REMIND_ALARM_SAVED, null);
     }
 }

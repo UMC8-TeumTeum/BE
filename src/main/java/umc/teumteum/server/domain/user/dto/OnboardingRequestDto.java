@@ -67,7 +67,7 @@ public class OnboardingRequestDto {
     @AllArgsConstructor
     public static class ProfileImagePresignedUrlRequest {
 
-        @NotBlank
+        @NotBlank(message = "파일의 MIME 타입은 필수 입력입니다")
         @Schema(description = "업로드할 파일의 MIME 타입", example = "image/png")
         private String contentType;
     }
@@ -80,7 +80,7 @@ public class OnboardingRequestDto {
     @AllArgsConstructor
     public static class ProfileImageRequest {
 
-        @NotBlank
+        @NotBlank(message = "파일 이름은 필수 입력입니다")
         @Schema(description = "업로드한 파일의 이름", example = "550e8400-e29b.jpg")
         private String fileName;
     }
@@ -148,5 +148,18 @@ public class OnboardingRequestDto {
         @JsonFormat(pattern = "HH:mm")
         @Schema(description = "종료 시간 (HH:mm 형식)", example = "00:00")
         private LocalTime endTime;
+    }
+
+
+    // 온보딩 - 리마인드 알림
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RemindAlarmList {
+
+        @NotNull(message = "리마인드 알림 설정은 필수 입력입니다 (빈 배열 가능)")
+        @Schema(description = "리마인드 알림 설정 (1, 3, 5, 10, 30분 중 선택, 빈 배열 가능)", example = "[1, 5, 30]")
+        private List<Integer> remindAlarms;
     }
 }
