@@ -19,10 +19,15 @@ import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +37,13 @@ public class FriendServiceImpl implements FriendService {
     private final FriendRepository friendRepository;
     private final ScheduleRepository scheduleRepository;
     private final FriendConverter friendConverter;
+
+    private static final Set<ScheduleType> GENERAL_SCHEDULE_TYPES =
+            EnumSet.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI);
+
+    private static final Set<ScheduleStatus> TEUM_VALID_STATUSES =
+            EnumSet.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED);
+
 
     @Override
     @Transactional
@@ -154,7 +166,7 @@ public class FriendServiceImpl implements FriendService {
                         return s.getStatus() == ScheduleStatus.ACTIVE || s.getStatus() == ScheduleStatus.COMPLETED;
                     } else {
                         return s.getStatus() == ScheduleStatus.ACTIVE &&
-                                List.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI).contains(s.getType());
+                                GENERAL_SCHEDULE_TYPES.contains(s.getType());
                     }
                 })
                 .limit(2)
@@ -170,9 +182,26 @@ public class FriendServiceImpl implements FriendService {
     }
 
     @Override
-    public List<String> getTodoDatesOfMonth(Long userId, String month) {
-        // TODO : 공개 투두가 있는 날짜 조회 로직 구현
-        return List.of();
+    public List<String> getTodoDatesOfMonth(Long loginUserId, Long targetUserId, String month) {
+        validateNotSelf(loginUserId, targetUserId);
+        validateUserExists(targetUserId);
+
+        YearMonth ym = YearMonth.parse(month);
+        LocalDate start = ym.atDay(1);
+        LocalDate end = ym.atEndOfMonth();
+
+        // TODO/WISH/AI 일정 (status: ACTIVE)
+        List<LocalDate> generalDates = scheduleRepository.findPublicActiveTodos(targetUserId, GENERAL_SCHEDULE_TYPES, start, end);
+
+        // TEUM 일정 (status: ACTIVE, COMPLETED)
+        List<LocalDate> teumDates = scheduleRepository.findPublicTeumDates(targetUserId, TEUM_VALID_STATUSES, start, end);
+
+        List<LocalDate> allDates = Stream.concat(generalDates.stream(), teumDates.stream())
+                .distinct()
+                .sorted()
+                .toList();
+
+        return friendConverter.toDateStringList(allDates);
     }
 
 

@@ -9,6 +9,7 @@ import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -92,5 +93,10 @@ public class FriendConverter {
                 .collect(Collectors.toList());
     }
 
+    public List<String> toDateStringList(List<LocalDate> dates) {
+        return dates.stream()
+                .map(LocalDate::toString)
+                .toList();
+    }
 
 }

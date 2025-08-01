@@ -124,7 +124,7 @@ public class FriendController {
             @Parameter(name = "userId", description = "조회할 친구 ID") @PathVariable("userId") Long targetUserId
     ) {
         FriendTeumTimeResponseDto result = friendService.getFriendTeumTime(loginUser.getId(), targetUserId);
-        return ApiResponse.of(FriendSuccessStatus.GET_FRIEND_TEUM_TIME_SUCCESS, result);
+        return ApiResponse.of(FriendSuccessStatus._GET_FRIEND_TEUM_TIME_SUCCESS, result);
     }
 
     @Operation(
@@ -138,7 +138,7 @@ public class FriendController {
             @PathVariable("userId") Long targetUserId
     ) {
         List<FriendPublicTodoResponseDto> result = friendService.getRecentPublicTodos(loginUser.getId(), targetUserId);
-        return ApiResponse.of(FriendSuccessStatus.GET_FRIEND_PUBLIC_TODO_SUCCESS, result);
+        return ApiResponse.of(FriendSuccessStatus._GET_FRIEND_PUBLIC_TODO_SUCCESS, result);
     }
 
     @Operation(
@@ -157,19 +157,19 @@ public class FriendController {
     }
 
     @Operation(
-            summary = "공개 투두가 있는 날짜(월별) 조회",
+            summary = "친구의 공개 투두가 있는 날짜(월별) 조회",
             description = "특정 유저의 특정 월에 공개 투두가 존재하는 날짜 목록을 반환합니다."
     )
     @GetMapping(value = "/{userId}/todos/public/calendar", produces = "application/json")
     public ApiResponse<List<String>> getTodoDatesOfMonth(
-            @Parameter(description = "조회할 유저 ID", required = true, example = "1")
-            @PathVariable("userId") Long userId,
-
-            @Parameter(description = "조회할 월 (YYYY-MM)", required = true, example = "2024-07")
+            @Parameter(hidden = true) @CurrentUser User loginUser,
+            @Parameter(name = "userId", description = "조회할 친구 ID", example = "2")
+            @PathVariable("userId") Long targetUserId,
+            @Parameter(description = "조회할 연월 (YYYY-MM)", example = "2025-05")
             @RequestParam("month") String month
     ) {
-        return ApiResponse.onSuccess(null);
-    }
+        List<String> result = friendService.getTodoDatesOfMonth(loginUser.getId(), targetUserId, month);
+        return ApiResponse.of(FriendSuccessStatus._GET_FRIEND_PUBLIC_TODO_SUCCESS, result);    }
 
 
 }
