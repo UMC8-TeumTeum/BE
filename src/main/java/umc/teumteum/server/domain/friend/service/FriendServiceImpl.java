@@ -50,7 +50,7 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     @Transactional
-    public void follow(Long targetUserId, User loginUser) {
+    public void follow(User loginUser, Long targetUserId) {
         // 1. 자기 자신을 팔로우하는지 확인
         if (targetUserId.equals(loginUser.getId())) {
             throw new FriendException(FriendErrorStatus.CANNOT_FOLLOW_SELF);
@@ -74,8 +74,22 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     @Transactional
-    public void unfollow(Long userId) {
-        // TODO : 언팔로우 로직 추후 구현
+    public void unfollow(User loginUser, Long targetUserId) {
+        // 1. 자기 자신을 언팔로우하는지 확인
+        if (targetUserId.equals(loginUser.getId())) {
+            throw new FriendException(FriendErrorStatus.CANNOT_UNFOLLOW_SELF);
+        }
+
+        // 2. 상대방 조회
+        User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new FriendException(FriendErrorStatus.USER_NOT_FOUND));
+
+        // 3. 팔로우 관계가 존재하는지 확인
+        Friend friend = friendRepository.findByFollowerAndFollowing(loginUser, targetUser)
+                .orElseThrow(() -> new FriendException(FriendErrorStatus.NOT_FOLLOWING));
+
+        // 4. Friend 삭제
+        friendRepository.delete(friend);
     }
 
     @Override

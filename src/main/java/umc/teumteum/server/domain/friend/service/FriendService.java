@@ -7,9 +7,9 @@ import umc.teumteum.server.global.dto.PagingResponseDto;
 import java.util.List;
 
 public interface FriendService {
-    void follow(Long targetUserId, User loginUser);
+    void follow(User loginUser, Long targetUserId);
 
-    void unfollow(Long userId);
+    void unfollow(User loginUser, Long targetUserId);
 
     List<FriendMutualResponseDto> getMutualFriends();
 

@@ -30,10 +30,10 @@ public class FriendController {
     @PostMapping(value = "/{userId}/follow", produces = "application/json")
     public ApiResponse<Object> followUser(
             @Parameter(name = "userId", description = "팔로우할 대상 유저의 ID", example = "1")
-            @PathVariable("userId") Long userId,
-            @CurrentUser @Parameter(hidden = true) User user
+            @PathVariable("userId") Long targetUserId,
+            @CurrentUser @Parameter(hidden = true) User loginUser
     ) {
-        friendService.follow(userId, user);
+        friendService.follow(loginUser, targetUserId);
         return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, null);
     }
 
@@ -43,11 +43,12 @@ public class FriendController {
             description = "특정 유저에 대한 팔로우를 취소합니다."
     )
     @DeleteMapping(value = "/{userId}/follow", produces = "application/json")
-    public ApiResponse<Void> unfollowUser(
+    public ApiResponse<Object> unfollowUser(
             @Parameter(name = "userId", description = "언팔로우할 대상 유저의 ID", example = "1")
-            @PathVariable("userId") Long userId
+            @PathVariable("userId") Long targetUserId,
+            @CurrentUser @Parameter(hidden = true) User loginUser
     ) {
-        friendService.unfollow(userId);
+        friendService.unfollow(loginUser, targetUserId);
         return ApiResponse.of(FriendSuccessStatus._UNFOLLOW_SUCCESS, null);
     }
 
