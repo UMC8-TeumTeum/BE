@@ -1,12 +1,13 @@
 package umc.teumteum.server.domain.friend.service;
 
 import umc.teumteum.server.domain.friend.dto.*;
+import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 
 import java.util.List;
 
 public interface FriendService {
-    Long follow(Long userId);
+    void follow(Long targetUserId, User loginUser);
 
     void unfollow(Long userId);
 

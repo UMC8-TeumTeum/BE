@@ -28,13 +28,15 @@ public class FriendController {
             description = "특정 유저를 팔로우합니다."
     )
     @PostMapping(value = "/{userId}/follow", produces = "application/json")
-    public ApiResponse<FollowResponseDto> followUser(
+    public ApiResponse<Object> followUser(
             @Parameter(name = "userId", description = "팔로우할 대상 유저의 ID", example = "1")
-            @PathVariable("userId") Long userId
+            @PathVariable("userId") Long userId,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        Long followId = friendService.follow(userId);
-        return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, new FollowResponseDto(followId));
+        friendService.follow(userId, user);
+        return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, null);
     }
+
 
     @Operation(
             summary = "유저 언팔로우",
@@ -49,6 +51,7 @@ public class FriendController {
         return ApiResponse.of(FriendSuccessStatus._UNFOLLOW_SUCCESS, null);
     }
 
+
     @Operation(
             summary = "맞팔로우 목록 조회",
             description = "특정 유저의 맞팔로우 목록을 조회합니다."
@@ -57,6 +60,7 @@ public class FriendController {
     public ApiResponse<List<FriendMutualResponseDto>> getMyMutualFriends() {
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, null);
     }
+
 
     @Operation(
             summary = "즐겨찾기 설정/해제",
@@ -71,6 +75,7 @@ public class FriendController {
         FavoriteResponseDto response = friendService.updateFavorite(userId, requestDto.getIsFavorite());
         return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, response);
     }
+
 
     @Operation(
             summary = "팔로잉 목록 조회",

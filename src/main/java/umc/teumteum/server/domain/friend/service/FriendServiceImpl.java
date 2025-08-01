@@ -1,13 +1,16 @@
 package umc.teumteum.server.domain.friend.service;
 
-import org.springframework.data.domain.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.RequiredArgsConstructor;
 import umc.teumteum.server.domain.friend.converter.FriendConverter;
 import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.entity.Friend;
+import umc.teumteum.server.domain.friend.exception.FriendException;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
 import umc.teumteum.server.domain.home.entity.Schedule;
@@ -47,9 +50,26 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     @Transactional
-    public Long follow(Long userId) {
-        // TODO : 팔로우 로직 추후 구현
-        return 123L;
+    public void follow(Long targetUserId, User loginUser) {
+        // 1. 자기 자신을 팔로우하는지 확인
+        if (targetUserId.equals(loginUser.getId())) {
+            throw new FriendException(FriendErrorStatus.CANNOT_FOLLOW_SELF);
+        }
+
+        // 2. 상대방 조회
+        User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new FriendException(FriendErrorStatus.USER_NOT_FOUND));
+
+        // 3. 이미 팔로우 중인지 확인
+        if (friendRepository.existsByFollowerAndFollowing(loginUser, targetUser)) {
+            throw new FriendException(FriendErrorStatus.ALREADY_FOLLOWING);
+        }
+
+        // 4. Friend 생성 및 저장
+        Friend friend = FriendConverter.toFriend(loginUser, targetUser);
+        friendRepository.save(friend);
+
+        // 5. TODO FOLLOW 알림 전송 필요
     }
 
     @Override
