@@ -582,12 +582,24 @@ public class HomeServiceImpl implements HomeService {
     @Override
     public HomeResponseDto.VirtualRoutineDto getVirtualRoutine(Long virtualId) {
         // 가상의 루틴 ID 파싱 함수
-        String str = Long.toString(Math.abs(virtualId)); // 음수 제거 후 string으로
-        String strDate = str.substring(0,8); //YYYYMMDD
-        String strRoutine = str.substring(8);
 
-        LocalDate date = LocalDate.parse(strDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
-        Long routineId = Long.parseLong(strRoutine);
-        return new HomeResponseDto.VirtualRoutineDto(date, routineId);
+        try{
+            String str = Long.toString(Math.abs(virtualId)); // 음수 제거 후 string으로
+
+            if(str.length()<=8){
+                throw new IllegalArgumentException();
+            }
+
+            // 날짜 파싱
+            String strDate = str.substring(0,8); //YYYYMMDD
+            String strRoutine = str.substring(8);
+
+            // 루틴 ID 파싱
+            LocalDate date = LocalDate.parse(strDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
+            Long routineId = Long.parseLong(strRoutine);
+            return new HomeResponseDto.VirtualRoutineDto(date, routineId);
+        } catch(Exception e){
+            throw new HomeException(HomeErrorStatus._INVALID_VIRTUAL_ID);
+        }
     }
 }
