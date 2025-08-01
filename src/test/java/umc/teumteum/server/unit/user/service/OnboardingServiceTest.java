@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
@@ -36,6 +37,9 @@ class OnboardingServiceTest {
 
     @Mock
     private RoutineRepository routineRepository;
+
+    @Mock
+    private ScheduleRepository scheduleRepository;
 
     @Spy
     private TimeUtil timeUtil = new TimeUtil();

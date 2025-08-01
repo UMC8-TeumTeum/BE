@@ -22,4 +22,10 @@ public interface FriendService {
 
     FriendTeumTimeResponseDto getFriendTeumTime(Long loginUserId, Long targetUserId);
 
+    List<FriendPublicTodoResponseDto> getRecentPublicTodos(Long loginUserId, Long targetUserId);
+
+    List<FriendPublicTodoResponseDto> getDailyPublicTodos(Long userId, String date);
+
+    List<String> getTodoDatesOfMonth(Long userId, String month);
+
 }

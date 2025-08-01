@@ -1,4 +1,4 @@
-package umc.teumteum.server.domain.user.dto;
+package umc.teumteum.server.domain.friend.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @Schema(title = "PublicTodoResponseDto : 공개 투두 응답 DTO")
-public class PublicTodoResponseDto {
+public class FriendPublicTodoResponseDto {
 
     @Schema(description = "투두 제목", example = "string")
     private String title;

@@ -13,6 +13,7 @@ import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.auth.exception.AuthHandler;
 import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
+import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.UserStatus;
@@ -33,15 +34,19 @@ public class AuthServiceImpl implements AuthService {
     private final KakaoOAuthService kakaoOAuthService;
     private final NaverOAuthService naverOAuthService;
     private final UserService userService;
+
     private final JwtProvider jwtProvider;
     private final S3Util s3Util;
+
     private final RoutineRepository routineRepository;
+    private final ScheduleRepository scheduleRepository;
 
     @Resource(name = "rtRedisTemplate")
     private RedisTemplate<String, String> rtRedisTemplate;
 
     @Value("${jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
+
 
     @Override
     @Transactional
@@ -91,7 +96,10 @@ public class AuthServiceImpl implements AuthService {
             // 2) 수면패턴 초기화
             user.clearSleepPattern();
 
-            // 3) 반복일정 초기화
+            // 3) 스케줄 초기화 (외래키로 인해 먼저 삭제)
+            scheduleRepository.deleteByUser(user);
+
+            // 4) 반복일정 초기화
             routineRepository.deleteByUser(user);
         }
 
