@@ -8,7 +8,9 @@ import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
+import umc.teumteum.server.global.util.TimeUtil;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 public class FriendConverter {
 
     private final S3Util s3Util;
+    private final TimeUtil timeUtil;
 
     public FollowingUserResponseDto toFollowingUserResponse(Friend friend) {
         User following = friend.getFollowing();
@@ -87,10 +90,15 @@ public class FriendConverter {
                 .map(s -> new FriendPublicTodoResponseDto(
                         s.getTitle(),
                         s.getStartTime().format(formatter),
-                        s.getEndTime().format(formatter)
+                        timeUtil.parseAndFormatEndTime(s.getEndTime().toLocalTime())
                 ))
                 .collect(Collectors.toList());
     }
 
+    public List<String> toDateStringList(List<LocalDate> dates) {
+        return dates.stream()
+                .map(LocalDate::toString)
+                .toList();
+    }
 
 }

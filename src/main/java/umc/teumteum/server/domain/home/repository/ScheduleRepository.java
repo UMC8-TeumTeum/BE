@@ -13,6 +13,7 @@ import umc.teumteum.server.domain.user.entity.User;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -185,6 +186,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Query("delete from Schedule s where s.user = :user")
     void deleteByUser(@Param("user") User user);
 
+
     @Query("""
     SELECT s FROM Schedule s
     WHERE s.user.id = :userId
@@ -195,7 +197,41 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findAllPublicByUserId(@Param("userId") Long userId);
 
 
-
     @Query("SELECT s FROM Schedule s WHERE s.user = :user AND s.date BETWEEN :startDate AND :endDate")
     List<Schedule> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate);
+
+
+    @Query("""
+    SELECT DISTINCT s.date FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.type IN :types
+      AND s.status = 'ACTIVE'
+      AND s.isPublic = true
+      AND s.isDeleted = false
+      AND s.date BETWEEN :start AND :end
+""")
+    List<LocalDate> findPublicActiveTodos(
+            @Param("userId") Long userId,
+            @Param("types") Collection<ScheduleType> types,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end
+    );
+
+    @Query("""
+    SELECT DISTINCT s.date FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.type = 'TEUM'
+      AND s.status IN :statuses
+      AND s.isPublic = true
+      AND s.isDeleted = false
+      AND s.date BETWEEN :start AND :end
+""")
+    List<LocalDate> findPublicTeumDates(
+            @Param("userId") Long userId,
+            @Param("statuses") Collection<ScheduleStatus> statuses,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end
+    );
+
+
 }
