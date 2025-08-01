@@ -324,10 +324,6 @@ public class TeumServiceImpl implements TeumService {
             );
 
             schedules.stream()
-                    .filter(schedule ->
-                            !schedule.getEndTime().toLocalDate().isBefore(date) &&
-                                    schedule.getStartTime().toLocalDate().isBefore(date.plusDays(1))
-                    )
                     .filter(schedule -> !Boolean.TRUE.equals(schedule.getIsDeleted()))
                     .map(schedule -> teumConverter.sliceScheduleToDate(schedule, date))
                     .filter(Objects::nonNull)
@@ -365,13 +361,12 @@ public class TeumServiceImpl implements TeumService {
             }
         }
 
-        // 병합 → 반전 → 병합
+        // 병합 → 반전
         List<TimeSlot> mergedBusy = teumConverter.mergeScheduledTimeSlots(scheduledSlots);
-        List<TimeSlot> rawAvailable = teumConverter.invertScheduledToAvailable(mergedBusy);
-        List<TimeSlot> cleanAvailable = teumConverter.mergeScheduledTimeSlots(rawAvailable);
+        List<TimeSlot> availableTime = teumConverter.invertScheduledToAvailable(mergedBusy);
 
-        // 리스트 복사 후 정렬 (정렬 보장)
-        List<TimeSlot> sortedAvailable = new ArrayList<>(cleanAvailable);
+        // 리스트 복사 후 정렬
+        List<TimeSlot> sortedAvailable = new ArrayList<>(availableTime);
         sortedAvailable.sort(Comparator.comparing(slot -> timeUtil.parseTimeForSort(slot.getStart())));
 
         return new AvailableTimeResponseDto(date.toString(), sortedAvailable);
