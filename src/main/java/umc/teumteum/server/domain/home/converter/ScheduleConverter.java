@@ -12,7 +12,10 @@ import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.user.entity.User;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -99,4 +102,19 @@ public class ScheduleConverter {
 
 
     }
+
+    // Schedule -> HomeResponseDto.CalendarDto
+    public List<HomeResponseDto.CalendarDto> toCalendarDto(Map<LocalDate, Boolean> calendarMap, LocalDate startDate, LocalDate endDate) {
+        List<HomeResponseDto.CalendarDto> result = new ArrayList<>();
+
+        for(LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)){
+            result.add(HomeResponseDto.CalendarDto.builder()
+                    .date(date)
+                    .hasSchedule(calendarMap.getOrDefault(date,false))
+                    .build());
+        }
+
+        return result;
+    }
+
 }
