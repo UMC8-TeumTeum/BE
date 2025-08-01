@@ -22,6 +22,7 @@ public enum UserErrorStatus implements BaseErrorCode {
     INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "ONBOARDING4006", "시작/종료 시간이 잘못 설정된 반복 일정이 존재합니다."),
     ROUTINE_TIME_CONFLICT(HttpStatus.BAD_REQUEST, "ONBOARDING4007", "반복 일정 간 시간 충돌이 발생했습니다."),
     ROUTINE_SLEEP_CONFLICT(HttpStatus.BAD_REQUEST, "ONBOARDING4008", "수면 패턴과 반복 일정 간 시간 충돌이 발생했습니다."),
+    INVALID_REMIND_ALARM_VALUE(HttpStatus.BAD_REQUEST, "ONBOARDING4009", "리마인드 알림은 1분, 3분, 5분, 10분, 30분 중에서만 설정 가능합니다."),
     NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "ONBOARDING4091", "이미 사용 중인 닉네임입니다."),
     ;
 

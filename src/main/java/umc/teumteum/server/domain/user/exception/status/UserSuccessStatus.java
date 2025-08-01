@@ -20,6 +20,7 @@ public enum UserSuccessStatus implements BaseCode {
     PROFILE_IMAGE_SAVED(HttpStatus.OK, "ONBOARDING2004", "프로필 이미지 등록이 완료되었습니다."),
     SLEEP_PATTERN_SAVED(HttpStatus.OK, "ONBOARDING2005", "수면 패턴 등록이 완료되었습니다."),
     ROUTINE_SAVED(HttpStatus.OK, "ONBOARDING2006", "요일별 반복 일정 등록이 완료되었습니다."),
+    REMIND_ALARM_SAVED(HttpStatus.OK, "ONBOARDING2007", "리마인드 알림 설정 등록이 완료되었습니다.");
 
 
     ;

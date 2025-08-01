@@ -1,6 +1,5 @@
 package umc.teumteum.server.domain.user.service;
 
-import jakarta.validation.Valid;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
@@ -17,4 +16,6 @@ public interface OnboardingService {
     OnboardingResponseDto.ProfileImagePresignedUrlResponse generateProfileImagePresignedUrl(OnboardingRequestDto.ProfileImagePresignedUrlRequest request, User user);
 
     void saveProfileImage(OnboardingRequestDto.ProfileImageRequest request, User user);
+
+    void saveRemindAlarms(OnboardingRequestDto.RemindAlarmList request, User user);
 }
