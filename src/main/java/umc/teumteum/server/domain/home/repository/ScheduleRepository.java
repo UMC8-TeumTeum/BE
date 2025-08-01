@@ -180,6 +180,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Query("SELECT s FROM Schedule s JOIN FETCH s.user WHERE s.date = :date")
     List<Schedule> findAllByDateWithUser(@Param("date") LocalDate today);
 
+    List<Schedule> findByUser(User user);
+
 
     @Modifying
     @Query("delete from Schedule s where s.user = :user")
