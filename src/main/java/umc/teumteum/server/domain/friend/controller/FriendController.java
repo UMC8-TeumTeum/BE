@@ -127,5 +127,49 @@ public class FriendController {
         return ApiResponse.of(FriendSuccessStatus.GET_FRIEND_TEUM_TIME_SUCCESS, result);
     }
 
+    @Operation(
+            summary = "최근 공개 투두 2개 조회",
+            description = "특정 유저의 최근 공개 투두 2개를 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/todos/public/recent", produces = "application/json")
+    public ApiResponse<List<FriendPublicTodoResponseDto>> getRecentPublicTodos(
+            @Parameter(hidden = true) @CurrentUser User loginUser,
+            @Parameter(name = "userId", description = "조회할 친구 ID", example = "1")
+            @PathVariable("userId") Long targetUserId
+    ) {
+        List<FriendPublicTodoResponseDto> result = friendService.getRecentPublicTodos(loginUser.getId(), targetUserId);
+        return ApiResponse.of(FriendSuccessStatus.GET_FRIEND_PUBLIC_TODO_SUCCESS, result);
+    }
+
+    @Operation(
+            summary = "특정 날짜의 공개 투두 조회",
+            description = "특정 유저의 특정 날짜에 해당하는 모든 공개 투두를 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/todos/public", produces = "application/json")
+    public ApiResponse<List<FriendPublicTodoResponseDto>> getDailyPublicTodos(
+            @Parameter(description = "조회할 유저 ID", example = "1")
+            @PathVariable("userId") Long userId,
+
+            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2024-07-12")
+            @RequestParam("date") String date
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
+    @Operation(
+            summary = "공개 투두가 있는 날짜(월별) 조회",
+            description = "특정 유저의 특정 월에 공개 투두가 존재하는 날짜 목록을 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/todos/public/calendar", produces = "application/json")
+    public ApiResponse<List<String>> getTodoDatesOfMonth(
+            @Parameter(description = "조회할 유저 ID", required = true, example = "1")
+            @PathVariable("userId") Long userId,
+
+            @Parameter(description = "조회할 월 (YYYY-MM)", required = true, example = "2024-07")
+            @RequestParam("month") String month
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
 
 }

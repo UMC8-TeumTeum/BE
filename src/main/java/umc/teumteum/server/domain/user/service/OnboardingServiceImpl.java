@@ -3,6 +3,8 @@ package umc.teumteum.server.domain.user.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.converter.AgreementConverter;
 import umc.teumteum.server.domain.user.converter.OnboardingConverter;
 import umc.teumteum.server.domain.user.converter.RoutineConverter;
@@ -23,6 +25,7 @@ import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,6 +37,8 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final UserRepository userRepository;
     private final AgreementRepository agreementRepository;
     private final RoutineRepository routineRepository;
+    private final ScheduleRepository scheduleRepository;
+
     private final TimeUtil timeUtil;
     private final S3Util s3Util;
 
@@ -184,7 +189,12 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 6. 반복 일정 저장
         List<Routine> newRoutines = RoutineConverter.toRoutineList(request.getRoutine(), user);
         routineRepository.saveAll(newRoutines);
+
+        // 7. 오늘 요일의 일정은 스케줄에 추가
+        List<Schedule> routineSchedules = OnboardingConverter.toScheduleList(newRoutines, user, LocalDate.now());
+        scheduleRepository.saveAll(routineSchedules);
     }
+
 
 
 
@@ -229,6 +239,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                     timeUtil.validateTimeRangeConflicts(timeRanges, UserErrorStatus.ROUTINE_TIME_CONFLICT);
                 });
     }
+
 
     // 수면패턴과 반복일정 간의 충돌 확인
     private void validateSleepPatternConflictsByDay(Map<Weekday, List<OnboardingRequestDto.RoutineDTO>> routinesByDay, User user) {
