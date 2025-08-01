@@ -25,7 +25,8 @@ public enum HomeSuccessStatus implements BaseCode {
     _CATEGORY_LOADED(HttpStatus.OK, "HOME20012","카테고리 정보가 조회되었습니다."),
     _TEUMTIME_LOADED(HttpStatus.OK, "HOME20013", "지금까지 채운 빈틈 시간이 성공적으로 조회되었습니다."),
     _CALENDAR_LOADED(HttpStatus.OK,"HOME20014","캘린더 정보가 성공적으로 조회되었습니다."),
-    _TODOLIST_LOADED(HttpStatus.OK,"HOME20015","투두리스트가 성공적으로 조회되었습니다.")
+    _TODOLIST_LOADED(HttpStatus.OK,"HOME20015","투두리스트가 성공적으로 조회되었습니다."),
+    _ACTIVITY_LOADED(HttpStatus.OK, "ACTIVITY2001", "채움활동 위시가 성공적으로 조회되었습니다.")
     ;
 
     private final HttpStatus httpStatus;

@@ -113,9 +113,11 @@ public class TeumController {
     @GetMapping(value = "/requests/calendar", produces = "application/json")
     public ApiResponse<List<String>> getTeumRequestsOfMonth(
             @Parameter(description = "조회할 연월 (YYYY-MM)", example = "2025-05")
-            @RequestParam("month") String month
+            @RequestParam("month") String month,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        return ApiResponse.onSuccess(null);
+        List<String> dates = teumService.getTeumRequestsOfMonth(user.getId(), month);
+        return ApiResponse.of(TeumSuccessStatus._TEUM_CALENDAR_LOADED, dates);
     }
 
     @Operation(
