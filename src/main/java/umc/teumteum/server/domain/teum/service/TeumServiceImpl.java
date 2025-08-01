@@ -1,7 +1,6 @@
 package umc.teumteum.server.domain.teum.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,12 +38,15 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Stream;
 
-import static umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus.INVALID_PARENT_REQUEST;
-import static umc.teumteum.server.domain.user.entity.enums.UserStatus.ACTIVE;
-
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TeumServiceImpl implements TeumService {
@@ -220,14 +222,38 @@ public class TeumServiceImpl implements TeumService {
         return teumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
     }
 
+    @Override
+    public List<String> getTeumRequestsOfMonth(Long userId, String month) {
+        YearMonth yearMonth = YearMonth.parse(month);
+        LocalDate start = yearMonth.atDay(1);
+        LocalDate end = yearMonth.atEndOfMonth();
 
+        List<LocalDate> myRequestDates =
+                teumRequestRepository.findMyRequestDates(userId, start, end);
+
+        List<LocalDate> receivedRequestDates =
+                teumResponseRepository.findReceivedRequestDates(userId, start, end);
+
+        List<LocalDate> allDates = Stream.concat(myRequestDates.stream(), receivedRequestDates.stream())
+                .distinct()
+                .sorted()
+                .toList();
+
+        return teumConverter.toDateStringList(allDates);
+    }
 
     @Override
     public List<String> getScheduledTeumsOfMonth(Long userId, String month) {
         List<ScheduleStatus> validStatuses = List.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED);
-        List<LocalDate> dates = scheduleRepository.findScheduledTeumsByMonth(userId, validStatuses, month);
+
+        YearMonth ym = YearMonth.parse(month);
+        LocalDate start = ym.atDay(1);
+        LocalDate end = ym.atEndOfMonth();
+
+        List<LocalDate> dates = scheduleRepository.findScheduledTeumsByDates(userId, validStatuses, start, end);
         return teumConverter.toDateStringList(dates);
     }
+
 
     @Override
     @Transactional(readOnly = true)
