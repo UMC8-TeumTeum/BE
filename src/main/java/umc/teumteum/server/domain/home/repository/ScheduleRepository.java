@@ -236,4 +236,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     );
 
 
+
+    @Query("SELECT s FROM Schedule s WHERE s.user = :user AND s.date = :date")
+    List<Schedule> findByUserAndDate(@Param("user") User user, @Param("date") LocalDate date);
 }

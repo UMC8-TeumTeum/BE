@@ -57,9 +57,11 @@ public class HomeController {
 
     @GetMapping(value = "/todolist", produces = "application/json")
     @Operation(summary = "투두리스트 조회 API",description = "특정날찌의 투두를 조회하는 API입니다. query string으로 날짜를 입력주세요.")
-    public ApiResponse<String> getTodolist(
-            @Parameter(name= "date", description = "날짜", example = "2025-07-31") @RequestParam("date") LocalDate date){
-        return ApiResponse.onSuccess(null);
+    public ApiResponse<List<HomeResponseDto.TodolistDto>> getTodolist(
+            @Parameter(name= "date", description = "날짜", example = "2025-07-31") @RequestParam("date") LocalDate date,
+            @CurrentUser @Parameter(hidden = true) User user){
+        List<HomeResponseDto.TodolistDto> response = homeService.getTodolist(date,user);
+        return ApiResponse.of(HomeSuccessStatus._TODOLIST_LOADED,response);
     }
 
     @GetMapping(value = "/user-reminds", produces = "application/json")

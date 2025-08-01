@@ -4,8 +4,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 public class HomeResponseDto {
 
@@ -34,6 +37,35 @@ public class HomeResponseDto {
 
     @Schema(description = "스케줄 여부", example = "true")
     private Boolean hasSchedule;
+  }
+
+  @Getter
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class TodolistDto{
+    @Schema(description = "아이디", example = "1")
+    private Long id;
+    @Schema(description = "제목", example = "수영하기")
+    private String title;
+    @Schema(description = "시작시간", example = "01:00")
+    private LocalTime startTime;
+    @Schema(description = "종료시간", example = "02:00")
+    private LocalTime endTime;
+    @Schema(description = "공개여부", example = "false")
+    private Boolean isPublic;
+    @Schema(description = "리마인드 알림 여부", example = "false")
+    private Boolean hasAlarm;
+    @Schema(description = "타입", example = "ROUTINE")
+    private ScheduleType type;
+  }
+
+  @Builder
+  @Getter
+  @AllArgsConstructor
+  static public class VirtualRoutineDto {
+    private LocalDate date;
+    private Long routineId;
   }
 
 }
