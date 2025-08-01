@@ -13,6 +13,8 @@ public enum HomeErrorStatus implements BaseErrorCode {
     _INVALID_DURATION(HttpStatus.BAD_REQUEST,"HOME4002","잘못된 조회 기간입니다."),
     _SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "HOME4041", "해당 정보를 찾을 수 없습니다."),
     _CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND,"HOME4042","해당 카테고리를 찾을 수 없습니다."),
+    _CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST, "HOME4003", "카테고리는 필수 항목입니다."),
+    _CATEGORY_INPUT_CONFLICT(HttpStatus.BAD_REQUEST, "HOME4004", "카테고리와 직접 입력은 둘 중 하나만 선택해야 합니다."),
     _WISH_NOT_FOUND(HttpStatus.NOT_FOUND,"HOME4043","해당 위시 정보를 찾을 수 없습니다."),
     _SCHEDULE_CONFLICT(HttpStatus.CONFLICT, "HOME4092","해당 시간에 스케줄이 존재합니다.")
     ;
