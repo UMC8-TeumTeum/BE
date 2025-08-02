@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.home.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.home.entity.Schedule;
@@ -10,16 +11,28 @@ import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByUserIdAndIncludeTeumIsTrue(Long userId);
 
-    List<Schedule> findByUserIdAndDateAndStatus(Long userId, LocalDate date, ScheduleStatus status);
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.status = :status
+      AND s.endTime >= :startOfDay
+      AND s.startTime < :endOfDay
+""")
+    List<Schedule> findOverlappingSchedules(
+            @Param("userId") Long userId,
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("endOfDay") LocalDateTime endOfDay,
+            @Param("status") ScheduleStatus status
+    );
 
     @Query("""
         SELECT COUNT(s) > 0 FROM Schedule s
@@ -56,15 +69,15 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     WHERE s.user.id = :userId
       AND s.type = 'TEUM'
       AND s.status IN (:statuses)
-      AND FUNCTION('DATE_FORMAT', s.date, '%Y-%m') = :yearMonth
+      AND s.date BETWEEN :start AND :end
       AND s.isDeleted = false
 """)
-    List<LocalDate> findScheduledTeumsByMonth(
+    List<LocalDate> findScheduledTeumsByDates(
             @Param("userId") Long userId,
             @Param("statuses") List<ScheduleStatus> statuses,
-            @Param("yearMonth") String yearMonth
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end
     );
-
 
     @Query("""
     SELECT s FROM Schedule s
@@ -167,4 +180,63 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     @Query("SELECT s FROM Schedule s JOIN FETCH s.user WHERE s.date = :date")
     List<Schedule> findAllByDateWithUser(@Param("date") LocalDate today);
+
+    List<Schedule> findByUser(User user);
+
+
+    @Modifying
+    @Query("delete from Schedule s where s.user = :user")
+    void deleteByUser(@Param("user") User user);
+
+
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.isPublic = true
+      AND s.isDeleted = false
+    ORDER BY s.createdAt DESC
+""")
+    List<Schedule> findAllPublicByUserId(@Param("userId") Long userId);
+
+
+    @Query("SELECT s FROM Schedule s WHERE s.user = :user AND s.date BETWEEN :startDate AND :endDate")
+    List<Schedule> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate);
+
+
+    @Query("""
+    SELECT DISTINCT s.date FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.type IN :types
+      AND s.status = 'ACTIVE'
+      AND s.isPublic = true
+      AND s.isDeleted = false
+      AND s.date BETWEEN :start AND :end
+""")
+    List<LocalDate> findPublicActiveTodos(
+            @Param("userId") Long userId,
+            @Param("types") Collection<ScheduleType> types,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end
+    );
+
+    @Query("""
+    SELECT DISTINCT s.date FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.type = 'TEUM'
+      AND s.status IN :statuses
+      AND s.isPublic = true
+      AND s.isDeleted = false
+      AND s.date BETWEEN :start AND :end
+""")
+    List<LocalDate> findPublicTeumDates(
+            @Param("userId") Long userId,
+            @Param("statuses") Collection<ScheduleStatus> statuses,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end
+    );
+
+
+
+    @Query("SELECT s FROM Schedule s WHERE s.user = :user AND s.date = :date")
+    List<Schedule> findByUserAndDate(@Param("user") User user, @Param("date") LocalDate date);
 }

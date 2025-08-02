@@ -47,17 +47,21 @@ public class HomeController {
 
     @GetMapping(value = "/calendar", produces = "application/json")
     @Operation(summary = "캘린더 조회 API",description = "오늘의 빈틈 시간을 조회하는 API입니다. query string으로 시작날짜와 종료날찌를 입력주세요.")
-    public ApiResponse<String> getCalendar(
+    public ApiResponse<List<HomeResponseDto.CalendarDto>> getCalendar(
             @Parameter(name= "startDate", description = "시작날짜", example = "2025-07-01") @RequestParam("startDate") LocalDate startDate,
-            @Parameter(name= "endDate", description = "종료날짜", example = "2025-07-31") @RequestParam("endDate") LocalDate endDate){
-        return ApiResponse.onSuccess(null);
+            @Parameter(name= "endDate", description = "종료날짜", example = "2025-07-31") @RequestParam("endDate") LocalDate endDate,
+            @CurrentUser @Parameter(hidden = true) User user){
+        List<HomeResponseDto.CalendarDto> response = homeService.getCalendar(startDate,endDate,user);
+        return ApiResponse.of(HomeSuccessStatus._CALENDAR_LOADED,response);
     }
 
     @GetMapping(value = "/todolist", produces = "application/json")
     @Operation(summary = "투두리스트 조회 API",description = "특정날찌의 투두를 조회하는 API입니다. query string으로 날짜를 입력주세요.")
-    public ApiResponse<String> getTodolist(
-            @Parameter(name= "date", description = "날짜", example = "2025-07-31") @RequestParam("date") LocalDate date){
-        return ApiResponse.onSuccess(null);
+    public ApiResponse<List<HomeResponseDto.TodolistDto>> getTodolist(
+            @Parameter(name= "date", description = "날짜", example = "2025-07-31") @RequestParam("date") LocalDate date,
+            @CurrentUser @Parameter(hidden = true) User user){
+        List<HomeResponseDto.TodolistDto> response = homeService.getTodolist(date,user);
+        return ApiResponse.of(HomeSuccessStatus._TODOLIST_LOADED,response);
     }
 
     @GetMapping(value = "/user-reminds", produces = "application/json")

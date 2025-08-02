@@ -15,7 +15,7 @@ public enum TeumSuccessStatus implements BaseCode {
     _TEUM_RECEIVED_LIST_LOADED(HttpStatus.OK, "TEUM2002", "받은 틈 요청 목록이 조회되었습니다."),
     _TEUM_DETAIL_LOADED(HttpStatus.OK, "TEUM2003", "틈 요청 상세 정보가 조회되었습니다."),
     _TEUM_STATUS_UPDATED(HttpStatus.OK, "TEUM2004", "틈 응답 상태가 성공적으로 변경되었습니다."),
-    _TEUM_CALENDAR_LOADED(HttpStatus.OK, "TEUM2005", "요청 달력 정보가 조회되었습니다."),
+    _TEUM_CALENDAR_LOADED(HttpStatus.OK, "TEUM2005", "틈 요청 달력 정보가 조회되었습니다."),
     _TEUM_LIST_BY_DATE_LOADED(HttpStatus.OK, "TEUM2006", "지정한 날짜의 틈 요청 목록이 조회되었습니다."),
     _SCHEDULED_CALENDAR_LOADED(HttpStatus.OK, "TEUM2007", "약속된 틈 달력 정보가 조회되었습니다."),
     _SCHEDULED_LIST_LOADED(HttpStatus.OK, "TEUM2008", "지정한 날짜의 약속된 틈 목록이 조회되었습니다."),

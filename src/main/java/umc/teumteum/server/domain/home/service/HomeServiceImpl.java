@@ -29,17 +29,19 @@ import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
+import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.entity.enums.Weekday;
+import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.validator.ConflictValidator;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -54,6 +56,7 @@ public class HomeServiceImpl implements HomeService {
     private final WishRepository wishRepository;
     private final CategoryRepository categoryRepository;
     private final S3Util s3Util;
+    private final RoutineRepository routineRepository;
     private final ConflictValidator conflictValidator;
 
     @Transactional
@@ -79,6 +82,23 @@ public class HomeServiceImpl implements HomeService {
     @Override
     public TodoInfoResponseDto getTodoInfo(Long scheduleId) {
         // Todo(Schedule) 조회
+        // 가상의 루틴 ID일 경우
+        if(scheduleId<0){
+            // 1. ID 파싱
+            HomeResponseDto.VirtualRoutineDto info = getVirtualRoutine(scheduleId);
+            LocalDate date = info.getDate();
+            Long routineId = info.getRoutineId();
+
+            Routine routine = routineRepository.findById(routineId)
+                    .orElseThrow(() -> new HomeException(HomeErrorStatus._ROUTINE_NOT_FOUND));
+
+            // 프로필 조회
+            String profileImageName = routine.getUser().getProfileImageName();
+            List<String> profileUrls = profileImageName != null ? List.of(s3Util.toPresignedUrl("profile/" + profileImageName, Duration.ofMinutes(30))) : List.of();
+
+            return scheduleConverter.toVirtualRoutineInfo(routine,date,profileUrls);
+        }
+
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
 
@@ -128,17 +148,30 @@ public class HomeServiceImpl implements HomeService {
     @Override
     public TodoIdResponseDto updateTodoInfo(TodoRequestDto dto, Long scheduleId, User user) {
         // Todo(Schedule) 수정
+        if (scheduleId < 0) {
+            // 1. 미래의 반복일정은 수정할 수 없음
+            throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
+        }
+
+        // 2. 스케줄 테이블 조회
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
 
+        if (schedule.getType() == ScheduleType.ROUTINE) {
+            // 3. 현재, 과거의 반복일정은 수정할 수 없음
+            throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
+        }
         // 충돌 검사
         conflictValidator.validateTodo(user,dto.getStartTime(), dto.getEndTime());
 
-        // 스케줄 필드 업데이트
-        schedule.updateField(dto);
+        // 4. 알림이 업데이트 되었는지 판단
+        boolean hasAlarm = dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty();
 
-        // 스케줄 리마인드 알림 저장
-        if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
+        // 5. 스케줄 필드 업데이트
+        schedule.updateField(dto,hasAlarm);
+
+        // 6. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
+        if (hasAlarm) {
             scheduleReminderRepository.deleteByScheduleId(scheduleId);
             List<ScheduleReminder> reminders = scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm());
             scheduleReminderRepository.saveAll(reminders);
@@ -150,11 +183,39 @@ public class HomeServiceImpl implements HomeService {
     @Override
     public void deleteTodo(Long scheduleId) {
         // Todo(Schedule) 삭제
+
+        // 1. 가상 루틴 ID인 경우
+        if (scheduleId < 0) {
+            // 반복일정 처리
+            deleteVirtualRoutine(scheduleId);
+            return;
+        }
+
+        // 2. 일반 스케줄 조회
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
 
+        // 2-1. 루틴 기반 스케줄일 경우
+        if (schedule.getRoutine() != null) {
+            schedule.setIsDeleted(true);
+            return;
+        }
+
         scheduleRepository.deleteById(scheduleId);
         scheduleReminderRepository.deleteByScheduleId(scheduleId);
+    }
+
+    private void deleteVirtualRoutine(Long scheduleId) {
+        // 가상의 루틴 ID 반복일정 삭제시
+        HomeResponseDto.VirtualRoutineDto info = getVirtualRoutine(scheduleId);
+        LocalDate date = info.getDate();
+        Long routineId = info.getRoutineId();
+
+        Routine routine = routineRepository.findById(routineId)
+                .orElseThrow(() -> new HomeException(HomeErrorStatus._ROUTINE_NOT_FOUND));
+
+        Schedule deletedSchedule = scheduleConverter.toDeleteRoutine(routine,date);
+        scheduleRepository.save(deletedSchedule);
     }
 
     @Transactional
@@ -418,5 +479,134 @@ public class HomeServiceImpl implements HomeService {
 
     }
 
+    @Override
+    public List<HomeResponseDto.CalendarDto> getCalendar(LocalDate startDate, LocalDate endDate, User user) {
+        // 캘린더 조회
 
+        // 1. 오늘 날짜 조회 & 날짜별 일정 여부 담을 맵 초기화
+        LocalDate today = LocalDate.now();
+        Map<LocalDate, Boolean> calendarMap = new HashMap<>();
+
+        // 2. Schedule 테이블 조회
+        List<Schedule> schedules = scheduleRepository.findByUserAndDateBetween(user,startDate,endDate);
+
+        // 3. Schedule 기준 true 표시
+        for (Schedule schedule : schedules) {
+            LocalDate date = schedule.getDate();
+            // 3-1. 삭제된 루틴 ->  표시 X
+            if(schedule.getRoutine() != null && schedule.getIsDeleted()) continue;
+            // 3-2. 일정 등록
+            calendarMap.put(date, true);
+        }
+
+
+        // 4. 미래의 경우 반복일정 검증
+        if(endDate.isAfter(today)){
+
+            // 4-1. 스케줄에서 삭제된 날짜의 루틴ID만 모아둠
+            Map<LocalDate, Set<Long>> deletedRoutine = schedules.stream()
+                    .filter(s -> s.getRoutine() != null && s.getIsDeleted())
+                    .collect(Collectors.groupingBy(
+                            Schedule::getDate,
+                            Collectors.mapping(
+                                    s -> s.getRoutine().getId(),
+                                    Collectors.toSet()
+                            )
+                    ));
+
+            // 4-2. 반복 일정 조회
+            List<Routine> routines = routineRepository.findByUser(user);
+
+            // 4-3. startDate부터 endDate까지 날짜 순회
+            for(LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                // 과거일 경우는 스킵
+                if(date.isBefore(today)) continue;
+
+                // 검증 날짜의 요일
+                Weekday weekday = Weekday.from(date.getDayOfWeek());
+
+                for(Routine routine : routines) {
+                    // 루틴의 요일과 검증 날짜의 요일이 일치하는 경우만 처리
+                    if(!routine.getWeekday().equals(weekday)) {
+                        continue;
+                    }
+
+                    // 삭제되지 않은 루틴만 true로
+                    Long routineId = routine.getId();
+                    boolean isDeleted = deletedRoutine.getOrDefault(date,Set.of()).contains(routineId);
+                    if(!isDeleted){
+                        calendarMap.put(date, true);
+                    }
+                }
+            }
+
+        }
+        return scheduleConverter.toCalendarDto(calendarMap,startDate,endDate);
+    }
+
+    @Override
+    public List<HomeResponseDto.TodolistDto> getTodolist(LocalDate date, User user) {
+        // 투두리스트 조회
+
+        // 1. 해당 날짜의 모든 스케줄 조회
+        List<Schedule> allSchedules = scheduleRepository.findByUserAndDate(user,date);
+
+        // 2. 스케줄 테이블 조회 (해당 날짜 & 삭제되지 않음)
+        List<HomeResponseDto.TodolistDto> scheduleDtos = allSchedules.stream()
+                .filter(s -> !s.getIsDeleted())
+                .map(scheduleConverter::toScheduleDto)
+                .toList();
+
+        // 3. 삭제된 루틴 ID
+        Set<Long> deletedRoutineIds = allSchedules.stream()
+                .filter(s-> s.getRoutine() != null && s.getIsDeleted())
+                .map(s->s.getRoutine().getId())
+                .collect(Collectors.toSet());
+
+        // 4. 미래의 경우 반복 루틴 추가 조회
+        LocalDate today = LocalDate.now();
+        List<HomeResponseDto.TodolistDto> routineDtos = new ArrayList<>();
+        if(date.isAfter(today)){
+            // 4-1. 조회 요일
+            Weekday todayWeekday = Weekday.valueOf(date.getDayOfWeek().name());
+            List<Routine> routines = routineRepository.findByUserAndWeekday(user, todayWeekday);
+
+            // 4-2. 삭제되지 않은 루틴에 대해 가상의 ID 생성
+            routineDtos = routines.stream()
+                    .filter(r -> !deletedRoutineIds.contains(r.getId()))
+                    .map(r -> scheduleConverter.toVirtualRoutineDto(r, date))
+                    .toList();
+        }
+
+        // 5. 합쳐서 반환 (시간순 정렬)
+        List<HomeResponseDto.TodolistDto> result = new ArrayList<>();
+        result.addAll(scheduleDtos);
+        result.addAll(routineDtos);
+        result.sort(Comparator.comparing(HomeResponseDto.TodolistDto::getStartTime));
+        return result;
+    }
+
+    @Override
+    public HomeResponseDto.VirtualRoutineDto getVirtualRoutine(Long virtualId) {
+        // 가상의 루틴 ID 파싱 함수
+
+        try{
+            String str = Long.toString(Math.abs(virtualId)); // 음수 제거 후 string으로
+
+            if(str.length()<=8){
+                throw new IllegalArgumentException();
+            }
+
+            // 날짜 파싱
+            String strDate = str.substring(0,8); //YYYYMMDD
+            String strRoutine = str.substring(8);
+
+            // 루틴 ID 파싱
+            LocalDate date = LocalDate.parse(strDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
+            Long routineId = Long.parseLong(strRoutine);
+            return new HomeResponseDto.VirtualRoutineDto(date, routineId);
+        } catch(Exception e){
+            throw new HomeException(HomeErrorStatus._INVALID_VIRTUAL_ID);
+        }
+    }
 }

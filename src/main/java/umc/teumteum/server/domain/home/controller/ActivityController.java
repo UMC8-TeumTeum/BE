@@ -1,12 +1,22 @@
 package umc.teumteum.server.domain.home.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import umc.teumteum.server.domain.home.dto.request.ActivityRequestDto;
+import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto;
+import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
+import umc.teumteum.server.domain.home.service.ActivityService;
+import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
+import umc.teumteum.server.global.apiPayload.code.status.SuccessStatus;
 
 @RestController
 @RequiredArgsConstructor
@@ -14,15 +24,20 @@ import umc.teumteum.server.global.apiPayload.ApiResponse;
 @Tag(name="Activity", description = "채움 활동 관련 API")
 public class ActivityController {
 
+  private final ActivityService activityServiceImpl;
+
   @Operation(
       summary = "채움활동 위시리스트 조회",
       description = "채움활동에서 사용자가 입력한 조건들을 만족하는 '내가 등록한 위시'들을 조회합니다."
   )
   @PostMapping(value = "/user-wishes", produces = "application/json")
-  public ApiResponse<Object> getMyWish(
+  public ApiResponse<ActivityResponseDto.WishResponse> getMyWish(
+      @Valid @RequestBody ActivityRequestDto.OptionRequest request,
+      @CurrentUser @Parameter(hidden = true) User user
   ) {
     // TODO: 채움활동에서 사용자의 조건을 만족하는 "내가 등록한 위시" 조회 로직 구현
-    return null;
+    ActivityResponseDto.WishResponse response = activityServiceImpl.getMyWish(user, request);
+    return ApiResponse.of(HomeSuccessStatus._ACTIVITY_LOADED, response);
 
   }
 

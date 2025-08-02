@@ -1,9 +1,9 @@
 package umc.teumteum.server.domain.user.repository;
 
-import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
@@ -16,4 +16,7 @@ public interface RoutineRepository extends JpaRepository<Routine, Long> {
     @Modifying
     @Query("delete from Routine r where r.user = :user")
     void deleteByUser(@Param("user") User user);
+
+    @Query("SELECT r FROM Routine r WHERE r.user = :user")
+    List<Routine> findByUser(@Param("user") User user);
 }

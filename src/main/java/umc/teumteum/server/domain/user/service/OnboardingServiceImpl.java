@@ -3,12 +3,15 @@ package umc.teumteum.server.domain.user.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import umc.teumteum.server.domain.user.converter.AgreementConverter;
+import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.entity.ScheduleReminder;
+import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
+import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.converter.OnboardingConverter;
-import umc.teumteum.server.domain.user.converter.RoutineConverter;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.entity.Agreement;
+import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
@@ -16,6 +19,7 @@ import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.domain.user.exception.OnboardingHandler;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.AgreementRepository;
+import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
 import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.TimeRange;
@@ -23,6 +27,7 @@ import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,12 +39,19 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final UserRepository userRepository;
     private final AgreementRepository agreementRepository;
     private final RoutineRepository routineRepository;
+    private final ScheduleRepository scheduleRepository;
+    private final ScheduleReminderRepository scheduleReminderRepository;
+    private final RemindAlarmRepository remindAlarmRepository;
+
     private final TimeUtil timeUtil;
     private final S3Util s3Util;
 
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp", "image/svg+xml"
     );
+
+    private static final Set<Integer> ALLOWED_REMIND_ALARM_VALUES = Set.of(1, 3, 5, 10, 30);
+
 
     // 온보딩 - 약관 동의
     @Override
@@ -57,7 +69,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
 
         // 3. Entity 변환
-        Agreement agreement = AgreementConverter.toAgreement(request, user);
+        Agreement agreement = OnboardingConverter.toAgreement(request, user);
 
         // 4. 저장
         agreementRepository.save(agreement);
@@ -182,9 +194,51 @@ public class OnboardingServiceImpl implements OnboardingService {
         validateSleepPatternConflictsByDay(routinesByDay, user);
 
         // 6. 반복 일정 저장
-        List<Routine> newRoutines = RoutineConverter.toRoutineList(request.getRoutine(), user);
+        List<Routine> newRoutines = OnboardingConverter.toRoutineList(request.getRoutine(), user);
         routineRepository.saveAll(newRoutines);
+
+        // 7. 오늘 요일의 일정은 스케줄에 추가
+        List<Schedule> routineSchedules = OnboardingConverter.toScheduleList(newRoutines, user, LocalDate.now());
+        scheduleRepository.saveAll(routineSchedules);
     }
+
+
+
+    // 온보딩 - 리마인드 알림 설정 등록
+    @Override
+    @Transactional
+    public void saveRemindAlarms(OnboardingRequestDto.RemindAlarmList request, User user) {
+        // 1. 사용자 step 확인
+        validateOnboardingStep(user, UserStep.ONBOARDING);
+
+        // 2. 입력값 있는지 확인 (리마인드 알림 등록은 선택 입력)
+        // (※ 온보딩 완료를 판단해야 하기 때문에 선택 입력임에도 API 호출이 필요)
+        if (!request.getRemindAlarms().isEmpty()) {
+
+            // 3. 알림 설정 범위 확인 (1, 3, 5, 10, 30)
+            if (!ALLOWED_REMIND_ALARM_VALUES.containsAll(request.getRemindAlarms())) {
+                throw new OnboardingHandler(UserErrorStatus.INVALID_REMIND_ALARM_VALUE);
+            }
+
+            // 4. RemindAlarm 저장
+            List<RemindAlarm> remindAlarms = OnboardingConverter.toRemindAlarmList(request.getRemindAlarms(), user);
+            remindAlarmRepository.saveAll(remindAlarms);
+
+            // 5. 저장된 Schedule이 있으면 (반복일정 등록은 선택 입력)
+            List<Schedule> existingSchedules = scheduleRepository.findByUser(user);
+            if (!existingSchedules.isEmpty()) {
+
+                // 6. 각 Schedule마다 ScheduleReminder 저장
+                List<ScheduleReminder> scheduleReminders = OnboardingConverter.toScheduleReminderList(
+                        request.getRemindAlarms(), existingSchedules);
+                scheduleReminderRepository.saveAll(scheduleReminders);
+            }
+        }
+
+        // 7. 최종 온보딩 완료로 사용자 step 변경
+        user.updateStep(UserStep.MAIN);
+    }
+
 
 
 
@@ -229,6 +283,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                     timeUtil.validateTimeRangeConflicts(timeRanges, UserErrorStatus.ROUTINE_TIME_CONFLICT);
                 });
     }
+
 
     // 수면패턴과 반복일정 간의 충돌 확인
     private void validateSleepPatternConflictsByDay(Map<Weekday, List<OnboardingRequestDto.RoutineDTO>> routinesByDay, User user) {

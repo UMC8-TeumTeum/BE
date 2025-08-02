@@ -36,5 +36,15 @@ public interface TeumRequestRepository extends JpaRepository<TeumRequest, Long> 
             @Param("date") LocalDate date
     );
 
+    @Query("""
+        SELECT DISTINCT tr.date FROM TeumRequest tr
+        WHERE tr.user.id = :userId
+          AND tr.date BETWEEN :start AND :end
+    """)
+    List<LocalDate> findMyRequestDates(
+            @Param("userId") Long userId,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end
+    );
 
 }

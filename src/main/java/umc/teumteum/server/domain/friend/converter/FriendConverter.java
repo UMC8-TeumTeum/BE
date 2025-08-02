@@ -1,17 +1,17 @@
 package umc.teumteum.server.domain.friend.converter;
 
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import umc.teumteum.server.domain.friend.dto.FollowerUserResponseDto;
-import umc.teumteum.server.domain.friend.dto.FollowingUserResponseDto;
-import umc.teumteum.server.domain.friend.dto.FriendProfileResponseDto;
-import umc.teumteum.server.domain.friend.dto.FriendTeumTimeResponseDto;
+import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
+import umc.teumteum.server.global.util.TimeUtil;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 public class FriendConverter {
 
     private final S3Util s3Util;
+    private final TimeUtil timeUtil;
 
     public FollowingUserResponseDto toFollowingUserResponse(Friend friend) {
         User following = friend.getFollowing();
@@ -82,5 +83,29 @@ public class FriendConverter {
         return new FriendTeumTimeResponseDto(days, hours, minutes, totalMinutes);
     }
 
+    public List<FriendPublicTodoResponseDto> toFriendPublicTodoResponse(List<Schedule> schedules) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
+        return schedules.stream()
+                .map(s -> new FriendPublicTodoResponseDto(
+                        s.getTitle(),
+                        s.getStartTime().format(formatter),
+                        timeUtil.parseAndFormatEndTime(s.getEndTime().toLocalTime())
+                ))
+                .collect(Collectors.toList());
+    }
+
+    public List<String> toDateStringList(List<LocalDate> dates) {
+        return dates.stream()
+                .map(LocalDate::toString)
+                .toList();
+    }
+
+    // 친구 - 상대방 팔로우
+    public static Friend toFriend(User follower, User following) {
+        return Friend.builder()
+                .follower(follower)
+                .following(following)
+                .build();
+    }
 }

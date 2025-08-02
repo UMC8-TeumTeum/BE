@@ -25,6 +25,8 @@ public interface TeumService {
 
     TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto);
 
+    List<String> getTeumRequestsOfMonth(Long userId, String month);
+
     List<String> getScheduledTeumsOfMonth(Long userId, String month);
 
     List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, String date);

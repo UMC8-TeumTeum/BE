@@ -28,26 +28,30 @@ public class FriendController {
             description = "특정 유저를 팔로우합니다."
     )
     @PostMapping(value = "/{userId}/follow", produces = "application/json")
-    public ApiResponse<FollowResponseDto> followUser(
+    public ApiResponse<Object> followUser(
             @Parameter(name = "userId", description = "팔로우할 대상 유저의 ID", example = "1")
-            @PathVariable("userId") Long userId
+            @PathVariable("userId") Long targetUserId,
+            @CurrentUser @Parameter(hidden = true) User loginUser
     ) {
-        Long followId = friendService.follow(userId);
-        return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, new FollowResponseDto(followId));
+        friendService.follow(loginUser, targetUserId);
+        return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, null);
     }
+
 
     @Operation(
             summary = "유저 언팔로우",
             description = "특정 유저에 대한 팔로우를 취소합니다."
     )
     @DeleteMapping(value = "/{userId}/follow", produces = "application/json")
-    public ApiResponse<Void> unfollowUser(
+    public ApiResponse<Object> unfollowUser(
             @Parameter(name = "userId", description = "언팔로우할 대상 유저의 ID", example = "1")
-            @PathVariable("userId") Long userId
+            @PathVariable("userId") Long targetUserId,
+            @CurrentUser @Parameter(hidden = true) User loginUser
     ) {
-        friendService.unfollow(userId);
+        friendService.unfollow(loginUser, targetUserId);
         return ApiResponse.of(FriendSuccessStatus._UNFOLLOW_SUCCESS, null);
     }
+
 
     @Operation(
             summary = "맞팔로우 목록 조회",
@@ -57,6 +61,7 @@ public class FriendController {
     public ApiResponse<List<FriendMutualResponseDto>> getMyMutualFriends() {
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, null);
     }
+
 
     @Operation(
             summary = "즐겨찾기 설정/해제",
@@ -71,6 +76,7 @@ public class FriendController {
         FavoriteResponseDto response = friendService.updateFavorite(userId, requestDto.getIsFavorite());
         return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, response);
     }
+
 
     @Operation(
             summary = "팔로잉 목록 조회",
@@ -124,8 +130,52 @@ public class FriendController {
             @Parameter(name = "userId", description = "조회할 친구 ID") @PathVariable("userId") Long targetUserId
     ) {
         FriendTeumTimeResponseDto result = friendService.getFriendTeumTime(loginUser.getId(), targetUserId);
-        return ApiResponse.of(FriendSuccessStatus.GET_FRIEND_TEUM_TIME_SUCCESS, result);
+        return ApiResponse.of(FriendSuccessStatus._GET_FRIEND_TEUM_TIME_SUCCESS, result);
     }
+
+    @Operation(
+            summary = "최근 공개 투두 2개 조회",
+            description = "특정 유저의 최근 공개 투두 2개를 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/todos/public/recent", produces = "application/json")
+    public ApiResponse<List<FriendPublicTodoResponseDto>> getRecentPublicTodos(
+            @Parameter(hidden = true) @CurrentUser User loginUser,
+            @Parameter(name = "userId", description = "조회할 친구 ID", example = "1")
+            @PathVariable("userId") Long targetUserId
+    ) {
+        List<FriendPublicTodoResponseDto> result = friendService.getRecentPublicTodos(loginUser.getId(), targetUserId);
+        return ApiResponse.of(FriendSuccessStatus._GET_FRIEND_PUBLIC_TODO_SUCCESS, result);
+    }
+
+    @Operation(
+            summary = "특정 날짜의 공개 투두 조회",
+            description = "특정 유저의 특정 날짜에 해당하는 모든 공개 투두를 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/todos/public", produces = "application/json")
+    public ApiResponse<List<FriendPublicTodoResponseDto>> getDailyPublicTodos(
+            @Parameter(description = "조회할 유저 ID", example = "1")
+            @PathVariable("userId") Long userId,
+
+            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2024-07-12")
+            @RequestParam("date") String date
+    ) {
+        return ApiResponse.onSuccess(null);
+    }
+
+    @Operation(
+            summary = "친구의 공개 투두가 있는 날짜(월별) 조회",
+            description = "특정 유저의 특정 월에 공개 투두가 존재하는 날짜 목록을 반환합니다."
+    )
+    @GetMapping(value = "/{userId}/todos/public/calendar", produces = "application/json")
+    public ApiResponse<List<String>> getTodoDatesOfMonth(
+            @Parameter(hidden = true) @CurrentUser User loginUser,
+            @Parameter(name = "userId", description = "조회할 친구 ID", example = "2")
+            @PathVariable("userId") Long targetUserId,
+            @Parameter(description = "조회할 연월 (YYYY-MM)", example = "2025-05")
+            @RequestParam("month") String month
+    ) {
+        List<String> result = friendService.getTodoDatesOfMonth(loginUser.getId(), targetUserId, month);
+        return ApiResponse.of(FriendSuccessStatus._GET_FRIEND_PUBLIC_TODO_SUCCESS, result);    }
 
 
 }

@@ -61,6 +61,10 @@ public class Schedule extends BaseEntity {
     @Column(name = "include_teum", nullable = false)
     private Boolean includeTeum = false;
 
+    @Column(name = "has_alarm", nullable = false)
+    @Builder.Default
+    private Boolean hasAlarm = false;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -84,7 +88,7 @@ public class Schedule extends BaseEntity {
     @OneToMany(mappedBy = "schedule", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ScheduleReminder> scheduleReminders = new ArrayList<>();
 
-    public void updateField(TodoRequestDto dto) {
+    public void updateField(TodoRequestDto dto, boolean hasAlarm) {
         this.title = dto.getTitle();
         this.date = dto.getStartTime().toLocalDate();
         this.startTime = dto.getStartTime();
@@ -92,9 +96,15 @@ public class Schedule extends BaseEntity {
         this.description = dto.getDescription();
         this.isPublic = dto.getIsPublic();
         this.includeTeum = dto.getIncludeTeum();
+        this.hasAlarm = hasAlarm;
     }
 
     public void cancel() {
         this.status = ScheduleStatus.CANCELLED;
+    }
+
+    // 루틴 삭제 처리
+    public void setIsDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
     }
 }

@@ -1,13 +1,16 @@
 package umc.teumteum.server.domain.friend.service;
 
-import org.springframework.data.domain.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.RequiredArgsConstructor;
 import umc.teumteum.server.domain.friend.converter.FriendConverter;
 import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.entity.Friend;
+import umc.teumteum.server.domain.friend.exception.FriendException;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
 import umc.teumteum.server.domain.home.entity.Schedule;
@@ -15,15 +18,19 @@ import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
-import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -34,17 +41,49 @@ public class FriendServiceImpl implements FriendService {
     private final ScheduleRepository scheduleRepository;
     private final FriendConverter friendConverter;
 
+    private static final Set<ScheduleType> GENERAL_SCHEDULE_TYPES =
+            EnumSet.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI);
+
+    private static final Set<ScheduleStatus> TEUM_VALID_STATUSES =
+            EnumSet.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED);
+
+
     @Override
     @Transactional
-    public Long follow(Long userId) {
-        // TODO : 팔로우 로직 추후 구현
-        return 123L;
+    public void follow(User loginUser, Long targetUserId) {
+        // 1. 자기 자신을 팔로우하는지 확인
+        validateNotSelf(loginUser.getId(), targetUserId);
+
+        // 2. 상대방 조회
+        User targetUser = getUserOrThrow(targetUserId);
+
+        // 3. 이미 팔로우 중인지 확인
+        if (friendRepository.existsByFollowerAndFollowing(loginUser, targetUser)) {
+            throw new FriendException(FriendErrorStatus.ALREADY_FOLLOWING);
+        }
+
+        // 4. Friend 생성 및 저장
+        Friend friend = FriendConverter.toFriend(loginUser, targetUser);
+        friendRepository.save(friend);
+
+        // 5. TODO FOLLOW 알림 전송 필요
     }
 
     @Override
     @Transactional
-    public void unfollow(Long userId) {
-        // TODO : 언팔로우 로직 추후 구현
+    public void unfollow(User loginUser, Long targetUserId) {
+        // 1. 자기 자신을 언팔로우하는지 확인
+        validateNotSelf(loginUser.getId(), targetUserId);
+
+        // 2. 상대방 조회
+        User targetUser = getUserOrThrow(targetUserId);
+
+        // 3. 팔로우 관계가 존재하는지 확인
+        Friend friend = friendRepository.findByFollowerAndFollowing(loginUser, targetUser)
+                .orElseThrow(() -> new FriendException(FriendErrorStatus.NOT_FOLLOWING));
+
+        // 4. Friend 삭제
+        friendRepository.delete(friend);
     }
 
     @Override
@@ -141,6 +180,58 @@ public class FriendServiceImpl implements FriendService {
         return friendConverter.toFriendTeumTimeResponse(totalMinutes);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<FriendPublicTodoResponseDto> getRecentPublicTodos(Long loginUserId, Long targetUserId) {
+        validateNotSelf(loginUserId, targetUserId);
+        validateUserExists(targetUserId);
+
+        List<Schedule> rawSchedules = scheduleRepository.findAllPublicByUserId(targetUserId);
+
+        List<Schedule> filtered = rawSchedules.stream()
+                .filter(s -> {
+                    if (s.getType() == ScheduleType.TEUM) {
+                        return s.getStatus() == ScheduleStatus.ACTIVE || s.getStatus() == ScheduleStatus.COMPLETED;
+                    } else {
+                        return s.getStatus() == ScheduleStatus.ACTIVE &&
+                                GENERAL_SCHEDULE_TYPES.contains(s.getType());
+                    }
+                })
+                .limit(2)
+                .collect(Collectors.toList());
+
+        return friendConverter.toFriendPublicTodoResponse(filtered);
+    }
+
+    @Override
+    public List<FriendPublicTodoResponseDto> getDailyPublicTodos(Long userId, String date) {
+        // TODO : 특정 날짜의 공개 투두 조회 로직 구현
+        return List.of();
+    }
+
+    @Override
+    public List<String> getTodoDatesOfMonth(Long loginUserId, Long targetUserId, String month) {
+        validateNotSelf(loginUserId, targetUserId);
+        validateUserExists(targetUserId);
+
+        YearMonth ym = YearMonth.parse(month);
+        LocalDate start = ym.atDay(1);
+        LocalDate end = ym.atEndOfMonth();
+
+        // TODO/WISH/AI 일정 (status: ACTIVE)
+        List<LocalDate> generalDates = scheduleRepository.findPublicActiveTodos(targetUserId, GENERAL_SCHEDULE_TYPES, start, end);
+
+        // TEUM 일정 (status: ACTIVE, COMPLETED)
+        List<LocalDate> teumDates = scheduleRepository.findPublicTeumDates(targetUserId, TEUM_VALID_STATUSES, start, end);
+
+        List<LocalDate> allDates = Stream.concat(generalDates.stream(), teumDates.stream())
+                .distinct()
+                .sorted()
+                .toList();
+
+        return friendConverter.toDateStringList(allDates);
+    }
+
 
     /**
      * 주어진 ID에 해당하는 User를 조회합니다.
@@ -149,7 +240,7 @@ public class FriendServiceImpl implements FriendService {
      */
     private User getUserOrThrow(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new GlobalHandler(FriendErrorStatus.USER_NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorStatus.USER_NOT_FOUND));
     }
 
     /**
@@ -159,15 +250,13 @@ public class FriendServiceImpl implements FriendService {
      */
     private void validateUserExists(Long userId) {
         if (!userRepository.existsById(userId)) {
-            throw new GlobalHandler(UserErrorStatus.USER_NOT_FOUND);
+            throw new FriendException(FriendErrorStatus.USER_NOT_FOUND);
         }
     }
 
     private void validateNotSelf(Long loginUserId, Long targetUserId) {
         if (loginUserId.equals(targetUserId)) {
-            throw new GlobalHandler(FriendErrorStatus.CANNOT_VIEW_SELF);
+            throw new FriendException(FriendErrorStatus.INVALID_SELF_REQUEST);
         }
     }
-
-
 }

@@ -1,14 +1,15 @@
 package umc.teumteum.server.domain.friend.service;
 
 import umc.teumteum.server.domain.friend.dto.*;
+import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 
 import java.util.List;
 
 public interface FriendService {
-    Long follow(Long userId);
+    void follow(User loginUser, Long targetUserId);
 
-    void unfollow(Long userId);
+    void unfollow(User loginUser, Long targetUserId);
 
     List<FriendMutualResponseDto> getMutualFriends();
 
@@ -21,5 +22,11 @@ public interface FriendService {
     FriendProfileResponseDto getFriendProfile(Long loginUserId, Long targetUserId);
 
     FriendTeumTimeResponseDto getFriendTeumTime(Long loginUserId, Long targetUserId);
+
+    List<FriendPublicTodoResponseDto> getRecentPublicTodos(Long loginUserId, Long targetUserId);
+
+    List<FriendPublicTodoResponseDto> getDailyPublicTodos(Long userId, String date);
+
+    List<String> getTodoDatesOfMonth(Long loginUserId, Long targetUserId, String month);
 
 }

@@ -1,6 +1,5 @@
 package umc.teumteum.server.domain.home.service;
 
-import java.time.Duration;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDto;
@@ -50,4 +49,13 @@ public interface HomeService {
 
     // 빈틈 시간 조회
     HomeResponseDto.TeumTimeDto getTeaumTime(User user);
+
+    // 캘린더 스케줄 여부 조회
+    List<HomeResponseDto.CalendarDto> getCalendar(LocalDate startDate, LocalDate endDate,User user);
+
+    // 투두리스트 조회
+    List<HomeResponseDto.TodolistDto> getTodolist(LocalDate date,User user);
+
+    // 가상의 루틴 ID 파싱
+    HomeResponseDto.VirtualRoutineDto getVirtualRoutine(Long virtualId);
 }
