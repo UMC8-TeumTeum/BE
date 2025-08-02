@@ -69,7 +69,7 @@ public class ConflictValidator {
 
     // 내부 충돌 검사 메서드들
     private void checkWithSchedules(User user, LocalDateTime requestStart, LocalDateTime requestEnd) {
-        List<ScheduleType> types = List.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI);
+        List<ScheduleType> types = List.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI, ScheduleType.TEUM);
 
         List<Schedule> schedules = scheduleRepository.findSchedulesByUserAndType(user, types);
 
