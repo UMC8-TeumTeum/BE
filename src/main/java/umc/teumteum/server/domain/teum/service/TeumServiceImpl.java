@@ -398,12 +398,12 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional(readOnly = true)
-    public SharedTeumTimeResponseDto getSharedTeumStats(Long userId, Long friendId) {
-        validateUserExists(friendId);
-        validateNotSelf(userId, friendId);
+    public SharedTeumTimeResponseDto getSharedTeumStats(Long loginUserId, Long targetUserId) {
+        validateUserExists(targetUserId);
+        validateNotSelf(loginUserId, targetUserId);
 
         List<Schedule> myTeumSchedules = scheduleRepository.findMySharedTeumSchedules(
-                userId, friendId, ScheduleType.TEUM, ScheduleStatus.COMPLETED
+                loginUserId, targetUserId, ScheduleType.TEUM, ScheduleStatus.COMPLETED
         );
 
         long totalMinutes = myTeumSchedules.stream()
