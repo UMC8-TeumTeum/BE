@@ -202,7 +202,7 @@ public class TeumController {
     }
 
     @Operation(
-            summary = "함께한 틈 시간 조회",
+            summary = "서로의 빈틈을 함께한 시간 조회",
             description = "로그인한 사용자와 지정된 친구가 함께 참여한 틈의 횟수와 누적 시간을 분 단위로 반환합니다."
     )
     @GetMapping(value = "/{userId}/shared/teum-time", produces = "application/json")
