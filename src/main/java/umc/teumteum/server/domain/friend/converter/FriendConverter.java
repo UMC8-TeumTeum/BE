@@ -1,6 +1,5 @@
 package umc.teumteum.server.domain.friend.converter;
 
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.friend.dto.*;
@@ -10,6 +9,7 @@ import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -101,4 +101,11 @@ public class FriendConverter {
                 .toList();
     }
 
+    // 친구 - 상대방 팔로우
+    public static Friend toFriend(User follower, User following) {
+        return Friend.builder()
+                .follower(follower)
+                .following(following)
+                .build();
+    }
 }

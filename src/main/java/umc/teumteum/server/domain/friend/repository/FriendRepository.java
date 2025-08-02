@@ -4,8 +4,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import umc.teumteum.server.domain.friend.entity.Friend;
+import umc.teumteum.server.domain.user.entity.User;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface FriendRepository extends JpaRepository<Friend, Long> {
@@ -15,4 +15,7 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
 
     Optional<Friend> findByFollowerIdAndFollowingId(Long followerId, Long followingId);
 
+    boolean existsByFollowerAndFollowing(User loginUser, User targetUser);
+
+    Optional<Friend> findByFollowerAndFollowing(User loginUser, User targetUser);
 }
