@@ -52,13 +52,10 @@ public class FriendServiceImpl implements FriendService {
     @Transactional
     public void follow(User loginUser, Long targetUserId) {
         // 1. 자기 자신을 팔로우하는지 확인
-        if (targetUserId.equals(loginUser.getId())) {
-            throw new FriendException(FriendErrorStatus.CANNOT_FOLLOW_SELF);
-        }
+        validateNotSelf(loginUser.getId(), targetUserId);
 
         // 2. 상대방 조회
-        User targetUser = userRepository.findById(targetUserId)
-                .orElseThrow(() -> new FriendException(FriendErrorStatus.USER_NOT_FOUND));
+        User targetUser = getUserOrThrow(targetUserId);
 
         // 3. 이미 팔로우 중인지 확인
         if (friendRepository.existsByFollowerAndFollowing(loginUser, targetUser)) {
@@ -76,13 +73,10 @@ public class FriendServiceImpl implements FriendService {
     @Transactional
     public void unfollow(User loginUser, Long targetUserId) {
         // 1. 자기 자신을 언팔로우하는지 확인
-        if (targetUserId.equals(loginUser.getId())) {
-            throw new FriendException(FriendErrorStatus.CANNOT_UNFOLLOW_SELF);
-        }
+        validateNotSelf(loginUser.getId(), targetUserId);
 
         // 2. 상대방 조회
-        User targetUser = userRepository.findById(targetUserId)
-                .orElseThrow(() -> new FriendException(FriendErrorStatus.USER_NOT_FOUND));
+        User targetUser = getUserOrThrow(targetUserId);
 
         // 3. 팔로우 관계가 존재하는지 확인
         Friend friend = friendRepository.findByFollowerAndFollowing(loginUser, targetUser)
@@ -246,7 +240,7 @@ public class FriendServiceImpl implements FriendService {
      */
     private User getUserOrThrow(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new GlobalHandler(FriendErrorStatus.USER_NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorStatus.USER_NOT_FOUND));
     }
 
     /**
@@ -256,15 +250,13 @@ public class FriendServiceImpl implements FriendService {
      */
     private void validateUserExists(Long userId) {
         if (!userRepository.existsById(userId)) {
-            throw new GlobalHandler(FriendErrorStatus.USER_NOT_FOUND);
+            throw new FriendException(FriendErrorStatus.USER_NOT_FOUND);
         }
     }
 
     private void validateNotSelf(Long loginUserId, Long targetUserId) {
         if (loginUserId.equals(targetUserId)) {
-            throw new GlobalHandler(FriendErrorStatus.CANNOT_VIEW_SELF);
+            throw new FriendException(FriendErrorStatus.INVALID_SELF_REQUEST);
         }
     }
-
-
 }

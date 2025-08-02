@@ -12,10 +12,8 @@ public enum FriendErrorStatus implements BaseErrorCode {
 
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "FRIEND4040", "존재하지 않는 유저입니다."),
     ALREADY_FOLLOWING(HttpStatus.BAD_REQUEST, "FRIEND4001", "이미 팔로우한 유저입니다."),
-    CANNOT_VIEW_SELF(HttpStatus.BAD_REQUEST, "FRIEND4002", "자기 자신은 조회할 수 없습니다."),
-    CANNOT_FOLLOW_SELF(HttpStatus.BAD_REQUEST, "FRIEND4003", "자기 자신은 팔로우할 수 없습니다."),
-    CANNOT_UNFOLLOW_SELF(HttpStatus.BAD_REQUEST, "FRIEND4004", "자기 자신은 언팔로우할 수 없습니다."),
-    NOT_FOLLOWING(HttpStatus.BAD_REQUEST, "FRIEND4005", "팔로우하지 않은 유저입니다."),
+    INVALID_SELF_REQUEST(HttpStatus.BAD_REQUEST, "FRIEND4002", "자기 자신에 대한 요청은 처리할 수 없습니다."),
+    NOT_FOLLOWING(HttpStatus.BAD_REQUEST, "FRIEND4003", "팔로우하지 않은 유저입니다."),
 
 
 
