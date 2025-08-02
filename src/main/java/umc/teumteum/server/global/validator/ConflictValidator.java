@@ -135,6 +135,11 @@ public class ConflictValidator {
         LocalTime sleepTime = user.getSleepTime();
         LocalTime wakeTime = user.getWakeTime();
 
+        // 수면패턴이 설정되지 않은 경우 -> 충돌 검사 생략
+        if (sleepTime == null || wakeTime == null) {
+            return;
+        }
+
         // 수면 시간은 이전 날짜 기준으로도 체크 필요
         // 1) 오늘 기준 수면 시간
         LocalDateTime sleepStartToday = LocalDateTime.of(date, sleepTime);
