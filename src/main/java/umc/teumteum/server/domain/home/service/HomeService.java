@@ -58,4 +58,7 @@ public interface HomeService {
 
     // 가상의 루틴 ID 파싱
     HomeResponseDto.VirtualRoutineDto getVirtualRoutine(Long virtualId);
+
+    // 리마인드 알림 정보 조회
+    HomeResponseDto.ReminderDto getUserRemind(User user);
 }

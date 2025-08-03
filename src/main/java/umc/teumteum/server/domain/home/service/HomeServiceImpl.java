@@ -29,9 +29,11 @@ import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
+import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
+import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
 import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
@@ -56,6 +58,7 @@ public class HomeServiceImpl implements HomeService {
     private final CategoryRepository categoryRepository;
     private final S3Util s3Util;
     private final RoutineRepository routineRepository;
+    private final RemindAlarmRepository remindAlarmRepository;
 
     @Transactional
     @Override
@@ -601,5 +604,15 @@ public class HomeServiceImpl implements HomeService {
         } catch(Exception e){
             throw new HomeException(HomeErrorStatus._INVALID_VIRTUAL_ID);
         }
+    }
+
+    @Override
+    public HomeResponseDto.ReminderDto getUserRemind(User user) {
+        List<Integer> response = remindAlarmRepository.findAllByUser(user).stream()
+                .map(RemindAlarm::getMinutesBefore)
+                .toList();
+
+        return HomeResponseDto.ReminderDto.builder()
+                .reminders(response).build();
     }
 }

@@ -66,8 +66,11 @@ public class HomeController {
 
     @GetMapping(value = "/user-reminds", produces = "application/json")
     @Operation(summary = "리마인드 알림 정보 조회 API",description = "유저의 리마인드 알림 설정 정보를 조회하는 API입니다")
-    public ApiResponse<String> getUserRemind(){
-        return ApiResponse.onSuccess(null);
+    public ApiResponse<HomeResponseDto.ReminderDto> getUserRemind(
+            @CurrentUser @Parameter(hidden = true) User user
+    ){
+        HomeResponseDto.ReminderDto response = homeService.getUserRemind(user);
+        return ApiResponse.of(HomeSuccessStatus._REMINDER_LOADED,response);
     }
 
     @PostMapping(value = "/todo",consumes = "application/json", produces = "application/json")
