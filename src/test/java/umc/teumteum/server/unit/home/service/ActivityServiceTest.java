@@ -19,6 +19,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import umc.teumteum.server.domain.home.ai.generator.AiWishGenerator;
+import umc.teumteum.server.domain.home.ai.util.AiWishContentSerializer;
 import umc.teumteum.server.domain.home.converter.WishConverter;
 import umc.teumteum.server.domain.home.dto.request.ActivityRequestDto.WishOptionRequest;
 import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto.WishResponse;
@@ -39,6 +41,9 @@ class ActivityServiceTest {
   private WishRepository wishRepository;
   @Mock private CategoryRepository categoryRepository;
   @Mock private WishConverter wishConverter;
+  @Mock private AiWishGenerator aiWishGenerator;
+  @Mock private AiWishContentSerializer aiWishContentSerializer;
+
 
   @InjectMocks
   private ActivityServiceImpl activityService;
