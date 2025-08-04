@@ -38,6 +38,7 @@ import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.S3Util;
+import umc.teumteum.server.global.validator.ConflictValidator;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -58,16 +59,16 @@ public class HomeServiceImpl implements HomeService {
     private final CategoryRepository categoryRepository;
     private final S3Util s3Util;
     private final RoutineRepository routineRepository;
+    private final ConflictValidator conflictValidator;
     private final RemindAlarmRepository remindAlarmRepository;
 
     @Transactional
     @Override
     public TodoIdResponseDto createTodo(TodoRequestDto dto, User user) {
         // Todo 등록
-        // 종료 시간이 시작 시간보다 빠르면 예외 발생
-        if (dto.getEndTime().isBefore(dto.getStartTime())){
-            throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
-        }
+
+        // 충돌 검사
+        conflictValidator.validateTodo(user,dto.getStartTime(), dto.getEndTime());
 
         // 스케줄 저장
         Schedule schedule = scheduleConverter.toSchedule(dto,user);
@@ -86,7 +87,7 @@ public class HomeServiceImpl implements HomeService {
         // Todo(Schedule) 조회
         // 가상의 루틴 ID일 경우
         if(scheduleId<0){
-            // 1. ID 파싱
+            // ID 파싱
             HomeResponseDto.VirtualRoutineDto info = getVirtualRoutine(scheduleId);
             LocalDate date = info.getDate();
             Long routineId = info.getRoutineId();
@@ -151,7 +152,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public TodoIdResponseDto updateTodoInfo(TodoRequestDto dto, Long scheduleId) {
+    public TodoIdResponseDto updateTodoInfo(TodoRequestDto dto, Long scheduleId, User user) {
         // Todo(Schedule) 수정
         if (scheduleId < 0) {
             // 1. 미래의 반복일정은 수정할 수 없음
@@ -166,14 +167,16 @@ public class HomeServiceImpl implements HomeService {
             // 3. 현재, 과거의 반복일정은 수정할 수 없음
             throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
         }
+        // 4. 충돌 검사
+        conflictValidator.validateTodo(user,dto.getStartTime(), dto.getEndTime());
 
-        // 4. 알림이 업데이트 되었는지 판단
+        // 5. 알림이 업데이트 되었는지 판단
         boolean hasAlarm = dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty();
 
-        // 5. 스케줄 필드 업데이트
+        // 6. 스케줄 필드 업데이트
         schedule.updateField(dto,hasAlarm);
 
-        // 6. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
+        // 7. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
         if (hasAlarm) {
             scheduleReminderRepository.deleteByScheduleId(scheduleId);
             List<ScheduleReminder> reminders = scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm());
@@ -400,7 +403,11 @@ public class HomeServiceImpl implements HomeService {
         Wish wish = wishRepository.findById(wishId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
 
-        // 2. 중복 스케줄 체크
+        // 2 중복 스케줄 체크
+        // 2-1. 틈 & 수면패턴 중복 검사 -> 등록 불가
+        conflictValidator.validateTodo(user,dto.getStartTime(),dto.getEndTime());
+
+        // 2-2. 스케줄 중복 검사 -> 등록 가능
         LocalDate date = dto.getStartTime().toLocalDate();
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
