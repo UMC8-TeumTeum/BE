@@ -101,9 +101,9 @@ public class FriendServiceImpl implements FriendService {
         // 2. 제외하려는 대상 조회
         User excludeUser = getUserOrThrow(excludeUserId);
 
-        // 3. Pageable 생성 (즐겨찾기순, 닉네임순 정렬)
+        // 3. Pageable 생성 (닉네임순 정렬)
         Pageable pageable = PageRequest.of(page - 1, size,
-                Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.asc("following.nickname")));
+                Sort.by(Sort.Order.asc("following.nickname")));
 
         // 4. 맞팔로우 관계 조회 (특정 사용자 제외)
         Slice<Friend> mutualFriendsSlice = friendRepository.findMutualFriendsExcluding(loginUser, excludeUser, pageable);
