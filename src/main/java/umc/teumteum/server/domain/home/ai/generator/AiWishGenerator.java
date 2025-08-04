@@ -6,11 +6,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import umc.teumteum.server.domain.home.dto.request.ActivityRequestDto.AiWishOptionRequest;
+import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto.AiWishDto;
 import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto.WishDto;
 import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
 import umc.teumteum.server.global.config.GptConfig;
@@ -22,9 +24,8 @@ public class AiWishGenerator {
 
   private final WebClient gptWebClient;
   private final GptConfig gptConfig;
-  private final ObjectMapper objectMapper = new ObjectMapper();
 
-  public List<WishDto> generate(AiWishOptionRequest request, String categoryName) {
+  public List<AiWishDto> generate(AiWishOptionRequest request, String categoryName) {
     // 1. 프롬프트 생성
     String prompt = buildPrompt(request, categoryName);
 
@@ -32,7 +33,7 @@ public class AiWishGenerator {
     Map<String, Object> requestBody = Map.of(
         "model", gptConfig.getModel(),
         "messages", List.of(
-            Map.of("role", "system", "content", prompt),
+            Map.of("role", "system", "content", "너는 간단한 활동 추천을 해주는 역할을 수행해야해."),
             Map.of("role", "user", "content", prompt)
         ),
         "temperature", gptConfig.getTemperature()
@@ -52,31 +53,31 @@ public class AiWishGenerator {
       return parseWishList(content, request.getEstimatedDuration());
 
     } catch (Exception e) {
+      log.warn("AI 콘텐츠 생성 실패. fallback 실행: {}", e.getMessage());
       return fallbackWish(request.getEstimatedDuration());
     }
   }
 
-  private List<WishDto> fallbackWish(EstimatedDuration estimatedDuration) {
+  private List<AiWishDto> fallbackWish(EstimatedDuration estimatedDuration) {
     return List.of(
-        WishDto.builder()
-            .id(1L)
-            .content("")
+        AiWishDto.builder()
+            .id(UUID.randomUUID().toString())
+            .title("AI 추천을 불러올 수 없어요.")
             .estimatedDuration(estimatedDuration)
             .build()
     );
 
   }
 
-  private List<WishDto> parseWishList(String content, EstimatedDuration estimatedDuration) {
-    List<WishDto> result = new ArrayList<>();
-    Long id = 1L;
+  private List<AiWishDto> parseWishList(String content, EstimatedDuration estimatedDuration) {
+    List<AiWishDto> result = new ArrayList<>();
 
     for (String line : content.split("\n")) {
       line = line.replaceFirst("[-\\d. ]+", "").trim();
       if(!line.isEmpty()){
-        result.add(WishDto.builder()
-                .id(id++)
-                .content(line)
+        result.add(AiWishDto.builder()
+                .id(UUID.randomUUID().toString())
+                .title(line)
                 .estimatedDuration(estimatedDuration)
             .build());
       }

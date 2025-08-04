@@ -17,9 +17,9 @@ import umc.teumteum.server.domain.home.converter.WishConverter;
 import umc.teumteum.server.domain.home.dto.request.ActivityRequestDto.AiWishOptionRequest;
 import umc.teumteum.server.domain.home.dto.request.ActivityRequestDto.WishOptionRequest;
 import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto;
-import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto.WishDto;
+import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto.AiWishDto;
+import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto.AiWishResponse;
 import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto.WishResponse;
-import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
 import umc.teumteum.server.domain.home.exception.HomeException;
@@ -79,7 +79,7 @@ public class ActivityServiceImpl implements ActivityService{
   }
 
   @Override
-    public WishResponse getAiWish(User user, AiWishOptionRequest request) {
+    public AiWishResponse getAiWish(User user, AiWishOptionRequest request) {
       // 유저 아이디 추출, 카테고리 이름 검증
       Long userId = user.getId();
       String categoryName = extractCategoryName(request.getCategoryId(), request.getCustomCategory());
@@ -94,7 +94,7 @@ public class ActivityServiceImpl implements ActivityService{
       }
 
       // 2. AI 콘텐츠 생성 (새로운 추천 생성)
-      List<WishDto> generated = aiWishGenerator.generate(request, categoryName);
+      List<AiWishDto> generated = aiWishGenerator.generate(request, categoryName);
 
       // 3. Redis 캐시에 저장 (TTL 1시간)
       aiContentsRedisTemplate.opsForValue().set(
@@ -104,7 +104,7 @@ public class ActivityServiceImpl implements ActivityService{
       );;
 
       // 4. 변환 후 반환
-      return ActivityResponseDto.WishResponse.builder()
+      return ActivityResponseDto.AiWishResponse.builder()
         .wishes(generated)
         .build();
 
