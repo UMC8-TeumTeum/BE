@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import umc.teumteum.server.global.util.CustomEndTimeSerializer;
+import umc.teumteum.server.global.util.TimeSerializer;
 
 import java.time.LocalTime;
 
@@ -21,7 +21,7 @@ public class TodayScheduleResponseDto {
     private LocalTime startTime;
 
     @Schema(description = "종료 시간", example = "10:00")
-    @JsonSerialize(using = CustomEndTimeSerializer.class)
+    @JsonSerialize(using = TimeSerializer.class)
     private LocalTime endTime;
 
     @Schema(description = "타입", example = "TODO | SLEEP | EMPTY")

@@ -54,15 +54,31 @@ public class ConflictValidator {
         }
     }
 
-    // TODO: 다른 일정에서의 중복 검증 로직 추가
+    /**
+     * TODO 등록 수정시 중복 검증 로직
+     * - 1. 수면패턴과 충돌 여부 검사
+     * - 2. 미확정된 틈 요청 충돌 여부 검사
+     */
+    public void validateTodo(User user, LocalDateTime startTime, LocalDateTime endTime) {
+        LocalDate date = startTime.toLocalDate();
+
+        checkWithTeumRequests(user,startTime,endTime);
+        checkWithSleepPattern(user,date,startTime,endTime);
+    }
+
 
     // 내부 충돌 검사 메서드들
     private void checkWithSchedules(User user, LocalDateTime requestStart, LocalDateTime requestEnd) {
-        List<ScheduleType> types = List.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI);
+        List<ScheduleType> types = List.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI, ScheduleType.TEUM);
 
         List<Schedule> schedules = scheduleRepository.findSchedulesByUserAndType(user, types);
 
         for (Schedule schedule : schedules) {
+
+            if(schedule.getType() == ScheduleType.TEUM && schedule.getStatus() == ScheduleStatus.CANCELLED){
+                // 취소된 틈 약속의 경우 검사 통과
+                continue;
+            }
             if (isOverlapping(requestStart, requestEnd, schedule.getStartTime(), schedule.getEndTime())) {
                 throw new GeneralException(ConflictErrorStatus.SCHEDULE_CONFLICT);
             }
@@ -123,6 +139,11 @@ public class ConflictValidator {
     private void checkWithSleepPattern(User user, LocalDate date, LocalDateTime requestStart, LocalDateTime requestEnd) {
         LocalTime sleepTime = user.getSleepTime();
         LocalTime wakeTime = user.getWakeTime();
+
+        // 수면패턴이 설정되지 않은 경우 -> 충돌 검사 생략
+        if (sleepTime == null || wakeTime == null) {
+            return;
+        }
 
         // 수면 시간은 이전 날짜 기준으로도 체크 필요
         // 1) 오늘 기준 수면 시간
