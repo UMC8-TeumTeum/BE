@@ -74,6 +74,11 @@ public class ConflictValidator {
         List<Schedule> schedules = scheduleRepository.findSchedulesByUserAndType(user, types);
 
         for (Schedule schedule : schedules) {
+
+            if(schedule.getType() == ScheduleType.TEUM && schedule.getStatus() == ScheduleStatus.CANCELLED){
+                // 취소된 틈 약속의 경우 검사 통과
+                continue;
+            }
             if (isOverlapping(requestStart, requestEnd, schedule.getStartTime(), schedule.getEndTime())) {
                 throw new GeneralException(ConflictErrorStatus.SCHEDULE_CONFLICT);
             }
