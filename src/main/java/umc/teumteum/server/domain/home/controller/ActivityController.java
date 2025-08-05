@@ -16,7 +16,6 @@ import umc.teumteum.server.domain.home.service.ActivityService;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
-import umc.teumteum.server.global.apiPayload.code.status.SuccessStatus;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,7 +31,7 @@ public class ActivityController {
   )
   @PostMapping(value = "/user-wishes", produces = "application/json")
   public ApiResponse<ActivityResponseDto.WishResponse> getMyWish(
-      @Valid @RequestBody ActivityRequestDto.OptionRequest request,
+      @Valid @RequestBody ActivityRequestDto.WishOptionRequest request,
       @CurrentUser @Parameter(hidden = true) User user
   ) {
     // TODO: 채움활동에서 사용자의 조건을 만족하는 "내가 등록한 위시" 조회 로직 구현
@@ -43,18 +42,17 @@ public class ActivityController {
 
 
   @Operation(
-      summary = "채움활동 AI 추천 컨텐츠 조회(자동 새로고침 포함)",
+      summary = "채움활동 AI 추천 컨텐츠 조회(새로고침 포함)",
       description = "채움활동에서 AI가 추천한 콘텐츠 목록들을 조회합니다. 새로고침 시에도 해당 api를 사용해 주세요."
   )
   @PostMapping(value = "/ai", produces = "application/json")
-  public ApiResponse<Object> getAiWish(
+  public ApiResponse<ActivityResponseDto.AiWishResponse> getAiWish(
+      @Valid @RequestBody ActivityRequestDto.AiWishOptionRequest request,
+      @CurrentUser @Parameter(hidden = true) User user
   ) {
     // TODO: Redis에서 기존 컨텐츠 확인 후, 채움활동 "AI 추천 컨텐츠" 생성 및 Redis 저장 후 반환 로직 구현
-    // 1. Redis 캐시 삭제 (기존 추천 초기화)
-    // 2. AI 추천 로직 실행 -> 콘텐츠 목록 생성
-    // 3. 콘텐츠 목록을 응답으로 반환
-    return null;
-
+    ActivityResponseDto.AiWishResponse response = activityServiceImpl.getAiWish(user, request);
+    return ApiResponse.of(HomeSuccessStatus._ACTIVITY_LOADED, response);
   }
 
 

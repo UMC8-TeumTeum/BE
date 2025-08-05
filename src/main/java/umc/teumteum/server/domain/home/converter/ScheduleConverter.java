@@ -11,10 +11,12 @@ import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +54,7 @@ public class ScheduleConverter {
     }
 
     // Schedule -> TodoInfoResponseDTO
-    public TodoInfoResponseDto toTodoInfoResponse(Schedule schedule, List<ScheduleReminder> reminders, List<String> profileUrls) {
+    public TodoInfoResponseDto toTodoInfoResponse(Schedule schedule, List<RemindAlarm> onboardingReminders, List<ScheduleReminder> reminders, List<String> profileUrls) {
 
         return TodoInfoResponseDto.builder()
                 .type(schedule.getType())
@@ -62,6 +64,9 @@ public class ScheduleConverter {
                 .description(schedule.getDescription())
                 .isPublic(schedule.getIsPublic())
                 .includeTeum(schedule.getIncludeTeum())
+                .onboardingReminder(onboardingReminders.stream()
+                        .map(RemindAlarm::getMinutesBefore)
+                        .toList())
                 .remindAlarm(reminders.stream()
                         .map(ScheduleReminder::getReminderTime)
                         .toList())
@@ -157,11 +162,14 @@ public class ScheduleConverter {
 
     // Schedule -> HomeResponseDto.TodolistDto
     public HomeResponseDto.TodolistDto toScheduleDto(Schedule schedule) {
+        // 자정 처리
+        LocalTime endtime = schedule.getEndTime().toLocalTime().equals(LocalTime.MIDNIGHT) ? LocalTime.MAX : schedule.getEndTime().toLocalTime();
+
         return HomeResponseDto.TodolistDto.builder()
                 .id(schedule.getId())
                 .title(schedule.getTitle())
                 .startTime(schedule.getStartTime().toLocalTime())
-                .endTime(schedule.getEndTime().toLocalTime())
+                .endTime(endtime)
                 .isPublic(schedule.getIsPublic())
                 .hasAlarm(schedule.getHasAlarm())
                 .type(schedule.getType())
@@ -176,11 +184,14 @@ public class ScheduleConverter {
         String idStr = dateStr + routine.getId();
         Long virtualId = -1 * Long.parseLong(idStr);
 
+        // 자정 처리
+        LocalTime endtime = routine.getEndTime().equals(LocalTime.MIDNIGHT)? LocalTime.MAX : routine.getEndTime();
+
         return HomeResponseDto.TodolistDto.builder()
                 .id(virtualId)
                 .title(routine.getTitle())
                 .startTime(routine.getStartTime())
-                .endTime(routine.getEndTime())
+                .endTime(endtime)
                 .isPublic(false)
                 .hasAlarm(false)
                 .type(ScheduleType.ROUTINE)

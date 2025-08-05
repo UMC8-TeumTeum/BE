@@ -7,9 +7,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
@@ -17,7 +14,7 @@ import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseD
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.exception.status.TeumSuccessStatus;
 import umc.teumteum.server.domain.teum.service.TeumService;
@@ -205,22 +202,24 @@ public class TeumController {
     }
 
     @Operation(
-            summary = "함께한 틈 시간 조회",
+            summary = "서로의 빈틈을 함께한 시간 조회",
             description = "로그인한 사용자와 지정된 친구가 함께 참여한 틈의 횟수와 누적 시간을 분 단위로 반환합니다."
     )
-    @GetMapping(value = "/shared-time/{userId}", produces = "application/json")
-    public ApiResponse<SharedTeumResponseDto> getSharedTeumStats(
-            @Parameter(name = "userId", description = "함께한 틈 정보를 조회할 친구 ID", example = "1")
-            @PathVariable("userId") Long userId
+    @GetMapping(value = "/{userId}/shared/teum-time", produces = "application/json")
+    public ApiResponse<SharedTeumTimeResponseDto> getSharedTeumStats(
+            @Parameter(hidden = true) @CurrentUser User loginUser,
+            @Parameter(name = "userId", description = "조회할 친구 ID", example = "2")
+            @PathVariable("userId") Long targetUserId
     ) {
-        return ApiResponse.onSuccess(null);
+        SharedTeumTimeResponseDto result = teumService.getSharedTeumStats(loginUser.getId(), targetUserId);
+        return ApiResponse.of(TeumSuccessStatus._SHARED_TIME_LOADED, result);
     }
 
     @Operation(
             summary = "함께한 틈 목록 조회",
             description = "로그인한 사용자와 지정된 친구가 함께 참여한 모든 틈 요청 목록을 반환합니다."
     )
-    @GetMapping(value = "/shared-list/{userId}", produces = "application/json")
+    @GetMapping(value = "/{userId}/shared", produces = "application/json")
     public ApiResponse<List<SharedTeumListResponseDto>> getSharedTeums(
             @Parameter(name = "userId", description = "함께한 틈을 조회할 친구 ID", example = "1")
             @PathVariable("userId") Long userId

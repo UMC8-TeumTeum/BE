@@ -66,8 +66,11 @@ public class HomeController {
 
     @GetMapping(value = "/user-reminds", produces = "application/json")
     @Operation(summary = "리마인드 알림 정보 조회 API",description = "유저의 리마인드 알림 설정 정보를 조회하는 API입니다")
-    public ApiResponse<String> getUserRemind(){
-        return ApiResponse.onSuccess(null);
+    public ApiResponse<HomeResponseDto.ReminderDto> getUserRemind(
+            @CurrentUser @Parameter(hidden = true) User user
+    ){
+        HomeResponseDto.ReminderDto response = homeService.getUserRemind(user);
+        return ApiResponse.of(HomeSuccessStatus._REMINDER_LOADED,response);
     }
 
     @PostMapping(value = "/todo",consumes = "application/json", produces = "application/json")
@@ -91,8 +94,9 @@ public class HomeController {
     @Operation(summary = "특정 투두 정보 수정 API",description = "특정투두의 상세정보를 수정하는 API입니다. path variable로 투두ID를 입력주세요.")
     public ApiResponse<TodoIdResponseDto> updateTodo(
             @Parameter(name= "todoId", description = "수정할 todo ID", example = "123") @PathVariable("todoId") Long todoId,
-            @RequestBody @Valid TodoRequestDto request){
-        TodoIdResponseDto response = homeService.updateTodoInfo(request,todoId);
+            @RequestBody @Valid TodoRequestDto request,
+            @CurrentUser @Parameter(hidden = true) User user){
+        TodoIdResponseDto response = homeService.updateTodoInfo(request,todoId,user);
         return ApiResponse.of(HomeSuccessStatus._TODO_UPDATED,response);
     }
 
