@@ -11,6 +11,7 @@ import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 
@@ -53,7 +54,7 @@ public class ScheduleConverter {
     }
 
     // Schedule -> TodoInfoResponseDTO
-    public TodoInfoResponseDto toTodoInfoResponse(Schedule schedule, List<ScheduleReminder> reminders, List<String> profileUrls) {
+    public TodoInfoResponseDto toTodoInfoResponse(Schedule schedule, List<RemindAlarm> onboardingReminders, List<ScheduleReminder> reminders, List<String> profileUrls) {
 
         return TodoInfoResponseDto.builder()
                 .type(schedule.getType())
@@ -63,6 +64,9 @@ public class ScheduleConverter {
                 .description(schedule.getDescription())
                 .isPublic(schedule.getIsPublic())
                 .includeTeum(schedule.getIncludeTeum())
+                .onboardingReminder(onboardingReminders.stream()
+                        .map(RemindAlarm::getMinutesBefore)
+                        .toList())
                 .remindAlarm(reminders.stream()
                         .map(ScheduleReminder::getReminderTime)
                         .toList())

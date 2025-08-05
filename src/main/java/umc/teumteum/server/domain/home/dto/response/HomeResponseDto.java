@@ -11,6 +11,7 @@ import umc.teumteum.server.global.util.TimeSerializer;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 public class HomeResponseDto {
 
@@ -78,4 +79,11 @@ public class HomeResponseDto {
     private Long routineId;
   }
 
+  @Builder
+  @Getter
+  @AllArgsConstructor
+  static public class ReminderDto {
+    @Schema(description = "온보딩 리마인드 알림 설정 정보", example = "[1,5]")
+    private List<Integer> reminders;
+  }
 }
