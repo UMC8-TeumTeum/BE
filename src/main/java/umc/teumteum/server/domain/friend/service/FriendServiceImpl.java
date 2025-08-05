@@ -94,7 +94,7 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagingResponseDto<FriendResponseDto.MutualFriendDto> getMutualFriends(User loginUser, Long excludeUserId, int page, int size) {
+    public PagingResponseDto<FriendResponseDto.MutualFriend> getMutualFriends(User loginUser, Long excludeUserId, int page, int size) {
         // 1. 자기 자신을 제외하는지 확인
         validateNotSelf(loginUser.getId(), excludeUserId);
 
@@ -109,7 +109,7 @@ public class FriendServiceImpl implements FriendService {
         Slice<Friend> mutualFriendsSlice = friendRepository.findMutualFriendsExcluding(loginUser, excludeUser, pageable);
 
         // 5. 맞팔로우한 상대방들에 대한 S3 프리사인드 URL 생성 및 Dto 변환
-        List<FriendResponseDto.MutualFriendDto> mutualFriendDtoList = mutualFriendsSlice.getContent()
+        List<FriendResponseDto.MutualFriend> mutualFriendList = mutualFriendsSlice.getContent()
                 .stream()
                 .map(friend -> {
                     User targetUser = friend.getFollowing();
@@ -120,14 +120,30 @@ public class FriendServiceImpl implements FriendService {
                 ;
 
         // 6. PagingResponseDto 생성
-        return new PagingResponseDto<>(mutualFriendDtoList, mutualFriendsSlice.hasNext());
+        return new PagingResponseDto<>(mutualFriendList, mutualFriendsSlice.hasNext());
     }
 
     @Override
     @Transactional
-    public FavoriteResponseDto updateFavorite(Long userId, Boolean isFavorite) {
-        // TODO : 즐겨찾기 로직 추후 구현
-        return new FavoriteResponseDto(userId, isFavorite);
+    public FriendResponseDto.FriendFavorite updateFavorite(User loginUser, Long targetUserId, Boolean isFavorite) {
+        // 1. 자기 자신을 즐겨찾기하는지 확인
+        validateNotSelf(loginUser.getId(), targetUserId);
+
+        // 2. 상대방 조회
+        User targetUser = getUserOrThrow(targetUserId);
+
+        // 3. 팔로잉 관계 조회
+        Friend friend = friendRepository.findByFollowerAndFollowing(loginUser, targetUser)
+                .orElseThrow(() -> new FriendException(FriendErrorStatus.NOT_FOLLOWING));
+
+        // 4. 즐겨찾기 상태 수정
+        if (friend.getIsFavorite().equals(isFavorite)) {
+            throw new FriendException(FriendErrorStatus.FAVORITE_ALREADY_SET);
+        }
+        friend.updateIsFavorite(isFavorite);
+
+        // 5. 결과 반환
+        return FriendConverter.toFriendFavoriteDto(targetUser, friend.getIsFavorite());
     }
 
     // 사용자가 팔로우한 유저 목록을 정렬 후 페이징하여 반환
