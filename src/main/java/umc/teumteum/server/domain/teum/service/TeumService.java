@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.teum.service;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
@@ -37,4 +38,6 @@ public interface TeumService {
     AvailableTimeResponseDto getAvailableTime(User user, AvailableTimeRequestDto requestDto);
 
     SharedTeumTimeResponseDto getSharedTeumStats(Long userId, Long friendId);
+
+    List<TeumRequestResponseDto> getTeumRequestsByDate(Long userId, String date);
 }
