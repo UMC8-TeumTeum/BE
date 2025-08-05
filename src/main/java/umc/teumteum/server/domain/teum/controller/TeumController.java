@@ -127,9 +127,11 @@ public class TeumController {
     @GetMapping(value = "/requests", produces = "application/json")
     public ApiResponse<List<TeumRequestResponseDto>> getTeumRequestsByDate(
             @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2025-05-02")
-            @RequestParam("date") String date
+            @RequestParam("date") String date,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        return ApiResponse.onSuccess(null);
+        List<TeumRequestResponseDto> result = teumService.getTeumRequestsByDate(user.getId(), date);
+        return ApiResponse.of(TeumSuccessStatus._TEUM_LIST_BY_DATE_LOADED, result);
     }
 
     @Operation(

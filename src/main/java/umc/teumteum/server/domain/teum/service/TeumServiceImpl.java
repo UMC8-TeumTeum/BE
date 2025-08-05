@@ -405,6 +405,27 @@ public class TeumServiceImpl implements TeumService {
         return null;
     }
 
+    @Override
+    public List<TeumRequestResponseDto> getTeumRequestsByDate(Long userId, String date) {
+        LocalDate parsedDate = LocalDate.parse(date);
+
+        List<TeumRequest> allRequests = teumRequestRepository.findByDate(parsedDate);
+
+        // 사용자가 요청자이거나 응답자인 요청만 필터링
+        List<TeumRequest> userRequests = allRequests.stream()
+                .filter(req ->
+                        req.getUser().getId().equals(userId) || // 요청자
+                                req.getTeumResponses().stream()
+                                        .anyMatch(resp -> resp.getReceiverUser().getId().equals(userId)) // 응답자
+                )
+                .toList();
+
+        return userRequests.stream()
+                .map(teumConverter::toTeumRequestResponseDto)
+                .toList();
+    }
+
+
     /**
      * 주어진 ID에 해당하는 User를 조회합니다.
      * - User 객체 자체가 필요한 경우에 사용합니다.

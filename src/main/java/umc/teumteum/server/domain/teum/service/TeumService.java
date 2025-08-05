@@ -38,4 +38,6 @@ public interface TeumService {
     AvailableTimeResponseDto getAvailableTime(User user, AvailableTimeRequestDto requestDto);
 
     SharedTeumResponseDto getSharedTeumStats(Long userId, Long friendId);
+
+    List<TeumRequestResponseDto> getTeumRequestsByDate(Long userId, String date);
 }

@@ -47,4 +47,6 @@ public interface TeumRequestRepository extends JpaRepository<TeumRequest, Long> 
             @Param("end") LocalDate end
     );
 
+    List<TeumRequest> findByDate(LocalDate date);
+
 }
