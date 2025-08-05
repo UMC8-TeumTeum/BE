@@ -88,10 +88,8 @@ public class AiWishGenerator {
 
   private String buildPrompt(AiWishOptionRequest request, String categoryName) {
     // 기본 값들
-    String location = Optional.ofNullable(request.getLocation()).orElse("실내");
-    String duration = Optional.ofNullable(request.getEstimatedDuration())
-        .map(EstimatedDuration::getDisplayName)
-        .orElse("30m");
+    String location = request.getLocation();
+    String duration = request.getEstimatedDuration().getDisplayName();
 
     return String.format(
         "지금 사용자는 %s에서 %s 정도 활동하고 싶어 해. 카테고리는 %s야."

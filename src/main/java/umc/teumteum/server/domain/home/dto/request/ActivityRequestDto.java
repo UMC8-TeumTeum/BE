@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.home.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,6 +37,7 @@ public class ActivityRequestDto {
     @Schema(description = "예상 소요 시간", example = "10m")
     private EstimatedDuration estimatedDuration;
 
+    @NotBlank
     @Schema(description = "현재 위치", example = "회사")
     private String location;
 
