@@ -108,4 +108,14 @@ public class FriendConverter {
                 .following(following)
                 .build();
     }
+
+    // 친구 - 맞팔로우 목록 조회
+    public static FriendResponseDto.MutualFriendDto toMutualFriendDto(User user, String profileImageUrl) {
+        return FriendResponseDto.MutualFriendDto.builder()
+                .userId(user.getId())
+                .nickname(user.getNickname())
+                .profileImageUrl(profileImageUrl)
+                .build()
+                ;
+    }
 }

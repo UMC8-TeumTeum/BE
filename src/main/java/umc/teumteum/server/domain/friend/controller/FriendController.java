@@ -3,7 +3,9 @@ package umc.teumteum.server.domain.friend.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.friend.dto.*;
 import umc.teumteum.server.domain.friend.exception.status.FriendSuccessStatus;
@@ -15,6 +17,7 @@ import umc.teumteum.server.global.dto.PagingResponseDto;
 
 import java.util.List;
 
+@Validated
 @Tag(name = "Friend", description = "친구 관련 API")
 @RestController
 @RequestMapping("/api/friends")
@@ -54,12 +57,20 @@ public class FriendController {
 
 
     @Operation(
-            summary = "맞팔로우 목록 조회",
-            description = "특정 유저의 맞팔로우 목록을 조회합니다."
+            summary = "맞팔로우 목록 조회 (특정 사용자 제외)",
+            description = "매칭 대상 사용자를 제외한 맞팔로우 목록을 조회합니다."
     )
     @GetMapping(value = "/mutuals", produces = "application/json")
-    public ApiResponse<List<FriendMutualResponseDto>> getMyMutualFriends() {
-        return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, null);
+    public ApiResponse<PagingResponseDto<FriendResponseDto.MutualFriendDto>> getMyMutualFriends(
+            @Parameter(hidden = true) @CurrentUser User loginUser,
+            @Parameter(description = "제외할 매칭 대상 사용자 ID") @RequestParam(name = "excludeUserId") Long excludeUserId,
+            @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1")
+            @Min(value = 1, message = "page는 1 이상이어야 합니다.") int page,
+            @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10")
+            @Min(value = 10, message = "size는 10 이상이어야 합니다.") int size
+    ) {
+        PagingResponseDto<FriendResponseDto.MutualFriendDto> response = friendService.getMutualFriends(loginUser, excludeUserId, page, size);
+        return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
 
