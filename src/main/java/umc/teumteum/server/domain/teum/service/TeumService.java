@@ -7,7 +7,7 @@ import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.user.entity.User;
 
@@ -37,7 +37,7 @@ public interface TeumService {
 
     AvailableTimeResponseDto getAvailableTime(User user, AvailableTimeRequestDto requestDto);
 
-    SharedTeumResponseDto getSharedTeumStats(Long userId, Long friendId);
+    SharedTeumTimeResponseDto getSharedTeumStats(Long userId, Long friendId);
 
     List<TeumRequestResponseDto> getTeumRequestsByDate(Long userId, String date);
 }

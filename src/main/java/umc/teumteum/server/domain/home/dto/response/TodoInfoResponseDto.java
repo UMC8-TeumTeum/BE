@@ -39,6 +39,9 @@ public class TodoInfoResponseDto {
     @Schema(description = "빈틈 시간 포함 여부", example = "false")
     private Boolean includeTeum;
 
+    @Schema(description = " 온보딩 리마인드 알림 목록", example = "[1, 30]")
+    private List<Integer> onboardingReminder;
+
     @Schema(description = "리마인드 알림 목록", example = "[1, 3, 5, 10, 30]")
     private List<Integer> remindAlarm;
 

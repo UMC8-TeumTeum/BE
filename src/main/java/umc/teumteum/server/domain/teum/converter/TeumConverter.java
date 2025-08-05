@@ -11,6 +11,11 @@ import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
+import umc.teumteum.server.domain.teum.dto.teum.TeumReceivedResponseDto;
+import umc.teumteum.server.domain.teum.dto.teum.TeumRequestDto;
+import umc.teumteum.server.domain.teum.dto.teum.TeumResendRequestDto;
+import umc.teumteum.server.domain.teum.dto.teum.TeumStatusUpdateResponseDto;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
@@ -288,6 +293,19 @@ public class TeumConverter {
                         schedule.getStartTime().toLocalTime().toString(),
                         timeUtil.parseAndFormatEndTime(schedule.getEndTime().toLocalTime())
                 )))
+                .build();
+    }
+
+    public static SharedTeumTimeResponseDto toSharedTeumTimeDto(long totalMinutes) {
+        long days = totalMinutes / (24 * 60);
+        long hours = (totalMinutes % (24 * 60)) / 60;
+        long minutes = totalMinutes % 60;
+
+        return SharedTeumTimeResponseDto.builder()
+                .days(days)
+                .hours(hours)
+                .minutes(minutes)
+                .totalMinutes(totalMinutes)
                 .build();
     }
 
