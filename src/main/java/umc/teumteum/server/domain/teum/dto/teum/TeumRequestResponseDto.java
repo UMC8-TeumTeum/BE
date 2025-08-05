@@ -1,5 +1,6 @@
 package umc.teumteum.server.domain.teum.dto.teum;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,9 +37,11 @@ public class TeumRequestResponseDto {
     @Schema(description = "요청자 정보", implementation = ParticipantDto.class)
     private ParticipantDto requester;
 
+    @JsonProperty("isResend")
     @Schema(description = "재요청 여부", example = "false")
     private boolean isResend;
 
+    @JsonProperty("isCancelled")
     @Schema(description = "취소 여부", example = "true")
     private boolean isCancelled;
 
