@@ -292,8 +292,12 @@ public class TeumConverter {
     }
 
 
-    public TeumRequestResponseDto toTeumRequestResponseDto(TeumRequest request) {
-        // 시간 정보 생성
+    public TeumRequestResponseDto toTeumRequestResponseDto(
+            TeumRequest request,
+            boolean isCancelled,
+            boolean isResend
+    ) {
+        // 시간 정보 구성
         TimeSlot timeSlot = new TimeSlot(
                 request.getStartTime().toString(),
                 timeUtil.parseAndFormatEndTime(request.getEndTime())
@@ -315,20 +319,11 @@ public class TeumConverter {
             switch (response.getStatus()) {
                 case PENDING -> pending.add(participant);
                 case ACCEPTED -> accepted.add(participant);
-                case REJECTED, LEFT -> cancelled.add(participant); // 거절과 취소 모두 취소 처리
+                case REJECTED, LEFT -> cancelled.add(participant);  // 거절과 취소는 모두 취소 처리
                 case RESEND -> resend.add(participant);
             }
         }
 
-        // 약속 취소 여부 판단
-        boolean isCancelled = pending.isEmpty() &&
-                request.getSchedules().stream()
-                        .allMatch(s -> s.getStatus() == ScheduleStatus.CANCELLED);
-
-        // 재요청 여부 판단
-        boolean isResend = request.getParentRequest() != null;
-
-        // 최종 응답 DTO 생성
         return TeumRequestResponseDto.builder()
                 .requestId(request.getId())
                 .title(request.getTitle())
@@ -344,6 +339,7 @@ public class TeumConverter {
                 .resend(resend)
                 .build();
     }
+
 
     private ParticipantDto toParticipantDto(User user) {
         String presignedUrl = s3Util.toPresignedUrl(

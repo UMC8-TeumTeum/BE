@@ -408,21 +408,50 @@ public class TeumServiceImpl implements TeumService {
     @Override
     public List<TeumRequestResponseDto> getTeumRequestsByDate(Long userId, String date) {
         LocalDate parsedDate = LocalDate.parse(date);
-
         List<TeumRequest> allRequests = teumRequestRepository.findByDate(parsedDate);
 
         // 사용자가 요청자이거나 응답자인 요청만 필터링
-        List<TeumRequest> userRequests = allRequests.stream()
-                .filter(req ->
-                        req.getUser().getId().equals(userId) || // 요청자
-                                req.getTeumResponses().stream()
-                                        .anyMatch(resp -> resp.getReceiverUser().getId().equals(userId)) // 응답자
-                )
-                .toList();
+        return allRequests.stream()
+                .filter(req -> isParticipant(req, userId))
+                .map(req -> {
+                    // 재요청 여부 판단
+                    boolean isResend = req.getParentRequest() != null;
 
-        return userRequests.stream()
-                .map(teumConverter::toTeumRequestResponseDto)
+                    // 약속 취소 여부 판단
+                    boolean isCancelled = isTeumCancelled(req);
+
+                    // DTO로 변환
+                    return teumConverter.toTeumRequestResponseDto(req, isCancelled, isResend);
+                })
                 .toList();
+    }
+
+    // 사용자가 해당 요청의 요청자 또는 응답자인지 여부
+    private boolean isParticipant(TeumRequest req, Long userId) {
+        return req.getUser().getId().equals(userId) ||
+                req.getTeumResponses().stream()
+                        .anyMatch(resp -> resp.getReceiverUser().getId().equals(userId));
+    }
+
+    // 약속 취소 여부 판단 로직
+    private boolean isTeumCancelled(TeumRequest request) {
+        // 미응답자가 없는지 여부
+        boolean hasNoPending = request.getTeumResponses().stream()
+                .noneMatch(r -> r.getStatus() == ResponseStatus.PENDING);
+
+        // 파생된 스케줄이 모두 취소되었는지 여부
+        boolean allSchedulesCancelled = request.getSchedules().stream()
+                .allMatch(s -> s.getStatus() == ScheduleStatus.CANCELLED);
+
+        // 파생된 스케줄이 없는 경우
+        boolean hasNoSchedules = request.getSchedules().isEmpty();
+
+        // 응답자가 모두 거절 또는 취소한 경우
+        boolean allResponsesCancelled = request.getTeumResponses().stream()
+                .allMatch(r -> r.getStatus() == ResponseStatus.REJECTED || r.getStatus() == ResponseStatus.LEFT);
+
+        // 최종 취소 판단 조건
+        return hasNoPending && (allSchedulesCancelled || (hasNoSchedules && allResponsesCancelled));
     }
 
 
