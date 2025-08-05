@@ -31,4 +31,8 @@ public class Friend extends BaseEntity {
     @Builder.Default
     @Column(name = "is_favorite", nullable = false)
     private Boolean isFavorite = false;
+
+    public void updateIsFavorite(Boolean isFavorite) {
+        this.isFavorite = isFavorite;
+    }
 }

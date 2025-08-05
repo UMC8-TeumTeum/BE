@@ -32,9 +32,9 @@ public class FriendController {
     )
     @PostMapping(value = "/{userId}/follow", produces = "application/json")
     public ApiResponse<Object> followUser(
+            @CurrentUser @Parameter(hidden = true) User loginUser,
             @Parameter(name = "userId", description = "팔로우할 대상 유저의 ID", example = "1")
-            @PathVariable("userId") Long targetUserId,
-            @CurrentUser @Parameter(hidden = true) User loginUser
+            @PathVariable("userId") Long targetUserId
     ) {
         friendService.follow(loginUser, targetUserId);
         return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, null);
@@ -47,9 +47,9 @@ public class FriendController {
     )
     @DeleteMapping(value = "/{userId}/follow", produces = "application/json")
     public ApiResponse<Object> unfollowUser(
+            @CurrentUser @Parameter(hidden = true) User loginUser,
             @Parameter(name = "userId", description = "언팔로우할 대상 유저의 ID", example = "1")
-            @PathVariable("userId") Long targetUserId,
-            @CurrentUser @Parameter(hidden = true) User loginUser
+            @PathVariable("userId") Long targetUserId
     ) {
         friendService.unfollow(loginUser, targetUserId);
         return ApiResponse.of(FriendSuccessStatus._UNFOLLOW_SUCCESS, null);
@@ -61,7 +61,7 @@ public class FriendController {
             description = "매칭 대상 사용자를 제외한 맞팔로우 목록을 조회합니다."
     )
     @GetMapping(value = "/mutuals", produces = "application/json")
-    public ApiResponse<PagingResponseDto<FriendResponseDto.MutualFriendDto>> getMyMutualFriends(
+    public ApiResponse<PagingResponseDto<FriendResponseDto.MutualFriend>> getMyMutualFriends(
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(description = "제외할 매칭 대상 사용자 ID") @RequestParam(name = "excludeUserId") Long excludeUserId,
             @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1")
@@ -69,23 +69,24 @@ public class FriendController {
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10")
             @Min(value = 10, message = "size는 10 이상이어야 합니다.") int size
     ) {
-        PagingResponseDto<FriendResponseDto.MutualFriendDto> response = friendService.getMutualFriends(loginUser, excludeUserId, page, size);
+        PagingResponseDto<FriendResponseDto.MutualFriend> response = friendService.getMutualFriends(loginUser, excludeUserId, page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
 
     @Operation(
             summary = "즐겨찾기 설정/해제",
-            description = "특정 유저에 대해 즐겨찾기 설정 또는 해제를 합니다."
+            description = "특정 사용자에 대해 즐겨찾기 설정 또는 해제를 합니다."
     )
     @PatchMapping(value = "/{userId}/favorite", consumes = "application/json", produces = "application/json")
-    public ApiResponse<FavoriteResponseDto> updateFavorite(
+    public ApiResponse<FriendResponseDto.FriendFavorite> updateFavorite(
+            @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "즐겨찾기를 설정/해제할 대상 유저의 ID", example = "1")
-            @PathVariable("userId") Long userId,
-            @RequestBody FavoriteRequestDto requestDto
+            @PathVariable("userId") Long targetUserId,
+            @RequestBody FriendRequestDto.FriendFavorite requestDto
     ) {
-        FavoriteResponseDto response = friendService.updateFavorite(userId, requestDto.getIsFavorite());
-        return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, response);
+        FriendResponseDto.FriendFavorite response = friendService.updateFavorite(loginUser, targetUserId, requestDto.getIsFavorite());
+        return ApiResponse.of(FriendSuccessStatus._FAVORITE_UPDATE_SUCCESS, response);
     }
 
 

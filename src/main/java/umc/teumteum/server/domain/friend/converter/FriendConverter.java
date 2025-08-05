@@ -101,7 +101,7 @@ public class FriendConverter {
                 .toList();
     }
 
-    // 친구 - 상대방 팔로우
+    // 친구 - 팔로우 관계 생성
     public static Friend toFriend(User follower, User following) {
         return Friend.builder()
                 .follower(follower)
@@ -109,12 +109,21 @@ public class FriendConverter {
                 .build();
     }
 
-    // 친구 - 맞팔로우 목록 조회
-    public static FriendResponseDto.MutualFriendDto toMutualFriendDto(User user, String profileImageUrl) {
-        return FriendResponseDto.MutualFriendDto.builder()
+    // 친구 - 맞팔로우 목록 조회 응답
+    public static FriendResponseDto.MutualFriend toMutualFriendDto(User user, String profileImageUrl) {
+        return FriendResponseDto.MutualFriend.builder()
                 .userId(user.getId())
                 .nickname(user.getNickname())
                 .profileImageUrl(profileImageUrl)
+                .build()
+                ;
+    }
+
+    // 친구 - 즐겨찾기 설정/해제 응답
+    public static FriendResponseDto.FriendFavorite toFriendFavoriteDto(User targetUser, Boolean isFavorite) {
+        return FriendResponseDto.FriendFavorite.builder()
+                .userId(targetUser.getId())
+                .isFavorite(isFavorite)
                 .build()
                 ;
     }

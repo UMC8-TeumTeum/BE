@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 public class FriendResponseDto {
 
     @Getter
@@ -15,7 +13,7 @@ public class FriendResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     @Schema(description = "맞팔로우 친구 목록 조회 응답")
-    public static class MutualFriendDto {
+    public static class MutualFriend {
 
         @Schema(description = "사용자 ID", example = "1")
         private Long userId;
@@ -25,6 +23,21 @@ public class FriendResponseDto {
 
         @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
         private String profileImageUrl;
+    }
+
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(description = "팔로잉 즐겨찾기 설정/해제 응답")
+    public static class FriendFavorite {
+
+        @Schema(description = "사용자 ID", example = "1")
+        private Long userId;
+
+        @Schema(description = "현재 즐겨찾기 상태", example = "true")
+        private Boolean isFavorite;
     }
 }
 
