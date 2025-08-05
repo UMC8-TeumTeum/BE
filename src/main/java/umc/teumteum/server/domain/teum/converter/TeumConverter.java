@@ -1,37 +1,30 @@
 package umc.teumteum.server.domain.teum.converter;
 
-import java.time.Duration;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.entity.Schedule;
-import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
-import umc.teumteum.server.domain.teum.dto.teum.TeumReceivedResponseDto;
-import umc.teumteum.server.domain.teum.dto.teum.TeumRequestDto;
-import umc.teumteum.server.domain.teum.dto.teum.TeumResendRequestDto;
-import umc.teumteum.server.domain.teum.dto.teum.TeumStatusUpdateResponseDto;
+import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.exception.GeneralException;
-import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
