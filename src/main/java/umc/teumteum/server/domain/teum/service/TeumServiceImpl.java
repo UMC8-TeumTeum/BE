@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
@@ -15,7 +16,7 @@ import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
@@ -34,11 +35,7 @@ import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 import umc.teumteum.server.global.validator.ConflictValidator;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.YearMonth;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -400,10 +397,22 @@ public class TeumServiceImpl implements TeumService {
 
 
     @Override
-    public SharedTeumResponseDto getSharedTeumStats(Long userId, Long friendId) {
-        // TODO : 함께한 틈 시간 조회 로직 추후 구현
-        return null;
+    @Transactional(readOnly = true)
+    public SharedTeumTimeResponseDto getSharedTeumStats(Long loginUserId, Long targetUserId) {
+        validateUserExists(targetUserId);
+        validateNotSelf(loginUserId, targetUserId);
+
+        List<Schedule> myTeumSchedules = scheduleRepository.findMySharedTeumSchedules(
+                loginUserId, targetUserId, ScheduleType.TEUM, ScheduleStatus.COMPLETED
+        );
+
+        long totalMinutes = myTeumSchedules.stream()
+                .mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes())
+                .sum();
+
+        return TeumConverter.toSharedTeumTimeDto(totalMinutes);
     }
+
 
     /**
      * 주어진 ID에 해당하는 User를 조회합니다.
@@ -423,6 +432,12 @@ public class TeumServiceImpl implements TeumService {
     private void validateUserExists(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new GlobalHandler(UserErrorStatus.USER_NOT_FOUND);
+        }
+    }
+
+    private void validateNotSelf(Long loginUserId, Long targetUserId) {
+        if (loginUserId.equals(targetUserId)) {
+            throw new GlobalHandler(TeumErrorStatus.CANNOT_VIEW_SELF);
         }
     }
 
