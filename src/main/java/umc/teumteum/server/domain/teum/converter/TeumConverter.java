@@ -8,6 +8,7 @@ import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
@@ -348,6 +349,24 @@ public class TeumConverter {
                 .accepted(accepted)
                 .cancelled(cancelled)
                 .resend(resend)
+                .build();
+    }
+
+
+    public SharedTeumListResponseDto toSharedTeumListDto(Schedule schedule, Long loginUserId) {
+        TeumRequest request = schedule.getTeumRequest();
+        User sender = request.getUser();
+
+        return SharedTeumListResponseDto.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .date(request.getDate().toString())
+                .time(new TimeSlot(
+                        schedule.getStartTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")),
+                        timeUtil.parseAndFormatEndTime(schedule.getEndTime().toLocalTime())
+                ))
+                .sender(toParticipantDto(sender))
+                .isSender(sender.getId().equals(loginUserId))
                 .build();
     }
 
