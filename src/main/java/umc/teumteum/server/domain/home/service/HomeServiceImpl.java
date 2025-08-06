@@ -120,7 +120,10 @@ public class HomeServiceImpl implements HomeService {
             String profileImageName = routine.getUser().getProfileImageName();
             List<String> profileUrls = profileImageName != null ? List.of(s3Util.toPresignedUrl("profile/" + profileImageName, Duration.ofMinutes(30))) : List.of();
 
-            return scheduleConverter.toVirtualRoutineInfo(routine,date,profileUrls);
+            // 온보딩 리마인드 알림 조회
+            List<RemindAlarm> onboardingReminders = remindAlarmRepository.findAllByUser(routine.getUser());
+
+            return scheduleConverter.toVirtualRoutineInfo(routine,date,onboardingReminders,profileUrls);
         }
 
         Schedule schedule = scheduleRepository.findById(scheduleId)

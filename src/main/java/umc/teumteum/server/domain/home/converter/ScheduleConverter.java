@@ -76,7 +76,7 @@ public class ScheduleConverter {
     }
 
     // Routine -> TodoInfoResponseDTO (미래의 반복일정 조회)
-    public TodoInfoResponseDto toVirtualRoutineInfo(Routine routine,LocalDate date, List<String> profileUrls) {
+    public TodoInfoResponseDto toVirtualRoutineInfo(Routine routine,LocalDate date, List<RemindAlarm> onboardingReminders, List<String> profileUrls) {
         return TodoInfoResponseDto.builder()
                 .type(ScheduleType.ROUTINE)
                 .title(routine.getTitle())
@@ -85,6 +85,9 @@ public class ScheduleConverter {
                 .endTime(date.atTime(routine.getEndTime()))
                 .isPublic(false)
                 .includeTeum(false)
+                .onboardingReminder(onboardingReminders.stream()
+                        .map(RemindAlarm::getMinutesBefore)
+                        .toList())
                 .remindAlarm(List.of())
                 .profileUrl(profileUrls)
                 .build();
