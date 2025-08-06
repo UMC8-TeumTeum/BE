@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
+import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
@@ -34,8 +35,8 @@ public class ScheduleGeneratorScheduler {
     private final RemindAlarmRepository remindAlarmRepository;
     private final ScheduleReminderRepository scheduleReminderRepository;
 
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
-//    @Scheduled(cron = "0 0/17 * * * *", zone = "Asia/Seoul")
+//    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0/24 * * * *", zone = "Asia/Seoul")
     public void schedule() {
         log.info("[00:00] 반복일정 스케줄 테이블에 등록 시작");
 
@@ -96,6 +97,7 @@ public class ScheduleGeneratorScheduler {
                     remindersToInsert.add(ScheduleReminder.builder()
                             .schedule(schedule)
                             .reminderTime(alarm.getMinutesBefore())
+                            .alarmStatus(AlarmStatus.INACTIVE)
                             .build());
                 }
             }

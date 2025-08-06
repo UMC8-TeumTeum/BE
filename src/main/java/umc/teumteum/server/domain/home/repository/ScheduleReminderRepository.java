@@ -9,4 +9,5 @@ import java.util.List;
 public interface ScheduleReminderRepository extends JpaRepository<ScheduleReminder,Long> {
     List<ScheduleReminder> findByScheduleIdAndAlarmStatus(Long scheduleId, AlarmStatus alarmStatus);
     void deleteByScheduleId(Long scheduleId);
+    List<ScheduleReminder> findByScheduleIdIn(List<Long> scheduleIds);
 }

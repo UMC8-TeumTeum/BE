@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.global.util.TimeSerializer;
 
@@ -65,7 +66,8 @@ public class HomeResponseDto {
     private Boolean isPublic;
 
     @Schema(description = "리마인드 알림 여부", example = "ACTIVE")
-    private String hasAlarm;
+    private AlarmStatus alarmStatus;
+
     @Schema(description = "타입", example = "ROUTINE")
     private ScheduleType type;
   }

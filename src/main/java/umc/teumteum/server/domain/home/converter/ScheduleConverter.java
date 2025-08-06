@@ -162,7 +162,7 @@ public class ScheduleConverter {
     }
 
     // Schedule -> HomeResponseDto.TodolistDto
-    public HomeResponseDto.TodolistDto toScheduleDto(Schedule schedule) {
+    public HomeResponseDto.TodolistDto toScheduleDto(Schedule schedule,AlarmStatus alarmStatus) {
         // 자정 처리
         LocalTime endtime = schedule.getEndTime().toLocalTime().equals(LocalTime.MIDNIGHT) ? LocalTime.MAX : schedule.getEndTime().toLocalTime();
 
@@ -172,7 +172,7 @@ public class ScheduleConverter {
                 .startTime(schedule.getStartTime().toLocalTime())
                 .endTime(endtime)
                 .isPublic(schedule.getIsPublic())
-                .hasAlarm("NONE")
+                .alarmStatus(alarmStatus)
                 .type(schedule.getType())
                 .build();
     }
@@ -194,7 +194,7 @@ public class ScheduleConverter {
                 .startTime(routine.getStartTime())
                 .endTime(endtime)
                 .isPublic(false)
-                .hasAlarm("NONE")
+                .alarmStatus(AlarmStatus.NONE)
                 .type(ScheduleType.ROUTINE)
                 .build();
 
