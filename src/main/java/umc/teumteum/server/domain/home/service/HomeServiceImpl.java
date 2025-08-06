@@ -76,30 +76,27 @@ public class HomeServiceImpl implements HomeService {
         Schedule savedSchedule = scheduleRepository.save(schedule);
 
         // 2. 스케줄 리마인드 알림 저장
-        Optional<RemindAlarm> userRemindAlarm =  remindAlarmRepository.findByUser(user);
-
         // 2-1. 온보딩에서 등록한 값
-        Set<Integer> onboardingAlarm = userRemindAlarm
+        List<Integer> onboardingAlarm = remindAlarmRepository.findAllByUser(user).stream()
                 .map(RemindAlarm::getMinutesBefore)
-                .map(values -> new HashSet<Integer>(values))
-                .orElse(new HashSet<>());
+                .toList();
 
         // 2-2. 실제 ACTIVE로 등록한 값
-        Set<Integer> activeRemindAlarm = new HashSet<>(dto.getRemindAlarm());
+        List<Integer> activeRemindAlarm = new ArrayList<>(dto.getRemindAlarm());
 
         // 2-3. ACTIVE 알림 저장
         if(!activeRemindAlarm.isEmpty()) {
-            List<ScheduleReminder> activeReminders = scheduleConverter.toScheduleReminders(savedSchedule, dto.getRemindAlarm(), AlarmStatus.ACTIVE);
+            List<ScheduleReminder> activeReminders = scheduleConverter.toScheduleReminders(savedSchedule, activeRemindAlarm, AlarmStatus.ACTIVE);
             scheduleReminderRepository.saveAll(activeReminders);
         }
 
         // 2-4. 등록하지 않은 온보딩 알림 -> INACTIVE로 저장
-        Set<Integer> inactiveRemindAlarm = onboardingAlarm.stream()
+        List<Integer> inactiveRemindAlarm = onboardingAlarm.stream()
                 .filter(minute -> !activeRemindAlarm.contains(minute))
-                .collect(Collectors.toSet());
+                .toList();
 
         if(!inactiveRemindAlarm.isEmpty()) {
-            List<ScheduleReminder> activeReminders = scheduleConverter.toScheduleReminders(savedSchedule, dto.getRemindAlarm(), AlarmStatus.INACTIVE);
+            List<ScheduleReminder> activeReminders = scheduleConverter.toScheduleReminders(savedSchedule, inactiveRemindAlarm, AlarmStatus.INACTIVE);
             scheduleReminderRepository.saveAll(activeReminders);
         }
 
@@ -130,7 +127,7 @@ public class HomeServiceImpl implements HomeService {
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
 
         // 라미인드 알림 조회
-        List<ScheduleReminder> reminders = scheduleReminderRepository.findByScheduleId(schedule.getId());
+        List<ScheduleReminder> reminders = scheduleReminderRepository.findByScheduleIdAndAlarmStatus(schedule.getId(),AlarmStatus.ACTIVE);
 
         // 프로필 조회
         List<String> profileUrls;
@@ -198,10 +195,32 @@ public class HomeServiceImpl implements HomeService {
         schedule.updateField(dto);
 
         // 6. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
-        if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
-            scheduleReminderRepository.deleteByScheduleId(scheduleId);
-            List<ScheduleReminder> reminders = scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm(), AlarmStatus.ACTIVE);
-            scheduleReminderRepository.saveAll(reminders);
+        // 6-1. 기존 리마인드 알림 삭제
+        scheduleReminderRepository.deleteByScheduleId(scheduleId);
+
+        // 6-2. 온보딩 알림 조회
+        List<Integer> onboardingAlarm = remindAlarmRepository.findAllByUser(user).stream()
+                .map(RemindAlarm::getMinutesBefore)
+                .toList();
+
+        // 6-3. 새로 등록한(ACTIVE) 리마인드 알림
+        List<Integer> activeRemindAlarm = new ArrayList<>(dto.getRemindAlarm());
+
+        // 6-4. ACTIVE 저장
+        if (!activeRemindAlarm.isEmpty()) {
+            List<ScheduleReminder> activeReminders = scheduleConverter.toScheduleReminders(schedule, activeRemindAlarm, AlarmStatus.ACTIVE);
+            scheduleReminderRepository.saveAll(activeReminders);
+        }
+
+        // 6-5. 온보딩 중 ACTIVE로 설정되지 않은 값 → INACTIVE
+        List<Integer> inactiveRemindAlarm = onboardingAlarm.stream()
+                .filter(minute -> !activeRemindAlarm.contains(minute))
+                .toList();
+
+        // 6-6. INACTIVE 저장
+        if (!inactiveRemindAlarm.isEmpty()) {
+            List<ScheduleReminder> inactiveReminders = scheduleConverter.toScheduleReminders(schedule, inactiveRemindAlarm, AlarmStatus.INACTIVE);
+            scheduleReminderRepository.saveAll(inactiveReminders);
         }
         return new TodoIdResponseDto(schedule.getId());
     }

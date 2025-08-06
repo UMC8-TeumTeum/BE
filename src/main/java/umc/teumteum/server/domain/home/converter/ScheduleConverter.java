@@ -21,6 +21,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -28,7 +29,6 @@ public class ScheduleConverter {
 
     // TodoRequestDTO -> Schedule
     public Schedule toSchedule(TodoRequestDto dto, User user) {
-        boolean hasAlarm = dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty();
 
         return Schedule.builder()
                 .title(dto.getTitle())
