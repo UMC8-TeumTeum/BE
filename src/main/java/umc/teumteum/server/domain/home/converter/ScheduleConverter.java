@@ -9,6 +9,7 @@ import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDto;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
+import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.user.entity.Routine;
@@ -35,18 +36,18 @@ public class ScheduleConverter {
                 .description(dto.getDescription())
                 .isPublic(dto.getIsPublic())
                 .includeTeum(dto.getIncludeTeum())
-                .hasAlarm(hasAlarm)
                 .type(ScheduleType.TODO)
                 .user(user)
                 .build();
     }
 
     //  DTO의 remindAlarm 리스트 -> ScheduleReminder
-    public List<ScheduleReminder> toScheduleReminders(Schedule schedule, List<Integer> remindAlarm) {
+    public List<ScheduleReminder> toScheduleReminders(Schedule schedule, List<Integer> remindAlarm, AlarmStatus alarmStatus) {
         return remindAlarm.stream()
                 .map(time -> ScheduleReminder.builder()
                         .schedule(schedule)
                         .reminderTime(time)
+                        .alarmStatus(alarmStatus)
                         .build())
                 .collect(Collectors.toList());
     }
@@ -163,7 +164,7 @@ public class ScheduleConverter {
                 .startTime(schedule.getStartTime().toLocalTime())
                 .endTime(schedule.getEndTime().toLocalTime())
                 .isPublic(schedule.getIsPublic())
-                .hasAlarm(schedule.getHasAlarm())
+                .hasAlarm("NONE")
                 .type(schedule.getType())
                 .build();
     }
@@ -181,8 +182,7 @@ public class ScheduleConverter {
                 .title(routine.getTitle())
                 .startTime(routine.getStartTime())
                 .endTime(routine.getEndTime())
-                .isPublic(false)
-                .hasAlarm(false)
+                .hasAlarm("NONE")
                 .type(ScheduleType.ROUTINE)
                 .build();
 

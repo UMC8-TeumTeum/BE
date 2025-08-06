@@ -18,6 +18,7 @@ import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
+import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
 import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
@@ -29,9 +30,11 @@ import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
+import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
+import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
 import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.GeneralException;
@@ -56,6 +59,7 @@ public class HomeServiceImpl implements HomeService {
     private final CategoryRepository categoryRepository;
     private final S3Util s3Util;
     private final RoutineRepository routineRepository;
+    private final RemindAlarmRepository remindAlarmRepository;
 
     @Transactional
     @Override
@@ -66,15 +70,38 @@ public class HomeServiceImpl implements HomeService {
             throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
         }
 
-        // 스케줄 저장
+        // 1. 스케줄 저장
         Schedule schedule = scheduleConverter.toSchedule(dto,user);
         Schedule savedSchedule = scheduleRepository.save(schedule);
 
-        // 스케줄 리마인드 알림 저장
-        if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
-            List<ScheduleReminder> reminders = scheduleConverter.toScheduleReminders(savedSchedule, dto.getRemindAlarm());
-            scheduleReminderRepository.saveAll(reminders);
+        // 2. 스케줄 리마인드 알림 저장
+        Optional<RemindAlarm> userRemindAlarm =  remindAlarmRepository.findByUser(user);
+
+        // 2-1. 온보딩에서 등록한 값
+        Set<Integer> onboardingAlarm = userRemindAlarm
+                .map(RemindAlarm::getMinutesBefore)
+                .map(values -> new HashSet<Integer>(values))
+                .orElse(new HashSet<>());
+
+        // 2-2. 실제 ACTIVE로 등록한 값
+        Set<Integer> activeRemindAlarm = new HashSet<>(dto.getRemindAlarm());
+
+        // 2-3. ACTIVE 알림 저장
+        if(!activeRemindAlarm.isEmpty()) {
+            List<ScheduleReminder> activeReminders = scheduleConverter.toScheduleReminders(savedSchedule, dto.getRemindAlarm(), AlarmStatus.ACTIVE);
+            scheduleReminderRepository.saveAll(activeReminders);
         }
+
+        // 2-4. 등록하지 않은 온보딩 알림 -> INACTIVE로 저장
+        Set<Integer> inactiveRemindAlarm = onboardingAlarm.stream()
+                .filter(minute -> !activeRemindAlarm.contains(minute))
+                .collect(Collectors.toSet());
+
+        if(!inactiveRemindAlarm.isEmpty()) {
+            List<ScheduleReminder> activeReminders = scheduleConverter.toScheduleReminders(savedSchedule, dto.getRemindAlarm(), AlarmStatus.INACTIVE);
+            scheduleReminderRepository.saveAll(activeReminders);
+        }
+
         return new TodoIdResponseDto(savedSchedule.getId());
     }
 
@@ -161,16 +188,13 @@ public class HomeServiceImpl implements HomeService {
             throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
         }
 
-        // 4. 알림이 업데이트 되었는지 판단
-        boolean hasAlarm = dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty();
+        // 4. 스케줄 필드 업데이트
+        schedule.updateField(dto);
 
-        // 5. 스케줄 필드 업데이트
-        schedule.updateField(dto,hasAlarm);
-
-        // 6. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
-        if (hasAlarm) {
+        // 5. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
+        if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
             scheduleReminderRepository.deleteByScheduleId(scheduleId);
-            List<ScheduleReminder> reminders = scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm());
+            List<ScheduleReminder> reminders = scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm(), AlarmStatus.ACTIVE);
             scheduleReminderRepository.saveAll(reminders);
         }
         return new TodoIdResponseDto(schedule.getId());

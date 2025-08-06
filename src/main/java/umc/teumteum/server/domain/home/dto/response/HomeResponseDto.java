@@ -54,8 +54,8 @@ public class HomeResponseDto {
     private LocalTime endTime;
     @Schema(description = "공개여부", example = "false")
     private Boolean isPublic;
-    @Schema(description = "리마인드 알림 여부", example = "false")
-    private Boolean hasAlarm;
+    @Schema(description = "리마인드 알림 여부", example = "ACTIVE")
+    private String hasAlarm;
     @Schema(description = "타입", example = "ROUTINE")
     private ScheduleType type;
   }
