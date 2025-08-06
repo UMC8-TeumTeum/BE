@@ -127,4 +127,17 @@ public class FriendConverter {
                 .build()
                 ;
     }
+
+    public List<FriendPublicTodoResponseDto> toFriendPublicTodoResponseList(List<Schedule> schedules) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        return schedules.stream()
+                .map(s -> new FriendPublicTodoResponseDto(
+                        s.getTitle(),
+                        s.getStartTime().format(formatter),
+                        timeUtil.parseAndFormatEndTime(s.getEndTime().toLocalTime())
+                ))
+                .collect(Collectors.toList());
+    }
+
 }

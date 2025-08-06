@@ -250,10 +250,29 @@ public class FriendServiceImpl implements FriendService {
     }
 
     @Override
-    public List<FriendPublicTodoResponseDto> getDailyPublicTodos(Long userId, String date) {
-        // TODO : 특정 날짜의 공개 투두 조회 로직 구현
-        return List.of();
+    @Transactional(readOnly = true)
+    public List<FriendPublicTodoResponseDto> getDailyPublicTodos(Long loginUserId, Long targetUserId, String date) {
+        validateNotSelf(loginUserId, targetUserId);
+        validateUserExists(targetUserId);
+
+        LocalDate localDate = LocalDate.parse(date);
+
+        List<Schedule> schedules = scheduleRepository.findPublicSchedulesByUserAndDate(targetUserId, localDate);
+
+        List<Schedule> filtered = schedules.stream()
+                .filter(s -> {
+                    if (s.getType() == ScheduleType.TEUM) {
+                        return s.getStatus() == ScheduleStatus.ACTIVE || s.getStatus() == ScheduleStatus.COMPLETED;
+                    } else {
+                        return s.getStatus() == ScheduleStatus.ACTIVE &&
+                                List.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI).contains(s.getType());
+                    }
+                })
+                .collect(Collectors.toList());
+
+        return friendConverter.toFriendPublicTodoResponseList(filtered);
     }
+
 
     @Override
     public List<String> getTodoDatesOfMonth(Long loginUserId, Long targetUserId, String month) {
