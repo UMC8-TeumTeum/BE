@@ -262,10 +262,10 @@ public class FriendServiceImpl implements FriendService {
         List<Schedule> filtered = schedules.stream()
                 .filter(s -> {
                     if (s.getType() == ScheduleType.TEUM) {
-                        return s.getStatus() == ScheduleStatus.ACTIVE || s.getStatus() == ScheduleStatus.COMPLETED;
+                        return TEUM_VALID_STATUSES.contains(s.getStatus());
                     } else {
                         return s.getStatus() == ScheduleStatus.ACTIVE &&
-                                List.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI).contains(s.getType());
+                                GENERAL_SCHEDULE_TYPES.contains(s.getType());
                     }
                 })
                 .collect(Collectors.toList());
