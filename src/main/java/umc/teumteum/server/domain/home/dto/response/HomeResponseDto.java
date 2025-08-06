@@ -1,14 +1,17 @@
 package umc.teumteum.server.domain.home.dto.response;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.global.util.TimeSerializer;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 public class HomeResponseDto {
 
@@ -46,14 +49,21 @@ public class HomeResponseDto {
   public static class TodolistDto{
     @Schema(description = "아이디", example = "1")
     private Long id;
+
     @Schema(description = "제목", example = "수영하기")
     private String title;
+
     @Schema(description = "시작시간", example = "01:00")
+    @JsonSerialize(using = TimeSerializer.class)
     private LocalTime startTime;
+
     @Schema(description = "종료시간", example = "02:00")
+    @JsonSerialize(using = TimeSerializer.class)
     private LocalTime endTime;
+
     @Schema(description = "공개여부", example = "false")
     private Boolean isPublic;
+
     @Schema(description = "리마인드 알림 여부", example = "ACTIVE")
     private String hasAlarm;
     @Schema(description = "타입", example = "ROUTINE")
@@ -68,4 +78,11 @@ public class HomeResponseDto {
     private Long routineId;
   }
 
+  @Builder
+  @Getter
+  @AllArgsConstructor
+  static public class ReminderDto {
+    @Schema(description = "온보딩 리마인드 알림 설정 정보", example = "[1,5]")
+    private List<Integer> reminders;
+  }
 }

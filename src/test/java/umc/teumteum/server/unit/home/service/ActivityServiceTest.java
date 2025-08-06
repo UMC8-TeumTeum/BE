@@ -19,8 +19,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import umc.teumteum.server.domain.home.ai.generator.AiWishGenerator;
+import umc.teumteum.server.domain.home.ai.util.AiWishContentSerializer;
 import umc.teumteum.server.domain.home.converter.WishConverter;
-import umc.teumteum.server.domain.home.dto.request.ActivityRequestDto.OptionRequest;
+import umc.teumteum.server.domain.home.dto.request.ActivityRequestDto.WishOptionRequest;
 import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto.WishResponse;
 import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Wish;
@@ -28,7 +30,6 @@ import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
 import umc.teumteum.server.domain.home.exception.HomeException;
 import umc.teumteum.server.domain.home.exception.status.HomeErrorStatus;
 import umc.teumteum.server.domain.home.repository.CategoryRepository;
-import umc.teumteum.server.domain.home.repository.WishCategoryRepository;
 import umc.teumteum.server.domain.home.repository.WishRepository;
 import umc.teumteum.server.domain.home.service.ActivityServiceImpl;
 import umc.teumteum.server.domain.user.entity.User;
@@ -38,9 +39,11 @@ class ActivityServiceTest {
 
   @Mock
   private WishRepository wishRepository;
-  @Mock private WishCategoryRepository wishCategoryRepository;
   @Mock private CategoryRepository categoryRepository;
   @Mock private WishConverter wishConverter;
+  @Mock private AiWishGenerator aiWishGenerator;
+  @Mock private AiWishContentSerializer aiWishContentSerializer;
+
 
   @InjectMocks
   private ActivityServiceImpl activityService;
@@ -66,7 +69,7 @@ class ActivityServiceTest {
   @DisplayName("[ActivityServiceImpl] - TC1 시간과 카테고리가 모두 일치하는 경우 priority1에서 최대 3개 반환")
   void getMyWish_priority1_max3() {
     // given
-    OptionRequest request = OptionRequest.builder()
+    WishOptionRequest request = WishOptionRequest.builder()
         .estimatedDuration(EstimatedDuration.MINUTES_10)
         .categoryId(1L)
         .build();
@@ -94,7 +97,7 @@ class ActivityServiceTest {
   @DisplayName("[ActivityServiceImpl] - TC2 우선순위1은 없고, 우선순위2(카테고리, 시간 일치)에서 추천되는 경우")
   void getMyWish_priority2_used() {
     // given
-    OptionRequest request = OptionRequest.builder()
+    WishOptionRequest request = WishOptionRequest.builder()
         .estimatedDuration(EstimatedDuration.MINUTES_10)
         .customCategory("휴식")
         .build();
@@ -120,7 +123,7 @@ class ActivityServiceTest {
   @DisplayName("[ActivityServiceImpl] - TC3 customCategory와 categoryId가 동시에 존재하면 예외 발생")
   void getMyWish_bothCategoryFields_throwsException() {
     // given
-    OptionRequest request = OptionRequest.builder()
+    WishOptionRequest request = WishOptionRequest.builder()
         .estimatedDuration(EstimatedDuration.MINUTES_10)
         .categoryId(1L)
         .customCategory("운동")
@@ -140,7 +143,7 @@ class ActivityServiceTest {
   @DisplayName("[ActivityServiceImpl] - TC4 categoryId로 조회했지만 존재하지 않으면 예외 발생")
   void getMyWish_categoryId_notFound() {
     // given
-    OptionRequest request = OptionRequest.builder()
+    WishOptionRequest request = WishOptionRequest.builder()
         .estimatedDuration(EstimatedDuration.MINUTES_10)
         .categoryId(99L)
         .build();
@@ -162,7 +165,7 @@ class ActivityServiceTest {
   @DisplayName("[ActivityServiceImpl] - TC5 category, duration 둘 다 비어있을 경우 예외 발생")
   void getMyWish_noCategory_throwsException() {
     // given
-    OptionRequest request = OptionRequest.builder()
+    WishOptionRequest request = WishOptionRequest.builder()
         .estimatedDuration(EstimatedDuration.MINUTES_10)
         .build(); // categoryId도 없고 custom도 없음
 

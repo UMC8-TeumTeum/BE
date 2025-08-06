@@ -22,7 +22,7 @@ public enum TeumSuccessStatus implements BaseCode {
     _SCHEDULED_DETAIL_LOADED(HttpStatus.OK, "TEUM2009", "약속된 틈 상세 정보가 조회되었습니다."),
     _SCHEDULED_CANCELLED(HttpStatus.OK, "TEUM2010", "약속된 틈이 성공적으로 취소되었습니다.."),
     _AVAILABLE_TIME_LOADED(HttpStatus.OK, "TEUM2011", "공통 가능한 시간대가 조회되었습니다."),
-    _SHARED_TIME_LOADED(HttpStatus.OK, "TEUM2012", "함께한 틈 시간 정보가 조회되었습니다."),
+    _SHARED_TIME_LOADED(HttpStatus.OK, "TEUM2012", "함께한 빈틈 시간 정보가 조회되었습니다."),
     _SHARED_LIST_LOADED(HttpStatus.OK, "TEUM2013", "함께한 틈 목록이 조회되었습니다."),
     _TEUM_READ_SUCCESS(HttpStatus.OK, "TEUM2014", "틈 요청이 읽음 처리되었습니다.");
 

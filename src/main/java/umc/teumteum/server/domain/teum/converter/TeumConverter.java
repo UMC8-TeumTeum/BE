@@ -1,34 +1,30 @@
 package umc.teumteum.server.domain.teum.converter;
 
-import java.time.Duration;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.teum.TeumReceivedResponseDto;
-import umc.teumteum.server.domain.teum.dto.teum.TeumRequestDto;
-import umc.teumteum.server.domain.teum.dto.teum.TeumResendRequestDto;
-import umc.teumteum.server.domain.teum.dto.teum.TeumStatusUpdateResponseDto;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
+import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.exception.GeneralException;
-import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
@@ -39,6 +35,7 @@ import java.util.stream.Collectors;
 public class TeumConverter {
 
     private final TimeUtil timeUtil;
+    private final S3Util s3Util;
 
     public TeumRequest toTeumRequest(TeumRequestDto dto, User sender) {
         return TeumRequest.builder()
@@ -289,6 +286,82 @@ public class TeumConverter {
                         schedule.getStartTime().toLocalTime().toString(),
                         timeUtil.parseAndFormatEndTime(schedule.getEndTime().toLocalTime())
                 )))
+                .build();
+    }
+
+    public static SharedTeumTimeResponseDto toSharedTeumTimeDto(long totalMinutes) {
+        long days = totalMinutes / (24 * 60);
+        long hours = (totalMinutes % (24 * 60)) / 60;
+        long minutes = totalMinutes % 60;
+
+        return SharedTeumTimeResponseDto.builder()
+                .days(days)
+                .hours(hours)
+                .minutes(minutes)
+                .totalMinutes(totalMinutes)
+                .build();
+    }
+
+
+    public TeumRequestResponseDto toTeumRequestResponseDto(
+            TeumRequest request,
+            boolean isCancelled,
+            boolean isResend
+    ) {
+        // 시간 정보 구성
+        TimeSlot timeSlot = new TimeSlot(
+                request.getStartTime().toString(),
+                timeUtil.parseAndFormatEndTime(request.getEndTime())
+        );
+
+        // 요청자 정보 생성
+        ParticipantDto requester = toParticipantDto(request.getUser());
+
+        // 응답자 상태별 분류
+        List<ParticipantDto> pending = new ArrayList<>();
+        List<ParticipantDto> accepted = new ArrayList<>();
+        List<ParticipantDto> cancelled = new ArrayList<>();
+        List<ParticipantDto> resend = new ArrayList<>();
+
+        for (TeumResponse response : request.getTeumResponses()) {
+            ParticipantDto participant = toParticipantDto(response.getReceiverUser());
+
+            // 응답 상태에 따라 분류
+            switch (response.getStatus()) {
+                case PENDING -> pending.add(participant);
+                case ACCEPTED -> accepted.add(participant);
+                case REJECTED, LEFT -> cancelled.add(participant);  // 거절과 취소는 모두 취소 처리
+                case RESEND -> resend.add(participant);
+            }
+        }
+
+        return TeumRequestResponseDto.builder()
+                .requestId(request.getId())
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .date(request.getDate())
+                .timeSlot(timeSlot)
+                .requester(requester)
+                .isCancelled(isCancelled)
+                .isResend(isResend)
+                .pending(pending)
+                .accepted(accepted)
+                .cancelled(cancelled)
+                .resend(resend)
+                .build();
+    }
+
+
+    private ParticipantDto toParticipantDto(User user) {
+        String presignedUrl = s3Util.toPresignedUrl(
+                "profile/" + user.getProfileImageName(),
+                Duration.ofMinutes(30)
+        );
+
+        return ParticipantDto.builder()
+                .userId(user.getId())
+                .nickname(user.getNickname())
+                .profileImageUrl(presignedUrl)
                 .build();
     }
 

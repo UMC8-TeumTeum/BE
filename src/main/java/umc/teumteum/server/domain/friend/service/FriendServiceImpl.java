@@ -20,8 +20,9 @@ import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
-import umc.teumteum.server.global.exception.handler.GlobalHandler;
+import umc.teumteum.server.global.util.S3Util;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -39,7 +40,10 @@ public class FriendServiceImpl implements FriendService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
     private final ScheduleRepository scheduleRepository;
+
     private final FriendConverter friendConverter;
+
+    private final S3Util s3Util;
 
     private static final Set<ScheduleType> GENERAL_SCHEDULE_TYPES =
             EnumSet.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI);
@@ -69,6 +73,7 @@ public class FriendServiceImpl implements FriendService {
         // 5. TODO FOLLOW 알림 전송 필요
     }
 
+
     @Override
     @Transactional
     public void unfollow(User loginUser, Long targetUserId) {
@@ -86,18 +91,59 @@ public class FriendServiceImpl implements FriendService {
         friendRepository.delete(friend);
     }
 
+
     @Override
     @Transactional(readOnly = true)
-    public List<FriendMutualResponseDto> getMutualFriends() {
-        // TODO : 맞팔로우 조회 로직 추후 구현
-        return null;
+    public PagingResponseDto<FriendResponseDto.MutualFriend> getMutualFriends(User loginUser, Long excludeUserId, int page, int size) {
+        // 1. 자기 자신을 제외하는지 확인
+        validateNotSelf(loginUser.getId(), excludeUserId);
+
+        // 2. 제외하려는 대상 조회
+        User excludeUser = getUserOrThrow(excludeUserId);
+
+        // 3. Pageable 생성 (닉네임순 정렬)
+        Pageable pageable = PageRequest.of(page - 1, size,
+                Sort.by(Sort.Order.asc("following.nickname")));
+
+        // 4. 맞팔로우 관계 조회 (특정 사용자 제외)
+        Slice<Friend> mutualFriendsSlice = friendRepository.findMutualFriendsExcluding(loginUser, excludeUser, pageable);
+
+        // 5. 맞팔로우한 상대방들에 대한 S3 프리사인드 URL 생성 및 Dto 변환
+        List<FriendResponseDto.MutualFriend> mutualFriendList = mutualFriendsSlice.getContent()
+                .stream()
+                .map(friend -> {
+                    User targetUser = friend.getFollowing();
+                    String profileImageUrl = s3Util.toPresignedUrl("profile/" + targetUser.getProfileImageName(), Duration.ofMinutes(30));
+                    return FriendConverter.toMutualFriendDto(targetUser, profileImageUrl);
+                })
+                .collect(Collectors.toList())
+                ;
+
+        // 6. PagingResponseDto 생성
+        return new PagingResponseDto<>(mutualFriendList, mutualFriendsSlice.hasNext());
     }
 
     @Override
     @Transactional
-    public FavoriteResponseDto updateFavorite(Long userId, Boolean isFavorite) {
-        // TODO : 즐겨찾기 로직 추후 구현
-        return new FavoriteResponseDto(userId, isFavorite);
+    public FriendResponseDto.FriendFavorite updateFavorite(User loginUser, Long targetUserId, Boolean isFavorite) {
+        // 1. 자기 자신을 즐겨찾기하는지 확인
+        validateNotSelf(loginUser.getId(), targetUserId);
+
+        // 2. 상대방 조회
+        User targetUser = getUserOrThrow(targetUserId);
+
+        // 3. 팔로잉 관계 조회
+        Friend friend = friendRepository.findByFollowerAndFollowing(loginUser, targetUser)
+                .orElseThrow(() -> new FriendException(FriendErrorStatus.NOT_FOLLOWING));
+
+        // 4. 즐겨찾기 상태 수정
+        if (friend.getIsFavorite().equals(isFavorite)) {
+            throw new FriendException(FriendErrorStatus.FAVORITE_ALREADY_SET);
+        }
+        friend.updateIsFavorite(isFavorite);
+
+        // 5. 결과 반환
+        return FriendConverter.toFriendFavoriteDto(targetUser, friend.getIsFavorite());
     }
 
     // 사용자가 팔로우한 유저 목록을 정렬 후 페이징하여 반환

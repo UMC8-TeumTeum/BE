@@ -236,7 +236,27 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     );
 
 
-
     @Query("SELECT s FROM Schedule s WHERE s.user = :user AND s.date = :date")
     List<Schedule> findByUserAndDate(@Param("user") User user, @Param("date") LocalDate date);
+
+
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.teumRequest.id IN (
+          SELECT sr.teumRequest.id FROM Schedule sr
+          WHERE sr.user.id = :friendId
+            AND sr.type = :type
+            AND sr.status = :status
+      )
+      AND s.type = :type
+      AND s.status = :status
+""")
+    List<Schedule> findMySharedTeumSchedules(
+            @Param("userId") Long userId,
+            @Param("friendId") Long friendId,
+            @Param("type") ScheduleType type,
+            @Param("status") ScheduleStatus status
+    );
+
 }

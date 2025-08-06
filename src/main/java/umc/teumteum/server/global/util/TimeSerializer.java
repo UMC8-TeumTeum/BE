@@ -8,11 +8,11 @@ import java.io.IOException;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-public class CustomEndTimeSerializer extends StdSerializer<LocalTime> {
+public class TimeSerializer extends StdSerializer<LocalTime> {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
-    public CustomEndTimeSerializer() {
+    public TimeSerializer() {
         super(LocalTime.class);
     }
 

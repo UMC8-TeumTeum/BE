@@ -11,9 +11,9 @@ public interface FriendService {
 
     void unfollow(User loginUser, Long targetUserId);
 
-    List<FriendMutualResponseDto> getMutualFriends();
+    PagingResponseDto<FriendResponseDto.MutualFriend> getMutualFriends(User loginUser, Long excludeUserId, int page, int size);
 
-    FavoriteResponseDto updateFavorite(Long userId, Boolean isFavorite);
+    FriendResponseDto.FriendFavorite updateFavorite(User loginUser, Long targetUserId, Boolean isFavorite);
 
     PagingResponseDto<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size);
 

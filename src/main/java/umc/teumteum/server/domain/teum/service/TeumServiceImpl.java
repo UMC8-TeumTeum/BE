@@ -15,7 +15,7 @@ import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
@@ -34,17 +34,8 @@ import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 import umc.teumteum.server.global.validator.ConflictValidator;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.time.*;
+import java.util.*;
 import java.util.stream.Stream;
 
 @Service
@@ -400,10 +391,72 @@ public class TeumServiceImpl implements TeumService {
 
 
     @Override
-    public SharedTeumResponseDto getSharedTeumStats(Long userId, Long friendId) {
-        // TODO : 함께한 틈 시간 조회 로직 추후 구현
-        return null;
+    @Transactional(readOnly = true)
+    public SharedTeumTimeResponseDto getSharedTeumStats(Long loginUserId, Long targetUserId) {
+        validateUserExists(targetUserId);
+        validateNotSelf(loginUserId, targetUserId);
+
+        List<Schedule> myTeumSchedules = scheduleRepository.findMySharedTeumSchedules(
+                loginUserId, targetUserId, ScheduleType.TEUM, ScheduleStatus.COMPLETED
+        );
+
+        long totalMinutes = myTeumSchedules.stream()
+                .mapToLong(s -> Duration.between(s.getStartTime(), s.getEndTime()).toMinutes())
+                .sum();
+
+        return TeumConverter.toSharedTeumTimeDto(totalMinutes);
     }
+
+
+    @Override
+    public List<TeumRequestResponseDto> getTeumRequestsByDate(Long userId, String date) {
+        LocalDate parsedDate = LocalDate.parse(date);
+        List<TeumRequest> allRequests = teumRequestRepository.findByDate(parsedDate);
+
+        // 사용자가 요청자이거나 응답자인 요청만 필터링
+        return allRequests.stream()
+                .filter(req -> isParticipant(req, userId))
+                .map(req -> {
+                    // 재요청 여부 판단
+                    boolean isResend = req.getParentRequest() != null;
+
+                    // 약속 취소 여부 판단
+                    boolean isCancelled = isTeumCancelled(req);
+
+                    // DTO로 변환
+                    return teumConverter.toTeumRequestResponseDto(req, isCancelled, isResend);
+                })
+                .toList();
+    }
+
+    // 사용자가 해당 요청의 요청자 또는 응답자인지 여부
+    private boolean isParticipant(TeumRequest req, Long userId) {
+        return req.getUser().getId().equals(userId) ||
+                req.getTeumResponses().stream()
+                        .anyMatch(resp -> resp.getReceiverUser().getId().equals(userId));
+    }
+
+    // 약속 취소 여부 판단 로직
+    private boolean isTeumCancelled(TeumRequest request) {
+        // 미응답자가 없는지 여부
+        boolean hasNoPending = request.getTeumResponses().stream()
+                .noneMatch(r -> r.getStatus() == ResponseStatus.PENDING);
+
+        // 파생된 스케줄이 모두 취소되었는지 여부
+        boolean allSchedulesCancelled = request.getSchedules().stream()
+                .allMatch(s -> s.getStatus() == ScheduleStatus.CANCELLED);
+
+        // 파생된 스케줄이 없는 경우
+        boolean hasNoSchedules = request.getSchedules().isEmpty();
+
+        // 응답자가 모두 거절 또는 취소한 경우
+        boolean allResponsesCancelled = request.getTeumResponses().stream()
+                .allMatch(r -> r.getStatus() == ResponseStatus.REJECTED || r.getStatus() == ResponseStatus.LEFT);
+
+        // 최종 취소 판단 조건
+        return hasNoPending && (allSchedulesCancelled || (hasNoSchedules && allResponsesCancelled));
+    }
+
 
     /**
      * 주어진 ID에 해당하는 User를 조회합니다.
@@ -423,6 +476,12 @@ public class TeumServiceImpl implements TeumService {
     private void validateUserExists(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new GlobalHandler(UserErrorStatus.USER_NOT_FOUND);
+        }
+    }
+
+    private void validateNotSelf(Long loginUserId, Long targetUserId) {
+        if (loginUserId.equals(targetUserId)) {
+            throw new GlobalHandler(TeumErrorStatus.CANNOT_VIEW_SELF);
         }
     }
 
