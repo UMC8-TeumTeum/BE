@@ -259,4 +259,17 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("status") ScheduleStatus status
     );
 
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.date = :date
+      AND s.isPublic = true
+      AND s.isDeleted = false
+""")
+    List<Schedule> findPublicSchedulesByUserAndDate(
+            @Param("userId") Long userId,
+            @Param("date") LocalDate date
+    );
+
+
 }
