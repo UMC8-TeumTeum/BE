@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
 import umc.teumteum.server.global.common.BaseEntity;
 
 @Entity
@@ -25,4 +26,8 @@ public class ScheduleReminder extends BaseEntity {
 
     @Column(name = "reminder_time", nullable = false)
     private Integer reminderTime;
+
+    @Column(name = "alarm_status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private AlarmStatus alarmStatus = AlarmStatus.INACTIVE;
 }

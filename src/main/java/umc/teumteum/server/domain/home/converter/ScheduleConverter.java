@@ -9,6 +9,7 @@ import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDto;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
+import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.user.entity.RemindAlarm;
@@ -20,6 +21,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -27,7 +29,6 @@ public class ScheduleConverter {
 
     // TodoRequestDTO -> Schedule
     public Schedule toSchedule(TodoRequestDto dto, User user) {
-        boolean hasAlarm = dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty();
 
         return Schedule.builder()
                 .title(dto.getTitle())
@@ -37,18 +38,18 @@ public class ScheduleConverter {
                 .description(dto.getDescription())
                 .isPublic(dto.getIsPublic())
                 .includeTeum(dto.getIncludeTeum())
-                .hasAlarm(hasAlarm)
                 .type(ScheduleType.TODO)
                 .user(user)
                 .build();
     }
 
     //  DTO의 remindAlarm 리스트 -> ScheduleReminder
-    public List<ScheduleReminder> toScheduleReminders(Schedule schedule, List<Integer> remindAlarm) {
+    public List<ScheduleReminder> toScheduleReminders(Schedule schedule, List<Integer> remindAlarm, AlarmStatus alarmStatus) {
         return remindAlarm.stream()
                 .map(time -> ScheduleReminder.builder()
                         .schedule(schedule)
                         .reminderTime(time)
+                        .alarmStatus(alarmStatus)
                         .build())
                 .collect(Collectors.toList());
     }
@@ -75,7 +76,7 @@ public class ScheduleConverter {
     }
 
     // Routine -> TodoInfoResponseDTO (미래의 반복일정 조회)
-    public TodoInfoResponseDto toVirtualRoutineInfo(Routine routine,LocalDate date, List<String> profileUrls) {
+    public TodoInfoResponseDto toVirtualRoutineInfo(Routine routine,LocalDate date, List<RemindAlarm> onboardingReminders, List<String> profileUrls) {
         return TodoInfoResponseDto.builder()
                 .type(ScheduleType.ROUTINE)
                 .title(routine.getTitle())
@@ -84,6 +85,9 @@ public class ScheduleConverter {
                 .endTime(date.atTime(routine.getEndTime()))
                 .isPublic(false)
                 .includeTeum(false)
+                .onboardingReminder(onboardingReminders.stream()
+                        .map(RemindAlarm::getMinutesBefore)
+                        .toList())
                 .remindAlarm(List.of())
                 .profileUrl(profileUrls)
                 .build();
@@ -161,7 +165,7 @@ public class ScheduleConverter {
     }
 
     // Schedule -> HomeResponseDto.TodolistDto
-    public HomeResponseDto.TodolistDto toScheduleDto(Schedule schedule) {
+    public HomeResponseDto.TodolistDto toScheduleDto(Schedule schedule,AlarmStatus alarmStatus) {
         // 자정 처리
         LocalTime endtime = schedule.getEndTime().toLocalTime().equals(LocalTime.MIDNIGHT) ? LocalTime.MAX : schedule.getEndTime().toLocalTime();
 
@@ -171,7 +175,7 @@ public class ScheduleConverter {
                 .startTime(schedule.getStartTime().toLocalTime())
                 .endTime(endtime)
                 .isPublic(schedule.getIsPublic())
-                .hasAlarm(schedule.getHasAlarm())
+                .alarmStatus(alarmStatus)
                 .type(schedule.getType())
                 .build();
     }
@@ -193,7 +197,7 @@ public class ScheduleConverter {
                 .startTime(routine.getStartTime())
                 .endTime(endtime)
                 .isPublic(false)
-                .hasAlarm(false)
+                .alarmStatus(AlarmStatus.NONE)
                 .type(ScheduleType.ROUTINE)
                 .build();
 

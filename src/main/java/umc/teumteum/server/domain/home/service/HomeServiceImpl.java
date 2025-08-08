@@ -18,6 +18,7 @@ import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
+import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
 import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
@@ -70,15 +71,35 @@ public class HomeServiceImpl implements HomeService {
         // 충돌 검사
         conflictValidator.validateTodo(user,dto.getStartTime(), dto.getEndTime());
 
-        // 스케줄 저장
+        // 1. 스케줄 저장
         Schedule schedule = scheduleConverter.toSchedule(dto,user);
         Schedule savedSchedule = scheduleRepository.save(schedule);
 
-        // 스케줄 리마인드 알림 저장
-        if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
-            List<ScheduleReminder> reminders = scheduleConverter.toScheduleReminders(savedSchedule, dto.getRemindAlarm());
-            scheduleReminderRepository.saveAll(reminders);
+        // 2. 스케줄 리마인드 알림 저장
+        // 2-1. 온보딩에서 등록한 값
+        List<Integer> onboardingAlarm = remindAlarmRepository.findAllByUser(user).stream()
+                .map(RemindAlarm::getMinutesBefore)
+                .toList();
+
+        // 2-2. 실제 ACTIVE로 등록한 값
+        List<Integer> activeRemindAlarm = new ArrayList<>(dto.getRemindAlarm());
+
+        // 2-3. ACTIVE 알림 저장
+        if(!activeRemindAlarm.isEmpty()) {
+            List<ScheduleReminder> activeReminders = scheduleConverter.toScheduleReminders(savedSchedule, activeRemindAlarm, AlarmStatus.ACTIVE);
+            scheduleReminderRepository.saveAll(activeReminders);
         }
+
+        // 2-4. 등록하지 않은 온보딩 알림 -> INACTIVE로 저장
+        List<Integer> inactiveRemindAlarm = onboardingAlarm.stream()
+                .filter(minute -> !activeRemindAlarm.contains(minute))
+                .toList();
+
+        if(!inactiveRemindAlarm.isEmpty()) {
+            List<ScheduleReminder> activeReminders = scheduleConverter.toScheduleReminders(savedSchedule, inactiveRemindAlarm, AlarmStatus.INACTIVE);
+            scheduleReminderRepository.saveAll(activeReminders);
+        }
+
         return new TodoIdResponseDto(savedSchedule.getId());
     }
 
@@ -99,14 +120,17 @@ public class HomeServiceImpl implements HomeService {
             String profileImageName = routine.getUser().getProfileImageName();
             List<String> profileUrls = profileImageName != null ? List.of(s3Util.toPresignedUrl("profile/" + profileImageName, Duration.ofMinutes(30))) : List.of();
 
-            return scheduleConverter.toVirtualRoutineInfo(routine,date,profileUrls);
+            // 온보딩 리마인드 알림 조회
+            List<RemindAlarm> onboardingReminders = remindAlarmRepository.findAllByUser(routine.getUser());
+
+            return scheduleConverter.toVirtualRoutineInfo(routine,date,onboardingReminders,profileUrls);
         }
 
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
 
         // 라미인드 알림 조회
-        List<ScheduleReminder> reminders = scheduleReminderRepository.findByScheduleId(schedule.getId());
+        List<ScheduleReminder> reminders = scheduleReminderRepository.findByScheduleIdAndAlarmStatus(schedule.getId(),AlarmStatus.ACTIVE);
 
         // 프로필 조회
         List<String> profileUrls;
@@ -170,17 +194,36 @@ public class HomeServiceImpl implements HomeService {
         // 4. 충돌 검사
         conflictValidator.validateTodo(user,dto.getStartTime(), dto.getEndTime());
 
-        // 5. 알림이 업데이트 되었는지 판단
-        boolean hasAlarm = dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty();
+        // 5. 스케줄 필드 업데이트
+        schedule.updateField(dto);
 
-        // 6. 스케줄 필드 업데이트
-        schedule.updateField(dto,hasAlarm);
+        // 6. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
+        // 6-1. 기존 리마인드 알림 삭제
+        scheduleReminderRepository.deleteByScheduleId(scheduleId);
 
-        // 7. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
-        if (hasAlarm) {
-            scheduleReminderRepository.deleteByScheduleId(scheduleId);
-            List<ScheduleReminder> reminders = scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm());
-            scheduleReminderRepository.saveAll(reminders);
+        // 6-2. 온보딩 알림 조회
+        List<Integer> onboardingAlarm = remindAlarmRepository.findAllByUser(user).stream()
+                .map(RemindAlarm::getMinutesBefore)
+                .toList();
+
+        // 6-3. 새로 등록한(ACTIVE) 리마인드 알림
+        List<Integer> activeRemindAlarm = new ArrayList<>(dto.getRemindAlarm());
+
+        // 6-4. ACTIVE 저장
+        if (!activeRemindAlarm.isEmpty()) {
+            List<ScheduleReminder> activeReminders = scheduleConverter.toScheduleReminders(schedule, activeRemindAlarm, AlarmStatus.ACTIVE);
+            scheduleReminderRepository.saveAll(activeReminders);
+        }
+
+        // 6-5. 온보딩 중 ACTIVE로 설정되지 않은 값 → INACTIVE
+        List<Integer> inactiveRemindAlarm = onboardingAlarm.stream()
+                .filter(minute -> !activeRemindAlarm.contains(minute))
+                .toList();
+
+        // 6-6. INACTIVE 저장
+        if (!inactiveRemindAlarm.isEmpty()) {
+            List<ScheduleReminder> inactiveReminders = scheduleConverter.toScheduleReminders(schedule, inactiveRemindAlarm, AlarmStatus.INACTIVE);
+            scheduleReminderRepository.saveAll(inactiveReminders);
         }
         return new TodoIdResponseDto(schedule.getId());
     }
@@ -557,34 +600,62 @@ public class HomeServiceImpl implements HomeService {
         // 1. 해당 날짜의 모든 스케줄 조회
         List<Schedule> allSchedules = scheduleRepository.findByUserAndDate(user,date);
 
-        // 2. 스케줄 테이블 조회 (해당 날짜 & 삭제되지 않음)
-        List<HomeResponseDto.TodolistDto> scheduleDtos = allSchedules.stream()
+        // 2. 삭제되지 않은 스케줄 필터링
+        List<Schedule> validSchedules = allSchedules.stream()
                 .filter(s -> !s.getIsDeleted())
-                .map(scheduleConverter::toScheduleDto)
                 .toList();
 
-        // 3. 삭제된 루틴 ID
+        // 3. 알림 상태 판단을 위해,, ScheduleReminder 조회
+        List<Long> scheduleIds = validSchedules.stream()
+                .map(Schedule::getId)
+                .toList();
+
+        List<ScheduleReminder> reminders = scheduleReminderRepository.findByScheduleIdIn(scheduleIds);
+
+        Map<Long, List<ScheduleReminder>> reminderMap = reminders.stream()
+                .collect(Collectors.groupingBy(r -> r.getSchedule().getId()));
+
+        // 4. 스케줄 DTO 변환 (해당 날짜 & 삭제되지 않음)
+        List<HomeResponseDto.TodolistDto> scheduleDtos = validSchedules.stream()
+                .map(schedule -> {
+                    List<ScheduleReminder> scheduleReminders = reminderMap.getOrDefault(schedule.getId(), Collections.emptyList());
+                    AlarmStatus alarmStatus;
+                    if(scheduleReminders.isEmpty()){
+                        alarmStatus = AlarmStatus.NONE;
+                    } else if(scheduleReminders.stream().anyMatch(r -> r.getAlarmStatus() == AlarmStatus.ACTIVE)){
+                        alarmStatus = AlarmStatus.ACTIVE;
+                    } else if(schedule.getType() == ScheduleType.ROUTINE) {
+                        // 데모데이까지 반복일정의 경우 알림은 NONE 수정불가
+                        alarmStatus = AlarmStatus.NONE;
+                    } else{
+                        alarmStatus = AlarmStatus.INACTIVE;
+                    }
+                    return scheduleConverter.toScheduleDto(schedule,alarmStatus);
+                })
+                .toList();
+
+        // 5. 삭제된 루틴 ID
         Set<Long> deletedRoutineIds = allSchedules.stream()
                 .filter(s-> s.getRoutine() != null && s.getIsDeleted())
                 .map(s->s.getRoutine().getId())
                 .collect(Collectors.toSet());
 
-        // 4. 미래의 경우 반복 루틴 추가 조회
+        // 6. 미래의 경우 반복 루틴 추가 조회
         LocalDate today = LocalDate.now();
         List<HomeResponseDto.TodolistDto> routineDtos = new ArrayList<>();
         if(date.isAfter(today)){
-            // 4-1. 조회 요일
+            // 6-1. 조회 요일
             Weekday todayWeekday = Weekday.valueOf(date.getDayOfWeek().name());
             List<Routine> routines = routineRepository.findByUserAndWeekday(user, todayWeekday);
 
-            // 4-2. 삭제되지 않은 루틴에 대해 가상의 ID 생성
+            // 6-2. 삭제되지 않은 루틴에 대해 가상의 ID 생성
             routineDtos = routines.stream()
                     .filter(r -> !deletedRoutineIds.contains(r.getId()))
                     .map(r -> scheduleConverter.toVirtualRoutineDto(r, date))
                     .toList();
         }
 
-        // 5. 합쳐서 반환 (시간순 정렬)
+        // 7. 합쳐서 반환 (시간순 정렬)
         List<HomeResponseDto.TodolistDto> result = new ArrayList<>();
         result.addAll(scheduleDtos);
         result.addAll(routineDtos);
