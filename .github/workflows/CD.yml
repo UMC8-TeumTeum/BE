@@ -86,7 +86,7 @@ jobs:
                 -e AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }} \
                 -e S3_BUCKET=${{ secrets.S3_BUCKET }} \
                 -e S3_PREFIX=${{ secrets.S3_PREFIX }} \
-                -e OPEN_API_KEY=${{ secrets.OPEN_API_KEY }} \
+                -e OPEN_API_KEY_BASE64=${{ secrets.OPEN_API_KEY }} \
                 ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest
             
               docker system df
