@@ -15,6 +15,10 @@ public class FollowerUserResponseDto {
     @Schema(description = "닉네임", example = "string")
     private String nickname;
 
+    @Schema(description = "분야 및 직종", example = "string")
+    private String job;
+
     @Schema(description = "프로필 이미지 URL", example = "string")
     private String profileImageUrl;
+
 }
