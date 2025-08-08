@@ -105,7 +105,7 @@ public class ActivityServiceImpl implements ActivityService{
 
       // 4. 변환 후 반환
       return ActivityResponseDto.AiWishResponse.builder()
-        .wishes(generated)
+        .aiContents(generated)
         .build();
 
   }
