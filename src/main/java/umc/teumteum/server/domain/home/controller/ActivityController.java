@@ -52,7 +52,7 @@ public class ActivityController {
   ) {
     // TODO: Redis에서 기존 컨텐츠 확인 후, 채움활동 "AI 추천 컨텐츠" 생성 및 Redis 저장 후 반환 로직 구현
     ActivityResponseDto.AiWishResponse response = activityServiceImpl.getAiWish(user, request);
-    return ApiResponse.of(HomeSuccessStatus._ACTIVITY_LOADED, response);
+    return ApiResponse.of(HomeSuccessStatus._AI_ACTIVITY_LOADED, response);
   }
 
 

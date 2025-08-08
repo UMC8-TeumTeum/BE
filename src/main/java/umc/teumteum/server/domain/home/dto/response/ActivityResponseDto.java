@@ -29,8 +29,8 @@ public class ActivityResponseDto {
   @Schema(description = " ai 위시 추천 응답")
   public static class AiWishResponse {
 
-    @Schema(description = "추천된 위시 목록")
-    private List<AiWishDto> wishes;
+    @Schema(description = "추천된 ai 위시 목록")
+      private List<AiWishDto> aiContents;
   }
 
   @Getter
