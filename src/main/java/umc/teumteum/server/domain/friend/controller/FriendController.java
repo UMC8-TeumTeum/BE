@@ -165,14 +165,14 @@ public class FriendController {
     )
     @GetMapping(value = "/{userId}/todos/public", produces = "application/json")
     public ApiResponse<List<FriendPublicTodoResponseDto>> getDailyPublicTodos(
-            @Parameter(description = "조회할 유저 ID", example = "1")
-            @PathVariable("userId") Long userId,
-
-            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2024-07-12")
-            @RequestParam("date") String date
+            @Parameter(hidden = true) @CurrentUser User loginUser,
+            @Parameter(description = "조회할 유저 ID", example = "1") @PathVariable("userId") Long userId,
+            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2024-07-31") @RequestParam("date") String date
     ) {
-        return ApiResponse.onSuccess(null);
+        List<FriendPublicTodoResponseDto> result = friendService.getDailyPublicTodos(loginUser.getId(), userId, date);
+        return ApiResponse.of(FriendSuccessStatus._GET_FRIEND_PUBLIC_TODO_SUCCESS, result);
     }
+
 
     @Operation(
             summary = "친구의 공개 투두가 있는 날짜(월별) 조회",

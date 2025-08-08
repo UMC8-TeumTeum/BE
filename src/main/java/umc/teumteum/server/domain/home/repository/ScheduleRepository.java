@@ -274,6 +274,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     );
 
 
+
     @Query("""
     SELECT s FROM Schedule s
     WHERE s.user.id = :userId

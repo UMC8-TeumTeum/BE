@@ -25,7 +25,7 @@ public interface FriendService {
 
     List<FriendPublicTodoResponseDto> getRecentPublicTodos(Long loginUserId, Long targetUserId);
 
-    List<FriendPublicTodoResponseDto> getDailyPublicTodos(Long userId, String date);
+    List<FriendPublicTodoResponseDto> getDailyPublicTodos(Long loginUserId, Long targetUserId, String date);
 
     List<String> getTodoDatesOfMonth(Long loginUserId, Long targetUserId, String month);
 
