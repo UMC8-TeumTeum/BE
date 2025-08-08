@@ -1,5 +1,6 @@
 package umc.teumteum.server.domain.auth.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,16 +14,39 @@ public class AuthResponseDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class LoginResponse {
-        private String accessToken;     // 액세스토큰
-        private String refreshToken;    // 리프레시토큰
-        private UserStep nextStep;        // 다음 화면 단계
+        @Schema(description = "틈틈 액세스 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
+        private String accessToken;
+
+        @Schema(description = "틈틈 리프레시 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
+        private String refreshToken;
+
+        @Schema(description = "다음 전환 화면", example = "ONBOARDING")
+        private UserStep nextStep;
     }
+
 
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class DevTokenResponse {
-        private String accessToken;     // 액세스토큰
+        @Schema(description = "개발용 액세스 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
+        private String accessToken;
+
+        @Schema(description = "개발용 리프레시 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
+        private String refreshToken;
+    }
+
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReissueResponse {
+        @Schema(description = "새로운 액세스 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
+        private String accessToken;
+
+        @Schema(description = "새로운 리프레시 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
+        private String refreshToken;
     }
 }

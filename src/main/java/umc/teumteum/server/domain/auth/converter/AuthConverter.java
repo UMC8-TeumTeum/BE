@@ -25,9 +25,18 @@ public class AuthConverter {
                 ;
     }
 
-    public static AuthResponseDTO.DevTokenResponse toDevTokenResponse(String accessToken) {
+    public static AuthResponseDTO.DevTokenResponse toDevTokenResponse(String accessToken, String refreshToken) {
         return AuthResponseDTO.DevTokenResponse.builder()
                 .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build()
+                ;
+    }
+
+    public static AuthResponseDTO.ReissueResponse toReissueResponse(String newAccessToken, String newRefreshToken) {
+        return AuthResponseDTO.ReissueResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
                 .build()
                 ;
     }

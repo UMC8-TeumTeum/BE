@@ -41,9 +41,9 @@ public class RedisConfig {
     return template;
   }
 
-  // RT용 Redis(index 0)
+  // RT 화이트리스트용 Redis(index 0)
   @Bean
-  public RedisTemplate<String, String> rtRedisTemplate() {
+  public RedisTemplate<String, String> rtWhitelistRedisTemplate() {
     return createRedisTemplate(createConnectionFactory(0));
   }
 
@@ -59,4 +59,9 @@ public class RedisConfig {
     return createRedisTemplate(createConnectionFactory(2));
   }
 
+  // AT 블랙리스트용 Redis(index 3)
+  @Bean
+  public RedisTemplate<String, String> atBlacklistRedisTemplate() {
+    return createRedisTemplate(createConnectionFactory(3));
+  }
 }

@@ -20,12 +20,14 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 // URL 접근 권한
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()  // 인증 관련 API 허용
+                        // 소셜 로그인, 토큰 재발급, 개발용 BE 토큰 발급 API 허용
+                        .requestMatchers("/api/auth/social-login/**", "/api/auth/reissue", "/api/auth/dev-token").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()   // Swagger 관련 경로 허용
                         .anyRequest().authenticated()   // 나머지는 인증 필요
                 )
