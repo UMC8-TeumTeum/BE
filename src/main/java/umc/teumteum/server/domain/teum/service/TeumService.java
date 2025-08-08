@@ -7,9 +7,11 @@ import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.global.dto.PagingResponseDto;
 
 import java.util.List;
 
@@ -38,6 +40,8 @@ public interface TeumService {
     AvailableTimeResponseDto getAvailableTime(User user, AvailableTimeRequestDto requestDto);
 
     SharedTeumTimeResponseDto getSharedTeumStats(Long userId, Long friendId);
+
+    PagingResponseDto<SharedTeumListResponseDto> getSharedTeums(Long loginUserId, Long targetUserId, int page, int size);
 
     List<TeumRequestResponseDto> getTeumRequestsByDate(Long userId, String date);
 }

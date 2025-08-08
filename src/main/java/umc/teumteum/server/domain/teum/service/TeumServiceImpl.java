@@ -15,6 +15,7 @@ import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
+import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
@@ -28,6 +29,7 @@ import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 import umc.teumteum.server.global.util.S3Util;
@@ -405,6 +407,38 @@ public class TeumServiceImpl implements TeumService {
                 .sum();
 
         return TeumConverter.toSharedTeumTimeDto(totalMinutes);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagingResponseDto<SharedTeumListResponseDto> getSharedTeums(Long loginUserId, Long targetUserId, int page, int size) {
+        validateNotSelf(loginUserId, targetUserId);
+        validateUserExists(targetUserId);
+
+        // 정렬: date desc, startTime desc
+        Pageable pageable = PageRequest.of(
+                Math.max(page - 1, 0),
+                size,
+                Sort.by(
+                        Sort.Order.desc("date"),
+                        Sort.Order.desc("startTime")
+                )
+        );
+
+        // 스케줄 조회
+        Slice<Schedule> slice = scheduleRepository.findSharedTeumSchedulesPaged(
+                loginUserId,
+                targetUserId,
+                ScheduleType.TEUM,
+                ScheduleStatus.COMPLETED,
+                pageable
+        );
+
+        List<SharedTeumListResponseDto> content = slice.getContent().stream()
+                .map(s -> teumConverter.toSharedTeumListDto(s, loginUserId))
+                .toList();
+
+        return new PagingResponseDto<>(content, slice.hasNext());
     }
 
 

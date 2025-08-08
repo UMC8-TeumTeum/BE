@@ -1,5 +1,7 @@
 package umc.teumteum.server.domain.home.repository;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -271,5 +273,26 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("date") LocalDate date
     );
 
+
+
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.teumRequest.id IN (
+          SELECT sr.teumRequest.id FROM Schedule sr
+          WHERE sr.user.id = :friendId
+            AND sr.type = :type
+            AND sr.status = :status
+      )
+      AND s.type = :type
+      AND s.status = :status
+""")
+    Slice<Schedule> findSharedTeumSchedulesPaged(
+            @Param("userId") Long userId,
+            @Param("friendId") Long friendId,
+            @Param("type") ScheduleType type,
+            @Param("status") ScheduleStatus status,
+            Pageable pageable
+    );
 
 }

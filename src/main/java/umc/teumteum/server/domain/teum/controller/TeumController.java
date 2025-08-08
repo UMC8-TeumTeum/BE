@@ -21,6 +21,7 @@ import umc.teumteum.server.domain.teum.service.TeumService;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
+import umc.teumteum.server.global.dto.PagingResponseDto;
 
 import java.util.List;
 
@@ -221,12 +222,17 @@ public class TeumController {
             summary = "함께한 틈 목록 조회",
             description = "로그인한 사용자와 지정된 친구가 함께 참여한 모든 틈 요청 목록을 반환합니다."
     )
-    @GetMapping(value = "/{userId}/shared", produces = "application/json")
-    public ApiResponse<List<SharedTeumListResponseDto>> getSharedTeums(
-            @Parameter(name = "userId", description = "함께한 틈을 조회할 친구 ID", example = "1")
-            @PathVariable("userId") Long userId
+    @GetMapping("/{userId}/shared")
+    public ApiResponse<PagingResponseDto<SharedTeumListResponseDto>> getSharedTeums(
+            @Parameter(hidden = true) @CurrentUser User loginUser,
+            @Parameter(name = "userId", description = "조회할 친구 ID", example = "2")
+            @PathVariable("userId") Long targetUserId,
+            @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1") int page,
+            @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        return ApiResponse.onSuccess(null);
+        PagingResponseDto<SharedTeumListResponseDto> result = teumService.getSharedTeums(loginUser.getId(), targetUserId, page, size);
+        return ApiResponse.of(TeumSuccessStatus._SHARED_LIST_LOADED, result);
     }
+
 
 }

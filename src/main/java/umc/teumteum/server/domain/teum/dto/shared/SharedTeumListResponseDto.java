@@ -1,5 +1,6 @@
 package umc.teumteum.server.domain.teum.dto.shared;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,14 +13,14 @@ import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(title = "SharedTeumListResponseDto : 공유된 틈 요청 리스트 응답 DTO")
+@Schema(title = "SharedTeumListResponseDto : 함께한 틈 요청 리스트 응답 DTO")
 public class SharedTeumListResponseDto {
-
-    @Schema(description = "틈 ID", example = "1")
-    private Long teumId;
 
     @Schema(description = "제목", example = "string")
     private String title;
+
+    @Schema(description = "설명", example = "string")
+    private String description;
 
     @Schema(description = "요청 날짜", example = "2025-07-15")
     private String date;
@@ -30,6 +31,7 @@ public class SharedTeumListResponseDto {
     @Schema(description = "요청자 정보")
     private ParticipantDto sender;
 
+    @JsonProperty("isSender")
     @Schema(description = "요청자가 나인지 여부", example = "true")
-    private boolean isRequester;
+    private boolean isSender;
 }
