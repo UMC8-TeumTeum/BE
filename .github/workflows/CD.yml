@@ -61,12 +61,12 @@ jobs:
               exit 1
             fi
 
-            docker network inspect app-net > /dev/null 2>&1 || docker network create app-net
-            docker volume  inspect redis-data > /dev/null 2>&1 || docker volume create redis-data
-
             docker rm -f spring-app 2>/dev/null || true
             docker rm -f redis-container 2>/dev/null || true
             docker system prune -af
+
+            docker network inspect app-net > /dev/null 2>&1 || docker network create app-net
+            docker volume inspect redis-data > /dev/null 2>&1 || docker volume create redis-data
 
             docker pull "${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest"
 
@@ -97,17 +97,14 @@ jobs:
 
             docker system df
 
-            echo "디스크 사용량 검사"
             USAGE=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
             if [ "$USAGE" -ge 80 ]; then
-              echo "디스크 사용량 ${USAGE}% - 경고 알림"
               HOST=${{ secrets.APP_EC2_PRIVATE_IP }}
               curl -X POST -H "Content-Type: application/json" \
                 -d "{\"content\": \"EC2 디스크 사용량 경고\\nHOST: ${HOST}\\nUsage: ${USAGE}%\\n→ 디스크 정리 또는 스토리지 확장 필요\"}" \
                 "${{ secrets.DISCORD_WEBHOOK }}"
             fi
             EOF
-      
 
       - name: Notify on Discord(Success)
         if: success()
@@ -116,11 +113,11 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
           args: |
-           서버 배포 성공
+            서버 배포 성공
             • Repo: `${{ github.repository }}`
             • Branch: `${{ github.ref_name }}`
             • Commit: `${{ github.sha }}`
-            • Docker Image: `${{ secrets.DOCKER_USERNAME }}/${{secrets.DOCKER_REPO}}:latest`
+            • Docker Image: `${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest`
             • [View commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
             • [Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
@@ -138,6 +135,3 @@ jobs:
             • [View commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
             • [Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
             → 로그 확인 필요!
-
-
-
