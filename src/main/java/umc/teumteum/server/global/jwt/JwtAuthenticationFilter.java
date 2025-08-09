@@ -1,28 +1,42 @@
 package umc.teumteum.server.global.jwt;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.SecurityException;
+import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
+import umc.teumteum.server.global.exception.InvalidTokenTypeException;
+import umc.teumteum.server.global.exception.TokenBlacklistException;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService userDetailsService;
-    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
+
+    @Resource(name = "atBlacklistRedisTemplate")
+    private RedisTemplate<String, String> atBlacklistRedisTemplate;
 
     // JWT 토큰 검증 및 인증 처리
     @Override
@@ -33,32 +47,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = resolveToken(request);
 
             if (token != null) {
-                // 2. 유효성 검증
-                jwtProvider.validateToken(token);
+                // 2. 액세스 토큰 유효성 검증
+                    jwtProvider.validateAccessToken(token);
 
-                // 3. 토큰에서 사용자 ID 추출
+                // 3. 토큰에서 사용자ID & 세션ID 추출
                 String userId = jwtProvider.getUserIdFromToken(token);
+                String sessionId = jwtProvider.getSessionIdFromToken(token);
 
-                // 4. UserDetails 로드
+                // 4. Redis 블랙리스트 확인 (있으면 -> 재로그인 필요)
+                String blacklistKey = String.format("AT_BLACKLIST:%s:%s", userId, sessionId);
+                if (atBlacklistRedisTemplate.hasKey(blacklistKey)) {
+                    log.error("블랙리스트된 토큰 접근 시도 - userId: {}, sessionId: {}", userId, sessionId);
+                    throw new TokenBlacklistException("블랙리스트된 토큰입니다.");
+                }
+
+                // 5. UserDetails 로드
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
 
-                // 5. Authentication 객체 생성
+                // 6. Authentication 객체 생성
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-                // 6. SecurityContext에 인증 정보 설정
+                // 7. SecurityContext에 인증 정보 설정
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-
-            filterChain.doFilter(request, response);
-
-        }
-        // AuthenticationEntryPoint에서 처리
-        catch (AuthenticationException e) {
-            authenticationEntryPoint.commence(request, response, e);
         } catch (Exception e) {
-            authenticationEntryPoint.commence(request, response, new BadCredentialsException("JWT 처리 중 오류가 발생했습니다.", e));
+            // 발생한 예외에 따라서 적절한 ErrorStatus 지정 (AuthenticationEntryPoint에서 처리)
+            ErrorStatus errorStatus = determineErrorStatus(e);
+            request.setAttribute("errorStatus", errorStatus);
         }
+
+        filterChain.doFilter(request, response);
     }
 
     // Authorization 헤더에서 JWT 토큰 추출
@@ -68,5 +87,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return bearerToken.substring(7);
         }
         return null;
+    }
+
+
+    // 적절한 ErrorStatus 결정
+    private ErrorStatus determineErrorStatus(Exception ex) {
+        return switch (ex) {
+            // 유효하지 않은 토큰 타입(=refresh)에 대한 예외 (커스텀)
+            case InvalidTokenTypeException invalidType -> ErrorStatus.INVALID_TOKEN_TYPE;
+
+            // 유효하지 않은 AT 예외 (커스텀)
+            case TokenBlacklistException blacklist -> ErrorStatus.ACCESS_TOKEN_BLACKLISTED;
+
+            // 사용자 인증 과정 예외
+            case DisabledException disabled -> ErrorStatus.INACTIVE_USER;
+            case UsernameNotFoundException notFound -> ErrorStatus.USER_NOT_FOUND;
+
+            // JWT 토큰 검증 관련 예외
+            case BadCredentialsException badCreds -> {
+                // cause : 실제 원인이 되는 예외
+                Throwable cause = badCreds.getCause();
+                yield switch (cause) {
+                    case SecurityException sec -> ErrorStatus.INVALID_JWT_SIGNATURE;
+                    case MalformedJwtException mal -> ErrorStatus.MALFORMED_JWT_TOKEN;
+                    case ExpiredJwtException exp -> ErrorStatus.EXPIRED_JWT_TOKEN;
+                    case UnsupportedJwtException unsup -> ErrorStatus.UNSUPPORTED_JWT_TOKEN;
+                    case IllegalArgumentException illegal -> ErrorStatus.EMPTY_JWT_CLAIMS;
+                    default -> ErrorStatus._UNAUTHORIZED;
+                };
+            }
+
+            default -> ErrorStatus._UNAUTHORIZED;
+        };
     }
 }

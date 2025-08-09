@@ -7,4 +7,6 @@ public interface AuthService {
     AuthResponseDTO.LoginResponse socialLogin(String socialType, AuthRequestDTO.SocialLoginRequest request);
 
     AuthResponseDTO.DevTokenResponse generateDevAccessToken();
+
+    AuthResponseDTO.ReissueResponse reissueToken(AuthRequestDTO.ReissueRequest request);
 }

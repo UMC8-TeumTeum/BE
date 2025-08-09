@@ -1,16 +1,22 @@
 package umc.teumteum.server.global.jwt;
 
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.stereotype.Component;
-import umc.teumteum.server.global.exception.InvalidTokenTypeException;
+    import io.jsonwebtoken.Claims;
+    import io.jsonwebtoken.ExpiredJwtException;
+    import io.jsonwebtoken.Jwts;
+    import io.jsonwebtoken.MalformedJwtException;
+    import io.jsonwebtoken.SignatureAlgorithm;
+    import io.jsonwebtoken.UnsupportedJwtException;
+    import io.jsonwebtoken.security.Keys;
+    import io.jsonwebtoken.security.SecurityException;
+    import jakarta.annotation.PostConstruct;
+    import org.springframework.beans.factory.annotation.Value;
+    import org.springframework.security.authentication.BadCredentialsException;
+    import org.springframework.stereotype.Component;
+    import umc.teumteum.server.global.exception.InvalidTokenTypeException;
 
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.util.Date;
+    import java.nio.charset.StandardCharsets;
+    import java.security.Key;
+    import java.util.Date;
 
 @Component
 public class JwtProvider {
@@ -32,21 +38,22 @@ public class JwtProvider {
     }
 
     // 액세스 토큰 생성
-    public String generateAccessToken(Long userId) {
-        return generateToken(userId, accessExpirationMs, "ACCESS");
+    public String generateAccessToken(Long userId, String sessionId) {
+        return generateToken(userId, sessionId, accessExpirationMs, "ACCESS");
     }
 
     // 리프레시 토큰 생성
-    public String generateRefreshToken(Long userId) {
-        return generateToken(userId, refreshExpirationMs, "REFRESH");
+    public String generateRefreshToken(Long userId, String sessionId) {
+        return generateToken(userId, sessionId, refreshExpirationMs, "REFRESH");
     }
 
     // 토큰 생성 (타입 구분)
-    private String generateToken(Long userId, long expiration, String tokenType) {
+    private String generateToken(Long userId, String sessionId, long expiration, String tokenType) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
         return Jwts.builder()
                 .setSubject(userId.toString())
+                .claim("sessionId", sessionId)
                 .claim("type", tokenType)   // ACCESS or REFRESH
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
@@ -55,8 +62,18 @@ public class JwtProvider {
                 ;
     }
 
+    // 액세스 토큰 유효성 검사
+    public void validateAccessToken(String token) {
+        validateToken(token, "ACCESS");
+    }
+
+    // 리프레시 토큰 유효성 검사
+    public void validateRefreshToken(String token) {
+        validateToken(token, "REFRESH");
+    }
+
     // 토큰 유효성 검사
-    public void validateToken(String token) {
+    public void validateToken(String token, String expectedType) {
         try {
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(key)
@@ -66,22 +83,22 @@ public class JwtProvider {
                     ;
 
             // 토큰 타입 확인
-            String tokenType = claims.get("type", String.class);
-            if (!("ACCESS".equals(tokenType))) {
-                throw new InvalidTokenTypeException("유효하지 않은 토큰 타입입니다.");
-            }
+                String tokenType = claims.get("type", String.class);
+                if (!(expectedType.equals(tokenType))) {
+                    throw new InvalidTokenTypeException("유효하지 않은 토큰 타입입니다.");
+                }
 
-        } catch (SecurityException e) {
-            throw new BadCredentialsException("유효하지 않은 JWT 서명입니다.", e);
-        } catch (MalformedJwtException e) {
-            throw new BadCredentialsException("손상된 JWT 토큰입니다.", e);
-        } catch (ExpiredJwtException e) {
-            throw new BadCredentialsException("만료된 JWT 토큰입니다.", e);
-        } catch (UnsupportedJwtException e) {
-            throw new BadCredentialsException("지원되지 않는 JWT 토큰입니다.", e);
-        } catch (IllegalArgumentException e) {
-            throw new BadCredentialsException("JWT 클레임이 비어있습니다.", e);
-        }
+            } catch (SecurityException e) {
+                throw new BadCredentialsException("유효하지 않은 JWT 서명입니다.", e);
+            } catch (MalformedJwtException e) {
+                throw new BadCredentialsException("손상된 JWT 토큰입니다.", e);
+            } catch (ExpiredJwtException e) {
+                throw new BadCredentialsException("만료된 JWT 토큰입니다.", e);
+            } catch (UnsupportedJwtException e) {
+                throw new BadCredentialsException("지원되지 않는 JWT 토큰입니다.", e);
+            } catch (IllegalArgumentException e) {
+                throw new BadCredentialsException("JWT 클레임이 비어있습니다.", e);
+            }
     }
 
     // 토큰에서 사용자 ID 추출
@@ -94,5 +111,17 @@ public class JwtProvider {
                 ;
 
         return claims.getSubject();
+    }
+
+    // 토큰에서 sessionId 추출
+    public String getSessionIdFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                ;
+
+        return claims.get("sessionId", String.class);
     }
 }

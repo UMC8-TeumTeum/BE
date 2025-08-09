@@ -19,10 +19,10 @@ public class InfraRedisServiceImpl implements InfraRedisService {
   public InfraRedisServiceImpl(
       @Qualifier("notificationRedisTemplate") RedisTemplate<String, String> notifiactionRedisTemplate,
       @Qualifier("aiContentsRedisTemplate") RedisTemplate<String, String> aiContentsRedisTemplate,
-      @Qualifier("rtRedisTemplate") RedisTemplate<String, String> rtRedisTemplate) {
+      @Qualifier("rtWhitelistRedisTemplate") RedisTemplate<String, String> rtWhitelistRedisTemplate) {
     this.notifiactionRedisTemplate = notifiactionRedisTemplate;
     this.aiContentsRedisTemplate = aiContentsRedisTemplate;
-    this.rtRedisTemplate = rtRedisTemplate;
+    this.rtRedisTemplate = rtWhitelistRedisTemplate;
   }
 
 

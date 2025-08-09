@@ -50,9 +50,10 @@ public class AuthController {
     )
     @PostMapping(value = "/reissue", produces = "application/json")
     public ApiResponse<Object> reissueToken(
+            @Valid @RequestBody AuthRequestDTO.ReissueRequest request
     ) {
-        // TODO: 토큰 재발급 로직 구현
-        return null;
+        AuthResponseDTO.ReissueResponse response = authService.reissueToken(request);
+        return ApiResponse.of(AuthSuccessStatus.TOKEN_REISSUE_SUCCESS, response);
     }
 
 
