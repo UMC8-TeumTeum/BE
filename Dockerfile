@@ -1,7 +1,10 @@
 FROM openjdk:21-jdk-slim
-ARG JAR_FILE=build/libs/*-SNAPSHOT.jar
-COPY ${JAR_FILE} app.jar
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod 755 /entrypoint.sh
 
+RUN addgroup --system app && adduser --system --ingroup app app
+
+ARG JAR_FILE=build/libs/*.jar
+COPY ${JAR_FILE} /app.jar
+COPY --chmod=755 entrypoint.sh /entrypoint.sh
+
+USER app
 ENTRYPOINT ["/entrypoint.sh"]
