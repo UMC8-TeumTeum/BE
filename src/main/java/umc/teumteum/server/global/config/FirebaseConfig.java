@@ -28,31 +28,23 @@ public class FirebaseConfig {
   public void initializeFirebase() throws IOException {
     if (FirebaseApp.getApps().isEmpty()) {
       FirebaseOptions options;
-
       if ("prod".equals(activeProfile)) {
-        String base64 = System.getenv("FIREBASE_CREDENTIALS_BASE64");
-        if (base64 == null || base64.isBlank()) {
-          throw new IllegalStateException("FIREBASE_CREDENTIALS_BASE64 is not set");
+        String path = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
+        if (path == null || path.isBlank()) {
+          throw new IllegalStateException("GOOGLE_APPLICATION_CREDENTIALS is not set");
         }
-
-        byte[] decoded = Base64.getDecoder().decode(base64);
-
-        File temp = new File("config/firebase-adminsdk.json");
-        temp.getParentFile().mkdirs();
-        try (FileOutputStream fos = new FileOutputStream(temp)) {
-          fos.write(decoded);
+        try (FileInputStream in = new FileInputStream(path)) {
+          options = FirebaseOptions.builder()
+              .setCredentials(GoogleCredentials.fromStream(in))
+              .build();
         }
-
-        options = FirebaseOptions.builder()
-            .setCredentials(GoogleCredentials.fromStream(new FileInputStream(temp)))
-            .build();
       } else {
-        FileInputStream account = new FileInputStream(firebaseConfigPath);
-        options = FirebaseOptions.builder()
-            .setCredentials(GoogleCredentials.fromStream(account))
-            .build();
+        try (FileInputStream in = new FileInputStream(firebaseConfigPath)) {
+          options = FirebaseOptions.builder()
+              .setCredentials(GoogleCredentials.fromStream(in))
+              .build();
+        }
       }
-
       FirebaseApp.initializeApp(options);
     }
   }

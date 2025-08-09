@@ -4,9 +4,10 @@ RUN addgroup --system app && adduser --system --ingroup app app
 
 WORKDIR /home/app
 
-ARG JAR_FILE=build/libs/*.jar
-COPY ${JAR_FILE} app.jar
+COPY build/libs/*.jar app.jar
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
+RUN mkdir -p /home/app/config && chown -R app:app /home/app
 
 USER app
 ENTRYPOINT ["/entrypoint.sh"]
+
