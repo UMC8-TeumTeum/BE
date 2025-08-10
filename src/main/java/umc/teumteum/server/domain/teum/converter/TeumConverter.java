@@ -20,7 +20,6 @@ import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -28,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -71,7 +71,7 @@ public class TeumConverter {
                 .toList();
     }
 
-    public TeumReceivedResponseDto toReceivedResponseDto(TeumResponse response, S3Util s3Util) {
+    public TeumReceivedResponseDto toReceivedResponseDto(TeumResponse response, String senderProfileImageUrl) {
         TeumRequest request = response.getTeumRequest();
         User sender = request.getUser();
 
@@ -86,8 +86,7 @@ public class TeumConverter {
                 .senderUser(ParticipantDto.builder()
                         .userId(sender.getId())
                         .nickname(sender.getNickname())
-                        .profileImageUrl(s3Util.toPresignedUrl("profile/" + sender.getProfileImageName(),
-                            Duration.ofMinutes(30)))
+                        .profileImageUrl(senderProfileImageUrl)
                         .build())
                 .date(request.getDate().toString())
                 .timeSlot(TimeSlot.builder()
@@ -97,12 +96,6 @@ public class TeumConverter {
                 .build();
     }
 
-
-    public List<TeumReceivedResponseDto> toReceivedResponseDtoList(List<TeumResponse> responses, S3Util s3Util) {
-        return responses.stream()
-                .map(response -> toReceivedResponseDto(response, s3Util))
-                .toList();
-    }
 
     public TeumRequest toResendTeumRequest(TeumRequest parent, TeumResendRequestDto dto, User resender) {
         return TeumRequest.builder()
@@ -259,7 +252,7 @@ public class TeumConverter {
     public ScheduledTeumDetailResponseDto toScheduledTeumDetailDto(
             Schedule baseSchedule,
             List<Schedule> relatedSchedules,
-            S3Util s3Util
+            Map<Long, String> profileUrlByUserId
     ) {
         return ScheduledTeumDetailResponseDto.builder()
                 .teumId(baseSchedule.getTeumRequest().getId())
@@ -271,8 +264,7 @@ public class TeumConverter {
                 .participants(relatedSchedules.stream()
                         .map(s -> {
                             var u = s.getUser();
-                            String presignedUrl = s3Util.toPresignedUrl("profile/" + u.getProfileImageName(), Duration.ofMinutes(30));
-                            return new ParticipantDto(u.getId(), u.getNickname(), presignedUrl);
+                            return new ParticipantDto(u.getId(), u.getNickname(), profileUrlByUserId.get(u.getId()));
                         })
                         .collect(Collectors.toList()))
                 .build();
@@ -307,31 +299,30 @@ public class TeumConverter {
     public TeumRequestResponseDto toTeumRequestResponseDto(
             TeumRequest request,
             boolean isCancelled,
-            boolean isResend
+            boolean isResend,
+            Map<Long, String> profileUrlByUserId
     ) {
-        // 시간 정보 구성
         TimeSlot timeSlot = new TimeSlot(
                 request.getStartTime().toString(),
                 timeUtil.parseAndFormatEndTime(request.getEndTime())
         );
 
-        // 요청자 정보 생성
-        ParticipantDto requester = toParticipantDto(request.getUser());
+        ParticipantDto requester = toParticipantDto(request.getUser(),
+                profileUrlByUserId.get(request.getUser().getId()));
 
-        // 응답자 상태별 분류
         List<ParticipantDto> pending = new ArrayList<>();
         List<ParticipantDto> accepted = new ArrayList<>();
         List<ParticipantDto> cancelled = new ArrayList<>();
         List<ParticipantDto> resend = new ArrayList<>();
 
         for (TeumResponse response : request.getTeumResponses()) {
-            ParticipantDto participant = toParticipantDto(response.getReceiverUser());
+            ParticipantDto participant = toParticipantDto(response.getReceiverUser(),
+                    profileUrlByUserId.get(response.getReceiverUser().getId()));
 
-            // 응답 상태에 따라 분류
             switch (response.getStatus()) {
                 case PENDING -> pending.add(participant);
                 case ACCEPTED -> accepted.add(participant);
-                case REJECTED, LEFT -> cancelled.add(participant);  // 거절과 취소는 모두 취소 처리
+                case REJECTED, LEFT -> cancelled.add(participant);
                 case RESEND -> resend.add(participant);
             }
         }
@@ -353,7 +344,7 @@ public class TeumConverter {
     }
 
 
-    public SharedTeumListResponseDto toSharedTeumListDto(Schedule schedule, Long loginUserId) {
+    public SharedTeumListResponseDto toSharedTeumListDto(Schedule schedule, Long loginUserId, String senderProfileImageUrl) {
         TeumRequest request = schedule.getTeumRequest();
         User sender = request.getUser();
 
@@ -365,22 +356,17 @@ public class TeumConverter {
                         schedule.getStartTime().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")),
                         timeUtil.parseAndFormatEndTime(schedule.getEndTime().toLocalTime())
                 ))
-                .sender(toParticipantDto(sender))
+                .sender(toParticipantDto(sender, senderProfileImageUrl))
                 .isSender(sender.getId().equals(loginUserId))
                 .build();
     }
 
 
-    private ParticipantDto toParticipantDto(User user) {
-        String presignedUrl = s3Util.toPresignedUrl(
-                "profile/" + user.getProfileImageName(),
-                Duration.ofMinutes(30)
-        );
-
+    private ParticipantDto toParticipantDto(User user, String profileImageUrl) {
         return ParticipantDto.builder()
                 .userId(user.getId())
                 .nickname(user.getNickname())
-                .profileImageUrl(presignedUrl)
+                .profileImageUrl(profileImageUrl)
                 .build();
     }
 

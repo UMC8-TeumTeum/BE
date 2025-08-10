@@ -38,6 +38,7 @@ import umc.teumteum.server.global.validator.ConflictValidator;
 
 import java.time.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -144,7 +145,13 @@ public class TeumServiceImpl implements TeumService {
         );
 
         List<TeumReceivedResponseDto> dtoList = pageData.getContent().stream()
-                .map(response -> teumConverter.toReceivedResponseDto(response, s3Util))
+                .map(response -> {
+                    User sender = response.getTeumRequest().getUser();
+                    String url = (sender == null || sender.getProfileImageName() == null)
+                            ? null
+                            : s3Util.toPresignedUrl("profile/" + sender.getProfileImageName(), Duration.ofMinutes(30));
+                    return teumConverter.toReceivedResponseDto(response, url);
+                })
                 .toList();
 
         return new PageImpl<>(dtoList, pageable, pageData.getTotalElements());
@@ -280,7 +287,17 @@ public class TeumServiceImpl implements TeumService {
                 List.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED)
         );
 
-        return teumConverter.toScheduledTeumDetailDto(schedule, relatedSchedules, s3Util);
+        Map<Long, String> profileUrlByUserId = relatedSchedules.stream()
+                .map(Schedule::getUser)
+                .collect(Collectors.toMap(
+                        User::getId,
+                        u -> (u == null || u.getProfileImageName() == null)
+                                ? null
+                                : s3Util.toPresignedUrl("profile/" + u.getProfileImageName(), Duration.ofMinutes(30)),
+                        (a, b) -> a
+                ));
+
+        return teumConverter.toScheduledTeumDetailDto(schedule, relatedSchedules, profileUrlByUserId);
     }
 
     @Override
@@ -435,7 +452,13 @@ public class TeumServiceImpl implements TeumService {
         );
 
         List<SharedTeumListResponseDto> content = slice.getContent().stream()
-                .map(s -> teumConverter.toSharedTeumListDto(s, loginUserId))
+                .map(s -> {
+                    User sender = s.getTeumRequest().getUser();
+                    String url = (sender == null || sender.getProfileImageName() == null)
+                            ? null
+                            : s3Util.toPresignedUrl("profile/" + sender.getProfileImageName(), Duration.ofMinutes(30));
+                    return teumConverter.toSharedTeumListDto(s, loginUserId, url);
+                })
                 .toList();
 
         return new PagingResponseDto<>(content, slice.hasNext());
@@ -457,11 +480,27 @@ public class TeumServiceImpl implements TeumService {
                     // 약속 취소 여부 판단
                     boolean isCancelled = isTeumCancelled(req);
 
+                    // 요청자 + 응답자 전원의 URL 맵 구성
+                    Map<Long, String> urlMap = new HashMap<>();
+                    User requester = req.getUser();
+                    if (requester != null && requester.getProfileImageName() != null) {
+                        urlMap.put(requester.getId(),
+                                s3Util.toPresignedUrl("profile/" + requester.getProfileImageName(), Duration.ofMinutes(30)));
+                    }
+                    req.getTeumResponses().forEach(r -> {
+                        User recv = r.getReceiverUser();
+                        if (recv != null && recv.getProfileImageName() != null) {
+                            urlMap.putIfAbsent(recv.getId(),
+                                    s3Util.toPresignedUrl("profile/" + recv.getProfileImageName(), Duration.ofMinutes(30)));
+                        }
+                    });
+
                     // DTO로 변환
-                    return teumConverter.toTeumRequestResponseDto(req, isCancelled, isResend);
+                    return teumConverter.toTeumRequestResponseDto(req, isCancelled, isResend, urlMap);
                 })
                 .toList();
     }
+
 
     // 사용자가 해당 요청의 요청자 또는 응답자인지 여부
     private boolean isParticipant(TeumRequest req, Long userId) {
