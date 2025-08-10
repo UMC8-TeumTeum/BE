@@ -9,10 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.converter.ScheduleConverter;
 import umc.teumteum.server.domain.home.converter.WishConverter;
-import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
-import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
-import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDto;
-import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
+import umc.teumteum.server.domain.home.dto.request.*;
 import umc.teumteum.server.domain.home.dto.response.*;
 import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Schedule;
@@ -696,5 +693,26 @@ public class HomeServiceImpl implements HomeService {
 
         return HomeResponseDto.ReminderDto.builder()
                 .reminders(response).build();
+    }
+
+    @Transactional
+    @Override
+    public void updateAlarm(HomeRequestDto.AlarmDto dto) {
+        // 리마인드 알림 정보 변경
+        Long scheduleId = dto.getTodoId();
+        AlarmStatus alarmStatus = dto.getAlarmStatus();
+
+        if (scheduleId < 0) {
+            // 1. 미래의 반복일정은 수정할 수 없음
+            throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
+        }
+
+        // 2. 스케줄 알림 테이블 조회
+        List<ScheduleReminder> reminders = scheduleReminderRepository.findByScheduleId(scheduleId);
+        System.out.println("reminders = " + reminders);
+        // 3. 필드 업데이트
+        for(ScheduleReminder reminder : reminders){
+            reminder.updateStatus(alarmStatus);
+        }
     }
 }

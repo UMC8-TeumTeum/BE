@@ -30,4 +30,11 @@ public class ScheduleReminder extends BaseEntity {
     @Column(name = "alarm_status", nullable = false)
     @Enumerated(EnumType.STRING)
     private AlarmStatus alarmStatus = AlarmStatus.INACTIVE;
+
+    /**
+     *  필드 변경 메소드
+     */
+    public void updateStatus(AlarmStatus alarmStatus) {
+        this.alarmStatus = alarmStatus;
+    }
 }

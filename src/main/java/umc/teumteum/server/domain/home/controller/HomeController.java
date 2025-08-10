@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.home.dto.request.HomeRequestDto;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
 import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
 import umc.teumteum.server.domain.home.dto.response.TodoIdResponseDto;
@@ -75,7 +76,7 @@ public class HomeController {
 
     @PostMapping(value = "/todo",consumes = "application/json", produces = "application/json")
     @Operation(summary = "투두 등록 API",description = "새로운 투두를 등록 API입니다.")
-    public ApiResponse<TodoIdResponseDto> createTodo(
+    public ApiResponse<TodoIdResponseDto> updateAlarm(
             @RequestBody @Valid TodoRequestDto request,
             @CurrentUser @Parameter(hidden = true) User user){
         TodoIdResponseDto response = homeService.createTodo(request, user);
@@ -107,4 +108,13 @@ public class HomeController {
         homeService.deleteTodo(todoId);
         return  ApiResponse.of(HomeSuccessStatus._TODO_DELETED,null);
     }
+
+    @PatchMapping(value = "/alarm",consumes = "application/json", produces = "application/json")
+    @Operation(summary = "리마인드 알림 변경 API",description = "리마인드 알림 상태를 변경하는 API입니다.")
+    public ApiResponse<String> updateAlarm(
+            @RequestBody @Valid HomeRequestDto.AlarmDto request){
+        homeService.updateAlarm(request);
+        return ApiResponse.of(HomeSuccessStatus._ALARM_UPDATED,null);
+    }
+
 }
