@@ -152,7 +152,7 @@ public class TeumServiceImpl implements TeumService {
         List<TeumReceivedResponseDto> dtoList = pageData.getContent().stream()
                 .map(response -> {
                     User sender = response.getTeumRequest().getUser();
-                    String url = toProfileUrl(sender); // CHANGED: 헬퍼 사용
+                    String url = toProfileUrl(sender);
                     return teumConverter.toReceivedResponseDto(response, url);
                 })
                 .toList();

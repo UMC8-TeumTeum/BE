@@ -302,19 +302,23 @@ public class TeumConverter {
             boolean isResend,
             Map<Long, String> profileUrlByUserId
     ) {
+        // 요청 시간 정보를 TimeSlot 객체로 변환
         TimeSlot timeSlot = new TimeSlot(
                 request.getStartTime().toString(),
                 timeUtil.parseAndFormatEndTime(request.getEndTime())
         );
 
+        // 요청자 정보를 ParticipantDto로 변환
         ParticipantDto requester = toParticipantDto(request.getUser(),
                 profileUrlByUserId.get(request.getUser().getId()));
 
+        // 응답 상태별 참가자 리스트 초기화
         List<ParticipantDto> pending = new ArrayList<>();
         List<ParticipantDto> accepted = new ArrayList<>();
         List<ParticipantDto> cancelled = new ArrayList<>();
         List<ParticipantDto> resend = new ArrayList<>();
 
+        // 각 응답 상태에 맞게 수신자 분류
         for (TeumResponse response : request.getTeumResponses()) {
             ParticipantDto participant = toParticipantDto(response.getReceiverUser(),
                     profileUrlByUserId.get(response.getReceiverUser().getId()));
@@ -362,6 +366,7 @@ public class TeumConverter {
     }
 
 
+    // User 객체와 프로필 이미지 URL을 이용해 ParticipantDto를 생성
     private ParticipantDto toParticipantDto(User user, String profileImageUrl) {
         return ParticipantDto.builder()
                 .userId(user.getId())
