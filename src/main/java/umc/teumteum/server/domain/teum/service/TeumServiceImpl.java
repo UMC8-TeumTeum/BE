@@ -54,6 +54,11 @@ public class TeumServiceImpl implements TeumService {
     private final TeumConverter teumConverter;
     private final TimeUtil timeUtil;
 
+    private String toProfileUrl(User user) {
+        if (user == null || user.getProfileImageName() == null) return null;
+        return s3Util.toPresignedUrl("profile/" + user.getProfileImageName(), Duration.ofMinutes(30));
+    }
+
     @Override
     @Transactional
     public Long createRequest(TeumRequestDto dto, User user) {
@@ -147,9 +152,7 @@ public class TeumServiceImpl implements TeumService {
         List<TeumReceivedResponseDto> dtoList = pageData.getContent().stream()
                 .map(response -> {
                     User sender = response.getTeumRequest().getUser();
-                    String url = (sender == null || sender.getProfileImageName() == null)
-                            ? null
-                            : s3Util.toPresignedUrl("profile/" + sender.getProfileImageName(), Duration.ofMinutes(30));
+                    String url = toProfileUrl(sender); // CHANGED: 헬퍼 사용
                     return teumConverter.toReceivedResponseDto(response, url);
                 })
                 .toList();
@@ -291,9 +294,7 @@ public class TeumServiceImpl implements TeumService {
                 .map(Schedule::getUser)
                 .collect(Collectors.toMap(
                         User::getId,
-                        u -> (u == null || u.getProfileImageName() == null)
-                                ? null
-                                : s3Util.toPresignedUrl("profile/" + u.getProfileImageName(), Duration.ofMinutes(30)),
+                        this::toProfileUrl,
                         (a, b) -> a
                 ));
 
@@ -454,9 +455,7 @@ public class TeumServiceImpl implements TeumService {
         List<SharedTeumListResponseDto> content = slice.getContent().stream()
                 .map(s -> {
                     User sender = s.getTeumRequest().getUser();
-                    String url = (sender == null || sender.getProfileImageName() == null)
-                            ? null
-                            : s3Util.toPresignedUrl("profile/" + sender.getProfileImageName(), Duration.ofMinutes(30));
+                    String url = toProfileUrl(sender);
                     return teumConverter.toSharedTeumListDto(s, loginUserId, url);
                 })
                 .toList();
@@ -483,16 +482,11 @@ public class TeumServiceImpl implements TeumService {
                     // 요청자 + 응답자 전원의 URL 맵 구성
                     Map<Long, String> urlMap = new HashMap<>();
                     User requester = req.getUser();
-                    if (requester != null && requester.getProfileImageName() != null) {
-                        urlMap.put(requester.getId(),
-                                s3Util.toPresignedUrl("profile/" + requester.getProfileImageName(), Duration.ofMinutes(30)));
-                    }
+                    urlMap.put(requester.getId(), toProfileUrl(requester));
+
                     req.getTeumResponses().forEach(r -> {
                         User recv = r.getReceiverUser();
-                        if (recv != null && recv.getProfileImageName() != null) {
-                            urlMap.putIfAbsent(recv.getId(),
-                                    s3Util.toPresignedUrl("profile/" + recv.getProfileImageName(), Duration.ofMinutes(30)));
-                        }
+                        urlMap.putIfAbsent(recv.getId(), toProfileUrl(recv));
                     });
 
                     // DTO로 변환
