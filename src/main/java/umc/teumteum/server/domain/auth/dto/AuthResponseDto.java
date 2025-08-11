@@ -7,12 +7,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
 
-public class AuthResponseDTO {
+public class AuthResponseDto {
 
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(description = "인증 - 소셜 로그인 Response")
     public static class LoginResponse {
         @Schema(description = "틈틈 액세스 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
         private String accessToken;
@@ -29,6 +30,7 @@ public class AuthResponseDTO {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(description = "인증 - 개발용 액세스 토큰 발급 Response")
     public static class DevTokenResponse {
         @Schema(description = "개발용 액세스 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
         private String accessToken;
@@ -42,6 +44,7 @@ public class AuthResponseDTO {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(description = "인증 - 토큰 재발급 Response")
     public static class ReissueResponse {
         @Schema(description = "새로운 액세스 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
         private String accessToken;

@@ -6,14 +6,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
-import umc.teumteum.server.domain.auth.dto.AuthRequestDTO;
-import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
+import umc.teumteum.server.domain.auth.dto.AuthRequestDto;
+import umc.teumteum.server.domain.auth.dto.AuthResponseDto;
 import umc.teumteum.server.domain.auth.exception.status.AuthSuccessStatus;
 import umc.teumteum.server.domain.auth.service.AuthService;
-import umc.teumteum.server.domain.user.entity.User;
-import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 @Tag(name = "Auth", description = "인증 관련 API")
@@ -29,16 +26,16 @@ public class AuthController {
             description = "카카오, 네이버에 대한 소셜 플랫폼을 통한 로그인을 처리합니다."
     )
     @PostMapping(value = "/social-login/{socialType}", produces = "application/json")
-    public ApiResponse<AuthResponseDTO.LoginResponse> socialLogin(
+    public ApiResponse<AuthResponseDto.LoginResponse> socialLogin(
             @Parameter(
                     description = "소셜 로그인 타입 (naver 또는 kakao)",
                     required = true,
                     schema = @Schema(type = "string", allowableValues = {"naver", "kakao"}, example = "kakao")
             )
             @PathVariable("socialType") String socialType,
-            @Valid @RequestBody AuthRequestDTO.SocialLoginRequest request
+            @Valid @RequestBody AuthRequestDto.SocialLoginRequest request
             ) {
-        AuthResponseDTO.LoginResponse response = authService.socialLogin(socialType, request);
+        AuthResponseDto.LoginResponse response = authService.socialLogin(socialType, request);
 
         return ApiResponse.of(AuthSuccessStatus.SOCIAL_LOGIN_SUCCESS, response);
     }
@@ -50,9 +47,9 @@ public class AuthController {
     )
     @PostMapping(value = "/reissue", produces = "application/json")
     public ApiResponse<Object> reissueToken(
-            @Valid @RequestBody AuthRequestDTO.ReissueRequest request
+            @Valid @RequestBody AuthRequestDto.ReissueRequest request
     ) {
-        AuthResponseDTO.ReissueResponse response = authService.reissueToken(request);
+        AuthResponseDto.ReissueResponse response = authService.reissueToken(request);
         return ApiResponse.of(AuthSuccessStatus.TOKEN_REISSUE_SUCCESS, response);
     }
 

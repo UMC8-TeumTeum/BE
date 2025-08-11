@@ -13,8 +13,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.auth.converter.AuthConverter;
-import umc.teumteum.server.domain.auth.dto.AuthRequestDTO;
-import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
+import umc.teumteum.server.domain.auth.dto.AuthRequestDto;
+import umc.teumteum.server.domain.auth.dto.AuthResponseDto;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.auth.exception.AuthHandler;
 import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
@@ -64,7 +64,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public AuthResponseDTO.LoginResponse socialLogin(String socialType, AuthRequestDTO.SocialLoginRequest request) {
+    public AuthResponseDto.LoginResponse socialLogin(String socialType, AuthRequestDto.SocialLoginRequest request) {
         // 1. 소셜 로그인 - 사용자 정보 불러오기
         OAuthUserInfo userInfo = getUserInfo(SocialType.valueOf(socialType.toUpperCase()), request.getAccessToken());
 
@@ -124,7 +124,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public AuthResponseDTO.DevTokenResponse generateDevAccessToken() {
+    public AuthResponseDto.DevTokenResponse generateDevAccessToken() {
         // 1. 더미 사용자 조회 (없으면 생성)
         User masterUser = userService.createDevUser();
 
@@ -144,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
 
 
     @Override
-    public AuthResponseDTO.ReissueResponse reissueToken(AuthRequestDTO.ReissueRequest request) {
+    public AuthResponseDto.ReissueResponse reissueToken(AuthRequestDto.ReissueRequest request) {
         String refreshKey = null;
 
         try {

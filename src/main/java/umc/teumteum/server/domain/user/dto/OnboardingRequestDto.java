@@ -15,11 +15,11 @@ import java.util.List;
 
 public class OnboardingRequestDto {
 
-    // 온보딩 - 약관 동의
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(description = "온보딩 - 약관 동의 Request")
     public static class AgreeRequest {
 
         @NotNull(message = "서비스 이용약관 동의 여부를 입력해야 합니다")
@@ -40,11 +40,11 @@ public class OnboardingRequestDto {
     }
 
 
-    // 온보딩 - 닉네임 & 분야/직종
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(description = "온보딩 - 닉네임 & 분야/직종 Request")
     public static class NicknameJobRequest {
 
         @NotBlank(message = "닉네임은 필수 입력입니다")
@@ -60,11 +60,11 @@ public class OnboardingRequestDto {
     }
 
 
-    // 온보딩 - 프로필 이미지 업로드용 URl 발급
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(description = "온보딩 - 프로필 이미지 업로드용 URl 발급 Request")
     public static class ProfileImagePresignedUrlRequest {
 
         @NotBlank(message = "파일의 MIME 타입은 필수 입력입니다")
@@ -73,11 +73,11 @@ public class OnboardingRequestDto {
     }
 
 
-    // 온보딩 - 프로필 이미지
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(description = "온보딩 - 프로필 이미지 Request")
     public static class ProfileImageRequest {
 
         @NotBlank(message = "파일 이름은 필수 입력입니다")
@@ -86,11 +86,11 @@ public class OnboardingRequestDto {
     }
 
 
-    // 온보딩 - 수면패턴
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(description = "온보딩 - 수면패턴 Request")
     public static class SleepPatternRequest {
 
         @NotNull(message = "취침 시간은 필수 입력입니다")
@@ -105,11 +105,11 @@ public class OnboardingRequestDto {
     }
 
 
-    // 온보딩 - 반복 일정
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(description = "온보딩 - 반복 일정 Request")
     public static class RoutineListRequest {
 
         @NotEmpty(message = "최소 1개 이상의 반복 일정이 필요합니다")
@@ -119,11 +119,11 @@ public class OnboardingRequestDto {
     }
 
 
-    // 온보딩 - 반복 일정 세부
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(description = "온보딩 - 반복 일정 세부")
     public static class RoutineDTO {
 
         @NotBlank(message = "제목은 필수 입력입니다")
@@ -151,11 +151,11 @@ public class OnboardingRequestDto {
     }
 
 
-    // 온보딩 - 리마인드 알림
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(description = "온보딩 - 리마인드 알림 Request")
     public static class RemindAlarmList {
 
         @NotNull(message = "리마인드 알림 설정은 필수 입력입니다 (빈 배열 가능)")
