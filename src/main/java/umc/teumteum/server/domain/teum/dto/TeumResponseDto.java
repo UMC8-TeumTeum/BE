@@ -16,37 +16,6 @@ import java.util.List;
 
 public class TeumResponseDto {
 
-    @Builder
-    @Getter
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class TeumParticipant {
-
-        @Schema(description = "수신자 ID", example = "1")
-        private Long userId;
-
-        @Schema(description = "수신자 닉네임", example = "틈틈")
-        private String nickname;
-
-        @Schema(description = "수신자 프로필 이미지 URL", example = "https://example.com/profile.jpg")
-        private String profileImageUrl;
-    }
-
-
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Schema(title = "TeumTimeSlot : 가능한 시간 구간")
-    public static class TeumTimeSlot {
-
-        @Schema(description = "시작 시간", example = "14:00")
-        private String start;
-
-        @Schema(description = "종료 시간", example = "15:00")
-        private String end;
-    }
-
 
     @Getter
     @Builder
@@ -201,7 +170,7 @@ public class TeumResponseDto {
         private boolean isRead;
 
         @Schema(description = "보낸 사용자 정보")
-        private TeumParticipant senderUser;
+        private ParticipantDto senderUser;
 
         @Schema(description = "수신자 총 인원 수 (본인 포함)", example = "1")
         private int receiverCount;
@@ -232,11 +201,11 @@ public class TeumResponseDto {
         @Schema(description = "요청 날짜", example = "2025-08-04")
         private LocalDate date;
 
-        @Schema(description = "시간 정보 (시작/종료)", implementation = TeumTimeSlot.class)
-        private TeumTimeSlot timeSlot;
+        @Schema(description = "시간 정보 (시작/종료)", implementation = TimeSlot.class)
+        private TimeSlot timeSlot;
 
-        @Schema(description = "요청자 정보", implementation = TeumParticipant.class)
-        private TeumParticipant requester;
+        @Schema(description = "요청자 정보", implementation = ParticipantDto.class)
+        private ParticipantDto requester;
 
         @JsonProperty("isResend")
         @Schema(description = "재요청 여부", example = "false")

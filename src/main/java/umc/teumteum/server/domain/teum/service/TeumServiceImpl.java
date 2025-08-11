@@ -128,7 +128,7 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, int page, int size) {
+    public Page<TeumResponseDto.TeumReceived> getReceivedRequests(Long userId, int page, int size) {
         getUserOrThrow(userId);
 
         int pageIndex = Math.max(page - 1, 0);
@@ -144,7 +144,7 @@ public class TeumServiceImpl implements TeumService {
                 userId, LocalDate.now(), LocalTime.now(), pageable
         );
 
-        List<TeumReceivedResponseDto> dtoList = pageData.getContent().stream()
+        List<TeumResponseDto.TeumReceived> dtoList = pageData.getContent().stream()
                 .map(response -> {
                     User sender = response.getTeumRequest().getUser();
                     String url = toProfileUrl(sender);

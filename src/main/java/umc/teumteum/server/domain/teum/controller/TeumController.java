@@ -61,12 +61,12 @@ public class TeumController {
             description = "현재 로그인 사용자가 응답자로 지정된 틈 요청 중, 아직 응답하지 않았고 요청 시간이 지나지 않은 요청 목록을 조회합니다."
     )
     @GetMapping("/request/received")
-    public ApiResponse<Page<TeumReceivedResponseDto>> getReceivedTeumRequests(
+    public ApiResponse<Page<TeumResponseDto.TeumReceived>> getReceivedTeumRequests(
             @Parameter(hidden = true) @CurrentUser User user,
             @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        Page<TeumReceivedResponseDto> responses = teumService.getReceivedRequests(user.getId(), page, size);
+        Page<TeumResponseDto.TeumReceived> responses = teumService.getReceivedRequests(user.getId(), page, size);
         return ApiResponse.of(TeumSuccessStatus._TEUM_RECEIVED_LIST_LOADED, responses);
     }
 

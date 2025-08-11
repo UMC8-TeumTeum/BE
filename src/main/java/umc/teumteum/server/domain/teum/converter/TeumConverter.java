@@ -69,11 +69,11 @@ public class TeumConverter {
                 .toList();
     }
 
-    public TeumReceivedResponseDto toReceivedResponseDto(TeumResponse response, String senderProfileImageUrl) {
+    public TeumResponseDto.TeumReceived toReceivedResponseDto(TeumResponse response, String senderProfileImageUrl) {
         TeumRequest request = response.getTeumRequest();
         User sender = request.getUser();
 
-        return TeumReceivedResponseDto.builder()
+        return TeumResponseDto.TeumReceived.builder()
                 .responseId(response.getId())
                 .requestId(request.getId())
                 .title(request.getTitle())
