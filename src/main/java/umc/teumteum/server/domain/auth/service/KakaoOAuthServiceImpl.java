@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -17,7 +18,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class KakaoOAuthServiceImpl implements KakaoOAuthService {
+public class KakaoOAuthServiceImpl implements OAuthService {
 
     private final RestTemplate restTemplate;
 

@@ -38,8 +38,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final KakaoOAuthService kakaoOAuthService;
-    private final NaverOAuthService naverOAuthService;
+    @Resource(name = "kakaoOAuthServiceImpl") private OAuthService kakaoOAuthService;
+    @Resource(name = "naverOAuthServiceImpl") private OAuthService naverOAuthService;
     private final UserService userService;
 
     private final JwtProvider jwtProvider;
@@ -47,13 +47,8 @@ public class AuthServiceImpl implements AuthService {
 
     private final RoutineRepository routineRepository;
     private final ScheduleRepository scheduleRepository;
-
-    @Resource(name = "rtWhitelistRedisTemplate")
-    private RedisTemplate<String, String> rtWhitelistRedisTemplate;
-
-    @Resource(name = "atBlacklistRedisTemplate")
-    private RedisTemplate<String, String> atBlacklistRedisTemplate;
-
+    @Resource(name = "rtWhitelistRedisTemplate") private RedisTemplate<String, String> rtWhitelistRedisTemplate;
+    @Resource(name = "atBlacklistRedisTemplate") private RedisTemplate<String, String> atBlacklistRedisTemplate;
 
     @Value("${jwt.access-expiration-ms}")
     private long accessExpirationMs;
