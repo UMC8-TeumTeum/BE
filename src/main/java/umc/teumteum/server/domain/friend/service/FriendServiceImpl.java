@@ -51,6 +51,10 @@ public class FriendServiceImpl implements FriendService {
     private static final Set<ScheduleStatus> TEUM_VALID_STATUSES =
             EnumSet.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED);
 
+    private String toProfileUrl(User user) {
+        if (user == null || user.getProfileImageName() == null) return null;
+        return s3Util.toPresignedUrl("profile/" + user.getProfileImageName(), Duration.ofMinutes(30));
+    }
 
     @Override
     @Transactional
@@ -160,7 +164,10 @@ public class FriendServiceImpl implements FriendService {
         Slice<Friend> slice = friendRepository.findByFollowerId(userId, pageable);
 
         List<FollowingUserResponseDto> dtoList = slice.getContent().stream()
-                .map(friendConverter::toFollowingUserResponse)
+                .map(friend -> {
+                    String url = toProfileUrl(friend.getFollowing());
+                    return friendConverter.toFollowingUserResponse(friend, url);
+                })
                 .collect(Collectors.toList());
 
         return new PagingResponseDto<>(dtoList, slice.hasNext());
@@ -180,7 +187,10 @@ public class FriendServiceImpl implements FriendService {
         Slice<Friend> slice = friendRepository.findByFollowingId(userId, pageable);
 
         List<FollowerUserResponseDto> dtoList = slice.getContent().stream()
-                .map(friendConverter::toFollowerUserResponse)
+                .map(friend -> {
+                    String url = toProfileUrl(friend.getFollower());
+                    return friendConverter.toFollowerUserResponse(friend, url);
+                })
                 .collect(Collectors.toList());
 
         return new PagingResponseDto<>(dtoList, slice.hasNext());
@@ -194,7 +204,8 @@ public class FriendServiceImpl implements FriendService {
         Optional<Friend> followRelationOpt =
                 friendRepository.findByFollowerIdAndFollowingId(loginUserId, targetUser.getId());
 
-        return friendConverter.toFriendProfileResponse(targetUser, followRelationOpt.orElse(null));
+        String url = toProfileUrl(targetUser);
+        return friendConverter.toFriendProfileResponse(targetUser, followRelationOpt.orElse(null), url);
     }
 
     @Override

@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/wishes")
-@Tag(name = "wish", description = "위시 관련 API")
+@Tag(name = "Wish", description = "위시 관련 API")
 public class WishController {
 
     private final HomeService homeService;
@@ -76,13 +76,6 @@ public class WishController {
     ){
         homeService.deleteWishByIds(request);
         return ApiResponse.of(HomeSuccessStatus._WISH_DELETED, null);
-    }
-
-    @GetMapping(value = "/teum", produces = "application/json")
-    @Operation(summary = "위시 등록 가능 시간 조회 API",description = "위시리스트를 틈으로 등록가능한 시간을 조회하는 API입니다. query string으로 am 또는 pm을 입력헤주세요")
-    public ApiResponse<String> getEnableTimes(
-            @Parameter(name = "period", description = "조회 시간대 (오전: am, 오후: pm)", example = "am") @RequestParam("period") String period){
-        return ApiResponse.onSuccess(null);
     }
 
     @PostMapping(value = "/{wishId}/assign", consumes = "application/json", produces = "application/json")
