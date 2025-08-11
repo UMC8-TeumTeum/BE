@@ -7,8 +7,6 @@ import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
@@ -281,12 +279,12 @@ public class TeumConverter {
                 .build();
     }
 
-    public static SharedTeumTimeResponseDto toSharedTeumTimeDto(long totalMinutes) {
+    public static TeumResponseDto.SharedTeumTime toSharedTeumTimeDto(long totalMinutes) {
         long days = totalMinutes / (24 * 60);
         long hours = (totalMinutes % (24 * 60)) / 60;
         long minutes = totalMinutes % 60;
 
-        return SharedTeumTimeResponseDto.builder()
+        return TeumResponseDto.SharedTeumTime.builder()
                 .days(days)
                 .hours(hours)
                 .minutes(minutes)
@@ -347,11 +345,11 @@ public class TeumConverter {
     }
 
 
-    public SharedTeumListResponseDto toSharedTeumListDto(Schedule schedule, Long loginUserId, String senderProfileImageUrl) {
+    public TeumResponseDto.SharedTeumList toSharedTeumListDto(Schedule schedule, Long loginUserId, String senderProfileImageUrl) {
         TeumRequest request = schedule.getTeumRequest();
         User sender = request.getUser();
 
-        return SharedTeumListResponseDto.builder()
+        return TeumResponseDto.SharedTeumList.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .date(request.getDate().toString())

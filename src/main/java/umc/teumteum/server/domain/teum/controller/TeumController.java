@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.exception.status.TeumSuccessStatus;
 import umc.teumteum.server.domain.teum.service.TeumService;
@@ -205,12 +203,12 @@ public class TeumController {
             description = "로그인한 사용자와 지정된 친구가 함께 참여한 틈의 횟수와 누적 시간을 분 단위로 반환합니다."
     )
     @GetMapping(value = "/{userId}/shared/teum-time", produces = "application/json")
-    public ApiResponse<SharedTeumTimeResponseDto> getSharedTeumStats(
+    public ApiResponse<TeumResponseDto.SharedTeumTime> getSharedTeumStats(
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "조회할 친구 ID", example = "2")
             @PathVariable("userId") Long targetUserId
     ) {
-        SharedTeumTimeResponseDto result = teumService.getSharedTeumStats(loginUser.getId(), targetUserId);
+        TeumResponseDto.SharedTeumTime result = teumService.getSharedTeumStats(loginUser.getId(), targetUserId);
         return ApiResponse.of(TeumSuccessStatus._SHARED_TIME_LOADED, result);
     }
 
@@ -219,14 +217,14 @@ public class TeumController {
             description = "로그인한 사용자와 지정된 친구가 함께 참여한 모든 틈 요청 목록을 반환합니다."
     )
     @GetMapping("/{userId}/shared")
-    public ApiResponse<PagingResponseDto<SharedTeumListResponseDto>> getSharedTeums(
+    public ApiResponse<PagingResponseDto<TeumResponseDto.SharedTeumList>> getSharedTeums(
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "조회할 친구 ID", example = "2")
             @PathVariable("userId") Long targetUserId,
             @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        PagingResponseDto<SharedTeumListResponseDto> result = teumService.getSharedTeums(loginUser.getId(), targetUserId, page, size);
+        PagingResponseDto<TeumResponseDto.SharedTeumList> result = teumService.getSharedTeums(loginUser.getId(), targetUserId, page, size);
         return ApiResponse.of(TeumSuccessStatus._SHARED_LIST_LOADED, result);
     }
 

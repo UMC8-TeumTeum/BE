@@ -11,8 +11,6 @@ import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
@@ -408,7 +406,7 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional(readOnly = true)
-    public SharedTeumTimeResponseDto getSharedTeumStats(Long loginUserId, Long targetUserId) {
+    public TeumResponseDto.SharedTeumTime getSharedTeumStats(Long loginUserId, Long targetUserId) {
         validateUserExists(targetUserId);
         validateNotSelf(loginUserId, targetUserId);
 
@@ -425,7 +423,7 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagingResponseDto<SharedTeumListResponseDto> getSharedTeums(Long loginUserId, Long targetUserId, int page, int size) {
+    public PagingResponseDto<TeumResponseDto.SharedTeumList> getSharedTeums(Long loginUserId, Long targetUserId, int page, int size) {
         validateNotSelf(loginUserId, targetUserId);
         validateUserExists(targetUserId);
 
@@ -448,7 +446,7 @@ public class TeumServiceImpl implements TeumService {
                 pageable
         );
 
-        List<SharedTeumListResponseDto> content = slice.getContent().stream()
+        List<TeumResponseDto.SharedTeumList> content = slice.getContent().stream()
                 .map(s -> {
                     User sender = s.getTeumRequest().getUser();
                     String url = toProfileUrl(sender);
