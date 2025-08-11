@@ -9,8 +9,7 @@ import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
-import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
-import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
+import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
@@ -341,7 +340,7 @@ public class TeumServiceImpl implements TeumService {
 
     // 공통 가능한 시간대 계산
     @Override
-    public AvailableTimeResponseDto getAvailableTime(User user, AvailableTimeRequestDto requestDto) {
+    public TeumResponseDto.TeumAvailableTime getAvailableTime(User user, umc.teumteum.server.domain.teum.dto.TeumRequestDto.TeumAvailableTime requestDto) {
         LocalDate date = LocalDate.parse(requestDto.getDate());
         DayOfWeek targetDay = date.getDayOfWeek();
         List<TimeSlot> scheduledSlots = new ArrayList<>();
@@ -406,7 +405,7 @@ public class TeumServiceImpl implements TeumService {
         List<TimeSlot> sortedAvailable = new ArrayList<>(availableTime);
         sortedAvailable.sort(Comparator.comparing(slot -> timeUtil.parseTimeForSort(slot.getStart())));
 
-        return new AvailableTimeResponseDto(date.toString(), sortedAvailable);
+        return new TeumResponseDto.TeumAvailableTime(date.toString(), sortedAvailable);
     }
 
 
