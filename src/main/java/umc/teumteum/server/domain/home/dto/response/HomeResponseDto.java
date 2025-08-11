@@ -87,4 +87,15 @@ public class HomeResponseDto {
     @Schema(description = "온보딩 리마인드 알림 설정 정보", example = "[1,5]")
     private List<Integer> reminders;
   }
+
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  @Schema(title = "CategoryDto : 카테고리 조회 응답 Dto ")
+  static public class CategoryDto {
+    @Schema(description = "카테고리 ID" , example = "1")
+    private Long categoryId;
+    @Schema(description = "카테고리 이름" , example = "자기계발")
+    private String categoryName;
+  }
 }

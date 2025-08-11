@@ -45,7 +45,7 @@ public interface HomeService {
     void assignWish(Long wishId, WishAssignRequestDto dto, User user);
 
     // 카테고리 정보 조회
-    List<CategoryResponseDto> getCategory();
+    List<HomeResponseDto.CategoryDto> getCategory();
 
     // 빈틈 시간 조회
     HomeResponseDto.TeumTimeDto getTeaumTime(User user);

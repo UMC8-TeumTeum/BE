@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDto;
-import umc.teumteum.server.domain.home.dto.response.CategoryResponseDto;
+import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
 import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDto;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
@@ -69,8 +69,8 @@ public class WishController {
 
     @GetMapping(value = "/categories", produces = "application/json")
     @Operation(summary = "카테고리 정보 조회 API",description = "위시의 카테고리 정보를 조회하는 API입니다.")
-    public ApiResponse<List<CategoryResponseDto>> getCategory(){
-        List<CategoryResponseDto> response = homeService.getCategory();
+    public ApiResponse<List<HomeResponseDto.CategoryDto>> getCategory(){
+        List<HomeResponseDto.CategoryDto> response = homeService.getCategory();
         return ApiResponse.of(HomeSuccessStatus._CATEGORY_LOADED,response);
     }
 

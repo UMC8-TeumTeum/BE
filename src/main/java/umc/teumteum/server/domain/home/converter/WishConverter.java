@@ -1,11 +1,8 @@
 package umc.teumteum.server.domain.home.converter;
 
 import org.springframework.stereotype.Component;
-import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto;
-import umc.teumteum.server.domain.home.dto.response.CategoryResponseDto;
-import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDto;
+import umc.teumteum.server.domain.home.dto.response.*;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
-import umc.teumteum.server.domain.home.dto.response.WishlistResponseDto;
 import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.mapping.WishCategory;
@@ -77,9 +74,9 @@ public class WishConverter {
                 .build();
     }
 
-    public List<CategoryResponseDto> toCategoryResponseDTO(List<Category> categories) {
+    public List<HomeResponseDto.CategoryDto> toCategoryResponseDTO(List<Category> categories) {
         return categories.stream()
-                .map(category -> CategoryResponseDto.builder()
+                .map(category -> HomeResponseDto.CategoryDto.builder()
                         .categoryId(category.getId())
                         .categoryName(category.getName())
                         .build())

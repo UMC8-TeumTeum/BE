@@ -471,7 +471,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public List<CategoryResponseDto> getCategory() {
+    public List<HomeResponseDto.CategoryDto> getCategory() {
         // 카테고리 정보 조회
         List<Category> categories = categoryRepository.findAll();
         return wishConverter.toCategoryResponseDTO(categories);
