@@ -12,7 +12,7 @@ public class FriendResponseDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    @Schema(description = "맞팔로우 친구 목록 조회 응답")
+    @Schema(title = "맞팔로우 친구 목록 조회 Response")
     public static class MutualFriend {
 
         @Schema(description = "사용자 ID", example = "1")
@@ -30,7 +30,7 @@ public class FriendResponseDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    @Schema(description = "팔로잉 즐겨찾기 설정/해제 응답")
+    @Schema(title = "팔로잉 즐겨찾기 설정/해제 Response")
     public static class FriendFavorite {
 
         @Schema(description = "사용자 ID", example = "1")
