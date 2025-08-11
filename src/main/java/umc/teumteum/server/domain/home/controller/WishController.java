@@ -6,8 +6,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
-import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.dto.response.WishResponseDto;
 import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
