@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.teum.service;
 
 import org.springframework.data.domain.Page;
+import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.user.entity.User;
@@ -10,7 +11,7 @@ import java.util.List;
 
 public interface TeumService {
 
-    Long createRequest(TeumRequestDto requestDto, User user);
+    Long createRequest(TeumRequestDto.TeumRequest requestDto, User user);
 
     Long createResendRequest(Long parentRequestId, TeumResendRequestDto resendRequestDto, User user);
 

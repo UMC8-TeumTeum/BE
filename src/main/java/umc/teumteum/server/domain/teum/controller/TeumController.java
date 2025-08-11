@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.exception.status.TeumSuccessStatus;
@@ -33,7 +34,7 @@ public class TeumController {
     )
     @PostMapping(value = "/request", consumes = "application/json", produces = "application/json")
     public ApiResponse<Long> createTeumRequest(
-            @RequestBody @Valid TeumRequestDto requestDto,
+            @RequestBody @Valid TeumRequestDto.TeumRequest requestDto,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
         Long id = teumService.createRequest(requestDto, user);

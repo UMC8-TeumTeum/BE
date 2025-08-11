@@ -5,8 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -68,7 +66,7 @@ public class TeumRequestDto {
     @Getter
     @NoArgsConstructor
     @Schema(title = "TeumResend : 재요청(시간 제안) 생성")
-    public class TeumResend {
+    public static class TeumResend {
 
         @NotBlank
         @Pattern(regexp = "^\\d{2}:\\d{2}$", message = "시간 형식은 HH:MM이어야 합니다.")
@@ -83,7 +81,7 @@ public class TeumRequestDto {
     @Getter
     @NoArgsConstructor
     @Schema(title = "TeumStatusUpdate : 틈 응답 상태 변경 DTO")
-    public class TeumStatusUpdate {
+    public static class TeumStatusUpdate {
 
         @Schema(description = "응답 상태", example = "ACCEPTED", allowableValues = {"ACCEPTED", "DECLINED", "SUGGESTED"})
         private String status;

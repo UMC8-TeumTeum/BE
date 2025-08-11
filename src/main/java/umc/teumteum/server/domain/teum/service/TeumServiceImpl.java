@@ -9,6 +9,7 @@ import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
+import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.teum.*;
@@ -55,7 +56,7 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional
-    public Long createRequest(TeumRequestDto dto, User user) {
+    public Long createRequest(TeumRequestDto.TeumRequest dto, User user) {
         // 시간 순서 검증
         validateTimeOrder(dto.getStartTime(), dto.getEndTime());
 
