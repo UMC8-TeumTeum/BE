@@ -13,6 +13,8 @@ public enum AuthSuccessStatus implements BaseCode {
     SOCIAL_LOGIN_SUCCESS(HttpStatus.OK, "AUTH2001", "소셜 로그인이 완료되었습니다."),
     DEV_TOKEN_ISSUED(HttpStatus.OK, "AUTH2002", "개발용 액세스 토큰 발급이 완료되었습니다."),
     TOKEN_REISSUE_SUCCESS(HttpStatus.OK, "AUTH2003", "토큰 재발급이 완료되었습니다."),
+    LOGOUT_SUCCESS(HttpStatus.OK, "AUTH2004", "로그아웃이 완료되었습니다."),
+
 
     ;
 

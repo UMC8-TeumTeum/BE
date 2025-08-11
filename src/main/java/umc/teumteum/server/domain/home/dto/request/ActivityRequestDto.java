@@ -37,9 +37,11 @@ public class ActivityRequestDto {
     @Schema(description = "예상 소요 시간", example = "10m")
     private EstimatedDuration estimatedDuration;
 
-    @NotBlank
-    @Schema(description = "현재 위치", example = "회사")
-    private String location;
+    @Schema(description = "현재 위치 Id", example = "1")
+    private Long locationId;
+
+    @Schema(description = "사용자가 직접 입력한 위치", example = "회사")
+    private String customLocation;
 
     @Schema(description = "활동 카테고리", example = "1")
     private Long categoryId;

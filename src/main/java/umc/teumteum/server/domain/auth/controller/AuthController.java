@@ -4,16 +4,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.auth.dto.AuthRequestDTO;
 import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
 import umc.teumteum.server.domain.auth.exception.status.AuthSuccessStatus;
 import umc.teumteum.server.domain.auth.service.AuthService;
-import umc.teumteum.server.domain.user.entity.User;
-import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 @Tag(name = "Auth", description = "인증 관련 API")
@@ -49,7 +47,7 @@ public class AuthController {
             description = "리프레시 토큰을 사용하여 새로운 액세스 토큰&리프레시 토큰을 발급받습니다."
     )
     @PostMapping(value = "/reissue", produces = "application/json")
-    public ApiResponse<Object> reissueToken(
+    public ApiResponse<AuthResponseDTO.ReissueResponse> reissueToken(
             @Valid @RequestBody AuthRequestDTO.ReissueRequest request
     ) {
         AuthResponseDTO.ReissueResponse response = authService.reissueToken(request);
@@ -57,10 +55,15 @@ public class AuthController {
     }
 
 
-//    @GetMapping(value = "/test/jwt", produces = "application/json")
-//    public ApiResponse<Long> getUser(
-//            @CurrentUser @Parameter(hidden = true) User user
-//    ) {
-//        return ApiResponse.onSuccess(user.getId());
-//    }
+    @Operation(
+            summary = "로그아웃",
+            description = "AT는 블랙리스트 등록 / RT는 화이트리스트 삭제를 진행합니다."
+    )
+    @PostMapping(value = "/logout", produces = "application/json")
+    public ApiResponse<Object> logout(
+            HttpServletRequest httpServletRequest
+    ) {
+        authService.logout(httpServletRequest);
+        return ApiResponse.of(AuthSuccessStatus.LOGOUT_SUCCESS, null);
+    }
 }
