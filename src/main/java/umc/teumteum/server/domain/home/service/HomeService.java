@@ -1,9 +1,6 @@
 package umc.teumteum.server.domain.home.service;
 
-import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
-import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
-import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDto;
-import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
+import umc.teumteum.server.domain.home.dto.request.*;
 import umc.teumteum.server.domain.home.dto.response.*;
 import umc.teumteum.server.domain.user.entity.User;
 
@@ -61,4 +58,7 @@ public interface HomeService {
 
     // 리마인드 알림 정보 조회
     HomeResponseDto.ReminderDto getUserRemind(User user);
+
+    // 리마인드 알림 정보 변경
+    void updateAlarm(HomeRequestDto.AlarmDto dto);
 }
