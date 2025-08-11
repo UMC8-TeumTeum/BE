@@ -3,10 +3,7 @@ package umc.teumteum.server.domain.home.dto.response;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.global.util.DateTimeSerializer;
@@ -139,13 +136,18 @@ public class HomeResponseDto {
     @Schema(description = "빈틈 시간 포함 여부", example = "false")
     private Boolean includeTeum;
 
-    @Schema(description = " 온보딩 리마인드 알림 목록", example = "[1, 30]")
-    private List<Integer> onboardingReminder;
-
-    @Schema(description = "리마인드 알림 목록", example = "[1, 3, 5, 10, 30]")
-    private List<Integer> remindAlarm;
+    @Schema(description = "리마인드 알림 목록", example = "{\"alarm\": 30, \"status\": \"INACTIVE\"}]")
+    private List<ReminderAlarmDto> remindAlarm;
 
     @Schema(description = "유저 프로필", example = "[\"string\",\"string\"]")
     private List<String> profileUrl;
+  }
+
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  public static class ReminderAlarmDto {
+    private Integer alarm;
+    private AlarmStatus status;
   }
 }

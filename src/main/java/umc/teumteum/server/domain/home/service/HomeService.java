@@ -12,7 +12,7 @@ public interface HomeService {
     HomeResponseDto.TodoIdDto createTodo(TodoRequestDto dto, User user);
 
     // Todo(Schedule) 조회
-    TodoInfoResponseDto getTodoInfo(Long scheduleId);
+    HomeResponseDto.TodoInfoDto getTodoInfo(Long scheduleId);
 
     // Todo(Schedule) 수정
     HomeResponseDto.TodoIdDto updateTodoInfo(TodoRequestDto dto, Long scheduleId, User user);

@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
-import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDto;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
@@ -51,9 +50,9 @@ public class ScheduleConverter {
     }
 
     // Schedule -> TodoInfoResponseDTO
-    public TodoInfoResponseDto toTodoInfoResponse(Schedule schedule, List<ScheduleReminder> reminders, List<String> profileUrls) {
+    public HomeResponseDto.TodoInfoDto toTodoInfoResponse(Schedule schedule, List<ScheduleReminder> reminders, List<String> profileUrls) {
 
-        return TodoInfoResponseDto.builder()
+        return HomeResponseDto.TodoInfoDto.builder()
                 .type(schedule.getType())
                 .title(schedule.getTitle())
                 .startTime(schedule.getStartTime())
@@ -67,8 +66,8 @@ public class ScheduleConverter {
     }
 
     // Routine -> TodoInfoResponseDTO (미래의 반복일정 조회)
-    public TodoInfoResponseDto toVirtualRoutineInfo(Routine routine,LocalDate date, List<RemindAlarm> onboardingReminders, List<String> profileUrls) {
-        return TodoInfoResponseDto.builder()
+    public HomeResponseDto.TodoInfoDto toVirtualRoutineInfo(Routine routine,LocalDate date, List<RemindAlarm> onboardingReminders, List<String> profileUrls) {
+        return HomeResponseDto.TodoInfoDto.builder()
                 .type(ScheduleType.ROUTINE)
                 .title(routine.getTitle())
                 .description(routine.getDescription())
@@ -82,12 +81,12 @@ public class ScheduleConverter {
     }
 
     // 리마인드 알림 변환
-    private List<TodoInfoResponseDto.ReminderAlarmDto> toReminderAlarmDtos(List<ScheduleReminder> reminders) {
+    private List<HomeResponseDto.ReminderAlarmDto> toReminderAlarmDtos(List<ScheduleReminder> reminders) {
 
         return reminders.stream()
                 .sorted(Comparator.comparingInt(ScheduleReminder::getReminderTime))
                 .map(r -> {
-                    TodoInfoResponseDto.ReminderAlarmDto dto = new TodoInfoResponseDto.ReminderAlarmDto();
+                    HomeResponseDto.ReminderAlarmDto dto = new HomeResponseDto.ReminderAlarmDto();
                     dto.setAlarm(r.getReminderTime());
                     dto.setStatus(r.getAlarmStatus());
                     return dto;

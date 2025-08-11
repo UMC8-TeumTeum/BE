@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.home.dto.request.HomeRequestDto;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
 import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
-import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDto;
 import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
 import umc.teumteum.server.domain.home.service.HomeService;
 import umc.teumteum.server.domain.user.entity.User;
@@ -83,9 +82,9 @@ public class HomeController {
 
     @GetMapping(value = "/todo/{todoId}", produces = "application/json")
     @Operation(summary = "특정 투두 정보 조회 API",description = "특정투두의 상세정보를 조회하는 API입니다. path variable로 투두ID를 입력주세요.")
-    public ApiResponse<TodoInfoResponseDto> getTodo(
+    public ApiResponse<HomeResponseDto.TodoInfoDto> getTodo(
             @Parameter(name= "todoId", description = "조회할 todo ID", example = "123") @PathVariable("todoId") Long todoId){
-        TodoInfoResponseDto response = homeService.getTodoInfo(todoId);
+        HomeResponseDto.TodoInfoDto response = homeService.getTodoInfo(todoId);
         return ApiResponse.of(HomeSuccessStatus._TODO_LOADED,response);
     }
 

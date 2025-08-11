@@ -83,7 +83,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public TodoInfoResponseDto getTodoInfo(Long scheduleId) {
+    public HomeResponseDto.TodoInfoDto getTodoInfo(Long scheduleId) {
         // Todo(Schedule) 조회
         // 가상의 루틴 ID일 경우
         if(scheduleId<0){
