@@ -36,7 +36,7 @@ public interface HomeService {
     void updateWishInfo(WishRequestDto dto, Long wishId, User user);
 
     // Wishlist 조회
-    WishlistResponseDto getWishlist(String duration, Integer page, User user);
+    HomeResponseDto.WishlistDto getWishlist(String duration, Integer page, User user);
 
     // 오늘의 시간표 조회
     List<TodayScheduleResponseDto> getTodaySchedule(LocalDate today, User user);

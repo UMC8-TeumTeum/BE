@@ -51,10 +51,10 @@ public class WishConverter {
                 .build();
     }
 
-    // wish 엔티티 목록 -> wishDTO 목록
-    public static List<WishlistResponseDto.WishDTO> toWishDTOList(List<Wish> wishes) {
+    // wish 엔티티 목록 -> WishDto 목록
+    public static List<HomeResponseDto.WishDto> toWishDTOList(List<Wish> wishes) {
         return wishes.stream()
-                .map(wish -> WishlistResponseDto.WishDTO.builder()
+                .map(wish -> HomeResponseDto.WishDto.builder()
                         .id(wish.getId())
                         .title(wish.getTitle())
                         .estimatedDuration(wish.getEstimatedDuration())
@@ -62,9 +62,9 @@ public class WishConverter {
                 .toList();
     }
 
-    // 위시 목록 & 페이지 정보 -> WishlistResponseDTO
-    public WishlistResponseDto toWishlistResponseDTO(List<Wish> wishes, int pageNumber, int pageSize, boolean hasNext, boolean isFirst, boolean isLast) {
-        return WishlistResponseDto.builder()
+    // 위시 목록 & 페이지 정보 -> WishlistDTO
+    public HomeResponseDto.WishlistDto toWishlistResponseDTO(List<Wish> wishes, int pageNumber, int pageSize, boolean hasNext, boolean isFirst, boolean isLast) {
+        return HomeResponseDto.WishlistDto.builder()
                 .wishlist(toWishDTOList(wishes))
                 .pageNumber(pageNumber)
                 .pageSize(pageSize)

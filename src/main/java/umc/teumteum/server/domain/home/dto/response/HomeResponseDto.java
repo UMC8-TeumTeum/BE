@@ -117,4 +117,33 @@ public class HomeResponseDto {
     private Long id;
     private String name;
   }
+
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  @Schema(title = "WishlistDTO : 위시리스트 조회 응답 DTO")
+  public static class WishlistDto {
+    @Schema(description = "위시 목록", example = "[{ \"id\": 1, \"title\": \"수영하기\", \"estimatedDuration\": \"10m\" }]")
+    private List<HomeResponseDto.WishDto> wishlist;
+    @Schema(description = "페이지 번호", example = "1")
+    private int pageNumber;
+    @Schema(description = "페이지 사이즈", example = "10")
+    private int pageSize;
+    @Schema(description = "다음 페이지 존재 여부", example = "true")
+    private Boolean hasNext;
+    @Schema(description = "첫번째 페이지 여부", example = "true")
+    private Boolean isFirst;
+    @Schema(description = "마지막 페이지 여부", example = "false")
+    private Boolean isLast;
+  }
+
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  @NoArgsConstructor
+  public static class WishDto {
+    private Long id;
+    private String title;
+    private EstimatedDuration estimatedDuration;
+  }
 }

@@ -335,7 +335,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public WishlistResponseDto getWishlist(String duration, Integer page, User user) {
+    public HomeResponseDto.WishlistDto getWishlist(String duration, Integer page, User user) {
         // Wishlist 조회
         System.out.println("user = " + user);
         // 페이징 조건:  page는 1부터, pageSize = 10, 정렬조건 = 최신순

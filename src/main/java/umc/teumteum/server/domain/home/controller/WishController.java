@@ -12,7 +12,6 @@ import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
 import umc.teumteum.server.domain.home.service.HomeService;
-import umc.teumteum.server.domain.home.dto.response.WishlistResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
@@ -29,12 +28,12 @@ public class WishController {
 
     @GetMapping(value = "/wishlist", produces = "application/json")
     @Operation(summary = "위시리스트 정보 조회 API",description = "위시 목록을 조회하는 API입니다. query string으로 조회 기간과 page 번호를 입력주세요.")
-    public ApiResponse<WishlistResponseDto> getWishlist(
+    public ApiResponse<HomeResponseDto.WishlistDto> getWishlist(
             @Parameter(name= "duration", description = "조회기간 (all | 10m | 20m | 30m | 1h)", example = "30m") @RequestParam("duration") String duration,
             @Parameter(name= "page", description = "페이지 번호는 1부터 시작", example = "1") @RequestParam("page") Integer page,
             @CurrentUser @Parameter(hidden = true) User user){
 
-        WishlistResponseDto response = homeService.getWishlist(duration, page, user);
+        HomeResponseDto.WishlistDto response = homeService.getWishlist(duration, page, user);
         return ApiResponse.of(HomeSuccessStatus._WISHLIST_LOADED, response);
     }
 
