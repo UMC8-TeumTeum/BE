@@ -239,7 +239,7 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FriendPublicTodoResponseDto> getRecentPublicTodos(Long loginUserId, Long targetUserId) {
+    public List<FriendResponseDto.FriendPublicTodo> getRecentPublicTodos(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
         validateUserExists(targetUserId);
 
@@ -262,7 +262,7 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FriendPublicTodoResponseDto> getDailyPublicTodos(Long loginUserId, Long targetUserId, String date) {
+    public List<FriendResponseDto.FriendPublicTodo> getDailyPublicTodos(Long loginUserId, Long targetUserId, String date) {
         validateNotSelf(loginUserId, targetUserId);
         validateUserExists(targetUserId);
 

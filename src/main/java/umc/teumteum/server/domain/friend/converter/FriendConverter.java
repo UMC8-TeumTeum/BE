@@ -68,11 +68,11 @@ public class FriendConverter {
         return new FriendTeumTimeResponseDto(days, hours, minutes, totalMinutes);
     }
 
-    public List<FriendPublicTodoResponseDto> toFriendPublicTodoResponse(List<Schedule> schedules) {
+    public List<FriendResponseDto.FriendPublicTodo> toFriendPublicTodoResponse(List<Schedule> schedules) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
         return schedules.stream()
-                .map(s -> new FriendPublicTodoResponseDto(
+                .map(s -> new FriendResponseDto.FriendPublicTodo(
                         s.getTitle(),
                         s.getStartTime().format(formatter),
                         timeUtil.parseAndFormatEndTime(s.getEndTime().toLocalTime())
@@ -113,11 +113,11 @@ public class FriendConverter {
                 ;
     }
 
-    public List<FriendPublicTodoResponseDto> toFriendPublicTodoResponseList(List<Schedule> schedules) {
+    public List<FriendResponseDto.FriendPublicTodo> toFriendPublicTodoResponseList(List<Schedule> schedules) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
         return schedules.stream()
-                .map(s -> new FriendPublicTodoResponseDto(
+                .map(s -> new FriendResponseDto.FriendPublicTodo(
                         s.getTitle(),
                         s.getStartTime().format(formatter),
                         timeUtil.parseAndFormatEndTime(s.getEndTime().toLocalTime())

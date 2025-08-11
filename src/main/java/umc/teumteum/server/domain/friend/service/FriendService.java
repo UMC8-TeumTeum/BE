@@ -23,9 +23,9 @@ public interface FriendService {
 
     FriendTeumTimeResponseDto getFriendTeumTime(Long loginUserId, Long targetUserId);
 
-    List<FriendPublicTodoResponseDto> getRecentPublicTodos(Long loginUserId, Long targetUserId);
+    List<FriendResponseDto.FriendPublicTodo> getRecentPublicTodos(Long loginUserId, Long targetUserId);
 
-    List<FriendPublicTodoResponseDto> getDailyPublicTodos(Long loginUserId, Long targetUserId, String date);
+    List<FriendResponseDto.FriendPublicTodo> getDailyPublicTodos(Long loginUserId, Long targetUserId, String date);
 
     List<String> getTodoDatesOfMonth(Long loginUserId, Long targetUserId, String month);
 
