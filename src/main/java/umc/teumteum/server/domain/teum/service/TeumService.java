@@ -13,7 +13,7 @@ public interface TeumService {
 
     Long createRequest(TeumRequestDto.TeumRequest requestDto, User user);
 
-    Long createResendRequest(Long parentRequestId, TeumResendRequestDto resendRequestDto, User user);
+    Long createResendRequest(Long parentRequestId, TeumRequestDto.TeumResend resendRequestDto, User user);
 
     Page<TeumResponseDto.TeumReceived> getReceivedRequests(Long userId, int page, int size);
 

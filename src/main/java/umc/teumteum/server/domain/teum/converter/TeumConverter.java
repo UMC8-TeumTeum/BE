@@ -95,7 +95,7 @@ public class TeumConverter {
     }
 
 
-    public TeumRequest toResendTeumRequest(TeumRequest parent, TeumResendRequestDto dto, User resender) {
+    public TeumRequest toResendTeumRequest(TeumRequest parent, TeumRequestDto.TeumResend dto, User resender) {
         return TeumRequest.builder()
                 .title(parent.getTitle())
                 .description(parent.getDescription())

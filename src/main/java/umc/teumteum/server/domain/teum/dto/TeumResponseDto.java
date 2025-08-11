@@ -248,4 +248,14 @@ public class TeumResponseDto {
     }
 
 
+    @Getter
+    @AllArgsConstructor
+    @Schema(title = "TeumResendResponseDto : 재요청(시간 제안) 생성 응답 DTO")
+    public static class TeumResend {
+
+        @Schema(description = "생성된 재요청 ID", example = "1")
+        private Long id;
+    }
+
+
 }

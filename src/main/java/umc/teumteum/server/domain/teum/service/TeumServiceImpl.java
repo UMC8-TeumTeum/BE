@@ -92,7 +92,7 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional
-    public Long createResendRequest(Long parentRequestId, TeumResendRequestDto dto, User user) {
+    public Long createResendRequest(Long parentRequestId, TeumRequestDto.TeumResend dto, User user) {
         // 원본 요청 확인 및 권한 검증
         TeumRequest parent = findActiveRequestOrThrow(parentRequestId);
         validateResendableRequest(parent);

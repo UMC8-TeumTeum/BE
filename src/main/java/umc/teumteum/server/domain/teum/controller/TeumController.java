@@ -43,17 +43,17 @@ public class TeumController {
 
     @Operation(
             summary = "틈 재요청",
-            description = "특정 요청을 기반으로 재요청(시간 제안)을 생성합니다."
+            description = "특정 요청의 응답을 기반으로 재요청(시간 제안)을 생성합니다."
     )
     @PostMapping(value = "/request/{parentRequestId}/resend", consumes = "application/json", produces = "application/json")
-    public ApiResponse<TeumResendResponseDto> createResendRequest(
-            @Parameter(name = "parentRequestId", description = "재요청을 생성할 기준이 되는 기존 요청 ID", example = "1")
+    public ApiResponse<TeumResponseDto.TeumResend> createResendRequest(
+            @Parameter(name = "parentRequestId", description = "재요청을 생성할 기준이 되는 기존 응답 ID", example = "1")
             @PathVariable("parentRequestId") Long parentRequestId,
-            @RequestBody TeumResendRequestDto resendRequestDto,
+            @RequestBody TeumRequestDto.TeumResend resendRequestDto,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
         Long id = teumService.createResendRequest(parentRequestId, resendRequestDto, user);
-        return ApiResponse.of(TeumSuccessStatus._TEUM_REQUEST_CREATED, new TeumResendResponseDto(id));
+        return ApiResponse.of(TeumSuccessStatus._TEUM_REQUEST_CREATED, new TeumResponseDto.TeumResend(id));
     }
 
     @Operation(
