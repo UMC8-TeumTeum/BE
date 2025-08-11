@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,6 +39,14 @@ public class TodoRequestDto {
     @Schema(description = "빈틈 시간 포함 여부", example = "false")
     private Boolean includeTeum;
 
-    @Schema(description = "리마인드 알림 목록", example = "[1, 3, 5, 10, 30]")
-    private List<Integer> remindAlarm;
+    @Schema(description = "리마인드 알림 목록", example = "[{ \"alarm\": 10, \"status\": \"ACTIVE\" }]")
+    private List<ReminderAlarmDto> remindAlarm;
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class ReminderAlarmDto {
+        private Integer alarm;
+        private AlarmStatus status;
+    }
 }
