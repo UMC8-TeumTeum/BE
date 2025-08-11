@@ -123,12 +123,12 @@ public class FriendController {
             description = "지정한 친구(userId)의 프로필 정보를 반환합니다."
     )
     @GetMapping(value = "/{userId}/profile", produces = "application/json")
-    public ApiResponse<FriendProfileResponseDto> getFriendProfile(
+    public ApiResponse<FriendResponseDto.FriendProfile> getFriendProfile(
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "조회할 친구 ID", example = "2")
             @PathVariable("userId") Long targetUserId
     ) {
-        FriendProfileResponseDto response = friendService.getFriendProfile(loginUser.getId(), targetUserId);
+        FriendResponseDto.FriendProfile response = friendService.getFriendProfile(loginUser.getId(), targetUserId);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 

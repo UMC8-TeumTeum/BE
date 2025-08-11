@@ -197,7 +197,7 @@ public class FriendServiceImpl implements FriendService {
     }
 
     @Override
-    public FriendProfileResponseDto getFriendProfile(Long loginUserId, Long targetUserId) {
+    public FriendResponseDto.FriendProfile getFriendProfile(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
         User targetUser = getUserOrThrow(targetUserId);
 

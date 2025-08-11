@@ -19,7 +19,7 @@ public interface FriendService {
 
     PagingResponseDto<FriendResponseDto.FollowerFriend> getFollowersByUser(Long userId, int page, int size);
 
-    FriendProfileResponseDto getFriendProfile(Long loginUserId, Long targetUserId);
+    FriendResponseDto.FriendProfile getFriendProfile(Long loginUserId, Long targetUserId);
 
     FriendTeumTimeResponseDto getFriendTeumTime(Long loginUserId, Long targetUserId);
 

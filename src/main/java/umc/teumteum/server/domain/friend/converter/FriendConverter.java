@@ -44,8 +44,8 @@ public class FriendConverter {
     }
 
 
-    public FriendProfileResponseDto toFriendProfileResponse(User targetUser, Friend followRelation, String profileImageUrl) {
-        return FriendProfileResponseDto.builder()
+    public FriendResponseDto.FriendProfile toFriendProfileResponse(User targetUser, Friend followRelation, String profileImageUrl) {
+        return FriendResponseDto.FriendProfile.builder()
                 .userId(targetUser.getId())
                 .name(targetUser.getNickname())
                 .profileImageUrl(profileImageUrl)
