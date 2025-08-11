@@ -22,9 +22,9 @@ public class FriendConverter {
     private final S3Util s3Util;
     private final TimeUtil timeUtil;
 
-    public FollowingUserResponseDto toFollowingUserResponse(Friend friend, String profileImageUrl) {
+    public FriendResponseDto.FollowingFriend toFollowingUserResponse(Friend friend, String profileImageUrl) {
         User following = friend.getFollowing();
-        return new FollowingUserResponseDto(
+        return new FriendResponseDto.FollowingFriend(
                 following.getId(),
                 following.getNickname(),
                 following.getJob(),
@@ -33,9 +33,9 @@ public class FriendConverter {
         );
     }
 
-    public FollowerUserResponseDto toFollowerUserResponse(Friend friend, String profileImageUrl) {
+    public FriendResponseDto.FollowerFriend toFollowerUserResponse(Friend friend, String profileImageUrl) {
         User follower = friend.getFollower();
-        return new FollowerUserResponseDto(
+        return new FriendResponseDto.FollowerFriend(
                 follower.getId(),
                 follower.getNickname(),
                 follower.getJob(),
