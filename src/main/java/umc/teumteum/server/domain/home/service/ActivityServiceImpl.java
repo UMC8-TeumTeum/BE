@@ -105,11 +105,21 @@ public class ActivityServiceImpl implements ActivityService{
 
       // 1. Redis 키 생성, 캐시 확인 및 Redis 캐시 삭제 (기존 추천 초기화)
       // - Redis 키 생성
-      String redisKey = generateRedisKey(userId, request, categoryName, locatoinName);
+      String parentKey = generateRedisKey(userId, request, categoryName, locatoinName);
 
-      // - 기존 캐시가 있으면 무조건 삭제
-      if (aiContentsRedisTemplate.hasKey(redisKey)) {
-        aiContentsRedisTemplate.delete(redisKey);
+      // 1-1) 동일 키가 이미 있으면 부모 + 보조키 전부 삭제
+      if (Boolean.TRUE.equals(aiContentsRedisTemplate.hasKey(parentKey))) {
+        String prevSerialized = aiContentsRedisTemplate.opsForValue().get(parentKey);
+        if (prevSerialized != null) {
+          List<AiWishDto> prevList = contentSerializer.deserialize(prevSerialized);
+          if (prevList != null) {
+            for (AiWishDto prev : prevList) {
+              aiContentsRedisTemplate.delete(WISH_TITLE_PREFIX + prev.getId());
+              aiContentsRedisTemplate.delete(WISH_PARENT_PREFIX + prev.getId());
+            }
+          }
+        }
+        aiContentsRedisTemplate.delete(parentKey);
       }
 
       // 2. AI 콘텐츠 생성 (새로운 추천 생성)
@@ -118,22 +128,19 @@ public class ActivityServiceImpl implements ActivityService{
       // 3. Redis 캐시에 저장 (TTL 1시간) + 보조키 생성
       String serialized = contentSerializer.serialize(generated);
       Duration ttl = Duration.ofHours(1);
-      aiContentsRedisTemplate.opsForValue().set(redisKey, serialized, ttl);
+      aiContentsRedisTemplate.opsForValue().set(parentKey, serialized, ttl);
 
       // 3-1) 보조 인덱스 저장: wishId -> title / parentKey
       for (AiWishDto dto : generated) {
         aiContentsRedisTemplate.opsForValue().set(
-            WISH_TITLE_PREFIX + dto.getId(), dto.getTitle(), ttl
-        );
+            WISH_TITLE_PREFIX + dto.getId(), dto.getTitle(), ttl);
         aiContentsRedisTemplate.opsForValue().set(
-            WISH_PARENT_PREFIX + dto.getId(), redisKey, ttl
-        );
+            WISH_PARENT_PREFIX + dto.getId(), parentKey, ttl);
       }
-
       // 4. 변환 후 반환
-    return ActivityResponseDto.AiWishResponse.builder()
-        .aiContents(generated)
-        .build();
+      return ActivityResponseDto.AiWishResponse.builder()
+          .aiContents(generated)
+          .build();
 
 
   }
