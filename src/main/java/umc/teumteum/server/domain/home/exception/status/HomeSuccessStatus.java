@@ -27,6 +27,7 @@ public enum HomeSuccessStatus implements BaseCode {
     _CALENDAR_LOADED(HttpStatus.OK,"HOME20014","캘린더 정보가 성공적으로 조회되었습니다."),
     _TODOLIST_LOADED(HttpStatus.OK,"HOME20015","투두리스트가 성공적으로 조회되었습니다."),
     _REMINDER_LOADED(HttpStatus.OK, "HOME20016", "리마인드 알림 정보가 성공적으로 조회되었습니다."),
+    _ALARM_UPDATED(HttpStatus.OK,"HOME20017","리마인드 알림 정보가 성공적으로 변경되었습니다."),
     _ACTIVITY_LOADED(HttpStatus.OK, "ACTIVITY2001", "채움활동 위시가 성공적으로 조회되었습니다."),
     _AI_ACTIVITY_LOADED(HttpStatus.OK, "ACTIVITY2002", "채움활동 ai컨텐츠가 성공적으로 조회되었습니다."),
     _AI_ACTIVITY_SAVE(HttpStatus.OK, "ACTIVITY2003", "채움활동 ai컨텐츠가 성공적으로 저장되었습니다.")

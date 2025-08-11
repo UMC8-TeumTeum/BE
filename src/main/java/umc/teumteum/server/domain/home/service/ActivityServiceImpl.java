@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +29,7 @@ import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto.WishResp
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
+import umc.teumteum.server.domain.home.entity.enums.LocationType;
 import umc.teumteum.server.domain.home.exception.HomeException;
 import umc.teumteum.server.domain.home.exception.status.HomeErrorStatus;
 import umc.teumteum.server.domain.home.repository.CategoryRepository;
@@ -98,11 +100,12 @@ public class ActivityServiceImpl implements ActivityService{
   public AiWishResponse getAiWish(User user, AiWishOptionRequest request) {
       // 유저 아이디 추출, 카테고리 이름 검증
       Long userId = user.getId();
+      String locatoinName = extractLocationName(request.getLocationId(), request.getCustomLocation());
       String categoryName = extractCategoryName(request.getCategoryId(), request.getCustomCategory());
 
       // 1. Redis 키 생성, 캐시 확인 및 Redis 캐시 삭제 (기존 추천 초기화)
       // - Redis 키 생성
-      String redisKey = generateRedisKey(userId, request, categoryName);
+      String redisKey = generateRedisKey(userId, request, categoryName, locatoinName);
 
       // - 기존 캐시가 있으면 무조건 삭제
       if (aiContentsRedisTemplate.hasKey(redisKey)) {
@@ -110,7 +113,7 @@ public class ActivityServiceImpl implements ActivityService{
       }
 
       // 2. AI 콘텐츠 생성 (새로운 추천 생성)
-      List<AiWishDto> generated = aiWishGenerator.generate(request, categoryName);
+      List<AiWishDto> generated = aiWishGenerator.generate(request, categoryName, locatoinName);
 
       // 3. Redis 캐시에 저장 (TTL 1시간) + 보조키 생성
       String serialized = contentSerializer.serialize(generated);
@@ -194,12 +197,12 @@ public class ActivityServiceImpl implements ActivityService{
 
   }
 
-  private String generateRedisKey(Long userId, AiWishOptionRequest request, String categoryName) {
+  private String generateRedisKey(Long userId, AiWishOptionRequest request, String categoryName, String locatoinName) {
     return String.format(CONTENT_PREFIX + "%s:%s:%s:%s",
         userId,
         request.getEstimatedDuration(),
-        request.getLocation(),
-        categoryName
+        categoryName,
+        locatoinName
     );
   }
 
@@ -223,6 +226,31 @@ public class ActivityServiceImpl implements ActivityService{
     }
     // 4. 카테고리가 아예 없으면 예외
     throw new HomeException(HomeErrorStatus._CATEGORY_REQUIRED);
+  }
+
+  private String extractLocationName(Long locationId, String customLocation) {
+    boolean hasCustomLocation = customLocation != null && !customLocation.isBlank();
+    boolean hasLocationId = locationId != null;
+
+    // 1. 위치를 두개 입력한 경우 예외
+    if (hasCustomLocation && hasLocationId) {
+      throw new HomeException(HomeErrorStatus._LOCATION_INPUT_CONFLICT);
+    }
+    // 2. CustomLocation를 입력한 경우 반환
+    if (hasCustomLocation) {
+      return customLocation;
+    }
+    // 3. 선택한 위치 Id가 enum에 존재하면 name 조회 후 반환
+      if (hasLocationId) {
+        LocationType locationType = Arrays.stream(LocationType.values())
+            .filter(type -> type.getLocationId() == locationId)
+            .findFirst()
+            .orElseThrow(() -> new HomeException(HomeErrorStatus._LOCATION_NOT_FOUND));
+
+        return locationType.getDisplayName();
+      }
+    // 4. 위치가 아예 없으면 예외
+    throw new HomeException(HomeErrorStatus._LOCATION_REQUIRED);
   }
 
   private List<Wish> randomPick(List<Wish> list, int count) {
