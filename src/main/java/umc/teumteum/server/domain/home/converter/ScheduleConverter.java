@@ -2,7 +2,7 @@ package umc.teumteum.server.domain.home.converter;
 
 import java.time.Duration;
 import org.springframework.stereotype.Component;
-import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
+import umc.teumteum.server.domain.home.dto.request.HomeRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
 import umc.teumteum.server.domain.home.entity.Schedule;
@@ -23,7 +23,7 @@ import java.util.*;
 public class ScheduleConverter {
 
     // TodoRequestDTO -> Schedule
-    public Schedule toSchedule(TodoRequestDto dto, User user) {
+    public Schedule toSchedule(HomeRequestDto.TodoRequestDto dto, User user) {
 
         return Schedule.builder()
                 .title(dto.getTitle())
@@ -39,7 +39,7 @@ public class ScheduleConverter {
     }
 
     //  DTO의 remindAlarm 리스트 -> ScheduleReminder
-    public List<ScheduleReminder> toScheduleReminders(Schedule schedule, List<TodoRequestDto.ReminderAlarmDto> remindAlarm) {
+    public List<ScheduleReminder> toScheduleReminders(Schedule schedule, List<HomeRequestDto.ReminderAlarmDto> remindAlarm) {
         return remindAlarm.stream()
                 .map(item -> ScheduleReminder.builder()
                         .schedule(schedule)

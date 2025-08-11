@@ -62,7 +62,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public HomeResponseDto.TodoIdDto createTodo(TodoRequestDto dto, User user) {
+    public HomeResponseDto.TodoIdDto createTodo(HomeRequestDto.TodoRequestDto dto, User user) {
         // Todo 등록
 
         // 충돌 검사
@@ -152,7 +152,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public HomeResponseDto.TodoIdDto updateTodoInfo(TodoRequestDto dto, Long scheduleId, User user) {
+    public HomeResponseDto.TodoIdDto updateTodoInfo(HomeRequestDto.TodoRequestDto dto, Long scheduleId, User user) {
         // Todo(Schedule) 수정
         if (scheduleId < 0) {
             // 1. 미래의 반복일정은 수정할 수 없음

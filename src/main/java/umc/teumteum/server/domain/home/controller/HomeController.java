@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.home.dto.request.HomeRequestDto;
-import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
 import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
 import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
 import umc.teumteum.server.domain.home.service.HomeService;
@@ -74,7 +73,7 @@ public class HomeController {
     @PostMapping(value = "/todo",consumes = "application/json", produces = "application/json")
     @Operation(summary = "투두 등록 API",description = "새로운 투두를 등록 API입니다.")
     public ApiResponse<HomeResponseDto.TodoIdDto> createTodo(
-            @RequestBody @Valid TodoRequestDto request,
+            @RequestBody @Valid HomeRequestDto.TodoRequestDto request,
             @CurrentUser @Parameter(hidden = true) User user){
         HomeResponseDto.TodoIdDto response = homeService.createTodo(request, user);
         return ApiResponse.of(HomeSuccessStatus._TODO_CREATED,response);
@@ -92,7 +91,7 @@ public class HomeController {
     @Operation(summary = "특정 투두 정보 수정 API",description = "특정투두의 상세정보를 수정하는 API입니다. path variable로 투두ID를 입력주세요.")
     public ApiResponse<HomeResponseDto.TodoIdDto> updateTodo(
             @Parameter(name= "todoId", description = "수정할 todo ID", example = "123") @PathVariable("todoId") Long todoId,
-            @RequestBody @Valid TodoRequestDto request,
+            @RequestBody @Valid HomeRequestDto.TodoRequestDto request,
             @CurrentUser @Parameter(hidden = true) User user){
         HomeResponseDto.TodoIdDto response = homeService.updateTodoInfo(request,todoId,user);
         return ApiResponse.of(HomeSuccessStatus._TODO_UPDATED,response);

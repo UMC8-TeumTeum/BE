@@ -9,13 +9,13 @@ import java.util.List;
 
 public interface HomeService {
     // Todo 등록
-    HomeResponseDto.TodoIdDto createTodo(TodoRequestDto dto, User user);
+    HomeResponseDto.TodoIdDto createTodo(HomeRequestDto.TodoRequestDto dto, User user);
 
     // Todo(Schedule) 조회
     HomeResponseDto.TodoInfoDto getTodoInfo(Long scheduleId);
 
     // Todo(Schedule) 수정
-    HomeResponseDto.TodoIdDto updateTodoInfo(TodoRequestDto dto, Long scheduleId, User user);
+    HomeResponseDto.TodoIdDto updateTodoInfo(HomeRequestDto.TodoRequestDto dto, Long scheduleId, User user);
 
     // Todo(Schedule) 삭제
     void deleteTodo(Long scheduleId);
