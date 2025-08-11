@@ -3,6 +3,7 @@ package umc.teumteum.server.domain.home.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -46,6 +47,28 @@ public class ActivityRequestDto {
 
     @Schema(description = "사용자가 직접 입력한 카테고리", example = "명상")
     private String customCategory;
+
+  }
+  @Getter
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class AiWishSaveRequest {
+    @NotBlank
+    @Schema(description = "ai 컨텐츠 ID", example = "3b4b2df3-8ef0-43e7-9474-762a76e53e49")
+    private String id;
+
+    @NotNull
+    @Schema(description = "시작 시간", example = "2025-07-24T10:00")
+    private LocalDateTime startTime;
+
+    @NotNull
+    @Schema(description = "종료 시간", example = "2025-07-24T11:00")
+    private LocalDateTime endTime;
+
+    @NotNull
+    @Schema(description = "강제 등록 여부", example = "false")
+    private Boolean isForce;
 
   }
 

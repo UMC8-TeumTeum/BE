@@ -19,7 +19,9 @@ public enum HomeErrorStatus implements BaseErrorCode {
     _CATEGORY_INPUT_CONFLICT(HttpStatus.BAD_REQUEST, "HOME4004", "카테고리와 직접 입력은 둘 중 하나만 선택해야 합니다."),
     _WISH_NOT_FOUND(HttpStatus.NOT_FOUND,"HOME4043","해당 위시 정보를 찾을 수 없습니다."),
     _ROUTINE_NOT_FOUND(HttpStatus.NOT_FOUND,"HOME4044","해당 루틴 정보를 찾을 수 없습니다."),
-    _SCHEDULE_CONFLICT(HttpStatus.CONFLICT, "HOME4092","해당 시간에 스케줄이 존재합니다.")
+    _SCHEDULE_CONFLICT(HttpStatus.CONFLICT, "HOME4092","해당 시간에 스케줄이 존재합니다."),
+
+    _AI_WISH_NOT_FOUND(HttpStatus.NOT_FOUND, "ACTIVITY4001", "해당 ai 컨텐츠를 찾을 수 없습니다."),
     ;
 
     private final HttpStatus httpStatus;
