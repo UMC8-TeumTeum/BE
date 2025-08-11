@@ -460,7 +460,7 @@ public class TeumServiceImpl implements TeumService {
 
 
     @Override
-    public List<TeumRequestResponseDto> getTeumRequestsByDate(Long userId, String date) {
+    public List<TeumResponseDto.TeumRequestDetail> getTeumRequestsByDate(Long userId, String date) {
         LocalDate parsedDate = LocalDate.parse(date);
         List<TeumRequest> allRequests = teumRequestRepository.findByDate(parsedDate);
 

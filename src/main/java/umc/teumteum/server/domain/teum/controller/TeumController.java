@@ -118,12 +118,12 @@ public class TeumController {
             description = "지정한 날짜에 해당하는 틈 요청 목록을 조회합니다."
     )
     @GetMapping(value = "/requests", produces = "application/json")
-    public ApiResponse<List<TeumRequestResponseDto>> getTeumRequestsByDate(
+    public ApiResponse<List<TeumResponseDto.TeumRequestDetail>> getTeumRequestsByDate(
             @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2025-05-02")
             @RequestParam("date") String date,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
-        List<TeumRequestResponseDto> result = teumService.getTeumRequestsByDate(user.getId(), date);
+        List<TeumResponseDto.TeumRequestDetail> result = teumService.getTeumRequestsByDate(user.getId(), date);
         return ApiResponse.of(TeumSuccessStatus._TEUM_LIST_BY_DATE_LOADED, result);
     }
 

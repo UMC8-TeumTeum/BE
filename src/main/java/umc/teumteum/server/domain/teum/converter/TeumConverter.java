@@ -294,7 +294,7 @@ public class TeumConverter {
     }
 
 
-    public TeumRequestResponseDto toTeumRequestResponseDto(
+    public TeumResponseDto.TeumRequestDetail toTeumRequestResponseDto(
             TeumRequest request,
             boolean isCancelled,
             boolean isResend,
@@ -329,7 +329,7 @@ public class TeumConverter {
             }
         }
 
-        return TeumRequestResponseDto.builder()
+        return TeumResponseDto.TeumRequestDetail.builder()
                 .requestId(request.getId())
                 .title(request.getTitle())
                 .description(request.getDescription())
