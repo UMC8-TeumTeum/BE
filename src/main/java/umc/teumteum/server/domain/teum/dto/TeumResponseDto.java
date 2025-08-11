@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
-import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
-import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 
 import java.time.LocalDate;
@@ -59,7 +57,7 @@ public class TeumResponseDto {
         private String date;
 
         @Schema(description = "공통 가능한 시간대 목록")
-        private List<TimeSlot> availableTime;
+        private List<TeumTimeSlot> availableTime;
 
     }
 
@@ -144,10 +142,10 @@ public class TeumResponseDto {
         private String date;
 
         @Schema(description = "요청 시간 슬롯")
-        private TimeSlot time;
+        private TeumTimeSlot time;
 
         @Schema(description = "요청자 정보")
-        private ParticipantDto sender;
+        private TeumParticipant sender;
 
         @JsonProperty("isSender")
         @Schema(description = "요청자가 나인지 여부", example = "true")
@@ -201,7 +199,7 @@ public class TeumResponseDto {
         private boolean isRead;
 
         @Schema(description = "보낸 사용자 정보")
-        private ParticipantDto senderUser;
+        private TeumParticipant senderUser;
 
         @Schema(description = "수신자 총 인원 수 (본인 포함)", example = "1")
         private int receiverCount;
@@ -210,7 +208,7 @@ public class TeumResponseDto {
         private String date;
 
         @Schema(description = "요청 시간 구간")
-        private TimeSlot timeSlot;
+        private TeumTimeSlot timeSlot;
     }
 
     @Getter
@@ -232,11 +230,11 @@ public class TeumResponseDto {
         @Schema(description = "요청 날짜", example = "2025-08-04")
         private LocalDate date;
 
-        @Schema(description = "시간 정보 (시작/종료)", implementation = TimeSlot.class)
-        private TimeSlot timeSlot;
+        @Schema(description = "시간 정보 (시작/종료)", implementation = TeumTimeSlot.class)
+        private TeumTimeSlot timeSlot;
 
-        @Schema(description = "요청자 정보", implementation = ParticipantDto.class)
-        private ParticipantDto requester;
+        @Schema(description = "요청자 정보", implementation = TeumParticipant.class)
+        private TeumParticipant requester;
 
         @JsonProperty("isResend")
         @Schema(description = "재요청 여부", example = "false")
@@ -247,16 +245,16 @@ public class TeumResponseDto {
         private boolean isCancelled;
 
         @Schema(description = "PENDING 상태인 응답자 목록")
-        private List<ParticipantDto> pending;
+        private List<TeumParticipant> pending;
 
         @Schema(description = "ACCEPTED 상태인 응답자 목록")
-        private List<ParticipantDto> accepted;
+        private List<TeumParticipant> accepted;
 
         @Schema(description = "CANCELLED(REJECTED/LEFT) 상태인 응답자 목록")
-        private List<ParticipantDto> cancelled;
+        private List<TeumParticipant> cancelled;
 
         @Schema(description = "RESEND 상태인 응답자 목록")
-        private List<ParticipantDto> resend;
+        private List<TeumParticipant> resend;
 
     }
 
