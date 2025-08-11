@@ -14,7 +14,6 @@ import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.exception.GeneralException;
-import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
 import java.time.LocalDate;
@@ -33,7 +32,6 @@ import java.util.stream.Collectors;
 public class TeumConverter {
 
     private final TimeUtil timeUtil;
-    private final S3Util s3Util;
 
     public TeumRequest toTeumRequest(TeumRequestDto.TeumRequest dto, User sender) {
         return TeumRequest.builder()

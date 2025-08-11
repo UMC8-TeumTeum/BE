@@ -1,6 +1,6 @@
 package umc.teumteum.server.domain.friend.service;
 
-import umc.teumteum.server.domain.friend.dto.*;
+import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 

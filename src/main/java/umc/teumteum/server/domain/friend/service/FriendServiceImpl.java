@@ -8,7 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.friend.converter.FriendConverter;
-import umc.teumteum.server.domain.friend.dto.*;
+import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.friend.exception.FriendException;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;

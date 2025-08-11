@@ -2,11 +2,10 @@ package umc.teumteum.server.domain.friend.converter;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import umc.teumteum.server.domain.friend.dto.*;
+import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.user.entity.User;
-import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
 import java.time.Duration;
@@ -19,7 +18,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FriendConverter {
 
-    private final S3Util s3Util;
     private final TimeUtil timeUtil;
 
     public FriendResponseDto.FollowingFriend toFollowingUserResponse(Friend friend, String profileImageUrl) {
