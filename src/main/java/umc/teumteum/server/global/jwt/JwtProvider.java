@@ -74,31 +74,18 @@ public class JwtProvider {
 
     // 토큰 유효성 검사
     public void validateToken(String token, String expectedType) {
-        try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody()
-                    ;
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                ;
 
-            // 토큰 타입 확인
-                String tokenType = claims.get("type", String.class);
-                if (!(expectedType.equals(tokenType))) {
-                    throw new InvalidTokenTypeException("유효하지 않은 토큰 타입입니다.");
-                }
-
-            } catch (SecurityException e) {
-                throw new BadCredentialsException("유효하지 않은 JWT 서명입니다.", e);
-            } catch (MalformedJwtException e) {
-                throw new BadCredentialsException("손상된 JWT 토큰입니다.", e);
-            } catch (ExpiredJwtException e) {
-                throw new BadCredentialsException("만료된 JWT 토큰입니다.", e);
-            } catch (UnsupportedJwtException e) {
-                throw new BadCredentialsException("지원되지 않는 JWT 토큰입니다.", e);
-            } catch (IllegalArgumentException e) {
-                throw new BadCredentialsException("JWT 클레임이 비어있습니다.", e);
-            }
+        // 토큰 타입 확인
+        String tokenType = claims.get("type", String.class);
+        if (!(expectedType.equals(tokenType))) {
+            throw new InvalidTokenTypeException("유효하지 않은 토큰 타입입니다.");
+        }
     }
 
     // 토큰에서 사용자 ID 추출

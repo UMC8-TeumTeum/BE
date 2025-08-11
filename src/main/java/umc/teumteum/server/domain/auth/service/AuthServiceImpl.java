@@ -214,20 +214,16 @@ public class AuthServiceImpl implements AuthService {
     private void validateRefreshTokenForService(String token) {
         try {
             jwtProvider.validateRefreshToken(token);
-        } catch (BadCredentialsException e) {
-            Throwable cause = e.getCause();
-
-            if (cause instanceof SecurityException) {
-                throw new AuthException(ErrorStatus.INVALID_JWT_SIGNATURE);
-            } else if (cause instanceof MalformedJwtException) {
-                throw new AuthException(ErrorStatus.MALFORMED_JWT_TOKEN);
-            } else if (cause instanceof ExpiredJwtException) {
-                throw new AuthException(ErrorStatus.EXPIRED_JWT_TOKEN);
-            } else if (cause instanceof UnsupportedJwtException) {
-                throw new AuthException(ErrorStatus.UNSUPPORTED_JWT_TOKEN);
-            } else if (cause instanceof IllegalArgumentException) {
-                throw new AuthException(ErrorStatus.EMPTY_JWT_CLAIMS);
-            }
+        } catch (SecurityException e) {
+            throw new AuthException(ErrorStatus.INVALID_JWT_SIGNATURE);
+        } catch (MalformedJwtException e) {
+            throw new AuthException(ErrorStatus.MALFORMED_JWT_TOKEN);
+        } catch (ExpiredJwtException e) {
+            throw new AuthException(ErrorStatus.EXPIRED_JWT_TOKEN);
+        } catch (UnsupportedJwtException e) {
+            throw new AuthException(ErrorStatus.UNSUPPORTED_JWT_TOKEN);
+        } catch (IllegalArgumentException e) {
+            throw new AuthException(ErrorStatus.EMPTY_JWT_CLAIMS);
         } catch (InvalidTokenTypeException e) {
             throw new AuthException(ErrorStatus.INVALID_TOKEN_TYPE);
         } catch (Exception e) {
