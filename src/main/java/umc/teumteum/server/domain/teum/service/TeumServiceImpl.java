@@ -12,7 +12,6 @@ import umc.teumteum.server.domain.teum.converter.TeumConverter;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
@@ -279,7 +278,7 @@ public class TeumServiceImpl implements TeumService {
 
     }
 
-    public ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long scheduleId, Long userId) {
+    public TeumResponseDto.ScheduledTeumDetail getScheduledTeumDetail(Long scheduleId, Long userId) {
         Schedule schedule = getScheduleOrThrow(scheduleId);
         validateScheduleAccessible(schedule, userId);
 

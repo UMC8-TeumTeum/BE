@@ -10,7 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
@@ -164,7 +163,7 @@ public class TeumController {
             description = "사용자가 참여 중인 약속된 틈(scheduleId)에 대한 상세 정보를 조회합니다."
     )
     @GetMapping(value = "/scheduled/{scheduleId}", produces = "application/json")
-    public ApiResponse<ScheduledTeumDetailResponseDto> getScheduledTeumDetail(
+    public ApiResponse<TeumResponseDto.ScheduledTeumDetail> getScheduledTeumDetail(
             @Parameter(name = "scheduleId", description = "사용자 본인의 약속된 틈 일정 ID", example = "300")
             @PathVariable("scheduleId") Long scheduleId,
             @CurrentUser @Parameter(hidden = true) User user

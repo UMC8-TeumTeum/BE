@@ -7,7 +7,6 @@ import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
@@ -249,12 +248,12 @@ public class TeumConverter {
                 .toList();
     }
 
-    public ScheduledTeumDetailResponseDto toScheduledTeumDetailDto(
+    public TeumResponseDto.ScheduledTeumDetail toScheduledTeumDetailDto(
             Schedule baseSchedule,
             List<Schedule> relatedSchedules,
             Map<Long, String> profileUrlByUserId
     ) {
-        return ScheduledTeumDetailResponseDto.builder()
+        return TeumResponseDto.ScheduledTeumDetail.builder()
                 .teumId(baseSchedule.getTeumRequest().getId())
                 .title(baseSchedule.getTitle())
                 .date(baseSchedule.getDate().toString())
