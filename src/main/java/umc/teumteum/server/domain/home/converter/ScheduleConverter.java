@@ -18,11 +18,7 @@ import umc.teumteum.server.domain.user.entity.User;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Component
 public class ScheduleConverter {
@@ -44,18 +40,18 @@ public class ScheduleConverter {
     }
 
     //  DTO의 remindAlarm 리스트 -> ScheduleReminder
-    public List<ScheduleReminder> toScheduleReminders(Schedule schedule, List<Integer> remindAlarm, AlarmStatus alarmStatus) {
+    public List<ScheduleReminder> toScheduleReminders(Schedule schedule, List<TodoRequestDto.ReminderAlarmDto> remindAlarm) {
         return remindAlarm.stream()
-                .map(time -> ScheduleReminder.builder()
+                .map(item -> ScheduleReminder.builder()
                         .schedule(schedule)
-                        .reminderTime(time)
-                        .alarmStatus(alarmStatus)
+                        .reminderTime(item.getAlarm())
+                        .alarmStatus(item.getStatus())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // Schedule -> TodoInfoResponseDTO
-    public TodoInfoResponseDto toTodoInfoResponse(Schedule schedule, List<RemindAlarm> onboardingReminders, List<ScheduleReminder> reminders, List<String> profileUrls) {
+    public TodoInfoResponseDto toTodoInfoResponse(Schedule schedule, List<ScheduleReminder> reminders, List<String> profileUrls) {
 
         return TodoInfoResponseDto.builder()
                 .type(schedule.getType())
@@ -65,12 +61,7 @@ public class ScheduleConverter {
                 .description(schedule.getDescription())
                 .isPublic(schedule.getIsPublic())
                 .includeTeum(schedule.getIncludeTeum())
-                .onboardingReminder(onboardingReminders.stream()
-                        .map(RemindAlarm::getMinutesBefore)
-                        .toList())
-                .remindAlarm(reminders.stream()
-                        .map(ScheduleReminder::getReminderTime)
-                        .toList())
+                .remindAlarm(toReminderAlarmDtos(reminders))
                 .profileUrl(profileUrls)
                 .build();
     }
@@ -85,12 +76,23 @@ public class ScheduleConverter {
                 .endTime(date.atTime(routine.getEndTime()))
                 .isPublic(false)
                 .includeTeum(false)
-                .onboardingReminder(onboardingReminders.stream()
-                        .map(RemindAlarm::getMinutesBefore)
-                        .toList())
                 .remindAlarm(List.of())
                 .profileUrl(profileUrls)
                 .build();
+    }
+
+    // 리마인드 알림 변환
+    private List<TodoInfoResponseDto.ReminderAlarmDto> toReminderAlarmDtos(List<ScheduleReminder> reminders) {
+
+        return reminders.stream()
+                .sorted(Comparator.comparingInt(ScheduleReminder::getReminderTime))
+                .map(r -> {
+                    TodoInfoResponseDto.ReminderAlarmDto dto = new TodoInfoResponseDto.ReminderAlarmDto();
+                    dto.setAlarm(r.getReminderTime());
+                    dto.setStatus(r.getAlarmStatus());
+                    return dto;
+                })
+                .toList();
     }
 
     // Routine -> Schedule(isDeleted = true)

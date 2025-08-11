@@ -5,6 +5,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SecurityException;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
     @Value("${jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
 
-
+    // 인증 - 소셜로그인
     @Override
     @Transactional
     public AuthResponseDto.LoginResponse socialLogin(String socialType, AuthRequestDto.SocialLoginRequest request) {
@@ -117,6 +118,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
+    // 인증 - 개발용 토큰 발급
     @Override
     @Transactional
     public AuthResponseDto.DevTokenResponse generateDevAccessToken() {
@@ -138,6 +140,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
+    // 인증 - 토큰 재발급
     @Override
     public AuthResponseDto.ReissueResponse reissueToken(AuthRequestDto.ReissueRequest request) {
         String refreshKey = null;
@@ -163,7 +166,7 @@ public class AuthServiceImpl implements AuthService {
 
             // 5. 요청받은 RT와 Redis에 저장된 RT 비교 (불일치 -> 재로그인 필요)
             if (!refreshToken.equals(storedRefreshToken)) {
-                log.warn("토큰 탈취 의심 - userId: {}, sessionId: {}", userId, sessionId);
+                log.warn("[토큰 탈취 의심] : 요청 RT != Redis RT - userId: {}, sessionId: {}", userId, sessionId);
                 
                 // 동일한 sessionID를 갖는 AT 블랙리스트 등록
                 String blacklistKey = getBlacklistKey(userId, sessionId);
@@ -195,6 +198,26 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
+    // 인증 - 로그아웃
+    @Override
+    public void logout(HttpServletRequest httpServletRequest) {
+        // 1. Authorization 헤더의 AT로 userId & sessionId 추출
+        String accessToken = jwtProvider.resolveToken(httpServletRequest);
+        String userId = jwtProvider.getUserIdFromToken(accessToken);
+        String sessionId = jwtProvider.getSessionIdFromToken(accessToken);
+
+        // 2. RT 화이트리스트 삭제
+        String refreshKey = getRefreshKey(userId, sessionId);
+        rtWhitelistRedisTemplate.delete(refreshKey);
+
+        // 3. AT 블랙리스트 등록 (남은 시간만큼)
+        String blacklistKey = getBlacklistKey(userId, sessionId);
+        long remainingTime = jwtProvider.getRemainingTime(accessToken);
+        if (remainingTime > 0) {
+            Duration blacklistDuration = Duration.ofMillis(remainingTime);
+            atBlacklistRedisTemplate.opsForValue().set(blacklistKey, "blacklisted", blacklistDuration);
+        }
+    }
 
 
     // SocialType 따라 로그인 분기 처리
