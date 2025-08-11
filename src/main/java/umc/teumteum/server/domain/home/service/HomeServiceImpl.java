@@ -63,7 +63,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public TodoIdResponseDto createTodo(TodoRequestDto dto, User user) {
+    public HomeResponseDto.TodoIdDto createTodo(TodoRequestDto dto, User user) {
         // Todo 등록
 
         // 충돌 검사
@@ -98,11 +98,11 @@ public class HomeServiceImpl implements HomeService {
             scheduleReminderRepository.saveAll(activeReminders);
         }
 
-        return new TodoIdResponseDto(savedSchedule.getId());
+        return new HomeResponseDto.TodoIdDto(savedSchedule.getId());
     }
 
     @Override
-    public TodoInfoResponseDto getTodoInfo(Long scheduleId) {
+    public HomeResponseDto.TodoInfoDto getTodoInfo(Long scheduleId) {
         // Todo(Schedule) 조회
         // 가상의 루틴 ID일 경우
         if(scheduleId<0){
@@ -174,7 +174,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public TodoIdResponseDto updateTodoInfo(TodoRequestDto dto, Long scheduleId, User user) {
+    public HomeResponseDto.TodoIdDto updateTodoInfo(TodoRequestDto dto, Long scheduleId, User user) {
         // Todo(Schedule) 수정
         if (scheduleId < 0) {
             // 1. 미래의 반복일정은 수정할 수 없음
@@ -223,7 +223,7 @@ public class HomeServiceImpl implements HomeService {
             List<ScheduleReminder> inactiveReminders = scheduleConverter.toScheduleReminders(schedule, inactiveRemindAlarm, AlarmStatus.INACTIVE);
             scheduleReminderRepository.saveAll(inactiveReminders);
         }
-        return new TodoIdResponseDto(schedule.getId());
+        return new HomeResponseDto.TodoIdDto(schedule.getId());
     }
 
     @Transactional
@@ -364,9 +364,9 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public List<TodayScheduleResponseDto> getTodaySchedule(LocalDate date, User user) {
+    public List<HomeResponseDto.TodayScheduleDto> getTodaySchedule(LocalDate date, User user) {
         // 오늘의 시간표 조회
-        List<TodayScheduleResponseDto> sleepAndTodo = new ArrayList<>(); // 수면패턴과 투두를 등록한 배열
+        List<HomeResponseDto.TodayScheduleDto> sleepAndTodo = new ArrayList<>(); // 수면패턴과 투두를 등록한 배열
 
         // 1. 수면 패턴 등록
         LocalTime sleepTime = user.getSleepTime();
@@ -375,11 +375,11 @@ public class HomeServiceImpl implements HomeService {
         if(sleepTime != null && wakeTime != null){
             if(sleepTime.isAfter(wakeTime)){
                 // 자정 이전에 자는 경우
-                sleepAndTodo.add(new TodayScheduleResponseDto(LocalTime.MIDNIGHT,wakeTime,"SLEEP"));
-                sleepAndTodo.add(new TodayScheduleResponseDto(sleepTime,LocalTime.MAX,"SLEEP"));
+                sleepAndTodo.add(new HomeResponseDto.TodayScheduleDto(LocalTime.MIDNIGHT,wakeTime,"SLEEP"));
+                sleepAndTodo.add(new HomeResponseDto.TodayScheduleDto(sleepTime,LocalTime.MAX,"SLEEP"));
             } else{
                 // 자정 이후에 자는 경우
-                sleepAndTodo.add(new TodayScheduleResponseDto(sleepTime,wakeTime,"SLEEP"));
+                sleepAndTodo.add(new HomeResponseDto.TodayScheduleDto(sleepTime,wakeTime,"SLEEP"));
             }
         }
 
@@ -399,7 +399,7 @@ public class HomeServiceImpl implements HomeService {
             LocalTime end = schedule.getEndTime().isAfter(tomorrow)?
                     LocalTime.MAX : schedule.getEndTime().toLocalTime();
 
-            sleepAndTodo.add(TodayScheduleResponseDto.builder()
+            sleepAndTodo.add(HomeResponseDto.TodayScheduleDto.builder()
                     .startTime(start)
                     .endTime(end)
                     .type("TODO")
@@ -407,17 +407,17 @@ public class HomeServiceImpl implements HomeService {
         }
 
         // 3. sleepAndTodo startTime 기준 정렬
-        sleepAndTodo.sort(Comparator.comparing(TodayScheduleResponseDto::getStartTime));
+        sleepAndTodo.sort(Comparator.comparing(HomeResponseDto.TodayScheduleDto::getStartTime));
 
         // 4. EMPTY 채우기
-        List<TodayScheduleResponseDto> result = new ArrayList<>(); // 응답 배열
+        List<HomeResponseDto.TodayScheduleDto> result = new ArrayList<>(); // 응답 배열
         LocalTime pointer = LocalTime.MIDNIGHT;
 
-        for (TodayScheduleResponseDto dto : sleepAndTodo) {
+        for (HomeResponseDto.TodayScheduleDto dto : sleepAndTodo) {
 
             if (pointer.isBefore(dto.getStartTime())) {
                 // 빈틈이 존재하면 EMPTY 추가
-                result.add(new TodayScheduleResponseDto(pointer, dto.getStartTime(), "EMPTY"));
+                result.add(new HomeResponseDto.TodayScheduleDto(pointer, dto.getStartTime(), "EMPTY"));
             }
 
             result.add(dto);
@@ -430,7 +430,7 @@ public class HomeServiceImpl implements HomeService {
 
         // 5. 남은 시간 마지막 EMPTY 채우기
         if (pointer.isBefore(LocalTime.MAX)) {
-            result.add(new TodayScheduleResponseDto(pointer, LocalTime.MAX, "EMPTY"));
+            result.add(new HomeResponseDto.TodayScheduleDto(pointer, LocalTime.MAX, "EMPTY"));
         }
 
         return result;

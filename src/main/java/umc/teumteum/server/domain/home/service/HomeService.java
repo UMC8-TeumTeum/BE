@@ -10,13 +10,13 @@ import java.util.List;
 
 public interface HomeService {
     // Todo 등록
-    TodoIdResponseDto createTodo(TodoRequestDto dto, User user);
+    HomeResponseDto.TodoIdDto createTodo(TodoRequestDto dto, User user);
 
     // Todo(Schedule) 조회
-    TodoInfoResponseDto getTodoInfo(Long scheduleId);
+    HomeResponseDto.TodoInfoDto getTodoInfo(Long scheduleId);
 
     // Todo(Schedule) 수정
-    TodoIdResponseDto updateTodoInfo(TodoRequestDto dto, Long scheduleId, User user);
+    HomeResponseDto.TodoIdDto updateTodoInfo(TodoRequestDto dto, Long scheduleId, User user);
 
     // Todo(Schedule) 삭제
     void deleteTodo(Long scheduleId);
@@ -37,7 +37,7 @@ public interface HomeService {
     WishResponseDto.WishlistDto getWishlist(String duration, Integer page, User user);
 
     // 오늘의 시간표 조회
-    List<TodayScheduleResponseDto> getTodaySchedule(LocalDate today, User user);
+    List<HomeResponseDto.TodayScheduleDto> getTodaySchedule(LocalDate today, User user);
 
     // Wish 투두 등록
     void assignWish(Long wishId, WishRequestDto.WishAssignDto dto, User user);

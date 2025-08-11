@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
-import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDto;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
@@ -53,10 +52,10 @@ public class ScheduleConverter {
                 .collect(Collectors.toList());
     }
 
-    // Schedule -> TodoInfoResponseDTO
-    public TodoInfoResponseDto toTodoInfoResponse(Schedule schedule, List<RemindAlarm> onboardingReminders, List<ScheduleReminder> reminders, List<String> profileUrls) {
+    // Schedule -> TodoInfoDto
+    public HomeResponseDto.TodoInfoDto toTodoInfoResponse(Schedule schedule, List<RemindAlarm> onboardingReminders, List<ScheduleReminder> reminders, List<String> profileUrls) {
 
-        return TodoInfoResponseDto.builder()
+        return HomeResponseDto.TodoInfoDto.builder()
                 .type(schedule.getType())
                 .title(schedule.getTitle())
                 .startTime(schedule.getStartTime())
@@ -74,9 +73,9 @@ public class ScheduleConverter {
                 .build();
     }
 
-    // Routine -> TodoInfoResponseDTO (미래의 반복일정 조회)
-    public TodoInfoResponseDto toVirtualRoutineInfo(Routine routine,LocalDate date, List<RemindAlarm> onboardingReminders, List<String> profileUrls) {
-        return TodoInfoResponseDto.builder()
+    // Routine -> TodoInfoDto (미래의 반복일정 조회)
+    public HomeResponseDto.TodoInfoDto toVirtualRoutineInfo(Routine routine,LocalDate date, List<RemindAlarm> onboardingReminders, List<String> profileUrls) {
+        return HomeResponseDto.TodoInfoDto.builder()
                 .type(ScheduleType.ROUTINE)
                 .title(routine.getTitle())
                 .description(routine.getDescription())
