@@ -12,7 +12,7 @@ public class OnboardingResponseDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    @Schema(description = "온보딩 - 프로필 이미지 업로드용 URl 발급 Response")
+    @Schema(title = "온보딩 - 프로필 이미지 업로드용 URl 발급 Response")
     public static class ProfileImagePresignedUrlResponse {
 
         @Schema(description = "S3에 업로드할 수 있는 Presigned URL")

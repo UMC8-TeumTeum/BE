@@ -13,7 +13,7 @@ public class AuthRequestDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    @Schema(description = "인증 - 소셜 로그인 Request")
+    @Schema(title = "인증 - 소셜 로그인 Request")
     public static class SocialLoginRequest {
 
         @NotBlank(message = "액세스 토큰은 필수입니다.")
@@ -26,7 +26,7 @@ public class AuthRequestDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    @Schema(description = "인증 - 토큰 재발급 Request")
+    @Schema(title = "인증 - 토큰 재발급 Request")
     public static class ReissueRequest {
 
         @NotBlank(message = "리프레시 토큰은 필수입니다.")
