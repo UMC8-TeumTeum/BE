@@ -13,8 +13,8 @@ import java.util.List;
 @Component
 public class WishConverter {
 
-    // WishRequestDTO -> Wish
-    public Wish toWish(WishRequestDto dto, User user) {
+    // CreateDto -> Wish
+    public Wish toWish(WishRequestDto.CreateDto dto, User user) {
         return Wish.builder()
                 .title(dto.getTitle())
                 .content(dto.getContent())
@@ -33,17 +33,17 @@ public class WishConverter {
                 .toList();
     }
 
-    // Wish -> WishInfoDTO
-    public HomeResponseDto.WishInfoDto toWishInfoDTO(Wish wish) {
+    // Wish -> WishInfoDto
+    public WishResponseDto.WishInfoDto toWishInfoDTO(Wish wish) {
         // WishCategory에서 Category 정보를 추출
-        List<HomeResponseDto.WishCategoryDto> categoryDTOS = wish.getWishCategories().stream()
-                .map(wc -> HomeResponseDto.WishCategoryDto.builder()
+        List<WishResponseDto.WishCategoryDto> categoryDTOS = wish.getWishCategories().stream()
+                .map(wc -> WishResponseDto.WishCategoryDto.builder()
                         .id(wc.getCategory().getId())
                         .name(wc.getCategory().getName())
                         .build())
                 .toList();
 
-        return HomeResponseDto.WishInfoDto.builder()
+        return WishResponseDto.WishInfoDto.builder()
                 .title(wish.getTitle())
                 .content(wish.getContent())
                 .estimatedDuration(wish.getEstimatedDuration())
@@ -52,9 +52,9 @@ public class WishConverter {
     }
 
     // wish 엔티티 목록 -> WishDto 목록
-    public static List<HomeResponseDto.WishDto> toWishDTOList(List<Wish> wishes) {
+    public static List<WishResponseDto.WishDto> toWishDTOList(List<Wish> wishes) {
         return wishes.stream()
-                .map(wish -> HomeResponseDto.WishDto.builder()
+                .map(wish -> WishResponseDto.WishDto.builder()
                         .id(wish.getId())
                         .title(wish.getTitle())
                         .estimatedDuration(wish.getEstimatedDuration())
@@ -62,9 +62,9 @@ public class WishConverter {
                 .toList();
     }
 
-    // 위시 목록 & 페이지 정보 -> WishlistDTO
-    public HomeResponseDto.WishlistDto toWishlistResponseDTO(List<Wish> wishes, int pageNumber, int pageSize, boolean hasNext, boolean isFirst, boolean isLast) {
-        return HomeResponseDto.WishlistDto.builder()
+    // 위시 목록 & 페이지 정보 -> WishlistDto
+    public WishResponseDto.WishlistDto toWishlistResponseDTO(List<Wish> wishes, int pageNumber, int pageSize, boolean hasNext, boolean isFirst, boolean isLast) {
+        return WishResponseDto.WishlistDto.builder()
                 .wishlist(toWishDTOList(wishes))
                 .pageNumber(pageNumber)
                 .pageSize(pageSize)
@@ -74,9 +74,9 @@ public class WishConverter {
                 .build();
     }
 
-    public List<HomeResponseDto.CategoryDto> toCategoryResponseDTO(List<Category> categories) {
+    public List<WishResponseDto.CategoryDto> toCategoryResponseDTO(List<Category> categories) {
         return categories.stream()
-                .map(category -> HomeResponseDto.CategoryDto.builder()
+                .map(category -> WishResponseDto.CategoryDto.builder()
                         .categoryId(category.getId())
                         .categoryName(category.getName())
                         .build())

@@ -4,6 +4,7 @@ import java.time.Duration;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
+import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
 import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDto;
 import umc.teumteum.server.domain.home.entity.Schedule;
@@ -112,7 +113,7 @@ public class ScheduleConverter {
     }
 
     // Wish -> Schedule entity
-    public Schedule toScheduleFromWish(Wish wish, WishAssignRequestDto dto) {
+    public Schedule toScheduleFromWish(Wish wish, WishRequestDto.WishAssignDto dto) {
         return Schedule.builder()
                 .user(wish.getUser())
                 .title(wish.getTitle())

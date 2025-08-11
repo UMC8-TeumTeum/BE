@@ -1,8 +1,6 @@
 package umc.teumteum.server.domain.home.service;
 
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
-import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
-import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.dto.response.*;
 import umc.teumteum.server.domain.user.entity.User;
@@ -24,28 +22,28 @@ public interface HomeService {
     void deleteTodo(Long scheduleId);
 
     // Wish 등록
-    void createWish(WishRequestDto dto, User user);
+    void createWish(WishRequestDto.CreateDto dto, User user);
 
     // Wish 조회
-    HomeResponseDto.WishInfoDto getWishInfo(Long wishId);
+    WishResponseDto.WishInfoDto getWishInfo(Long wishId);
 
     // Wish 삭제
-    void deleteWishByIds(WishDeleteRequestDto dto);
+    void deleteWishByIds(WishRequestDto.WishDeleteDto dto);
 
     // Wish 수정
-    void updateWishInfo(WishRequestDto dto, Long wishId, User user);
+    void updateWishInfo(WishRequestDto.CreateDto dto, Long wishId);
 
     // Wishlist 조회
-    HomeResponseDto.WishlistDto getWishlist(String duration, Integer page, User user);
+    WishResponseDto.WishlistDto getWishlist(String duration, Integer page, User user);
 
     // 오늘의 시간표 조회
     List<TodayScheduleResponseDto> getTodaySchedule(LocalDate today, User user);
 
     // Wish 투두 등록
-    void assignWish(Long wishId, WishAssignRequestDto dto, User user);
+    void assignWish(Long wishId, WishRequestDto.WishAssignDto dto, User user);
 
     // 카테고리 정보 조회
-    List<HomeResponseDto.CategoryDto> getCategory();
+    List<WishResponseDto.CategoryDto> getCategory();
 
     // 빈틈 시간 조회
     HomeResponseDto.TeumTimeDto getTeaumTime(User user);

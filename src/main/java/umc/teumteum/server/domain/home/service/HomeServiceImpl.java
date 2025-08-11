@@ -10,8 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.converter.ScheduleConverter;
 import umc.teumteum.server.domain.home.converter.WishConverter;
 import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
-import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
-import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.dto.response.*;
 import umc.teumteum.server.domain.home.entity.Category;
@@ -269,7 +267,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public void createWish(WishRequestDto dto, User user) {
+    public void createWish(WishRequestDto.CreateDto dto, User user) {
         // Wish 등록
 
         // 카테고리 ID 유효성 검사
@@ -286,7 +284,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public HomeResponseDto.WishInfoDto getWishInfo(Long wishId) {
+    public WishResponseDto.WishInfoDto getWishInfo(Long wishId) {
         // Wish 조회
         Wish wish = wishRepository.findById(wishId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
@@ -295,7 +293,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public void deleteWishByIds(WishDeleteRequestDto dto) {
+    public void deleteWishByIds(WishRequestDto.WishDeleteDto dto) {
         // Wish 삭제
         List<Long> ids = dto.getWishIds();
         List<Wish> wishes = wishRepository.findAllById(ids);
@@ -311,7 +309,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public void updateWishInfo(WishRequestDto dto, Long wishId, User user) {
+    public void updateWishInfo(WishRequestDto.CreateDto dto, Long wishId) {
         // Wish 수정
         Wish wish = wishRepository.findById(wishId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
@@ -335,7 +333,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public HomeResponseDto.WishlistDto getWishlist(String duration, Integer page, User user) {
+    public WishResponseDto.WishlistDto getWishlist(String duration, Integer page, User user) {
         // Wishlist 조회
         System.out.println("user = " + user);
         // 페이징 조건:  page는 1부터, pageSize = 10, 정렬조건 = 최신순
@@ -439,7 +437,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public void assignWish(Long wishId, WishAssignRequestDto dto, User user) {
+    public void assignWish(Long wishId, WishRequestDto.WishAssignDto dto, User user) {
         // 위시 투두 등록
 
         // 1. 위시 조회
@@ -471,7 +469,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public List<HomeResponseDto.CategoryDto> getCategory() {
+    public List<WishResponseDto.CategoryDto> getCategory() {
         // 카테고리 정보 조회
         List<Category> categories = categoryRepository.findAll();
         return wishConverter.toCategoryResponseDTO(categories);
