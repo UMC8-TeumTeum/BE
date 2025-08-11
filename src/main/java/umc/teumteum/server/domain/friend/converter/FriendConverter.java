@@ -22,51 +22,34 @@ public class FriendConverter {
     private final S3Util s3Util;
     private final TimeUtil timeUtil;
 
-    public FollowingUserResponseDto toFollowingUserResponse(Friend friend) {
+    public FollowingUserResponseDto toFollowingUserResponse(Friend friend, String profileImageUrl) {
         User following = friend.getFollowing();
-        String imageUrl = s3Util.toPresignedUrl("profile/" + following.getProfileImageName(), Duration.ofMinutes(30));
-
         return new FollowingUserResponseDto(
                 following.getId(),
                 following.getNickname(),
                 following.getJob(),
-                imageUrl,
+                profileImageUrl,
                 friend.getIsFavorite()
         );
     }
 
-    public List<FollowingUserResponseDto> toFollowingUserResponseList(List<Friend> friendList) {
-        return friendList.stream()
-                .map(this::toFollowingUserResponse)
-                .collect(Collectors.toList());
-    }
-
-    public FollowerUserResponseDto toFollowerUserResponse(Friend friend) {
+    public FollowerUserResponseDto toFollowerUserResponse(Friend friend, String profileImageUrl) {
         User follower = friend.getFollower();
-        String imageUrl = s3Util.toPresignedUrl("profile/" + follower.getProfileImageName(), Duration.ofMinutes(30));
-
         return new FollowerUserResponseDto(
                 follower.getId(),
                 follower.getNickname(),
                 follower.getJob(),
-                imageUrl
+                profileImageUrl
         );
     }
 
-    public List<FollowerUserResponseDto> toFollowerUserResponseList(List<Friend> friendList) {
-        return friendList.stream()
-                .map(this::toFollowerUserResponse)
-                .collect(Collectors.toList());
-    }
 
-    public FriendProfileResponseDto toFriendProfileResponse(User targetUser, Friend followRelation) {
-        String imageUrl = s3Util.toPresignedUrl("profile/" + targetUser.getProfileImageName(), Duration.ofMinutes(30));
-
+    public FriendProfileResponseDto toFriendProfileResponse(User targetUser, Friend followRelation, String profileImageUrl) {
         return FriendProfileResponseDto.builder()
                 .userId(targetUser.getId())
                 .name(targetUser.getNickname())
-                .profileImageUrl(imageUrl)
-                .field(targetUser.getJob()) // 또는 getField() 등
+                .profileImageUrl(profileImageUrl)
+                .field(targetUser.getJob())
                 .isFollowing(followRelation != null)
                 .isFavorite(followRelation != null && followRelation.getIsFavorite())
                 .build();
