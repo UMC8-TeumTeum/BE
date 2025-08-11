@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishDeleteRequestDto;
 import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
-import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDto;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
 import umc.teumteum.server.domain.home.service.HomeService;
@@ -51,9 +50,9 @@ public class WishController {
 
     @GetMapping(value = "/{wishId}", produces = "application/json")
     @Operation(summary = "특정 위시 정보 조회 API",description = "특정위시의 상세정보를 조회하는 API입니다.")
-    public ApiResponse<WishInfoResponseDto> getWish(
+    public ApiResponse<HomeResponseDto.WishInfoDto> getWish(
             @Parameter(name= "wishId", description = "조회할 위시 ID", example = "123") @PathVariable("wishId") Long wishId){
-        WishInfoResponseDto response = homeService.getWishInfo(wishId);
+        HomeResponseDto.WishInfoDto response = homeService.getWishInfo(wishId);
         return ApiResponse.of(HomeSuccessStatus._WISH_LOADED,response);
     }
 

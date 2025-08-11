@@ -286,7 +286,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public WishInfoResponseDto getWishInfo(Long wishId) {
+    public HomeResponseDto.WishInfoDto getWishInfo(Long wishId) {
         // Wish 조회
         Wish wish = wishRepository.findById(wishId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));

@@ -27,7 +27,7 @@ public interface HomeService {
     void createWish(WishRequestDto dto, User user);
 
     // Wish 조회
-    WishInfoResponseDto getWishInfo(Long wishId);
+    HomeResponseDto.WishInfoDto getWishInfo(Long wishId);
 
     // Wish 삭제
     void deleteWishByIds(WishDeleteRequestDto dto);

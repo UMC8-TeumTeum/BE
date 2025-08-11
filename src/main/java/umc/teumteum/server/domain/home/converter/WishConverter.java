@@ -33,17 +33,17 @@ public class WishConverter {
                 .toList();
     }
 
-    // Wish -> WishInfoResponseDTO
-    public WishInfoResponseDto toWishInfoDTO(Wish wish) {
+    // Wish -> WishInfoDTO
+    public HomeResponseDto.WishInfoDto toWishInfoDTO(Wish wish) {
         // WishCategory에서 Category 정보를 추출
-        List<WishInfoResponseDto.CategoryDTO> categoryDTOS = wish.getWishCategories().stream()
-                .map(wc -> WishInfoResponseDto.CategoryDTO.builder()
+        List<HomeResponseDto.WishCategoryDto> categoryDTOS = wish.getWishCategories().stream()
+                .map(wc -> HomeResponseDto.WishCategoryDto.builder()
                         .id(wc.getCategory().getId())
                         .name(wc.getCategory().getName())
                         .build())
                 .toList();
 
-        return WishInfoResponseDto.builder()
+        return HomeResponseDto.WishInfoDto.builder()
                 .title(wish.getTitle())
                 .content(wish.getContent())
                 .estimatedDuration(wish.getEstimatedDuration())

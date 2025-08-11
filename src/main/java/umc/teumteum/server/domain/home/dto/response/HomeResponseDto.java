@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
+import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.global.util.TimeSerializer;
 
@@ -34,11 +35,10 @@ public class HomeResponseDto {
   @Getter
   @Builder
   @AllArgsConstructor
+  @Schema(title = "CalendarDto : 캘린더 조회 응답 Dto")
   public static class CalendarDto{
-
     @Schema(description = "날짜", example = "2025-07-31")
     private LocalDate date;
-
     @Schema(description = "스케줄 여부", example = "true")
     private Boolean hasSchedule;
   }
@@ -47,27 +47,22 @@ public class HomeResponseDto {
   @Builder
   @NoArgsConstructor
   @AllArgsConstructor
+  @Schema(title = "TodolistDto : 투두리스트 응답 Dto")
   public static class TodolistDto{
     @Schema(description = "아이디", example = "1")
     private Long id;
-
     @Schema(description = "제목", example = "수영하기")
     private String title;
-
     @Schema(description = "시작시간", example = "01:00")
     @JsonSerialize(using = TimeSerializer.class)
     private LocalTime startTime;
-
     @Schema(description = "종료시간", example = "02:00")
     @JsonSerialize(using = TimeSerializer.class)
     private LocalTime endTime;
-
     @Schema(description = "공개여부", example = "false")
     private Boolean isPublic;
-
     @Schema(description = "리마인드 알림 여부", example = "ACTIVE")
     private AlarmStatus alarmStatus;
-
     @Schema(description = "타입", example = "ROUTINE")
     private ScheduleType type;
   }
@@ -75,7 +70,7 @@ public class HomeResponseDto {
   @Builder
   @Getter
   @AllArgsConstructor
-  static public class VirtualRoutineDto {
+  public static class VirtualRoutineDto {
     private LocalDate date;
     private Long routineId;
   }
@@ -83,7 +78,8 @@ public class HomeResponseDto {
   @Builder
   @Getter
   @AllArgsConstructor
-  static public class ReminderDto {
+  @Schema(title = "ReminderDto : 온보딩 리망니드 알림 정보 응답 Dto")
+  public static class ReminderDto {
     @Schema(description = "온보딩 리마인드 알림 설정 정보", example = "[1,5]")
     private List<Integer> reminders;
   }
@@ -92,10 +88,33 @@ public class HomeResponseDto {
   @Builder
   @AllArgsConstructor
   @Schema(title = "CategoryDto : 카테고리 조회 응답 Dto ")
-  static public class CategoryDto {
+  public static class CategoryDto {
     @Schema(description = "카테고리 ID" , example = "1")
     private Long categoryId;
     @Schema(description = "카테고리 이름" , example = "자기계발")
     private String categoryName;
+  }
+
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  @Schema(title = "WishInfoDTO : 위시 정보 조회 응답 DTO")
+  public static class WishInfoDto {
+    @Schema(description = "위시 제목", example = "string")
+    private String title;
+    @Schema(description = "상세 설명", example = "string")
+    private String content;
+    @Schema(description = "예상 소요 시간", example = "10m")
+    private EstimatedDuration estimatedDuration;
+    @Schema(description = "위시 카테고리", example = "{\"id\": 1, \"name\": \"자기계발\"}")
+    private List<HomeResponseDto.WishCategoryDto> categories;
+  }
+
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  public static class WishCategoryDto {
+    private Long id;
+    private String name;
   }
 }
