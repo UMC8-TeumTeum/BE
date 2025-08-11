@@ -11,7 +11,7 @@ import umc.teumteum.server.domain.auth.converter.AuthConverter;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
-import umc.teumteum.server.domain.auth.exception.AuthHandler;
+import umc.teumteum.server.domain.auth.exception.AuthException;
 
 import java.util.Map;
 
@@ -36,7 +36,7 @@ public class KakaoOAuthServiceImpl implements KakaoOAuthService {
             Map<String, Object> body = response.getBody();
 
             if (body == null || !body.containsKey("id")) {
-                throw new AuthHandler(AuthErrorStatus.KAKAO_USER_INFO_FAILED);
+                throw new AuthException(AuthErrorStatus.KAKAO_USER_INFO_FAILED);
             }
 
             String socialId = String.valueOf(body.get("id"));
@@ -46,7 +46,7 @@ public class KakaoOAuthServiceImpl implements KakaoOAuthService {
             return AuthConverter.toOAuthUserInfo(SocialType.KAKAO, socialId, email);
 
         } catch (Exception e) {
-            throw new AuthHandler(AuthErrorStatus.KAKAO_USER_INFO_FAILED);
+            throw new AuthException(AuthErrorStatus.KAKAO_USER_INFO_FAILED);
         }
     }
 }
