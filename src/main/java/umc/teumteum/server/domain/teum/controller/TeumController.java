@@ -10,7 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.exception.status.TeumSuccessStatus;
 import umc.teumteum.server.domain.teum.service.TeumService;
 import umc.teumteum.server.domain.user.entity.User;
@@ -43,11 +42,11 @@ public class TeumController {
 
     @Operation(
             summary = "틈 재요청",
-            description = "특정 요청의 응답을 기반으로 재요청(시간 제안)을 생성합니다."
+            description = "특정 요청을 기반으로 재요청(시간 제안)을 생성합니다."
     )
     @PostMapping(value = "/request/{parentRequestId}/resend", consumes = "application/json", produces = "application/json")
     public ApiResponse<TeumResponseDto.TeumResend> createResendRequest(
-            @Parameter(name = "parentRequestId", description = "재요청을 생성할 기준이 되는 기존 응답 ID", example = "1")
+            @Parameter(name = "parentRequestId", description = "재요청을 생성할 기준이 되는 기존 요청 ID", example = "1")
             @PathVariable("parentRequestId") Long parentRequestId,
             @RequestBody TeumRequestDto.TeumResend resendRequestDto,
             @CurrentUser @Parameter(hidden = true) User user
@@ -89,13 +88,13 @@ public class TeumController {
             description = "응답 ID(responseId)에 해당하는 응답의 상태를 변경합니다. 상태가 'accepted'인 경우 틈 생성 여부를 판단하여 반환합니다."
     )
     @PatchMapping("/response/{responseId}/status")
-    public ApiResponse<TeumStatusUpdateResponseDto> updateResponseStatus(
+    public ApiResponse<TeumResponseDto.TeumStatusUpdate> updateResponseStatus(
             @Parameter(name = "responseId", description = "응답 ID", example = "1")
             @PathVariable("responseId") Long responseId,
             @Parameter(hidden = true) @CurrentUser User user,
-            @RequestBody TeumStatusUpdateRequestDto requestDto
+            @RequestBody TeumRequestDto.TeumStatusUpdate requestDto
     ) {
-        TeumStatusUpdateResponseDto result = teumService.updateResponseStatus(responseId, user.getId(), requestDto);
+        TeumResponseDto.TeumStatusUpdate result = teumService.updateResponseStatus(responseId, user.getId(), requestDto);
         return ApiResponse.of(TeumSuccessStatus._TEUM_STATUS_UPDATED, result);
     }
 

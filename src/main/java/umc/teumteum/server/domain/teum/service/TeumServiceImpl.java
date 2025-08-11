@@ -12,7 +12,6 @@ import umc.teumteum.server.domain.teum.converter.TeumConverter;
 import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
-import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.teum.entity.enums.RequestStatus;
@@ -167,7 +166,7 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional
-    public TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto) {
+    public TeumResponseDto.TeumStatusUpdate updateResponseStatus(Long responseId, Long userId, TeumRequestDto.TeumStatusUpdate requestDto) {
         // 응답 조회 및 권한 검증
         TeumResponse response = getResponseOrThrow(responseId);
         validateReceiver(response, userId);

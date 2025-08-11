@@ -3,7 +3,6 @@ package umc.teumteum.server.domain.teum.service;
 import org.springframework.data.domain.Page;
 import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 
@@ -19,7 +18,7 @@ public interface TeumService {
 
     Long updateReadStatus(Long responseId, Long userId);
 
-    TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto);
+    TeumResponseDto.TeumStatusUpdate updateResponseStatus(Long responseId, Long userId, TeumRequestDto.TeumStatusUpdate requestDto);
 
     List<String> getTeumRequestsOfMonth(Long userId, String month);
 
