@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
@@ -179,11 +178,11 @@ public class TeumController {
             description = "본인의 약속된 틈을 취소합니다. 마지막 1인이 남을 경우 자동으로 같이 취소됩니다."
     )
     @PatchMapping("/scheduled/{scheduleId}/cancel")
-    public ApiResponse<ScheduledTeumCancelResponseDto> cancelScheduledTeum(
+    public ApiResponse<TeumResponseDto.ScheduledTeumCancel> cancelScheduledTeum(
             @PathVariable("scheduleId") Long scheduleId,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
-        ScheduledTeumCancelResponseDto result = teumService.cancelScheduledTeum(scheduleId, user.getId());
+        TeumResponseDto.ScheduledTeumCancel result = teumService.cancelScheduledTeum(scheduleId, user.getId());
         return ApiResponse.of(TeumSuccessStatus._SCHEDULED_CANCELLED, result);
     }
 

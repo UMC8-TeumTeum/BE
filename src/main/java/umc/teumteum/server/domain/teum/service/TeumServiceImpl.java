@@ -11,7 +11,6 @@ import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
@@ -300,7 +299,7 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional
-    public ScheduledTeumCancelResponseDto cancelScheduledTeum(Long scheduleId, Long userId) {
+    public TeumResponseDto.ScheduledTeumCancel cancelScheduledTeum(Long scheduleId, Long userId) {
         Schedule schedule = getScheduleOrThrow(scheduleId);
         validateScheduleOwner(schedule, userId);
         validateScheduleTypeIsTeum(schedule);
@@ -331,7 +330,7 @@ public class TeumServiceImpl implements TeumService {
             cancelledUserIds.add(lastOne.getUser().getId());
         }
 
-        return ScheduledTeumCancelResponseDto.builder()
+        return TeumResponseDto.ScheduledTeumCancel.builder()
                 .cancelledUserIds(cancelledUserIds)
                 .build();
     }
