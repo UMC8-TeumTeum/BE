@@ -13,7 +13,6 @@ import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
@@ -259,7 +258,7 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, String date) {
+    public List<TeumResponseDto.ScheduledTeum> getScheduledTeums(Long userId, String date) {
         LocalDate targetDate = LocalDate.parse(date);
 
         List<Schedule> allSchedules = scheduleRepository.findByUserIdAndDateAndStatusIn(

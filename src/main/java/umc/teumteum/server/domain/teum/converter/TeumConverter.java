@@ -4,10 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
@@ -270,8 +270,8 @@ public class TeumConverter {
                 .build();
     }
 
-    public ScheduledTeumResponseDto toScheduledTeumResponseDto(Schedule schedule) {
-        return ScheduledTeumResponseDto.builder()
+    public TeumResponseDto.ScheduledTeum toScheduledTeumResponseDto(Schedule schedule) {
+        return TeumResponseDto.ScheduledTeum.builder()
                 .teumId(schedule.getId())
                 .title(schedule.getTitle())
                 .date(schedule.getDate().toString())

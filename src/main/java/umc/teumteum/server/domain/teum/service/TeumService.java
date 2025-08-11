@@ -4,7 +4,6 @@ import org.springframework.data.domain.Page;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
@@ -29,7 +28,7 @@ public interface TeumService {
 
     List<String> getScheduledTeumsOfMonth(Long userId, String month);
 
-    List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, String date);
+    List<TeumResponseDto.ScheduledTeum> getScheduledTeums(Long userId, String date);
 
     ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long scheduleId, Long userId);
 

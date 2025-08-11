@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
 import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
 import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
 import umc.teumteum.server.domain.teum.dto.teum.*;
@@ -151,12 +150,12 @@ public class TeumController {
             description = "사용자가 참여 중인 틈 중, 지정한 날짜에 해당하는 틈 목록을 조회합니다."
     )
     @GetMapping(value = "/scheduled", produces = "application/json")
-    public ApiResponse<List<ScheduledTeumResponseDto>> getScheduledTeums(
+    public ApiResponse<List<TeumResponseDto.ScheduledTeum>> getScheduledTeums(
             @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2025-05-02")
             @RequestParam("date") String date,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
-        List<ScheduledTeumResponseDto> result = teumService.getScheduledTeums(user.getId(), date);
+        List<TeumResponseDto.ScheduledTeum> result = teumService.getScheduledTeums(user.getId(), date);
         return ApiResponse.of(TeumSuccessStatus._SCHEDULED_LIST_LOADED, result);
     }
 
