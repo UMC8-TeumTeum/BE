@@ -9,5 +9,4 @@ public interface ScheduleReminderRepository extends JpaRepository<ScheduleRemind
     List<ScheduleReminder> findByScheduleId(Long scheduleId);
     void deleteByScheduleId(Long scheduleId);
     List<ScheduleReminder> findByScheduleIdIn(List<Long> scheduleIds);
-    List<ScheduleReminder> findByScheduleId(Long scheduleId);
 }
