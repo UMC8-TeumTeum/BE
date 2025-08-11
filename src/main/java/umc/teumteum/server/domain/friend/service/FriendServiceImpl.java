@@ -209,7 +209,7 @@ public class FriendServiceImpl implements FriendService {
     }
 
     @Override
-    public FriendTeumTimeResponseDto getFriendTeumTime(Long loginUserId, Long targetUserId) {
+    public FriendResponseDto.FriendTeumTime getFriendTeumTime(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
         validateUserExists(targetUserId);
 

@@ -137,11 +137,11 @@ public class FriendController {
             description = "친구의 스케줄 중에서 includeTeum == true 인 일정들의 시간을 합산하여 반환합니다."
     )
     @GetMapping(value = "/{userId}/teum-time", produces = "application/json")
-    public ApiResponse<FriendTeumTimeResponseDto> getFriendTeumTime(
+    public ApiResponse<FriendResponseDto.FriendTeumTime> getFriendTeumTime(
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "조회할 친구 ID") @PathVariable("userId") Long targetUserId
     ) {
-        FriendTeumTimeResponseDto result = friendService.getFriendTeumTime(loginUser.getId(), targetUserId);
+        FriendResponseDto.FriendTeumTime result = friendService.getFriendTeumTime(loginUser.getId(), targetUserId);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIEND_TEUM_TIME_SUCCESS, result);
     }
 

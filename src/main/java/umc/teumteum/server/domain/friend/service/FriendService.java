@@ -21,7 +21,7 @@ public interface FriendService {
 
     FriendResponseDto.FriendProfile getFriendProfile(Long loginUserId, Long targetUserId);
 
-    FriendTeumTimeResponseDto getFriendTeumTime(Long loginUserId, Long targetUserId);
+    FriendResponseDto.FriendTeumTime getFriendTeumTime(Long loginUserId, Long targetUserId);
 
     List<FriendResponseDto.FriendPublicTodo> getRecentPublicTodos(Long loginUserId, Long targetUserId);
 

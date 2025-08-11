@@ -61,11 +61,11 @@ public class FriendConverter {
                 .sum();
     }
 
-    public FriendTeumTimeResponseDto toFriendTeumTimeResponse(long totalMinutes) {
+    public FriendResponseDto.FriendTeumTime toFriendTeumTimeResponse(long totalMinutes) {
         int days = (int) (totalMinutes / (60 * 24));
         int hours = (int) ((totalMinutes % (60 * 24)) / 60);
         int minutes = (int) (totalMinutes % 60);
-        return new FriendTeumTimeResponseDto(days, hours, minutes, totalMinutes);
+        return new FriendResponseDto.FriendTeumTime(days, hours, minutes, totalMinutes);
     }
 
     public List<FriendResponseDto.FriendPublicTodo> toFriendPublicTodoResponse(List<Schedule> schedules) {
