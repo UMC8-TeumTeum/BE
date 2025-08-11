@@ -335,7 +335,7 @@ public class TeumServiceImpl implements TeumService {
 
     // 공통 가능한 시간대 계산
     @Override
-    public TeumResponseDto.TeumAvailableTime getAvailableTime(User user, umc.teumteum.server.domain.teum.dto.TeumRequestDto.TeumAvailableTime requestDto) {
+    public TeumResponseDto.TeumAvailableTime getAvailableTime(User user, TeumRequestDto.TeumAvailableTime requestDto) {
         LocalDate date = LocalDate.parse(requestDto.getDate());
         DayOfWeek targetDay = date.getDayOfWeek();
         List<TimeSlot> scheduledSlots = new ArrayList<>();

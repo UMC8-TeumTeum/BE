@@ -30,7 +30,7 @@ public interface TeumService {
 
     TeumResponseDto.ScheduledTeumCancel cancelScheduledTeum(Long scheduleId, Long userId);
 
-    TeumResponseDto.TeumAvailableTime getAvailableTime(User user, umc.teumteum.server.domain.teum.dto.TeumRequestDto.TeumAvailableTime requestDto);
+    TeumResponseDto.TeumAvailableTime getAvailableTime(User user, TeumRequestDto.TeumAvailableTime requestDto);
 
     TeumResponseDto.SharedTeumTime getSharedTeumStats(Long userId, Long friendId);
 

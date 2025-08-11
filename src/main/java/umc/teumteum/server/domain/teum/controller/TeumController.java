@@ -192,7 +192,7 @@ public class TeumController {
     @PostMapping(value = "/available-time", consumes = "application/json", produces = "application/json")
     public ApiResponse<TeumResponseDto.TeumAvailableTime> getAvailableTime(
             @Parameter(hidden = true) @CurrentUser User user,
-            @RequestBody umc.teumteum.server.domain.teum.dto.TeumRequestDto.TeumAvailableTime requestDto
+            @RequestBody TeumRequestDto.TeumAvailableTime requestDto
     ) {
         return ApiResponse.of(TeumSuccessStatus._AVAILABLE_TIME_LOADED,
                 teumService.getAvailableTime(user, requestDto));
