@@ -9,9 +9,11 @@ package umc.teumteum.server.global.jwt;
     import io.jsonwebtoken.security.Keys;
     import io.jsonwebtoken.security.SecurityException;
     import jakarta.annotation.PostConstruct;
+    import jakarta.servlet.http.HttpServletRequest;
     import org.springframework.beans.factory.annotation.Value;
     import org.springframework.security.authentication.BadCredentialsException;
     import org.springframework.stereotype.Component;
+    import org.springframework.util.StringUtils;
     import umc.teumteum.server.global.exception.InvalidTokenTypeException;
 
     import java.nio.charset.StandardCharsets;
@@ -35,6 +37,15 @@ public class JwtProvider {
     @PostConstruct
     public void init() {
         key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    }
+
+    // Authorization 헤더에서 JWT 토큰 추출
+    public String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 
     // 액세스 토큰 생성
@@ -123,5 +134,21 @@ public class JwtProvider {
                 ;
 
         return claims.get("sessionId", String.class);
+    }
+
+    // 토큰 남은 유효시간 계산
+    public long getRemainingTime(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                ;
+
+        Date expiration = claims.getExpiration();
+        Date now = new Date();
+
+        long remainingTime = expiration.getTime() - now.getTime();
+        return Math.max(0, remainingTime);
     }
 }
