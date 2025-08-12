@@ -311,17 +311,22 @@ public class TeumServiceImpl implements TeumService {
             throw new GeneralException(TeumErrorStatus.TEUM_REQUEST_NOT_FOUND);
         }
 
-        // 본인 스케줄을 CANCELLED 처리
+        // 본인 스케줄만 취소
         schedule.cancel();
+
+        // 본인 응답만 LEFT로 (상대는 그대로)
+        teumResponseRepository.findRequestAndReceiver(request.getId(), userId)
+                .ifPresent(r -> r.changeStatus(ResponseStatus.LEFT));
+
         List<Long> cancelledUserIds = new ArrayList<>();
         cancelledUserIds.add(userId);
 
-        // 해당 틈 요청과 연결된 다른 ACTIVE 스케줄이 있는지 조회
+        // 같은 요청에 다른 ACTIVE 스케줄 조회
         List<Schedule> activeSchedules = scheduleRepository.findByTeumRequestAndStatusIn(
                 request, List.of(ScheduleStatus.ACTIVE)
         );
 
-        // 한 명만 남아 있다면, 그 사람 스케줄도 같이 취소
+        // 한 명만 남아 있다면, 그 사람 스케줄도 같이 취소 (응답 상태는 변경 없음)
         if (activeSchedules.size() == 1) {
             Schedule lastOne = activeSchedules.getFirst();
             lastOne.cancel();
@@ -332,6 +337,7 @@ public class TeumServiceImpl implements TeumService {
                 .cancelledUserIds(cancelledUserIds)
                 .build();
     }
+
 
     // 공통 가능한 시간대 계산
     @Override
