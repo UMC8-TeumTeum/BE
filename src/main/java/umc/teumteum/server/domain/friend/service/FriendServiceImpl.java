@@ -17,6 +17,7 @@ import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
+import umc.teumteum.server.domain.notification.service.NotificationUseCases;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
@@ -42,6 +43,7 @@ public class FriendServiceImpl implements FriendService {
     private final ScheduleRepository scheduleRepository;
 
     private final FriendConverter friendConverter;
+    private final NotificationUseCases notificationUseCases;
 
     private final S3Util s3Util;
 
@@ -74,7 +76,9 @@ public class FriendServiceImpl implements FriendService {
         Friend friend = FriendConverter.toFriend(loginUser, targetUser);
         friendRepository.save(friend);
 
-        // 5. TODO FOLLOW 알림 전송 필요
+        // 5. 알림 전송
+        notificationUseCases.notifyFollow(loginUser, targetUser, friend.getId());
+
     }
 
 

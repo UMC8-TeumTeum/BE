@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.teum.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.http.client.reactive.AbstractClientHttpConnectorProperties;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,6 +9,7 @@ import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
+import umc.teumteum.server.domain.notification.service.NotificationUseCases;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
 import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
@@ -53,8 +55,9 @@ public class TeumServiceImpl implements TeumService {
     private final ScheduleRepository scheduleRepository;
     private final TeumConverter teumConverter;
     private final TimeUtil timeUtil;
+    private final NotificationUseCases notificationUseCases;
 
-    private String toProfileUrl(User user) {
+  private String toProfileUrl(User user) {
         if (user == null || user.getProfileImageName() == null) return null;
         return s3Util.toPresignedUrl("profile/" + user.getProfileImageName(), Duration.ofMinutes(30));
     }
@@ -92,6 +95,22 @@ public class TeumServiceImpl implements TeumService {
         request.getTeumResponses().addAll(responses);
         teumRequestRepository.save(request);
 
+      // [추가] 알림 전송
+        if (receivers.size() == 1) {
+            notificationUseCases.notifyTeumRequest(
+                user,
+                receivers.get(0),
+                request.getId(),
+                dto
+            );
+        } else if (!receivers.isEmpty()) {
+            notificationUseCases.notifyTeumRequestBatch(
+                user,
+                receivers,
+                request.getId(),
+                dto
+            );
+        }
         return request.getId();
     }
 
@@ -127,7 +146,47 @@ public class TeumServiceImpl implements TeumService {
 
         teumRequestRepository.save(newRequest);
 
-        return newRequest.getId();
+        // [추가] 알림 전송
+        // [알림 전용 추가] 재요청 알림 수신자 계산
+        // 1대1인 경우랑 1대다인 경우 포함
+        // User는 알림 보낸 사람
+        // originalSender는 User에게 원래 요청을 보낸 사람 (무조건 응답 보내야됨)
+        List<User> receiversForNotification = new ArrayList<>();
+
+        // 1. 원본 작성자는 항상 포함
+        receiversForNotification.add(originalSender);
+
+        // 2. 원본 요청의 수신자들(= parent의 응답 대상자들) 추가 -> 일대다 요청일 수도 있어서
+        receiversForNotification.addAll(
+            parent.getTeumResponses().stream()
+                .map(TeumResponse::getReceiverUser)
+                .filter(u -> !u.getId().equals(user.getId())) // 본인은 제외
+                .toList()
+        );
+
+        // 3. 중복 제거
+        receiversForNotification = receiversForNotification.stream()
+            .distinct()
+            .toList();
+
+        // 4. 알림 전송 1:1 / 1:다 나눠서 처리
+        if (receiversForNotification.size() == 1) {
+          notificationUseCases.notifyTeumReRequest(
+              user,
+              receiversForNotification.get(0),
+              newRequest.getId(),
+              newRequest
+          );
+        } else if (!receiversForNotification.isEmpty()) {
+          notificationUseCases.notifyTeumReRequestBatch(
+              user,
+              receiversForNotification,
+              newRequest.getId(),
+              newRequest
+          );
+        }
+
+      return newRequest.getId();
     }
 
 
@@ -221,6 +280,15 @@ public class TeumServiceImpl implements TeumService {
             // 수신자 본인 스케줄 ID 반환
             teumId = receiverSchedule.getId();
         }
+        // [추가] 알림 전송
+        User sender = response.getReceiverUser();
+        User receiver = response.getTeumRequest().getUser();
+        notificationUseCases.notifyTeumResponse(
+            sender,
+            receiver,
+            response.getId(),
+            isAccepted
+        );
 
         return teumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
     }
