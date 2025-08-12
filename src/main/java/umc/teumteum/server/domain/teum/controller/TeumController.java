@@ -8,14 +8,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
-import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
-import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
-import umc.teumteum.server.domain.teum.dto.teum.*;
+import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
+import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.exception.status.TeumSuccessStatus;
 import umc.teumteum.server.domain.teum.service.TeumService;
 import umc.teumteum.server.domain.user.entity.User;
@@ -39,7 +33,7 @@ public class TeumController {
     )
     @PostMapping(value = "/request", consumes = "application/json", produces = "application/json")
     public ApiResponse<Long> createTeumRequest(
-            @RequestBody @Valid TeumRequestDto requestDto,
+            @RequestBody @Valid TeumRequestDto.TeumRequest requestDto,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
         Long id = teumService.createRequest(requestDto, user);
@@ -51,14 +45,14 @@ public class TeumController {
             description = "특정 요청을 기반으로 재요청(시간 제안)을 생성합니다."
     )
     @PostMapping(value = "/request/{parentRequestId}/resend", consumes = "application/json", produces = "application/json")
-    public ApiResponse<TeumResendResponseDto> createResendRequest(
+    public ApiResponse<TeumResponseDto.TeumResend> createResendRequest(
             @Parameter(name = "parentRequestId", description = "재요청을 생성할 기준이 되는 기존 요청 ID", example = "1")
             @PathVariable("parentRequestId") Long parentRequestId,
-            @RequestBody TeumResendRequestDto resendRequestDto,
+            @RequestBody TeumRequestDto.TeumResend resendRequestDto,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
         Long id = teumService.createResendRequest(parentRequestId, resendRequestDto, user);
-        return ApiResponse.of(TeumSuccessStatus._TEUM_REQUEST_CREATED, new TeumResendResponseDto(id));
+        return ApiResponse.of(TeumSuccessStatus._TEUM_REQUEST_CREATED, new TeumResponseDto.TeumResend(id));
     }
 
     @Operation(
@@ -66,12 +60,12 @@ public class TeumController {
             description = "현재 로그인 사용자가 응답자로 지정된 틈 요청 중, 아직 응답하지 않았고 요청 시간이 지나지 않은 요청 목록을 조회합니다."
     )
     @GetMapping("/request/received")
-    public ApiResponse<Page<TeumReceivedResponseDto>> getReceivedTeumRequests(
+    public ApiResponse<Page<TeumResponseDto.TeumReceived>> getReceivedTeumRequests(
             @Parameter(hidden = true) @CurrentUser User user,
             @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        Page<TeumReceivedResponseDto> responses = teumService.getReceivedRequests(user.getId(), page, size);
+        Page<TeumResponseDto.TeumReceived> responses = teumService.getReceivedRequests(user.getId(), page, size);
         return ApiResponse.of(TeumSuccessStatus._TEUM_RECEIVED_LIST_LOADED, responses);
     }
 
@@ -94,13 +88,13 @@ public class TeumController {
             description = "응답 ID(responseId)에 해당하는 응답의 상태를 변경합니다. 상태가 'accepted'인 경우 틈 생성 여부를 판단하여 반환합니다."
     )
     @PatchMapping("/response/{responseId}/status")
-    public ApiResponse<TeumStatusUpdateResponseDto> updateResponseStatus(
+    public ApiResponse<TeumResponseDto.TeumStatusUpdate> updateResponseStatus(
             @Parameter(name = "responseId", description = "응답 ID", example = "1")
             @PathVariable("responseId") Long responseId,
             @Parameter(hidden = true) @CurrentUser User user,
-            @RequestBody TeumStatusUpdateRequestDto requestDto
+            @RequestBody TeumRequestDto.TeumStatusUpdate requestDto
     ) {
-        TeumStatusUpdateResponseDto result = teumService.updateResponseStatus(responseId, user.getId(), requestDto);
+        TeumResponseDto.TeumStatusUpdate result = teumService.updateResponseStatus(responseId, user.getId(), requestDto);
         return ApiResponse.of(TeumSuccessStatus._TEUM_STATUS_UPDATED, result);
     }
 
@@ -123,12 +117,12 @@ public class TeumController {
             description = "지정한 날짜에 해당하는 틈 요청 목록을 조회합니다."
     )
     @GetMapping(value = "/requests", produces = "application/json")
-    public ApiResponse<List<TeumRequestResponseDto>> getTeumRequestsByDate(
+    public ApiResponse<List<TeumResponseDto.TeumRequestDetail>> getTeumRequestsByDate(
             @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2025-05-02")
             @RequestParam("date") String date,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
-        List<TeumRequestResponseDto> result = teumService.getTeumRequestsByDate(user.getId(), date);
+        List<TeumResponseDto.TeumRequestDetail> result = teumService.getTeumRequestsByDate(user.getId(), date);
         return ApiResponse.of(TeumSuccessStatus._TEUM_LIST_BY_DATE_LOADED, result);
     }
 
@@ -152,12 +146,12 @@ public class TeumController {
             description = "사용자가 참여 중인 틈 중, 지정한 날짜에 해당하는 틈 목록을 조회합니다."
     )
     @GetMapping(value = "/scheduled", produces = "application/json")
-    public ApiResponse<List<ScheduledTeumResponseDto>> getScheduledTeums(
+    public ApiResponse<List<TeumResponseDto.ScheduledTeum>> getScheduledTeums(
             @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2025-05-02")
             @RequestParam("date") String date,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
-        List<ScheduledTeumResponseDto> result = teumService.getScheduledTeums(user.getId(), date);
+        List<TeumResponseDto.ScheduledTeum> result = teumService.getScheduledTeums(user.getId(), date);
         return ApiResponse.of(TeumSuccessStatus._SCHEDULED_LIST_LOADED, result);
     }
 
@@ -166,7 +160,7 @@ public class TeumController {
             description = "사용자가 참여 중인 약속된 틈(scheduleId)에 대한 상세 정보를 조회합니다."
     )
     @GetMapping(value = "/scheduled/{scheduleId}", produces = "application/json")
-    public ApiResponse<ScheduledTeumDetailResponseDto> getScheduledTeumDetail(
+    public ApiResponse<TeumResponseDto.ScheduledTeumDetail> getScheduledTeumDetail(
             @Parameter(name = "scheduleId", description = "사용자 본인의 약속된 틈 일정 ID", example = "300")
             @PathVariable("scheduleId") Long scheduleId,
             @CurrentUser @Parameter(hidden = true) User user
@@ -182,11 +176,11 @@ public class TeumController {
             description = "본인의 약속된 틈을 취소합니다. 마지막 1인이 남을 경우 자동으로 같이 취소됩니다."
     )
     @PatchMapping("/scheduled/{scheduleId}/cancel")
-    public ApiResponse<ScheduledTeumCancelResponseDto> cancelScheduledTeum(
+    public ApiResponse<TeumResponseDto.ScheduledTeumCancel> cancelScheduledTeum(
             @PathVariable("scheduleId") Long scheduleId,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
-        ScheduledTeumCancelResponseDto result = teumService.cancelScheduledTeum(scheduleId, user.getId());
+        TeumResponseDto.ScheduledTeumCancel result = teumService.cancelScheduledTeum(scheduleId, user.getId());
         return ApiResponse.of(TeumSuccessStatus._SCHEDULED_CANCELLED, result);
     }
 
@@ -196,9 +190,9 @@ public class TeumController {
             description = "현재 로그인 사용자와 지정된 사용자들 간의 특정 날짜에 대해 공통 가능한 시간대를 반환합니다."
     )
     @PostMapping(value = "/available-time", consumes = "application/json", produces = "application/json")
-    public ApiResponse<AvailableTimeResponseDto> getAvailableTime(
+    public ApiResponse<TeumResponseDto.TeumAvailableTime> getAvailableTime(
             @Parameter(hidden = true) @CurrentUser User user,
-            @RequestBody AvailableTimeRequestDto requestDto
+            @RequestBody TeumRequestDto.TeumAvailableTime requestDto
     ) {
         return ApiResponse.of(TeumSuccessStatus._AVAILABLE_TIME_LOADED,
                 teumService.getAvailableTime(user, requestDto));
@@ -209,12 +203,12 @@ public class TeumController {
             description = "로그인한 사용자와 지정된 친구가 함께 참여한 틈의 횟수와 누적 시간을 분 단위로 반환합니다."
     )
     @GetMapping(value = "/{userId}/shared/teum-time", produces = "application/json")
-    public ApiResponse<SharedTeumTimeResponseDto> getSharedTeumStats(
+    public ApiResponse<TeumResponseDto.SharedTeumTime> getSharedTeumStats(
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "조회할 친구 ID", example = "2")
             @PathVariable("userId") Long targetUserId
     ) {
-        SharedTeumTimeResponseDto result = teumService.getSharedTeumStats(loginUser.getId(), targetUserId);
+        TeumResponseDto.SharedTeumTime result = teumService.getSharedTeumStats(loginUser.getId(), targetUserId);
         return ApiResponse.of(TeumSuccessStatus._SHARED_TIME_LOADED, result);
     }
 
@@ -223,14 +217,14 @@ public class TeumController {
             description = "로그인한 사용자와 지정된 친구가 함께 참여한 모든 틈 요청 목록을 반환합니다."
     )
     @GetMapping("/{userId}/shared")
-    public ApiResponse<PagingResponseDto<SharedTeumListResponseDto>> getSharedTeums(
+    public ApiResponse<PagingResponseDto<TeumResponseDto.SharedTeumList>> getSharedTeums(
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "조회할 친구 ID", example = "2")
             @PathVariable("userId") Long targetUserId,
             @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        PagingResponseDto<SharedTeumListResponseDto> result = teumService.getSharedTeums(loginUser.getId(), targetUserId, page, size);
+        PagingResponseDto<TeumResponseDto.SharedTeumList> result = teumService.getSharedTeums(loginUser.getId(), targetUserId, page, size);
         return ApiResponse.of(TeumSuccessStatus._SHARED_LIST_LOADED, result);
     }
 
