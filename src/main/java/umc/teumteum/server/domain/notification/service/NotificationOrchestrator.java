@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j; // ⬅️ 추가
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import umc.teumteum.server.domain.fcm.entity.FcmToken;
 import umc.teumteum.server.domain.fcm.repository.FcmTokenRepository;
@@ -18,7 +18,7 @@ import umc.teumteum.server.global.notification.sender.FcmNotificationSender;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j // ⬅️ 추가
+@Slf4j 
 public class NotificationOrchestrator {
   private final NotificationRepository notificationRepository;
   private final FcmTokenRepository fcmTokenRepository;
