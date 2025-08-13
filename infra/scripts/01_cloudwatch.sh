@@ -17,7 +17,7 @@ fi
 sudo install -d -m 755 -o cwagent -g cwagent /opt/aws/amazon-cloudwatch-agent/etc
 
 
-sudo cp -f "$(dirname "$0")/../config/grafana/cloudwatch-agent.json" \
+sudo cp -f "$(dirname "$0")/../config/cloudwatch-agent.json" \
   /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 
 
