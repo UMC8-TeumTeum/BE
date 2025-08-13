@@ -1,6 +1,6 @@
 package umc.teumteum.server.domain.friend.service;
 
-import umc.teumteum.server.domain.friend.dto.*;
+import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 
@@ -15,17 +15,17 @@ public interface FriendService {
 
     FriendResponseDto.FriendFavorite updateFavorite(User loginUser, Long targetUserId, Boolean isFavorite);
 
-    PagingResponseDto<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size);
+    PagingResponseDto<FriendResponseDto.FollowingFriend> getFollowingsByUser(Long userId, int page, int size);
 
-    PagingResponseDto<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size);
+    PagingResponseDto<FriendResponseDto.FollowerFriend> getFollowersByUser(Long userId, int page, int size);
 
-    FriendProfileResponseDto getFriendProfile(Long loginUserId, Long targetUserId);
+    FriendResponseDto.FriendProfile getFriendProfile(Long loginUserId, Long targetUserId);
 
-    FriendTeumTimeResponseDto getFriendTeumTime(Long loginUserId, Long targetUserId);
+    FriendResponseDto.FriendTeumTime getFriendTeumTime(Long loginUserId, Long targetUserId);
 
-    List<FriendPublicTodoResponseDto> getRecentPublicTodos(Long loginUserId, Long targetUserId);
+    List<FriendResponseDto.FriendPublicTodo> getRecentPublicTodos(Long loginUserId, Long targetUserId);
 
-    List<FriendPublicTodoResponseDto> getDailyPublicTodos(Long loginUserId, Long targetUserId, String date);
+    List<FriendResponseDto.FriendPublicTodo> getDailyPublicTodos(Long loginUserId, Long targetUserId, String date);
 
     List<String> getTodoDatesOfMonth(Long loginUserId, Long targetUserId, String month);
 

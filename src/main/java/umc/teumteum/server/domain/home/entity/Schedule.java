@@ -98,8 +98,13 @@ public class Schedule extends BaseEntity {
         this.status = ScheduleStatus.CANCELLED;
     }
 
+    public void complete() {
+        this.status = ScheduleStatus.COMPLETED;
+    }
+
     // 루틴 삭제 처리
     public void setIsDeleted(boolean isDeleted) {
         this.isDeleted = isDeleted;
     }
+
 }

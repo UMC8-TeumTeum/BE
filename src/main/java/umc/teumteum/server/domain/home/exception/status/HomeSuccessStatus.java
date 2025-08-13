@@ -29,7 +29,10 @@ public enum HomeSuccessStatus implements BaseCode {
     _REMINDER_LOADED(HttpStatus.OK, "HOME20016", "리마인드 알림 정보가 성공적으로 조회되었습니다."),
     _ALARM_UPDATED(HttpStatus.OK,"HOME20017","리마인드 알림 정보가 성공적으로 변경되었습니다."),
     _ACTIVITY_LOADED(HttpStatus.OK, "ACTIVITY2001", "채움활동 위시가 성공적으로 조회되었습니다."),
-    _AI_ACTIVITY_LOADED(HttpStatus.OK, "ACTIVITY2002", "채움활동 ai컨텐츠가 성공적으로 조회되었습니다.")
+    _AI_ACTIVITY_LOADED(HttpStatus.OK, "ACTIVITY2002", "채움활동 ai컨텐츠가 성공적으로 조회되었습니다."),
+    _AI_ACTIVITY_SAVE(HttpStatus.OK, "ACTIVITY2003", "선택된 채움활동 ai컨텐츠가 투두로 등록되었습니다.")
+
+
     ;
 
     private final HttpStatus httpStatus;

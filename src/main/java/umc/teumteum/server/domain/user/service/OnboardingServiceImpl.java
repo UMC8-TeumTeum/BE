@@ -16,7 +16,7 @@ import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
-import umc.teumteum.server.domain.user.exception.OnboardingHandler;
+import umc.teumteum.server.domain.user.exception.OnboardingException;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.AgreementRepository;
 import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
@@ -62,10 +62,10 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         // 2. 필수 항목 동의 여부 확인
         if (!request.getTosConsent()) {
-            throw new OnboardingHandler(UserErrorStatus.TOS_CONSENT_NOT_AGREED);
+            throw new OnboardingException(UserErrorStatus.TOS_CONSENT_NOT_AGREED);
         }
         if (!request.getPrivacyConsent()) {
-            throw new OnboardingHandler(UserErrorStatus.PRIVACY_CONSENT_NOT_AGREED);
+            throw new OnboardingException(UserErrorStatus.PRIVACY_CONSENT_NOT_AGREED);
         }
 
         // 3. Entity 변환
@@ -90,13 +90,13 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 기존 닉네임이 null이면(=처음 닉네임 등록) 단순 중복 체크
         if (user.getNickname() == null) {
             if (userRepository.existsByNickname(request.getNickname())) {
-                throw new OnboardingHandler(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+                throw new OnboardingException(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
             }
         }
         // 기존 닉네임이 있으면(=온보딩 중단으로 인한 닉네임 재등록) 본인 닉네임 이외와 중복 체크
         else {
             if (!request.getNickname().equals(user.getNickname()) && userRepository.existsByNickname(request.getNickname())) {
-                throw new OnboardingHandler(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+                throw new OnboardingException(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
             }
         }
 
@@ -114,7 +114,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 2. Content-Type 검증
         String contentType = request.getContentType().toLowerCase();
         if (!ALLOWED_IMAGE_TYPES.contains(contentType)) {
-            throw new OnboardingHandler(UserErrorStatus.UNSUPPORTED_IMAGE_FORMAT);
+            throw new OnboardingException(UserErrorStatus.UNSUPPORTED_IMAGE_FORMAT);
         }
 
         // 3. 확장자 추출
@@ -217,7 +217,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
             // 3. 알림 설정 범위 확인 (1, 3, 5, 10, 30)
             if (!ALLOWED_REMIND_ALARM_VALUES.containsAll(request.getRemindAlarms())) {
-                throw new OnboardingHandler(UserErrorStatus.INVALID_REMIND_ALARM_VALUE);
+                throw new OnboardingException(UserErrorStatus.INVALID_REMIND_ALARM_VALUE);
             }
 
             // 4. RemindAlarm 저장
@@ -245,7 +245,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     // 사용자의 step을 확인
     private void validateOnboardingStep(User user, UserStep expectedStep) {
         if (user.getStep() == null || !user.getStep().equals(expectedStep)) {
-            throw new OnboardingHandler(UserErrorStatus.INVALID_STEP);
+            throw new OnboardingException(UserErrorStatus.INVALID_STEP);
         }
     }
 
@@ -263,7 +263,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 2. 기본 유효성 검증 (시작시간 < 종료시간)
         if (!startTime.isBefore(endTime)) {
             // ex) 13:00~03:00, 10:00~10:00 등이 해당
-            throw new OnboardingHandler(UserErrorStatus.INVALID_TIME_RANGE);
+            throw new OnboardingException(UserErrorStatus.INVALID_TIME_RANGE);
         }
     }
 

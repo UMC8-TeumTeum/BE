@@ -2,11 +2,10 @@ package umc.teumteum.server.domain.friend.converter;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import umc.teumteum.server.domain.friend.dto.*;
+import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.user.entity.User;
-import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
 import java.time.Duration;
@@ -19,12 +18,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FriendConverter {
 
-    private final S3Util s3Util;
     private final TimeUtil timeUtil;
 
-    public FollowingUserResponseDto toFollowingUserResponse(Friend friend, String profileImageUrl) {
+    public FriendResponseDto.FollowingFriend toFollowingUserResponse(Friend friend, String profileImageUrl) {
         User following = friend.getFollowing();
-        return new FollowingUserResponseDto(
+        return new FriendResponseDto.FollowingFriend(
                 following.getId(),
                 following.getNickname(),
                 following.getJob(),
@@ -33,9 +31,9 @@ public class FriendConverter {
         );
     }
 
-    public FollowerUserResponseDto toFollowerUserResponse(Friend friend, String profileImageUrl) {
+    public FriendResponseDto.FollowerFriend toFollowerUserResponse(Friend friend, String profileImageUrl) {
         User follower = friend.getFollower();
-        return new FollowerUserResponseDto(
+        return new FriendResponseDto.FollowerFriend(
                 follower.getId(),
                 follower.getNickname(),
                 follower.getJob(),
@@ -44,8 +42,8 @@ public class FriendConverter {
     }
 
 
-    public FriendProfileResponseDto toFriendProfileResponse(User targetUser, Friend followRelation, String profileImageUrl) {
-        return FriendProfileResponseDto.builder()
+    public FriendResponseDto.FriendProfile toFriendProfileResponse(User targetUser, Friend followRelation, String profileImageUrl) {
+        return FriendResponseDto.FriendProfile.builder()
                 .userId(targetUser.getId())
                 .name(targetUser.getNickname())
                 .profileImageUrl(profileImageUrl)
@@ -61,18 +59,18 @@ public class FriendConverter {
                 .sum();
     }
 
-    public FriendTeumTimeResponseDto toFriendTeumTimeResponse(long totalMinutes) {
+    public FriendResponseDto.FriendTeumTime toFriendTeumTimeResponse(long totalMinutes) {
         int days = (int) (totalMinutes / (60 * 24));
         int hours = (int) ((totalMinutes % (60 * 24)) / 60);
         int minutes = (int) (totalMinutes % 60);
-        return new FriendTeumTimeResponseDto(days, hours, minutes, totalMinutes);
+        return new FriendResponseDto.FriendTeumTime(days, hours, minutes, totalMinutes);
     }
 
-    public List<FriendPublicTodoResponseDto> toFriendPublicTodoResponse(List<Schedule> schedules) {
+    public List<FriendResponseDto.FriendPublicTodo> toFriendPublicTodoResponse(List<Schedule> schedules) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
         return schedules.stream()
-                .map(s -> new FriendPublicTodoResponseDto(
+                .map(s -> new FriendResponseDto.FriendPublicTodo(
                         s.getTitle(),
                         s.getStartTime().format(formatter),
                         timeUtil.parseAndFormatEndTime(s.getEndTime().toLocalTime())
@@ -113,11 +111,11 @@ public class FriendConverter {
                 ;
     }
 
-    public List<FriendPublicTodoResponseDto> toFriendPublicTodoResponseList(List<Schedule> schedules) {
+    public List<FriendResponseDto.FriendPublicTodo> toFriendPublicTodoResponseList(List<Schedule> schedules) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
         return schedules.stream()
-                .map(s -> new FriendPublicTodoResponseDto(
+                .map(s -> new FriendResponseDto.FriendPublicTodo(
                         s.getTitle(),
                         s.getStartTime().format(formatter),
                         timeUtil.parseAndFormatEndTime(s.getEndTime().toLocalTime())

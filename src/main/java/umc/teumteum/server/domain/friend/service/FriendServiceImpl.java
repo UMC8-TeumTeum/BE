@@ -8,7 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.friend.converter.FriendConverter;
-import umc.teumteum.server.domain.friend.dto.*;
+import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.friend.exception.FriendException;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
@@ -157,7 +157,7 @@ public class FriendServiceImpl implements FriendService {
     // 사용자가 팔로우한 유저 목록을 정렬 후 페이징하여 반환
     @Override
     @Transactional(readOnly = true)
-    public PagingResponseDto<FollowingUserResponseDto> getFollowingsByUser(Long userId, int page, int size) {
+    public PagingResponseDto<FriendResponseDto.FollowingFriend> getFollowingsByUser(Long userId, int page, int size) {
 
         Pageable pageable = PageRequest.of(
                 Math.max(page - 1, 0),
@@ -167,7 +167,7 @@ public class FriendServiceImpl implements FriendService {
 
         Slice<Friend> slice = friendRepository.findByFollowerId(userId, pageable);
 
-        List<FollowingUserResponseDto> dtoList = slice.getContent().stream()
+        List<FriendResponseDto.FollowingFriend> dtoList = slice.getContent().stream()
                 .map(friend -> {
                     String url = toProfileUrl(friend.getFollowing());
                     return friendConverter.toFollowingUserResponse(friend, url);
@@ -180,7 +180,7 @@ public class FriendServiceImpl implements FriendService {
     // 사용자를 팔로우한 유저 목록을 정렬 후 페이징하여 반환
     @Override
     @Transactional(readOnly = true)
-    public PagingResponseDto<FollowerUserResponseDto> getFollowersByUser(Long userId, int page, int size) {
+    public PagingResponseDto<FriendResponseDto.FollowerFriend> getFollowersByUser(Long userId, int page, int size) {
 
         Pageable pageable = PageRequest.of(
                 Math.max(page - 1, 0),
@@ -190,7 +190,7 @@ public class FriendServiceImpl implements FriendService {
 
         Slice<Friend> slice = friendRepository.findByFollowingId(userId, pageable);
 
-        List<FollowerUserResponseDto> dtoList = slice.getContent().stream()
+        List<FriendResponseDto.FollowerFriend> dtoList = slice.getContent().stream()
                 .map(friend -> {
                     String url = toProfileUrl(friend.getFollower());
                     return friendConverter.toFollowerUserResponse(friend, url);
@@ -201,7 +201,7 @@ public class FriendServiceImpl implements FriendService {
     }
 
     @Override
-    public FriendProfileResponseDto getFriendProfile(Long loginUserId, Long targetUserId) {
+    public FriendResponseDto.FriendProfile getFriendProfile(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
         User targetUser = getUserOrThrow(targetUserId);
 
@@ -213,7 +213,7 @@ public class FriendServiceImpl implements FriendService {
     }
 
     @Override
-    public FriendTeumTimeResponseDto getFriendTeumTime(Long loginUserId, Long targetUserId) {
+    public FriendResponseDto.FriendTeumTime getFriendTeumTime(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
         validateUserExists(targetUserId);
 
@@ -243,7 +243,7 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FriendPublicTodoResponseDto> getRecentPublicTodos(Long loginUserId, Long targetUserId) {
+    public List<FriendResponseDto.FriendPublicTodo> getRecentPublicTodos(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
         validateUserExists(targetUserId);
 
@@ -266,7 +266,7 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FriendPublicTodoResponseDto> getDailyPublicTodos(Long loginUserId, Long targetUserId, String date) {
+    public List<FriendResponseDto.FriendPublicTodo> getDailyPublicTodos(Long loginUserId, Long targetUserId, String date) {
         validateNotSelf(loginUserId, targetUserId);
         validateUserExists(targetUserId);
 

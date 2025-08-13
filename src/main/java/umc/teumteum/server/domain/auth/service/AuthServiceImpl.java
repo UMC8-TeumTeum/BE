@@ -14,10 +14,10 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.auth.converter.AuthConverter;
-import umc.teumteum.server.domain.auth.dto.AuthRequestDTO;
-import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
+import umc.teumteum.server.domain.auth.dto.AuthRequestDto;
+import umc.teumteum.server.domain.auth.dto.AuthResponseDto;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
-import umc.teumteum.server.domain.auth.exception.AuthHandler;
+import umc.teumteum.server.domain.auth.exception.AuthException;
 import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
@@ -39,8 +39,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final KakaoOAuthService kakaoOAuthService;
-    private final NaverOAuthService naverOAuthService;
+    @Resource(name = "kakaoOAuthServiceImpl") private OAuthService kakaoOAuthService;
+    @Resource(name = "naverOAuthServiceImpl") private OAuthService naverOAuthService;
     private final UserService userService;
 
     private final JwtProvider jwtProvider;
@@ -48,13 +48,8 @@ public class AuthServiceImpl implements AuthService {
 
     private final RoutineRepository routineRepository;
     private final ScheduleRepository scheduleRepository;
-
-    @Resource(name = "rtWhitelistRedisTemplate")
-    private RedisTemplate<String, String> rtWhitelistRedisTemplate;
-
-    @Resource(name = "atBlacklistRedisTemplate")
-    private RedisTemplate<String, String> atBlacklistRedisTemplate;
-
+    @Resource(name = "rtWhitelistRedisTemplate") private RedisTemplate<String, String> rtWhitelistRedisTemplate;
+    @Resource(name = "atBlacklistRedisTemplate") private RedisTemplate<String, String> atBlacklistRedisTemplate;
 
     @Value("${jwt.access-expiration-ms}")
     private long accessExpirationMs;
@@ -65,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
     // 인증 - 소셜로그인
     @Override
     @Transactional
-    public AuthResponseDTO.LoginResponse socialLogin(String socialType, AuthRequestDTO.SocialLoginRequest request) {
+    public AuthResponseDto.LoginResponse socialLogin(String socialType, AuthRequestDto.SocialLoginRequest request) {
         // 1. 소셜 로그인 - 사용자 정보 불러오기
         OAuthUserInfo userInfo = getUserInfo(SocialType.valueOf(socialType.toUpperCase()), request.getAccessToken());
 
@@ -74,7 +69,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 3. 사용자 status 확인
         if (user.getStatus() == UserStatus.INACTIVE) {
-            throw new AuthHandler(ErrorStatus.INACTIVE_USER);
+            throw new AuthException(ErrorStatus.INACTIVE_USER);
         }
 
         // 4. 토큰 생성
@@ -126,7 +121,7 @@ public class AuthServiceImpl implements AuthService {
     // 인증 - 개발용 토큰 발급
     @Override
     @Transactional
-    public AuthResponseDTO.DevTokenResponse generateDevAccessToken() {
+    public AuthResponseDto.DevTokenResponse generateDevAccessToken() {
         // 1. 더미 사용자 조회 (없으면 생성)
         User masterUser = userService.createDevUser();
 
@@ -147,7 +142,7 @@ public class AuthServiceImpl implements AuthService {
 
     // 인증 - 토큰 재발급
     @Override
-    public AuthResponseDTO.ReissueResponse reissueToken(AuthRequestDTO.ReissueRequest request) {
+    public AuthResponseDto.ReissueResponse reissueToken(AuthRequestDto.ReissueRequest request) {
         String refreshKey = null;
 
         try {
@@ -163,7 +158,7 @@ public class AuthServiceImpl implements AuthService {
             refreshKey = getRefreshKey(userId, sessionId);
             String storedRefreshToken = rtWhitelistRedisTemplate.opsForValue().get(refreshKey);
             if (storedRefreshToken == null) {
-                throw new AuthHandler(AuthErrorStatus.REFRESH_TOKEN_NOT_FOUND);
+                throw new AuthException(AuthErrorStatus.REFRESH_TOKEN_NOT_FOUND);
             }
 
             // 4. Redis에 저장된 RT 유효성 검증 (검증 실패 -> 재로그인 필요)
@@ -178,7 +173,7 @@ public class AuthServiceImpl implements AuthService {
                 Duration blacklistDuration = Duration.ofMillis(accessExpirationMs);
                 atBlacklistRedisTemplate.opsForValue().set(blacklistKey, "blacklisted", blacklistDuration);
 
-                throw new AuthHandler(AuthErrorStatus.REFRESH_TOKEN_MISMATCH);
+                throw new AuthException(AuthErrorStatus.REFRESH_TOKEN_MISMATCH);
             }
 
             // 6. 기존 sessionId로 토큰 재발급
@@ -192,7 +187,7 @@ public class AuthServiceImpl implements AuthService {
             // 8. converter 작업
             return AuthConverter.toReissueResponse(newAccessToken, newRefreshToken);
 
-        } catch (AuthHandler e) {
+        } catch (AuthException e) {
             // 예외 발생 시, RT Redis 초기화하여 동일한 sessionID로 토큰 재발급 불가
             if (refreshKey != null) {
                 rtWhitelistRedisTemplate.delete(refreshKey);
@@ -233,7 +228,7 @@ public class AuthServiceImpl implements AuthService {
             case SocialType.NAVER:
                 return naverOAuthService.getUserInfoWithAccessToken(accessToken);
             default:
-                throw new AuthHandler(AuthErrorStatus.INVALID_SOCIAL_TYPE);
+                throw new AuthException(AuthErrorStatus.INVALID_SOCIAL_TYPE);
         }
     }
 
@@ -242,24 +237,20 @@ public class AuthServiceImpl implements AuthService {
     private void validateRefreshTokenForService(String token) {
         try {
             jwtProvider.validateRefreshToken(token);
-        } catch (BadCredentialsException e) {
-            Throwable cause = e.getCause();
-
-            if (cause instanceof SecurityException) {
-                throw new AuthHandler(ErrorStatus.INVALID_JWT_SIGNATURE);
-            } else if (cause instanceof MalformedJwtException) {
-                throw new AuthHandler(ErrorStatus.MALFORMED_JWT_TOKEN);
-            } else if (cause instanceof ExpiredJwtException) {
-                throw new AuthHandler(ErrorStatus.EXPIRED_JWT_TOKEN);
-            } else if (cause instanceof UnsupportedJwtException) {
-                throw new AuthHandler(ErrorStatus.UNSUPPORTED_JWT_TOKEN);
-            } else if (cause instanceof IllegalArgumentException) {
-                throw new AuthHandler(ErrorStatus.EMPTY_JWT_CLAIMS);
-            }
+        } catch (SecurityException e) {
+            throw new AuthException(ErrorStatus.INVALID_JWT_SIGNATURE);
+        } catch (MalformedJwtException e) {
+            throw new AuthException(ErrorStatus.MALFORMED_JWT_TOKEN);
+        } catch (ExpiredJwtException e) {
+            throw new AuthException(ErrorStatus.EXPIRED_JWT_TOKEN);
+        } catch (UnsupportedJwtException e) {
+            throw new AuthException(ErrorStatus.UNSUPPORTED_JWT_TOKEN);
+        } catch (IllegalArgumentException e) {
+            throw new AuthException(ErrorStatus.EMPTY_JWT_CLAIMS);
         } catch (InvalidTokenTypeException e) {
-            throw new AuthHandler(ErrorStatus.INVALID_TOKEN_TYPE);
+            throw new AuthException(ErrorStatus.INVALID_TOKEN_TYPE);
         } catch (Exception e) {
-            throw new AuthHandler(AuthErrorStatus.INVALID_REFRESH_TOKEN);
+            throw new AuthException(AuthErrorStatus.INVALID_REFRESH_TOKEN);
         }
     }
 

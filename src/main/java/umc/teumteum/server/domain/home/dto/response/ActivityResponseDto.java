@@ -69,4 +69,14 @@ public class ActivityResponseDto {
 
   }
 
+  @Getter
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Schema(description = "Ai 위시 저장 DTO")
+  public static class AiSaveResponse {
+    @Schema(description = "scheduleId" , example = "1")
+    private Long id;
+  }
+
 }
