@@ -366,6 +366,14 @@ public class TeumServiceImpl implements TeumService {
                     .filter(Objects::nonNull)
                     .forEach(scheduledSlots::add);
 
+            // 틈 요청
+            List<TeumRequest> teumRequests = teumRequestRepository.findTeumRequestsByUserAndDate(targetUser, date);
+            for (TeumRequest tr : teumRequests) {
+                String start = tr.getStartTime().toString();
+                String end = tr.getEndTime().equals(LocalTime.MIDNIGHT) ? "24:00" : tr.getEndTime().toString();
+                scheduledSlots.add(new TimeSlot(start, end));
+            }
+
             // 수면 시간
             LocalTime sleep = targetUser.getSleepTime();
             LocalTime wake = targetUser.getWakeTime();
