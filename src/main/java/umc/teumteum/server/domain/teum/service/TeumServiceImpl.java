@@ -31,6 +31,7 @@ import umc.teumteum.server.global.util.TimeUtil;
 import umc.teumteum.server.global.validator.ConflictValidator;
 
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -370,7 +371,7 @@ public class TeumServiceImpl implements TeumService {
             List<TeumRequest> teumRequests = teumRequestRepository.findTeumRequestsByUserAndDate(targetUser, date);
             for (TeumRequest tr : teumRequests) {
                 String start = tr.getStartTime().toString();
-                String end = tr.getEndTime().equals(LocalTime.MIDNIGHT) ? "24:00" : tr.getEndTime().toString();
+                String end   = timeUtil.formatEndTime(timeUtil.convertEndTime(tr.getEndTime()));
                 scheduledSlots.add(new TimeSlot(start, end));
             }
 
@@ -399,7 +400,7 @@ public class TeumServiceImpl implements TeumService {
                     if (!isRoutineDeleted) {
                         scheduledSlots.add(new TimeSlot(
                                 routine.getStartTime().toString(),
-                                routine.getEndTime().toString()
+                                timeUtil.formatEndTime(timeUtil.convertEndTime(routine.getEndTime()))
                         ));
                     }
                 }
@@ -415,6 +416,10 @@ public class TeumServiceImpl implements TeumService {
         sortedAvailable.sort(Comparator.comparing(slot -> timeUtil.parseTimeForSort(slot.getStart())));
 
         return new TeumResponseDto.TeumAvailableTime(date.toString(), sortedAvailable);
+    }
+
+    private String formatEnd(LocalTime t) {
+        return t.equals(LocalTime.MIDNIGHT) ? "24:00" : t.format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
 
