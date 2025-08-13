@@ -101,7 +101,7 @@ public class FriendResponseDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    @Schema(description = "팔로잉 즐겨찾기 설정/해제 응답")
+    @Schema(title = "팔로잉 즐겨찾기 설정/해제 Response")
     public static class FriendFavorite {
 
         @Schema(description = "사용자 ID", example = "1")

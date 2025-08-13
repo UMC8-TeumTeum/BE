@@ -2,6 +2,6 @@ package umc.teumteum.server.domain.auth.service;
 
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 
-public interface NaverOAuthService {
+public interface OAuthService {
     OAuthUserInfo getUserInfoWithAccessToken(String accessToken);
 }

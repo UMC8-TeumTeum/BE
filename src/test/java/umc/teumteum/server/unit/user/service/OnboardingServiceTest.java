@@ -14,7 +14,7 @@ import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
-import umc.teumteum.server.domain.user.exception.OnboardingHandler;
+import umc.teumteum.server.domain.user.exception.OnboardingException;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.service.OnboardingServiceImpl;
@@ -279,7 +279,7 @@ class OnboardingServiceTest {
         // 수면패턴 등록X인 경우 예외
         assertThatCode(() -> {
             onboardingService.saveRoutines(createRoutineF(), testUser);
-        }).isInstanceOfSatisfying(OnboardingHandler.class, ex -> {
+        }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
             assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
         });
 
@@ -288,7 +288,7 @@ class OnboardingServiceTest {
             assertThatThrownBy(() -> {
                 onboardingService.saveSleepPattern(sleepPattern, testUser);
                 onboardingService.saveRoutines(createRoutineF(), testUser);
-            }).isInstanceOfSatisfying(OnboardingHandler.class, ex -> {
+            }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
                 assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
             });
         }
@@ -301,7 +301,7 @@ class OnboardingServiceTest {
         // 수면패턴 등록X인 경우 예외
         assertThatCode(() -> {
             onboardingService.saveRoutines(createRoutineG(), testUser);
-        }).isInstanceOfSatisfying(OnboardingHandler.class, ex -> {
+        }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
             assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
         });
 
@@ -310,7 +310,7 @@ class OnboardingServiceTest {
             assertThatThrownBy(() -> {
                 onboardingService.saveSleepPattern(sleepPattern, testUser);
                 onboardingService.saveRoutines(createRoutineG(), testUser);
-            }).isInstanceOfSatisfying(OnboardingHandler.class, ex -> {
+            }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
                 assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
             });
         }
@@ -323,7 +323,7 @@ class OnboardingServiceTest {
         // 수면패턴 등록X인 경우 예외
         assertThatCode(() -> {
             onboardingService.saveRoutines(createRoutineH(), testUser);
-        }).isInstanceOfSatisfying(OnboardingHandler.class, ex -> {
+        }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
             assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
         });
 
@@ -332,7 +332,7 @@ class OnboardingServiceTest {
             assertThatThrownBy(() -> {
                 onboardingService.saveSleepPattern(sleepPattern, testUser);
                 onboardingService.saveRoutines(createRoutineH(), testUser);
-            }).isInstanceOfSatisfying(OnboardingHandler.class, ex -> {
+            }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
                 assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
             });
         }
