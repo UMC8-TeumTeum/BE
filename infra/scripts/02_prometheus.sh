@@ -13,7 +13,7 @@ sudo mkdir -p /opt/prometheus
 if ! command -v envsubst >/dev/null 2>&1; then
   sudo apt-get update -y && sudo apt-get install -y gettext-base
 fi
-SPRINGBOOT_PORT="${SPRINGBOOT_PORT}" envsubst < "$(dirname "$0")/../config/prometheus-server.yml" | sudo tee /opt/prometheus/prometheus.yml >/dev/null
+SPRINGBOOT_PORT="${SPRINGBOOT_PORT}" envsubst < "$(dirname "$0")/../config/grafana/prometheus-server.yml" | sudo tee /opt/prometheus/prometheus.yml >/dev/null
 
 docker run -d --restart unless-stopped \
   --name prometheus \

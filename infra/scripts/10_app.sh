@@ -26,6 +26,7 @@ docker run -d --restart unless-stopped \
   -e "S3_BUCKET=${S3_BUCKET}" \
   -e "S3_PREFIX=${S3_PREFIX}" \
   -e "OPEN_API_KEY=${OPEN_API_KEY_DECODED}" \
+  -e "GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}" \
   -v /opt/app/config/firebase-adminsdk.json:/app/config/firebase-adminsdk.json:ro \
   "${IMAGE}"
 

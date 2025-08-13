@@ -16,9 +16,6 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Update Git Submodules
-        run: git submodule update --init --recursive
-
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -34,24 +31,30 @@ jobs:
       - name: Docker login
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Docker build and push ( latest & sha )
+      - name: Docker build and push (latest & sha)
         run: |
           IMAGE="${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}"
-          docker build -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" .
-          docker push "$IMAGE:latest"
-          docker push "$IMAGE:${{ github.sha }}"
+          docker build -t $IMAGE:latest -t $IMAGE:${GITHUB_SHA} .
+          docker push $IMAGE:latest
+          docker push $IMAGE:${GITHUB_SHA}
 
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
     steps:
-      - name: Checkout
+      - name: Checkout for infra
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.ACCESS_TOKEN }}
+          submodules: recursive
+          fetch-depth: 0
 
-      - name: Write App EC2 key to temp file (runner)
+      - name: Debug infra files (sanity check)
         run: |
-          umask 077
-          printf "%s" "${{ secrets.APP_EC2_PRIVATE_KEY }}" > app_ec2.pem
+          echo "[DEBUG] pwd=$(pwd)"
+          ls -al .
+          echo "----- infra -----"
+          ls -alR ./infra || echo "NO infra DIR"
 
       - name: Upload infra to Bastion
         uses: appleboy/scp-action@master
@@ -59,22 +62,11 @@ jobs:
           host: ${{ secrets.BASTION_HOST }}
           username: ${{ secrets.BASTION_USERNAME }}
           key: ${{ secrets.BASTION_PRIVATE_KEY }}
-          source: "infra/**"
-          target: "~/deploy"
-
-      - name: Upload App EC2 key to Bastion
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.BASTION_HOST }}
-          username: ${{ secrets.BASTION_USERNAME }}
-          key: ${{ secrets.BASTION_PRIVATE_KEY }}
-          source: "app_ec2.pem"
+          source: "infra"
           target: "~"
+          overwrite: true
 
-      - name: Remove local temp key (runner)
-        run: rm -f app_ec2.pem
-
-      - name: Deploy via Bastion
+      - name: Prepare on Bastion (chmod)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.BASTION_HOST }}
@@ -82,62 +74,72 @@ jobs:
           key: ${{ secrets.BASTION_PRIVATE_KEY }}
           script: |
             set -Eeuo pipefail
-            chmod 600 ~/app_ec2.pem
+            ls -al ~/infra
+            chmod +x ~/infra/scripts/*.sh
+            ls -al ~/infra/scripts
 
-            rsync -az -e "ssh -o StrictHostKeyChecking=no -i ~/app_ec2.pem" \
-              ~/deploy/ ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }}:/home/ubuntu/deploy/
-
-            ssh -o StrictHostKeyChecking=no -i ~/app_ec2.pem ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }} <<'ENDSSH'
-set -Eeuo pipefail
-  
-export REGION="${{ secrets.AWS_REGION }}"
-export DOMAIN="${{ secrets.GRAFANA_DOMAIN }}"
-export GRAFANA_ADMIN_PASSWORD="${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
-export IMAGE="${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }}"
-export SPRINGBOOT_PORT="${{ secrets.SPRINGBOOT_PORT }}"
-export REDIS_VERSION="${{ secrets.REDIS_VERSION }}"
-export REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}"
-export DB_URL="${{ secrets.DB_URL }}"
-export DB_USERNAME="${{ secrets.DB_USERNAME }}"
-export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-export AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}"
-export AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}"
-export S3_BUCKET="${{ secrets.S3_BUCKET }}"
-export S3_PREFIX="${{ secrets.S3_PREFIX }}"
-export FIREBASE_CREDENTIALS_BASE64="${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}"
-export OPEN_API_KEY_B64="${{ secrets.OPEN_API_KEY }}"
-export ENABLE_CLOUDWATCH="${{ secrets.ENABLE_CLOUDWATCH }}"
-export ENABLE_PROMETHEUS="${{ secrets.ENABLE_PROMETHEUS }}"
-export ENABLE_GRAFANA="${{ secrets.ENABLE_GRAFANA }}"
-  
-bash /home/ubuntu/deploy/infra/scripts/run_all.sh
-ENDSSH
-
-
-
-      - name: Notify on Discord(Success)
-        if: success()
-        uses: Ilshidur/action-discord@master
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Deploy via Bastion to App EC2
+        uses: appleboy/ssh-action@master
         with:
-          args: |
-            서버 배포 성공
-            • Repo: `${{ github.repository }}`
-            • Branch: `${{ github.ref_name }}`
-            • Commit: `${{ github.sha }}`
-            • Docker Image: `${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }}`
+          host: ${{ secrets.BASTION_HOST }}
+          username: ${{ secrets.BASTION_USERNAME }}
+          key: ${{ secrets.BASTION_PRIVATE_KEY }}
+          script: |
+            set -Eeuo pipefail
+            PEM_KEY_PATH="$HOME/.ssh/teumteum.pem"
+            chmod 600 "$PEM_KEY_PATH"
 
-      - name: Notify on Discord(Fail)
-        if: failure()
-        uses: Ilshidur/action-discord@master
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        with:
-          args: |
-            서버 배포 실패
-            • Repo: `${{ github.repository }}`
-            • Branch: `${{ github.ref_name }}`
-            • Commit: `${{ github.sha }}`
-            • [Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            scp -o StrictHostKeyChecking=no -i "$PEM_KEY_PATH" -r ~/infra ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }}:/home/ubuntu/
 
+            ssh -o StrictHostKeyChecking=no -i "$PEM_KEY_PATH" ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }} \
+              "chmod +x /home/ubuntu/infra/scripts/*.sh && \
+               export REGION='${{ secrets.AWS_REGION }}' \
+               DOMAIN='${{ secrets.GRAFANA_DOMAIN }}' \
+               GRAFANA_ADMIN_PASSWORD='${{ secrets.GRAFANA_ADMIN_PASSWORD }}' \
+               IMAGE='${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }}' \
+               SPRINGBOOT_PORT='${{ secrets.SPRINGBOOT_PORT }}' \
+               REDIS_VERSION='${{ secrets.REDIS_VERSION }}' \
+               REDIS_PASSWORD='${{ secrets.REDIS_PASSWORD }}' \
+               DB_URL='${{ secrets.DB_URL }}' \
+               DB_USERNAME='${{ secrets.DB_USERNAME }}' \
+               DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
+               AWS_ACCESS_KEY='${{ secrets.AWS_ACCESS_KEY }}' \
+               AWS_SECRET_KEY='${{ secrets.AWS_SECRET_KEY }}' \
+               S3_BUCKET='${{ secrets.S3_BUCKET }}' \
+               S3_PREFIX='${{ secrets.S3_PREFIX }}' \
+               FIREBASE_CREDENTIALS_BASE64='${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}' \
+               GOOGLE_APPLICATION_CREDENTIALS='${{ secrets.FIREBASE_CREDENTIAL_PATH }}' \
+               OPEN_API_KEY_B64='${{ secrets.OPEN_API_KEY }}' \
+               ENABLE_CLOUDWATCH='${{ secrets.ENABLE_CLOUDWATCH }}' \
+               ENABLE_PROMETHEUS='${{ secrets.ENABLE_PROMETHEUS }}' \
+               ENABLE_GRAFANA='${{ secrets.ENABLE_GRAFANA }}' \
+               && bash /home/ubuntu/infra/scripts/run_all.sh"
+
+
+
+
+#      - name: Notify on Discord (Success)
+#        if: success()
+#        uses: Ilshidur/action-discord@master
+#        env:
+#          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+#        with:
+#          args: |
+#            서버 배포 성공
+#            • Repo: `${{ github.repository }}`
+#            • Branch: `${{ github.ref_name }}`
+#            • Commit: `${{ github.sha }}`
+#            • Docker Image: `${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }}`
+#
+#      - name: Notify on Discord (Fail)
+#        if: failure()
+#        uses: Ilshidur/action-discord@master
+#        env:
+#          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+#        with:
+#          args: |
+#            서버 배포 실패
+#            • Repo: `${{ github.repository }}`
+#            • Branch: `${{ github.ref_name }}`
+#            • Commit: `${{ github.sha }}`
+#            • Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
