@@ -14,7 +14,7 @@ public class TeumRequestDto {
 
     @Getter
     @NoArgsConstructor
-    @Schema(title = "TeumAvailableTime : 공통 가능 시간 요청")
+    @Schema(name = "TeumAvailableTimeRequest", title = "공통 가능 시간 요청")
     public static class TeumAvailableTime {
 
         @Schema(description = "참여자 ID 목록 (요청자는 자동 포함됨)", example = "[1, 2, 3]")

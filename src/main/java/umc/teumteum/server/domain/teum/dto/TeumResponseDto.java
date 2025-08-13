@@ -21,7 +21,7 @@ public class TeumResponseDto {
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    @Schema(title = "TeumAvailableTime : 공통 가능 시간 응답")
+    @Schema(name = "TeumAvailableTimeResponse", title = "공통 가능 시간 응답")
     public static class TeumAvailableTime {
 
         @Schema(description = "날짜", example = "2025-07-14")
