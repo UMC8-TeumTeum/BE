@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.teum.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.http.client.reactive.AbstractClientHttpConnectorProperties;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,6 +9,7 @@ import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
+import umc.teumteum.server.domain.notification.service.NotificationUseCases;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
 import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
 import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
@@ -47,8 +49,9 @@ public class TeumServiceImpl implements TeumService {
     private final ScheduleRepository scheduleRepository;
     private final TeumConverter teumConverter;
     private final TimeUtil timeUtil;
+    private final NotificationUseCases notificationUseCases;
 
-    private String toProfileUrl(User user) {
+  private String toProfileUrl(User user) {
         if (user == null || user.getProfileImageName() == null) return null;
         return s3Util.toPresignedUrl("profile/" + user.getProfileImageName(), Duration.ofMinutes(30));
     }
@@ -86,6 +89,22 @@ public class TeumServiceImpl implements TeumService {
         request.getTeumResponses().addAll(responses);
         teumRequestRepository.save(request);
 
+      // [추가] 알림 전송
+        if (receivers.size() == 1) {
+            notificationUseCases.notifyTeumRequest(
+                user,
+                receivers.get(0),
+                request.getId(),
+                dto
+            );
+        } else if (!receivers.isEmpty()) {
+            notificationUseCases.notifyTeumRequestBatch(
+                user,
+                receivers,
+                request.getId(),
+                dto
+            );
+        }
         return request.getId();
     }
 
@@ -121,7 +140,15 @@ public class TeumServiceImpl implements TeumService {
 
         teumRequestRepository.save(newRequest);
 
-        return newRequest.getId();
+        // [추가] 알림 전송 1:1 재요청
+        notificationUseCases.notifyTeumReRequest(
+            user,
+            originalSender,
+            newRequest.getId(),
+            newRequest
+        );
+
+      return newRequest.getId();
     }
 
 
@@ -215,6 +242,15 @@ public class TeumServiceImpl implements TeumService {
             // 수신자 본인 스케줄 ID 반환
             teumId = receiverSchedule.getId();
         }
+        // [추가] 알림 전송
+        User sender = response.getReceiverUser();
+        User receiver = response.getTeumRequest().getUser();
+        notificationUseCases.notifyTeumResponse(
+            sender,
+            receiver,
+            response.getId(),
+            isAccepted
+        );
 
         return teumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
     }
