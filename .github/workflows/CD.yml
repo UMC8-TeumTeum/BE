@@ -57,6 +57,16 @@ jobs:
           source: "infra/**"
           target: "~/deploy"
 
+      - name: Create App EC2 Key File on Bastion
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.BASTION_HOST }}
+          username: ${{ secrets.BASTION_USERNAME }}
+          key: ${{ secrets.BASTION_PRIVATE_KEY }}
+          script: |
+            echo "${{ secrets.APP_EC2_PRIVATE_KEY }}" > ~/app_ec2.pem
+            chmod 600 ~/app_ec2.pem
+
       - name: Deploy via Bastion
         uses: appleboy/ssh-action@master
         with:
@@ -66,42 +76,34 @@ jobs:
           script: |
             set -Eeuo pipefail
 
-            APP_KEY_FILE="$HOME/app_ec2.pem"
-            printf "%s" "${{ secrets.APP_EC2_PRIVATE_KEY }}" > "$APP_KEY_FILE"
-            chmod 600 "$APP_KEY_FILE"
-            
-            rsync -az -e "ssh -o StrictHostKeyChecking=no -i $APP_KEY_FILE" \
-            ~/deploy/ ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }}:/home/ubuntu/deploy/
+            rsync -az -e "ssh -o StrictHostKeyChecking=no -i ~/app_ec2.pem" \
+              ~/deploy/ ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }}:/home/ubuntu/deploy/
 
-            ssh -o StrictHostKeyChecking=no -i "$APP_KEY_FILE" ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }} << 'EOF'
-            set -Eeuo pipefail
+            ssh -o StrictHostKeyChecking=no -i ~/app_ec2.pem ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }} << 'EOF'
+              set -Eeuo pipefail
 
-            export REGION="${{ secrets.AWS_REGION }}"
-            export DOMAIN="${{ secrets.GRAFANA_DOMAIN }}"
-            export GRAFANA_ADMIN_PASSWORD="${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
-            export IMAGE="${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }}"
-            export SPRINGBOOT_PORT="${{ secrets.SPRINGBOOT_PORT }}"
-            export REDIS_VERSION="${{ secrets.REDIS_VERSION }}"
-            export REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}"
-            export DB_URL="${{ secrets.DB_URL }}"
-            export DB_USERNAME="${{ secrets.DB_USERNAME }}"
-            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-            export AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}"
-            export AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}"
-            export S3_BUCKET="${{ secrets.S3_BUCKET }}"
-            export S3_PREFIX="${{ secrets.S3_PREFIX }}"
-            export FIREBASE_CREDENTIALS_BASE64="${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}"
-            export OPEN_API_KEY_B64="${{ secrets.OPEN_API_KEY }}" 
+              export REGION="${{ secrets.AWS_REGION }}"
+              export DOMAIN="${{ secrets.GRAFANA_DOMAIN }}"
+              export GRAFANA_ADMIN_PASSWORD="${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
+              export IMAGE="${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }}"
+              export SPRINGBOOT_PORT="${{ secrets.SPRINGBOOT_PORT }}"
+              export REDIS_VERSION="${{ secrets.REDIS_VERSION }}"
+              export REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}"
+              export DB_URL="${{ secrets.DB_URL }}"
+              export DB_USERNAME="${{ secrets.DB_USERNAME }}"
+              export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+              export AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}"
+              export AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}"
+              export S3_BUCKET="${{ secrets.S3_BUCKET }}"
+              export S3_PREFIX="${{ secrets.S3_PREFIX }}"
+              export FIREBASE_CREDENTIALS_BASE64="${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}"
+              export OPEN_API_KEY_B64="${{ secrets.OPEN_API_KEY }}"
+              export ENABLE_CLOUDWATCH="${{ secrets.ENABLE_CLOUDWATCH }}"
+              export ENABLE_PROMETHEUS="${{ secrets.ENABLE_PROMETHEUS }}"
+              export ENABLE_GRAFANA="${{ secrets.ENABLE_GRAFANA }}"
 
-
-            export ENABLE_CLOUDWATCH="${{ secrets.ENABLE_CLOUDWATCH }}"
-            export ENABLE_PROMETHEUS="${{ secrets.ENABLE_PROMETHEUS }}"
-            export ENABLE_GRAFANA="${{ secrets.ENABLE_GRAFANA }}"   
-
-            bash /home/ubuntu/deploy/infra/scripts/run_all.sh
+              bash /home/ubuntu/deploy/infra/scripts/run_all.sh
             EOF
-
-
 
       - name: Notify on Discord(Success)
         if: success()
@@ -116,8 +118,6 @@ jobs:
             • Commit: `${{ github.sha }}`
             • Docker Image: `${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }}`
 
-
-
       - name: Notify on Discord(Fail)
         if: failure()
         uses: Ilshidur/action-discord@master
@@ -130,4 +130,3 @@ jobs:
             • Branch: `${{ github.ref_name }}`
             • Commit: `${{ github.sha }}`
             • [Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
