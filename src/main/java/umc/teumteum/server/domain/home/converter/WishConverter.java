@@ -1,13 +1,17 @@
 package umc.teumteum.server.domain.home.converter;
 
 import org.springframework.stereotype.Component;
+import umc.teumteum.server.domain.home.dto.request.ActivityRequestDto.AiWishSaveRequest;
 import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto;
 import umc.teumteum.server.domain.home.dto.response.CategoryResponseDto;
 import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDto;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.dto.response.WishlistResponseDto;
 import umc.teumteum.server.domain.home.entity.Category;
+import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.Wish;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.entity.mapping.WishCategory;
 import umc.teumteum.server.domain.user.entity.User;
 
@@ -98,5 +102,16 @@ public class WishConverter {
         return wishes.stream()
             .map(this::toActivityWishDto)
             .toList();
+    }
+    public Schedule toScheduleFromAiWish(User user, AiWishSaveRequest request, String title){
+        return Schedule.builder()
+            .user(user)
+            .title(title)
+            .description(null)
+            .type(ScheduleType.AI)
+            .date(request.getStartTime().toLocalDate())
+            .startTime(request.getStartTime())
+            .endTime(request.getEndTime())
+            .build();
     }
 }

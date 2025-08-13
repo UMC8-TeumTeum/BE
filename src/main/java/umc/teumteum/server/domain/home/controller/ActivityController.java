@@ -61,10 +61,13 @@ public class ActivityController {
       description = "사용자가 선택한 AI 추천 컨텐츠를 투두에 등록합니다."
   )
   @PostMapping(value = "/ai/assign", produces = "application/json")
-  public ApiResponse<Object> assignAiContent(
+  public ApiResponse<ActivityResponseDto.AiSaveResponse> assignAiContent(
+      @Valid @RequestBody ActivityRequestDto.AiWishSaveRequest request,
+      @CurrentUser @Parameter(hidden = true) User user
   ) {
-    // TODO: 넘겨준 AI 추천 컨텐츠를 투두에 등록하는 로직 필요
-    return null;
+    // TODO: 넘겨준 AI 추천 컨텐츠를 투두에 등록하는 로직 구현
+    ActivityResponseDto.AiSaveResponse response = activityServiceImpl.assginAiWish(user, request);
+    return ApiResponse.of(HomeSuccessStatus._AI_ACTIVITY_SAVE, response);
 
   }
 
