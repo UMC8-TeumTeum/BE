@@ -7,7 +7,8 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import umc.teumteum.server.domain.friend.dto.*;
+import umc.teumteum.server.domain.friend.dto.FriendRequestDto;
+import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
 import umc.teumteum.server.domain.friend.exception.status.FriendSuccessStatus;
 import umc.teumteum.server.domain.friend.service.FriendService;
 import umc.teumteum.server.domain.user.entity.User;
@@ -95,12 +96,12 @@ public class FriendController {
             description = "현재 로그인한 사용자가 팔로우한 유저 목록을 조회합니다."
     )
     @GetMapping(value = "/followings", produces = "application/json")
-    public ApiResponse<PagingResponseDto<FollowingUserResponseDto>> getFollowingsByUser(
+    public ApiResponse<PagingResponseDto<FriendResponseDto.FollowingFriend>> getFollowingsByUser(
             @Parameter(hidden = true) @CurrentUser User user,
             @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        PagingResponseDto<FollowingUserResponseDto> response = friendService.getFollowingsByUser(user.getId(), page, size);
+        PagingResponseDto<FriendResponseDto.FollowingFriend> response = friendService.getFollowingsByUser(user.getId(), page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
@@ -109,12 +110,12 @@ public class FriendController {
             description = "현재 로그인한 사용자를 팔로우한 유저 목록을 조회합니다."
     )
     @GetMapping("/followers")
-    public ApiResponse<PagingResponseDto<FollowerUserResponseDto>> getFollowersByUser(
+    public ApiResponse<PagingResponseDto<FriendResponseDto.FollowerFriend>> getFollowersByUser(
             @Parameter(hidden = true) @CurrentUser User user,
             @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(name = "page", defaultValue = "1") int page,
             @Parameter(description = "한 페이지에 포함될 항목 수") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
-        PagingResponseDto<FollowerUserResponseDto> response = friendService.getFollowersByUser(user.getId(), page, size);
+        PagingResponseDto<FriendResponseDto.FollowerFriend> response = friendService.getFollowersByUser(user.getId(), page, size);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
@@ -123,12 +124,12 @@ public class FriendController {
             description = "지정한 친구(userId)의 프로필 정보를 반환합니다."
     )
     @GetMapping(value = "/{userId}/profile", produces = "application/json")
-    public ApiResponse<FriendProfileResponseDto> getFriendProfile(
+    public ApiResponse<FriendResponseDto.FriendProfile> getFriendProfile(
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "조회할 친구 ID", example = "2")
             @PathVariable("userId") Long targetUserId
     ) {
-        FriendProfileResponseDto response = friendService.getFriendProfile(loginUser.getId(), targetUserId);
+        FriendResponseDto.FriendProfile response = friendService.getFriendProfile(loginUser.getId(), targetUserId);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIENDS_SUCCESS, response);
     }
 
@@ -137,11 +138,11 @@ public class FriendController {
             description = "친구의 스케줄 중에서 includeTeum == true 인 일정들의 시간을 합산하여 반환합니다."
     )
     @GetMapping(value = "/{userId}/teum-time", produces = "application/json")
-    public ApiResponse<FriendTeumTimeResponseDto> getFriendTeumTime(
+    public ApiResponse<FriendResponseDto.FriendTeumTime> getFriendTeumTime(
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "조회할 친구 ID") @PathVariable("userId") Long targetUserId
     ) {
-        FriendTeumTimeResponseDto result = friendService.getFriendTeumTime(loginUser.getId(), targetUserId);
+        FriendResponseDto.FriendTeumTime result = friendService.getFriendTeumTime(loginUser.getId(), targetUserId);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIEND_TEUM_TIME_SUCCESS, result);
     }
 
@@ -150,12 +151,12 @@ public class FriendController {
             description = "특정 유저의 최근 공개 투두 2개를 반환합니다."
     )
     @GetMapping(value = "/{userId}/todos/public/recent", produces = "application/json")
-    public ApiResponse<List<FriendPublicTodoResponseDto>> getRecentPublicTodos(
+    public ApiResponse<List<FriendResponseDto.FriendPublicTodo>> getRecentPublicTodos(
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "조회할 친구 ID", example = "1")
             @PathVariable("userId") Long targetUserId
     ) {
-        List<FriendPublicTodoResponseDto> result = friendService.getRecentPublicTodos(loginUser.getId(), targetUserId);
+        List<FriendResponseDto.FriendPublicTodo> result = friendService.getRecentPublicTodos(loginUser.getId(), targetUserId);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIEND_PUBLIC_TODO_SUCCESS, result);
     }
 
@@ -164,12 +165,12 @@ public class FriendController {
             description = "특정 유저의 특정 날짜에 해당하는 모든 공개 투두를 반환합니다."
     )
     @GetMapping(value = "/{userId}/todos/public", produces = "application/json")
-    public ApiResponse<List<FriendPublicTodoResponseDto>> getDailyPublicTodos(
+    public ApiResponse<List<FriendResponseDto.FriendPublicTodo>> getDailyPublicTodos(
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(description = "조회할 유저 ID", example = "1") @PathVariable("userId") Long userId,
             @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2024-07-31") @RequestParam("date") String date
     ) {
-        List<FriendPublicTodoResponseDto> result = friendService.getDailyPublicTodos(loginUser.getId(), userId, date);
+        List<FriendResponseDto.FriendPublicTodo> result = friendService.getDailyPublicTodos(loginUser.getId(), userId, date);
         return ApiResponse.of(FriendSuccessStatus._GET_FRIEND_PUBLIC_TODO_SUCCESS, result);
     }
 
