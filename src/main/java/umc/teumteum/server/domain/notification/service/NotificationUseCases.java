@@ -134,34 +134,4 @@ public class NotificationUseCases {
     );
   }
 
-  // 일대다 재요청
-  public void notifyTeumReRequestBatch(User sender, List<User> receivers, Long requestId, TeumRequest parentRequest) {
-    String content = NotificationType.TEUM_REQUEST_REREQUEST.getContent();
-
-    int othersCount = receivers.size() - 1;
-
-    Map<String, String> data = new HashMap<>();
-    data.put("senderId", String.valueOf(sender.getId()));
-    data.put("senderName", sender.getNickname());
-    data.put("title", parentRequest.getTitle());
-    data.put("description", parentRequest.getDescription() == null ? "" : parentRequest.getDescription());
-    data.put("date", String.valueOf(parentRequest.getDate()));
-    data.put("startTime", String.valueOf(parentRequest.getStartTime()));
-    data.put("endTime", String.valueOf(parentRequest.getEndTime()));
-    data.put("graphicId", String.valueOf(parentRequest.getGraphicId()));
-    data.put("isGroup", String.valueOf(othersCount > 0));
-    data.put("othersCount", String.valueOf(othersCount));
-    data.put("reRequest", "true");
-    data.put("originalRequestId", String.valueOf(parentRequest.getId()));
-
-    orchestrator.saveAndPushToMany(
-        receivers,
-        NotificationType.TEUM_REQUEST_REREQUEST,
-        content,
-        requestId,
-        data
-    );
-  }
-
-
 }

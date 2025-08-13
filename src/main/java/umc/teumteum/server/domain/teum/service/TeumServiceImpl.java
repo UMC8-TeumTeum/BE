@@ -146,45 +146,13 @@ public class TeumServiceImpl implements TeumService {
 
         teumRequestRepository.save(newRequest);
 
-        // [추가] 알림 전송
-        // [알림 전용 추가] 재요청 알림 수신자 계산
-        // 1대1인 경우랑 1대다인 경우 포함
-        // User는 알림 보낸 사람
-        // originalSender는 User에게 원래 요청을 보낸 사람 (무조건 응답 보내야됨)
-        List<User> receiversForNotification = new ArrayList<>();
-
-        // 1. 원본 작성자는 항상 포함
-        receiversForNotification.add(originalSender);
-
-        // 2. 원본 요청의 수신자들(= parent의 응답 대상자들) 추가 -> 일대다 요청일 수도 있어서
-        receiversForNotification.addAll(
-            parent.getTeumResponses().stream()
-                .map(TeumResponse::getReceiverUser)
-                .filter(u -> !u.getId().equals(user.getId())) // 본인은 제외
-                .toList()
+        // [추가] 알림 전송 1:1 재요청
+        notificationUseCases.notifyTeumReRequest(
+            user,
+            originalSender,
+            newRequest.getId(),
+            newRequest
         );
-
-        // 3. 중복 제거
-        receiversForNotification = receiversForNotification.stream()
-            .distinct()
-            .toList();
-
-        // 4. 알림 전송 1:1 / 1:다 나눠서 처리
-        if (receiversForNotification.size() == 1) {
-          notificationUseCases.notifyTeumReRequest(
-              user,
-              receiversForNotification.get(0),
-              newRequest.getId(),
-              newRequest
-          );
-        } else if (!receiversForNotification.isEmpty()) {
-          notificationUseCases.notifyTeumReRequestBatch(
-              user,
-              receiversForNotification,
-              newRequest.getId(),
-              newRequest
-          );
-        }
 
       return newRequest.getId();
     }
