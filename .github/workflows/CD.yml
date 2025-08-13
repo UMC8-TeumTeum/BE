@@ -66,13 +66,12 @@ jobs:
           script: |
             set -Eeuo pipefail
 
-            APP_KEY_FILE="$HOME/app_ec2.pem"  
-            echo "${{ secrets.APP_EC2_PRIVATE_KEY }}" > "$APP_KEY_FILE"
+            APP_KEY_FILE="$HOME/app_ec2.pem"
+            printf "%s" "${{ secrets.APP_EC2_PRIVATE_KEY }}" > "$APP_KEY_FILE"
             chmod 600 "$APP_KEY_FILE"
-
+            
             rsync -az -e "ssh -o StrictHostKeyChecking=no -i $APP_KEY_FILE" \
-              ~/deploy/ ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }}:/home/ubuntu/deploy/
-
+            ~/deploy/ ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }}:/home/ubuntu/deploy/
 
             ssh -o StrictHostKeyChecking=no -i "$APP_KEY_FILE" ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }} << 'EOF'
             set -Eeuo pipefail
