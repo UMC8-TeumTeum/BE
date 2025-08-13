@@ -8,7 +8,6 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout With Submodules
         uses: actions/checkout@v4
@@ -35,76 +34,77 @@ jobs:
       - name: Docker login
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Docker build and push
+      - name: Docker build and push ( latest & sha )
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest
+          IMAGE="${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}"
+          docker build -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" .
+          docker push "$IMAGE:latest"
+          docker push "$IMAGE:${{ github.sha }}"
 
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
-
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload infra to Bastion
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.BASTION_HOST }}
+          username: ${{ secrets.BASTION_USERNAME }}
+          key: ${{ secrets.BASTION_PRIVATE_KEY }}
+          source: "infra/**"
+          target: "~/deploy"
+
       - name: Deploy via Bastion
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.BASTION_HOST }}
           username: ${{ secrets.BASTION_USERNAME }}
           key: ${{ secrets.BASTION_PRIVATE_KEY }}
+          script_stop: true
           script: |
-            ssh -o StrictHostKeyChecking=no -i ~/teumteum.pem ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }} << 'EOF'
             set -Eeuo pipefail
 
-            OPEN_API_KEY_DECODED="$(printf %s "${{ secrets.OPEN_API_KEY }}" | base64 -d 2>/dev/null || true)"
-            if [ -z "$OPEN_API_KEY_DECODED" ]; then
-              echo "[deploy] base64 decode failed for OPEN_API_KEY" 1>&2
-              exit 1
-            fi
 
-            docker rm -f spring-app 2>/dev/null || true
-            docker rm -f redis-container 2>/dev/null || true
-            docker system prune -af
+            APP_KEY_FILE="$HOME/app_ec2.pem"  
+            echo "${{ secrets.APP_EC2_PRIVATE_KEY }}" > "$APP_KEY_FILE"
+            chmod 600 "$APP_KEY_FILE"
 
-            docker network inspect app-net > /dev/null 2>&1 || docker network create app-net
-            docker volume inspect redis-data > /dev/null 2>&1 || docker volume create redis-data
+            rsync -az -e "ssh -o StrictHostKeyChecking=no -i $APP_KEY_FILE" \
+              ~/deploy/ ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }}:/home/ubuntu/deploy/
 
-            docker pull "${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest"
 
-            docker run -d --restart unless-stopped \
-              --name redis-container \
-              --network app-net \
-              -p "${{ secrets.REDIS_PORT }}":"${{ secrets.REDIS_PORT }}" \
-              -v redis-data:/data \
-              "redis:${{ secrets.REDIS_VERSION }}" \
-              redis-server --requirepass "${{ secrets.REDIS_PASSWORD }}"
+            ssh -o StrictHostKeyChecking=no -i "$APP_KEY_FILE" ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }} << 'EOF'
+            set -Eeuo pipefail
 
-            docker run -d --restart unless-stopped \
-              --name spring-app \
-              --network app-net \
-              -p "${{ secrets.SPRINGBOOT_PORT }}":"${{ secrets.SPRINGBOOT_PORT }}" \
-              -e "FIREBASE_CREDENTIALS_BASE64=${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}" \
-              -e "SPRINGBOOT_PORT=${{ secrets.SPRINGBOOT_PORT }}" \
-              -e "SPRING_REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" \
-              -e "DB_URL=${{ secrets.DB_URL }}" \
-              -e "DB_USERNAME=${{ secrets.DB_USERNAME }}" \
-              -e "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
-              -e "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" \
-              -e "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" \
-              -e "S3_BUCKET=${{ secrets.S3_BUCKET }}" \
-              -e "S3_PREFIX=${{ secrets.S3_PREFIX }}" \
-              -e "OPEN_API_KEY=$OPEN_API_KEY_DECODED" \
-              "${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest"
+            export REGION="${{ secrets.AWS_REGION }}"
+            export DOMAIN="${{ secrets.GRAFANA_DOMAIN }}"
+            export GRAFANA_ADMIN_PASSWORD="${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
+            export IMAGE="${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }}"
+            export SPRINGBOOT_PORT="${{ secrets.SPRINGBOOT_PORT }}"
+            export REDIS_VERSION="${{ secrets.REDIS_VERSION }}"
+            export REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}"
+            export DB_URL="${{ secrets.DB_URL }}"
+            export DB_USERNAME="${{ secrets.DB_USERNAME }}"
+            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            export AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}"
+            export AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}"
+            export S3_BUCKET="${{ secrets.S3_BUCKET }}"
+            export S3_PREFIX="${{ secrets.S3_PREFIX }}"
+            export FIREBASE_CREDENTIALS_BASE64="${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}"
+            export OPEN_API_KEY_B64="${{ secrets.OPEN_API_KEY }}" 
 
-            docker system df
 
-            USAGE=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
-            if [ "$USAGE" -ge 80 ]; then
-              HOST=${{ secrets.APP_EC2_PRIVATE_IP }}
-              curl -X POST -H "Content-Type: application/json" \
-                -d "{\"content\": \"EC2 디스크 사용량 경고\\nHOST: ${HOST}\\nUsage: ${USAGE}%\\n→ 디스크 정리 또는 스토리지 확장 필요\"}" \
-                "${{ secrets.DISCORD_WEBHOOK }}"
-            fi
+            export ENABLE_CLOUDWATCH="${{ secrets.ENABLE_CLOUDWATCH }}"
+            export ENABLE_PROMETHEUS="${{ secrets.ENABLE_PROMETHEUS }}"
+            export ENABLE_GRAFANA="${{ secrets.ENABLE_GRAFANA }}"   
+
+            bash /home/ubuntu/deploy/infra/scripts/run_all.sh
             EOF
+
+
 
       - name: Notify on Discord(Success)
         if: success()
@@ -117,9 +117,9 @@ jobs:
             • Repo: `${{ github.repository }}`
             • Branch: `${{ github.ref_name }}`
             • Commit: `${{ github.sha }}`
-            • Docker Image: `${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest`
-            • [View commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
-            • [Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            • Docker Image: `${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }}`
+
+
 
       - name: Notify on Discord(Fail)
         if: failure()
@@ -132,6 +132,5 @@ jobs:
             • Repo: `${{ github.repository }}`
             • Branch: `${{ github.ref_name }}`
             • Commit: `${{ github.sha }}`
-            • [View commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
             • [Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            → 로그 확인 필요!
+
