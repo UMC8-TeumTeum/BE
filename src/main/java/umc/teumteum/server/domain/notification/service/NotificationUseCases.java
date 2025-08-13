@@ -7,7 +7,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
-import umc.teumteum.server.domain.teum.dto.teum.TeumRequestDto;
+import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.user.entity.User;
 
@@ -32,7 +32,7 @@ public class NotificationUseCases {
   }
 
   // 틈 요청 알림(1:1) : sender -> receiver
-  public void notifyTeumRequest(User sender, User reciver, Long requestId, TeumRequestDto request) {
+  public void notifyTeumRequest(User sender, User reciver, Long requestId, TeumRequestDto.TeumRequest request) {
     String content = NotificationType.TEUM_REQUEST.getContent();
 
     Map<String, String> data = new java.util.HashMap<>();
@@ -59,7 +59,7 @@ public class NotificationUseCases {
   }
 
   // 틈 요청 알림(1:다) : sender -> receivers
-  public void notifyTeumRequestBatch(User sender, List<User> receivers, Long requestId, TeumRequestDto request) {
+  public void notifyTeumRequestBatch(User sender, List<User> receivers, Long requestId, TeumRequestDto.TeumRequest request) {
     String content = NotificationType.TEUM_REQUEST.getContent();
 
     int totalReceivers = (request.getReceiverUserIds() == null) ? 0 : request.getReceiverUserIds().size();
