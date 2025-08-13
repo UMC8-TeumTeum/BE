@@ -63,10 +63,8 @@ jobs:
           host: ${{ secrets.BASTION_HOST }}
           username: ${{ secrets.BASTION_USERNAME }}
           key: ${{ secrets.BASTION_PRIVATE_KEY }}
-          script_stop: true
           script: |
             set -Eeuo pipefail
-
 
             APP_KEY_FILE="$HOME/app_ec2.pem"  
             echo "${{ secrets.APP_EC2_PRIVATE_KEY }}" > "$APP_KEY_FILE"
