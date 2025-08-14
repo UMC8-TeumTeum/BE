@@ -13,7 +13,7 @@ public class FriendRequestDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    @Schema(description = "팔로잉 즐겨찾기 설정/해제 요청")
+    @Schema(title = "팔로잉 즐겨찾기 설정/해제 Request")
     public static class FriendFavorite {
 
         @NotNull(message = "즐겨찾기 여부는 필수 입력입니다.")

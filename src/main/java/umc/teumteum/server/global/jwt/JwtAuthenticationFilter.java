@@ -83,6 +83,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // 적절한 ErrorStatus 결정
     private ErrorStatus determineErrorStatus(Exception ex) {
         return switch (ex) {
+            // JWT 토큰 검증 관련 예외
+            case SecurityException sec -> ErrorStatus.INVALID_JWT_SIGNATURE;
+            case MalformedJwtException mal -> ErrorStatus.MALFORMED_JWT_TOKEN;
+            case ExpiredJwtException exp -> ErrorStatus.EXPIRED_JWT_TOKEN;
+            case UnsupportedJwtException unsup -> ErrorStatus.UNSUPPORTED_JWT_TOKEN;
+            case IllegalArgumentException illegal -> ErrorStatus.EMPTY_JWT_CLAIMS;
+
             // 유효하지 않은 토큰 타입(=refresh)에 대한 예외 (커스텀)
             case InvalidTokenTypeException invalidType -> ErrorStatus.INVALID_TOKEN_TYPE;
 
@@ -92,20 +99,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 사용자 인증 과정 예외
             case DisabledException disabled -> ErrorStatus.INACTIVE_USER;
             case UsernameNotFoundException notFound -> ErrorStatus.USER_NOT_FOUND;
-
-            // JWT 토큰 검증 관련 예외
-            case BadCredentialsException badCreds -> {
-                // cause : 실제 원인이 되는 예외
-                Throwable cause = badCreds.getCause();
-                yield switch (cause) {
-                    case SecurityException sec -> ErrorStatus.INVALID_JWT_SIGNATURE;
-                    case MalformedJwtException mal -> ErrorStatus.MALFORMED_JWT_TOKEN;
-                    case ExpiredJwtException exp -> ErrorStatus.EXPIRED_JWT_TOKEN;
-                    case UnsupportedJwtException unsup -> ErrorStatus.UNSUPPORTED_JWT_TOKEN;
-                    case IllegalArgumentException illegal -> ErrorStatus.EMPTY_JWT_CLAIMS;
-                    default -> ErrorStatus._UNAUTHORIZED;
-                };
-            }
 
             default -> ErrorStatus._UNAUTHORIZED;
         };

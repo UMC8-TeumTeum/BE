@@ -12,6 +12,8 @@ import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
+import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -293,6 +295,19 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("type") ScheduleType type,
             @Param("status") ScheduleStatus status,
             Pageable pageable
+    );
+
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.type = :type
+      AND s.status = :status
+      AND s.isDeleted = false
+      AND s.startTime <= :now
+""")
+    List<Schedule> findAllExpiredActiveTeums(
+            @Param("now") LocalDateTime now,
+            @Param("type") ScheduleType type,
+            @Param("status") ScheduleStatus status
     );
 
     @Query("""

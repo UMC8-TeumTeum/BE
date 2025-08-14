@@ -11,6 +11,7 @@ import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface TeumResponseRepository extends JpaRepository<TeumResponse, Long> {
 
@@ -40,5 +41,18 @@ public interface TeumResponseRepository extends JpaRepository<TeumResponse, Long
             @Param("start") LocalDate start,
             @Param("end") LocalDate end
     );
+
+    @Query("""
+        SELECT r
+        FROM TeumResponse r
+        JOIN r.teumRequest tr
+        WHERE tr.id = :requestId
+          AND r.receiverUser.id = :receiverUserId
+""")
+    Optional<TeumResponse> findRequestAndReceiver(
+            @Param("requestId") Long requestId,
+            @Param("receiverUserId") Long receiverUserId
+    );
+
 
 }

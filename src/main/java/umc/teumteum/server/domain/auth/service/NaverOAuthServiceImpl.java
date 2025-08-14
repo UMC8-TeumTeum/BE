@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -11,13 +12,13 @@ import umc.teumteum.server.domain.auth.converter.AuthConverter;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
-import umc.teumteum.server.domain.auth.exception.AuthHandler;
+import umc.teumteum.server.domain.auth.exception.AuthException;
 
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class NaverOAuthServiceImpl implements NaverOAuthService {
+public class NaverOAuthServiceImpl implements OAuthService {
 
     private final RestTemplate restTemplate;
 
@@ -36,7 +37,7 @@ public class NaverOAuthServiceImpl implements NaverOAuthService {
             Map<String, Object> body = response.getBody();
 
             if (body == null || !body.containsKey("response")) {
-                throw new AuthHandler(AuthErrorStatus.NAVER_USER_INFO_FAILED);
+                throw new AuthException(AuthErrorStatus.NAVER_USER_INFO_FAILED);
             }
 
             Map<String, Object> responseData = (Map<String, Object>) body.get("response");
@@ -46,7 +47,7 @@ public class NaverOAuthServiceImpl implements NaverOAuthService {
             return AuthConverter.toOAuthUserInfo(SocialType.NAVER, socialId, email);
 
         } catch (Exception e) {
-            throw new AuthHandler(AuthErrorStatus.NAVER_USER_INFO_FAILED);
+            throw new AuthException(AuthErrorStatus.NAVER_USER_INFO_FAILED);
         }
     }
 }

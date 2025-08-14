@@ -8,7 +8,6 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout With Submodules
         uses: actions/checkout@v4
@@ -16,9 +15,6 @@ jobs:
           token: ${{ secrets.ACCESS_TOKEN }}
           submodules: recursive
           fetch-depth: 0
-
-      - name: Update Git Submodules
-        run: git submodule update --init --recursive
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -35,78 +31,94 @@ jobs:
       - name: Docker login
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Docker build and push
+      - name: Docker build and push (latest & sha)
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest
+          IMAGE="${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}"
+          docker build -t $IMAGE:latest -t $IMAGE:${GITHUB_SHA} .
+          docker push $IMAGE:latest
+          docker push $IMAGE:${GITHUB_SHA}
 
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
-
     steps:
-      - name: Deploy via Bastion
+      - name: Checkout for infra
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.ACCESS_TOKEN }}
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Debug infra files (sanity check)
+        run: |
+          echo "[DEBUG] pwd=$(pwd)"
+          ls -al .
+          echo "----- infra -----"
+          ls -alR ./infra || echo "NO infra DIR"
+
+      - name: Upload infra to Bastion
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.BASTION_HOST }}
+          username: ${{ secrets.BASTION_USERNAME }}
+          key: ${{ secrets.BASTION_PRIVATE_KEY }}
+          source: "infra"
+          target: "~"
+          overwrite: true
+
+      - name: Prepare on Bastion (chmod)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.BASTION_HOST }}
           username: ${{ secrets.BASTION_USERNAME }}
           key: ${{ secrets.BASTION_PRIVATE_KEY }}
           script: |
-            ssh -o StrictHostKeyChecking=no -i ~/teumteum.pem ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }} << 'EOF'
             set -Eeuo pipefail
+            ls -al ~/infra
+            chmod +x ~/infra/scripts/*.sh
+            ls -al ~/infra/scripts
 
-            OPEN_API_KEY_DECODED="$(printf %s "${{ secrets.OPEN_API_KEY }}" | base64 -d 2>/dev/null || true)"
-            if [ -z "$OPEN_API_KEY_DECODED" ]; then
-              echo "[deploy] base64 decode failed for OPEN_API_KEY" 1>&2
-              exit 1
-            fi
+      - name: Deploy via Bastion to App EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.BASTION_HOST }}
+          username: ${{ secrets.BASTION_USERNAME }}
+          key: ${{ secrets.BASTION_PRIVATE_KEY }}
+          script: |
+            set -Eeuo pipefail
+            PEM_KEY_PATH="$HOME/.ssh/teumteum.pem"
+            chmod 600 "$PEM_KEY_PATH"
 
-            docker rm -f spring-app 2>/dev/null || true
-            docker rm -f redis-container 2>/dev/null || true
-            docker system prune -af
+            scp -o StrictHostKeyChecking=no -i "$PEM_KEY_PATH" -r ~/infra ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }}:/home/ubuntu/
 
-            docker network inspect app-net > /dev/null 2>&1 || docker network create app-net
-            docker volume inspect redis-data > /dev/null 2>&1 || docker volume create redis-data
+            ssh -o StrictHostKeyChecking=no -i "$PEM_KEY_PATH" ubuntu@${{ secrets.APP_EC2_PRIVATE_IP }} \
+              "chmod +x /home/ubuntu/infra/scripts/*.sh && \
+               export REGION='${{ secrets.AWS_REGION }}' \
+               DOMAIN='${{ secrets.GRAFANA_DOMAIN }}' \
+               GRAFANA_ADMIN_PASSWORD='${{ secrets.GRAFANA_ADMIN_PASSWORD }}' \
+               IMAGE='${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }}' \
+               SPRINGBOOT_PORT='${{ secrets.SPRINGBOOT_PORT }}' \
+               REDIS_VERSION='${{ secrets.REDIS_VERSION }}' \
+               REDIS_PASSWORD='${{ secrets.REDIS_PASSWORD }}' \
+               DB_URL='${{ secrets.DB_URL }}' \
+               DB_USERNAME='${{ secrets.DB_USERNAME }}' \
+               DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
+               AWS_ACCESS_KEY='${{ secrets.AWS_ACCESS_KEY }}' \
+               AWS_SECRET_KEY='${{ secrets.AWS_SECRET_KEY }}' \
+               S3_BUCKET='${{ secrets.S3_BUCKET }}' \
+               S3_PREFIX='${{ secrets.S3_PREFIX }}' \
+               FIREBASE_CREDENTIALS_BASE64='${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}' \
+               GOOGLE_APPLICATION_CREDENTIALS='${{ secrets.FIREBASE_CREDENTIAL_PATH }}' \
+               OPEN_API_KEY_B64='${{ secrets.OPEN_API_KEY }}' \
+               ENABLE_CLOUDWATCH='${{ secrets.ENABLE_CLOUDWATCH }}' \
+               ENABLE_PROMETHEUS='${{ secrets.ENABLE_PROMETHEUS }}' \
+               ENABLE_GRAFANA='${{ secrets.ENABLE_GRAFANA }}' \
+               && bash /home/ubuntu/infra/scripts/run_all.sh"
 
-            docker pull "${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest"
 
-            docker run -d --restart unless-stopped \
-              --name redis-container \
-              --network app-net \
-              -p "${{ secrets.REDIS_PORT }}":"${{ secrets.REDIS_PORT }}" \
-              -v redis-data:/data \
-              "redis:${{ secrets.REDIS_VERSION }}" \
-              redis-server --requirepass "${{ secrets.REDIS_PASSWORD }}"
 
-            docker run -d --restart unless-stopped \
-              --name spring-app \
-              --network app-net \
-              -p "${{ secrets.SPRINGBOOT_PORT }}":"${{ secrets.SPRINGBOOT_PORT }}" \
-              -e "FIREBASE_CREDENTIALS_BASE64=${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}" \
-              -e "SPRINGBOOT_PORT=${{ secrets.SPRINGBOOT_PORT }}" \
-              -e "SPRING_REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" \
-              -e "DB_URL=${{ secrets.DB_URL }}" \
-              -e "DB_USERNAME=${{ secrets.DB_USERNAME }}" \
-              -e "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
-              -e "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}" \
-              -e "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}" \
-              -e "S3_BUCKET=${{ secrets.S3_BUCKET }}" \
-              -e "S3_PREFIX=${{ secrets.S3_PREFIX }}" \
-              -e "OPEN_API_KEY=$OPEN_API_KEY_DECODED" \
-              "${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest"
 
-            docker system df
-
-            USAGE=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
-            if [ "$USAGE" -ge 80 ]; then
-              HOST=${{ secrets.APP_EC2_PRIVATE_IP }}
-              curl -X POST -H "Content-Type: application/json" \
-                -d "{\"content\": \"EC2 디스크 사용량 경고\\nHOST: ${HOST}\\nUsage: ${USAGE}%\\n→ 디스크 정리 또는 스토리지 확장 필요\"}" \
-                "${{ secrets.DISCORD_WEBHOOK }}"
-            fi
-            EOF
-
-      - name: Notify on Discord(Success)
+      - name: Notify on Discord (Success)
         if: success()
         uses: Ilshidur/action-discord@master
         env:
@@ -117,11 +129,9 @@ jobs:
             • Repo: `${{ github.repository }}`
             • Branch: `${{ github.ref_name }}`
             • Commit: `${{ github.sha }}`
-            • Docker Image: `${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:latest`
-            • [View commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
-            • [Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            • Docker Image: `${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}:${{ github.sha }}`
 
-      - name: Notify on Discord(Fail)
+      - name: Notify on Discord (Fail)
         if: failure()
         uses: Ilshidur/action-discord@master
         env:
@@ -132,6 +142,4 @@ jobs:
             • Repo: `${{ github.repository }}`
             • Branch: `${{ github.ref_name }}`
             • Commit: `${{ github.sha }}`
-            • [View commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
-            • [Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            → 로그 확인 필요!
+            • Logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.teum.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.http.client.reactive.AbstractClientHttpConnectorProperties;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,16 +9,11 @@ import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
+import umc.teumteum.server.domain.notification.service.NotificationUseCases;
 import umc.teumteum.server.domain.teum.converter.TeumConverter;
-import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
-import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
+import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
+import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
-import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.teum.entity.enums.RequestStatus;
@@ -53,15 +49,16 @@ public class TeumServiceImpl implements TeumService {
     private final ScheduleRepository scheduleRepository;
     private final TeumConverter teumConverter;
     private final TimeUtil timeUtil;
+    private final NotificationUseCases notificationUseCases;
 
-    private String toProfileUrl(User user) {
+  private String toProfileUrl(User user) {
         if (user == null || user.getProfileImageName() == null) return null;
         return s3Util.toPresignedUrl("profile/" + user.getProfileImageName(), Duration.ofMinutes(30));
     }
 
     @Override
     @Transactional
-    public Long createRequest(TeumRequestDto dto, User user) {
+    public Long createRequest(TeumRequestDto.TeumRequest dto, User user) {
         // 시간 순서 검증
         validateTimeOrder(dto.getStartTime(), dto.getEndTime());
 
@@ -92,12 +89,28 @@ public class TeumServiceImpl implements TeumService {
         request.getTeumResponses().addAll(responses);
         teumRequestRepository.save(request);
 
+      // [추가] 알림 전송
+        if (receivers.size() == 1) {
+            notificationUseCases.notifyTeumRequest(
+                user,
+                receivers.get(0),
+                request.getId(),
+                dto
+            );
+        } else if (!receivers.isEmpty()) {
+            notificationUseCases.notifyTeumRequestBatch(
+                user,
+                receivers,
+                request.getId(),
+                dto
+            );
+        }
         return request.getId();
     }
 
     @Override
     @Transactional
-    public Long createResendRequest(Long parentRequestId, TeumResendRequestDto dto, User user) {
+    public Long createResendRequest(Long parentRequestId, TeumRequestDto.TeumResend dto, User user) {
         // 원본 요청 확인 및 권한 검증
         TeumRequest parent = findActiveRequestOrThrow(parentRequestId);
         validateResendableRequest(parent);
@@ -127,13 +140,21 @@ public class TeumServiceImpl implements TeumService {
 
         teumRequestRepository.save(newRequest);
 
-        return newRequest.getId();
+        // [추가] 알림 전송 1:1 재요청
+        notificationUseCases.notifyTeumReRequest(
+            user,
+            originalSender,
+            newRequest.getId(),
+            newRequest
+        );
+
+      return newRequest.getId();
     }
 
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, int page, int size) {
+    public Page<TeumResponseDto.TeumReceived> getReceivedRequests(Long userId, int page, int size) {
         getUserOrThrow(userId);
 
         int pageIndex = Math.max(page - 1, 0);
@@ -149,7 +170,7 @@ public class TeumServiceImpl implements TeumService {
                 userId, LocalDate.now(), LocalTime.now(), pageable
         );
 
-        List<TeumReceivedResponseDto> dtoList = pageData.getContent().stream()
+        List<TeumResponseDto.TeumReceived> dtoList = pageData.getContent().stream()
                 .map(response -> {
                     User sender = response.getTeumRequest().getUser();
                     String url = toProfileUrl(sender);
@@ -172,7 +193,7 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional
-    public TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto) {
+    public TeumResponseDto.TeumStatusUpdate updateResponseStatus(Long responseId, Long userId, TeumRequestDto.TeumStatusUpdate requestDto) {
         // 응답 조회 및 권한 검증
         TeumResponse response = getResponseOrThrow(responseId);
         validateReceiver(response, userId);
@@ -221,6 +242,15 @@ public class TeumServiceImpl implements TeumService {
             // 수신자 본인 스케줄 ID 반환
             teumId = receiverSchedule.getId();
         }
+        // [추가] 알림 전송
+        User sender = response.getReceiverUser();
+        User receiver = response.getTeumRequest().getUser();
+        notificationUseCases.notifyTeumResponse(
+            sender,
+            receiver,
+            response.getId(),
+            isAccepted
+        );
 
         return teumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
     }
@@ -260,7 +290,7 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, String date) {
+    public List<TeumResponseDto.ScheduledTeum> getScheduledTeums(Long userId, String date) {
         LocalDate targetDate = LocalDate.parse(date);
 
         List<Schedule> allSchedules = scheduleRepository.findByUserIdAndDateAndStatusIn(
@@ -281,7 +311,7 @@ public class TeumServiceImpl implements TeumService {
 
     }
 
-    public ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long scheduleId, Long userId) {
+    public TeumResponseDto.ScheduledTeumDetail getScheduledTeumDetail(Long scheduleId, Long userId) {
         Schedule schedule = getScheduleOrThrow(scheduleId);
         validateScheduleAccessible(schedule, userId);
 
@@ -303,7 +333,7 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional
-    public ScheduledTeumCancelResponseDto cancelScheduledTeum(Long scheduleId, Long userId) {
+    public TeumResponseDto.ScheduledTeumCancel cancelScheduledTeum(Long scheduleId, Long userId) {
         Schedule schedule = getScheduleOrThrow(scheduleId);
         validateScheduleOwner(schedule, userId);
         validateScheduleTypeIsTeum(schedule);
@@ -317,31 +347,37 @@ public class TeumServiceImpl implements TeumService {
             throw new GeneralException(TeumErrorStatus.TEUM_REQUEST_NOT_FOUND);
         }
 
-        // 본인 스케줄을 CANCELLED 처리
+        // 본인 스케줄만 취소
         schedule.cancel();
+
+        // 본인 응답만 LEFT로 (상대는 그대로)
+        teumResponseRepository.findRequestAndReceiver(request.getId(), userId)
+                .ifPresent(r -> r.changeStatus(ResponseStatus.LEFT));
+
         List<Long> cancelledUserIds = new ArrayList<>();
         cancelledUserIds.add(userId);
 
-        // 해당 틈 요청과 연결된 다른 ACTIVE 스케줄이 있는지 조회
+        // 같은 요청에 다른 ACTIVE 스케줄 조회
         List<Schedule> activeSchedules = scheduleRepository.findByTeumRequestAndStatusIn(
                 request, List.of(ScheduleStatus.ACTIVE)
         );
 
-        // 한 명만 남아 있다면, 그 사람 스케줄도 같이 취소
+        // 한 명만 남아 있다면, 그 사람 스케줄도 같이 취소 (응답 상태는 변경 없음)
         if (activeSchedules.size() == 1) {
             Schedule lastOne = activeSchedules.getFirst();
             lastOne.cancel();
             cancelledUserIds.add(lastOne.getUser().getId());
         }
 
-        return ScheduledTeumCancelResponseDto.builder()
+        return TeumResponseDto.ScheduledTeumCancel.builder()
                 .cancelledUserIds(cancelledUserIds)
                 .build();
     }
 
+
     // 공통 가능한 시간대 계산
     @Override
-    public AvailableTimeResponseDto getAvailableTime(User user, AvailableTimeRequestDto requestDto) {
+    public TeumResponseDto.TeumAvailableTime getAvailableTime(User user, TeumRequestDto.TeumAvailableTime requestDto) {
         LocalDate date = LocalDate.parse(requestDto.getDate());
         DayOfWeek targetDay = date.getDayOfWeek();
         List<TimeSlot> scheduledSlots = new ArrayList<>();
@@ -406,13 +442,13 @@ public class TeumServiceImpl implements TeumService {
         List<TimeSlot> sortedAvailable = new ArrayList<>(availableTime);
         sortedAvailable.sort(Comparator.comparing(slot -> timeUtil.parseTimeForSort(slot.getStart())));
 
-        return new AvailableTimeResponseDto(date.toString(), sortedAvailable);
+        return new TeumResponseDto.TeumAvailableTime(date.toString(), sortedAvailable);
     }
 
 
     @Override
     @Transactional(readOnly = true)
-    public SharedTeumTimeResponseDto getSharedTeumStats(Long loginUserId, Long targetUserId) {
+    public TeumResponseDto.SharedTeumTime getSharedTeumStats(Long loginUserId, Long targetUserId) {
         validateUserExists(targetUserId);
         validateNotSelf(loginUserId, targetUserId);
 
@@ -429,7 +465,7 @@ public class TeumServiceImpl implements TeumService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagingResponseDto<SharedTeumListResponseDto> getSharedTeums(Long loginUserId, Long targetUserId, int page, int size) {
+    public PagingResponseDto<TeumResponseDto.SharedTeumList> getSharedTeums(Long loginUserId, Long targetUserId, int page, int size) {
         validateNotSelf(loginUserId, targetUserId);
         validateUserExists(targetUserId);
 
@@ -452,7 +488,7 @@ public class TeumServiceImpl implements TeumService {
                 pageable
         );
 
-        List<SharedTeumListResponseDto> content = slice.getContent().stream()
+        List<TeumResponseDto.SharedTeumList> content = slice.getContent().stream()
                 .map(s -> {
                     User sender = s.getTeumRequest().getUser();
                     String url = toProfileUrl(sender);
@@ -465,7 +501,7 @@ public class TeumServiceImpl implements TeumService {
 
 
     @Override
-    public List<TeumRequestResponseDto> getTeumRequestsByDate(Long userId, String date) {
+    public List<TeumResponseDto.TeumRequestDetail> getTeumRequestsByDate(Long userId, String date) {
         LocalDate parsedDate = LocalDate.parse(date);
         List<TeumRequest> allRequests = teumRequestRepository.findByDate(parsedDate);
 

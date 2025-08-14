@@ -1,15 +1,15 @@
 package umc.teumteum.server.domain.auth.service;
 
 import jakarta.servlet.http.HttpServletRequest;
-import umc.teumteum.server.domain.auth.dto.AuthRequestDTO;
-import umc.teumteum.server.domain.auth.dto.AuthResponseDTO;
+import umc.teumteum.server.domain.auth.dto.AuthRequestDto;
+import umc.teumteum.server.domain.auth.dto.AuthResponseDto;
 
 public interface AuthService {
-    AuthResponseDTO.LoginResponse socialLogin(String socialType, AuthRequestDTO.SocialLoginRequest request);
+    AuthResponseDto.LoginResponse socialLogin(String socialType, AuthRequestDto.SocialLoginRequest request);
 
-    AuthResponseDTO.DevTokenResponse generateDevAccessToken();
+    AuthResponseDto.DevTokenResponse generateDevAccessToken();
 
-    AuthResponseDTO.ReissueResponse reissueToken(AuthRequestDTO.ReissueRequest request);
+    AuthResponseDto.ReissueResponse reissueToken(AuthRequestDto.ReissueRequest request);
 
     void logout(HttpServletRequest httpServletRequest);
 }
