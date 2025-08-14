@@ -8,7 +8,7 @@ import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
-import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
+import umc.teumteum.server.domain.home.repository.ScheduleJdbcRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.Routine;
@@ -27,52 +27,49 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ScheduleGeneratorScheduler {
+public class RoutineScheduler {
 
     private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
     private final RoutineRepository routineRepository;
     private final RemindAlarmRepository remindAlarmRepository;
-    private final ScheduleReminderRepository scheduleReminderRepository;
+    private final ScheduleJdbcRepository scheduleJdbcRepository;
 
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
-//    @Scheduled(cron = "0 0/24 * * * *", zone = "Asia/Seoul")
+        @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+//    @Scheduled(cron = "0 0/08 * * * *", zone = "Asia/Seoul")
     public void schedule() {
         log.info("[00:00] 반복일정 스케줄 테이블에 등록 시작");
-
-        List<User> users = userRepository.findByStatus(UserStatus.ACTIVE);
 
         LocalDate today = LocalDate.now();
         Weekday todayWeekday = Weekday.valueOf(today.getDayOfWeek().name());
 
-        // user : remind alarm 정보 미리 조회
+        // 1-1. 유저 조회
+        List<User> users = userRepository.findByStatus(UserStatus.ACTIVE);
+
+        // 1-2. user : remind alarm 정보 조회
         Map<Long, List<RemindAlarm>> alarmMap = remindAlarmRepository.findAll().stream()
                 .collect(Collectors.groupingBy(r -> r.getUser().getId()));
 
+        // 1-3. 오늘 등록할 루틴 조회
+        List<Routine> routines = routineRepository.findByWeekday(todayWeekday);
+
+        // 1-4. Schedule 테이블에서 삭제된 루틴 조회
+        List<Routine> deletedRoutines = scheduleRepository.findDeletedRoutinesByDate(today);
+        Set<Long> deletedRoutineIds = deletedRoutines.stream()
+                .map(Routine::getId)
+                .collect(Collectors.toSet());
+
+        // 2-1. 생성할 스케줄 모으기
+        List<Schedule> schedulesToInsert = new ArrayList<>();
+
         for (User user : users) {
-            /**
-             * routine 테이블의 반복일정 등록
-             * 조회방식: 오늘요일 = routine.weekday
-             * 이미 스케줄 테이블에 삭제된 루틴으로 저장된 경우 스킵
-             * 등록해야할 정보
-             * user, routine, title = routine.title, description = routine.description, type=ROUTINE,
-             * date(YYYY-MM-DD), startTime(오늘날짜 + routine.startTIme), endTIme(오늘날짜 + routine.endTime)
-             * & schedule reminder 정보
-             */
-            List<Schedule> schedulesToInsert = new ArrayList<>();
-            List<ScheduleReminder> remindersToInsert = new ArrayList<>();
+            // 유저의 루틴 필터링
+            List<Routine> userRoutines = routines.stream()
+                    .filter(r -> r.getUser().getId().equals(user.getId()))
+                    .toList();
 
-            // 루틴 테이블 조회
-            List<Routine> routines = routineRepository.findByUserAndWeekday(user, todayWeekday);
-
-            // Schedule 테이블에서 삭제된 루틴 조회
-            List<Routine> deletedRoutines = scheduleRepository.findDeletedRoutinesByUserAndDate(user,today);
-            Set<Long> deletedRoutineIds = deletedRoutines.stream()
-                    .map(Routine::getId)
-                    .collect(Collectors.toSet());
-
-            // 스케줄 저장
-            for (Routine routine : routines) {
+            // 스케줄 객체 생성
+            for (Routine routine : userRoutines) {
                 // 삭제된 반복일정이라면 스킵
                 if (deletedRoutineIds.contains(routine.getId())) continue;
 
@@ -88,20 +85,39 @@ public class ScheduleGeneratorScheduler {
                         .build();
                 schedulesToInsert.add(routineSchedule);
             }
-            List<Schedule> savedSchedules = scheduleRepository.saveAll(schedulesToInsert);
-            List<RemindAlarm> userAlarms = alarmMap.getOrDefault(user.getId(), Collections.emptyList()); // 유저의 리마인드 알림 정보
+        }
 
-            // 스케줄 리마인드 저장
-            for (Schedule schedule : savedSchedules) {
-                for (RemindAlarm alarm : userAlarms) {
-                    remindersToInsert.add(ScheduleReminder.builder()
-                            .schedule(schedule)
-                            .reminderTime(alarm.getMinutesBefore())
-                            .alarmStatus(AlarmStatus.INACTIVE)
-                            .build());
-                }
+        // 2-2. 스케줄 데이터 삽입
+        if(!schedulesToInsert.isEmpty()){
+            scheduleJdbcRepository.saveSchedule(schedulesToInsert);
+        }
+
+        // 3. 생성된 스케줄 데이터 재조회
+        Set<Long> userIds = users.stream()
+                .map(User::getId)
+                .collect(Collectors.toSet());
+
+        List<Schedule> savedRoutines =
+                scheduleRepository.findRoutines(today, ScheduleType.ROUTINE, userIds);
+
+        // 4-1. 스케줄 리마인드 데이터 모으기
+        List<ScheduleReminder> remindersToInsert = new ArrayList<>();
+
+        for(Schedule routine : savedRoutines){
+            List<RemindAlarm> userAlarms = alarmMap.getOrDefault(routine.getUser().getId(), Collections.emptyList());
+
+            for(RemindAlarm alarm : userAlarms){
+                remindersToInsert.add(ScheduleReminder.builder()
+                        .schedule(routine)
+                        .reminderTime(alarm.getMinutesBefore())
+                        .alarmStatus(AlarmStatus.INACTIVE)
+                        .build());
             }
-            scheduleReminderRepository.saveAll(remindersToInsert);
+        }
+
+        // 4-2. 스케줄 리마인드 데이터 삽입
+        if(!remindersToInsert.isEmpty()){
+            scheduleJdbcRepository.saveScheduleReminder(remindersToInsert);
         }
         log.info("[00:00] 총 {}명의 유저에 대해 스케줄 생성 완료", users.size());
     }

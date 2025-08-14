@@ -128,8 +128,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     @Query("""
     SELECT s.routine FROM Schedule s
-    WHERE s.user = :user AND s.date = :date AND s.isDeleted = true AND s.routine IS NOT NULL""")
-    List<Routine> findDeletedRoutinesByUserAndDate(@Param("user") User user, @Param("date") LocalDate date);
+    WHERE s.date = :date AND s.isDeleted = true AND s.routine IS NOT NULL""")
+    List<Routine> findDeletedRoutinesByDate( @Param("date") LocalDate date);
 
     /**
      * 사용자 일정 중 다음 조건을 모두 만족하는 일정 조회:
@@ -308,6 +308,21 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("now") LocalDateTime now,
             @Param("type") ScheduleType type,
             @Param("status") ScheduleStatus status
+    );
+
+    @Query("""
+        select s
+        from Schedule s
+        where s.date = :date
+          and s.type = :type
+          and s.routine is not null
+          and s.user.id in :userIds
+          and s.isDeleted = false
+    """)
+    List<Schedule> findRoutines(
+            @Param("date") LocalDate date,
+            @Param("type") ScheduleType type,
+            @Param("userIds") Collection<Long> userIds
     );
 
 }
