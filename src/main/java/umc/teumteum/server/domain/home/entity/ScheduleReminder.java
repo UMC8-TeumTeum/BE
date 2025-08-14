@@ -27,6 +27,7 @@ public class ScheduleReminder extends BaseEntity {
     @Column(name = "reminder_time", nullable = false)
     private Integer reminderTime;
 
+    @Builder.Default
     @Column(name = "alarm_status", nullable = false)
     @Enumerated(EnumType.STRING)
     private AlarmStatus alarmStatus = AlarmStatus.INACTIVE;

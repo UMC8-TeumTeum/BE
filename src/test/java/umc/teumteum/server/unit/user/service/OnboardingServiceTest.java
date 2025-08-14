@@ -8,6 +8,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import umc.teumteum.server.domain.home.repository.ScheduleJdbcRepository;
+import umc.teumteum.server.domain.home.repository.ScheduleReminderJdbcRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.entity.User;
@@ -16,6 +18,8 @@ import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.domain.user.exception.OnboardingException;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
+import umc.teumteum.server.domain.user.repository.RemindAlarmJdbcRepository;
+import umc.teumteum.server.domain.user.repository.RoutineJdbcRepository;
 import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.service.OnboardingServiceImpl;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
@@ -39,7 +43,16 @@ class OnboardingServiceTest {
     private RoutineRepository routineRepository;
 
     @Mock
-    private ScheduleRepository scheduleRepository;
+    private RoutineJdbcRepository routineJdbcRepository;
+
+    @Mock
+    private ScheduleJdbcRepository scheduleJdbcRepository;
+
+    @Mock
+    private RemindAlarmJdbcRepository remindAlarmJdbcRepository;
+
+    @Mock
+    private ScheduleReminderJdbcRepository scheduleReminderJdbcRepository;
 
     @Spy
     private TimeUtil timeUtil = new TimeUtil();

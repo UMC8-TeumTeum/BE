@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
+import umc.teumteum.server.domain.home.repository.ScheduleJdbcRepository;
+import umc.teumteum.server.domain.home.repository.ScheduleReminderJdbcRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.converter.OnboardingConverter;
@@ -18,10 +20,7 @@ import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.domain.user.exception.OnboardingException;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
-import umc.teumteum.server.domain.user.repository.AgreementRepository;
-import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
-import umc.teumteum.server.domain.user.repository.RoutineRepository;
-import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.domain.user.repository.*;
 import umc.teumteum.server.global.dto.TimeRange;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
@@ -39,9 +38,13 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final UserRepository userRepository;
     private final AgreementRepository agreementRepository;
     private final RoutineRepository routineRepository;
+    private final RoutineJdbcRepository routineJdbcRepository;
     private final ScheduleRepository scheduleRepository;
+    private final ScheduleJdbcRepository scheduleJdbcRepository;
     private final ScheduleReminderRepository scheduleReminderRepository;
+    private final ScheduleReminderJdbcRepository scheduleReminderJdbcRepository;
     private final RemindAlarmRepository remindAlarmRepository;
+    private final RemindAlarmJdbcRepository remindAlarmJdbcRepository;
 
     private final TimeUtil timeUtil;
     private final S3Util s3Util;
@@ -195,11 +198,15 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         // 6. 반복 일정 저장
         List<Routine> newRoutines = OnboardingConverter.toRoutineList(request.getRoutine(), user);
-        routineRepository.saveAll(newRoutines);
+        routineJdbcRepository.batchInsertRoutines(newRoutines);
 
-        // 7. 오늘 요일의 일정은 스케줄에 추가
-        List<Schedule> routineSchedules = OnboardingConverter.toScheduleList(newRoutines, user, LocalDate.now());
-        scheduleRepository.saveAll(routineSchedules);
+        // 7. 오늘 요일에 해당하는 저장된 Routine만 조회 (기본키값 필요)
+        Weekday todayWeekday = Weekday.from(LocalDate.now().getDayOfWeek());
+        List<Routine> todayRoutines = routineRepository.findByUserAndWeekday(user, todayWeekday);
+
+        // 8. 오늘에 해당하는 반복일정은 스케줄에 추가
+        List<Schedule> routineSchedules = OnboardingConverter.toScheduleList(todayRoutines, user, LocalDate.now());
+        scheduleJdbcRepository.batchInsertSchedules(routineSchedules);
     }
 
 
@@ -222,7 +229,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
             // 4. RemindAlarm 저장
             List<RemindAlarm> remindAlarms = OnboardingConverter.toRemindAlarmList(request.getRemindAlarms(), user);
-            remindAlarmRepository.saveAll(remindAlarms);
+            remindAlarmJdbcRepository.batchInsertRemindAlarms(remindAlarms);
 
             // 5. 저장된 Schedule이 있으면 (반복일정 등록은 선택 입력)
             List<Schedule> existingSchedules = scheduleRepository.findByUser(user);
@@ -231,7 +238,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 // 6. 각 Schedule마다 ScheduleReminder 저장
                 List<ScheduleReminder> scheduleReminders = OnboardingConverter.toScheduleReminderList(
                         request.getRemindAlarms(), existingSchedules);
-                scheduleReminderRepository.saveAll(scheduleReminders);
+                scheduleReminderJdbcRepository.batchInsertScheduleReminders(scheduleReminders);
             }
         }
 

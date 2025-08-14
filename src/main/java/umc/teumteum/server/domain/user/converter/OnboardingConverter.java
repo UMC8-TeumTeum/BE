@@ -9,7 +9,6 @@ import umc.teumteum.server.domain.user.entity.Agreement;
 import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
-import umc.teumteum.server.domain.user.entity.enums.Weekday;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -66,10 +65,7 @@ public class OnboardingConverter {
 
     // 온보딩 - 반복일정 -> Schedule
     public static List<Schedule> toScheduleList(List<Routine> routines, User user, LocalDate today) {
-        Weekday todayWeekday = Weekday.from(today.getDayOfWeek());
-
         return routines.stream()
-                .filter(routine -> routine.getWeekday() == todayWeekday)
                 .map(routine -> Schedule.builder()
                         .title(routine.getTitle())
                         .description(routine.getDescription())
@@ -81,7 +77,8 @@ public class OnboardingConverter {
                         .routine(routine)
                         .build()
                 )
-                .toList();
+                .toList()
+                ;
     }
 
 
