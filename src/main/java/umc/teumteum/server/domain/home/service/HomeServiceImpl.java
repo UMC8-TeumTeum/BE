@@ -371,6 +371,9 @@ public class HomeServiceImpl implements HomeService {
         // 3. sleepAndTodo startTime 기준 정렬
         sleepAndTodo.sort(Comparator.comparing(TodayScheduleResponseDto::getStartTime));
 
+        // 3-1. 겹치는 투두 병합
+        sleepAndTodo = mergeSameTime(sleepAndTodo);
+
         // 4. EMPTY 채우기
         List<TodayScheduleResponseDto> result = new ArrayList<>(); // 응답 배열
         LocalTime pointer = LocalTime.MIDNIGHT;
@@ -395,6 +398,35 @@ public class HomeServiceImpl implements HomeService {
             result.add(new TodayScheduleResponseDto(pointer, LocalTime.MAX, "EMPTY"));
         }
 
+        return result;
+    }
+
+    private List<TodayScheduleResponseDto> mergeSameTime(List<TodayScheduleResponseDto> list) {
+        // 투두 겹침 처리 로직
+        if(list.isEmpty()) return list;
+
+        List<TodayScheduleResponseDto> result = new ArrayList<>();
+        TodayScheduleResponseDto last = list.get(0); // 첫번째 투두
+        result.add(last);
+
+        for(int i = 1; i < list.size(); i++){
+            TodayScheduleResponseDto current = list.get(i);
+
+            if(!current.getStartTime().isAfter(last.getEndTime())){
+                // current 투두의 시작시간이 last 투두의 종료시간과 같거나 이른 경우
+                TodayScheduleResponseDto merged = TodayScheduleResponseDto.builder()
+                        .startTime(last.getStartTime()) // 이전 시작
+                        .endTime(current.getEndTime()) // 현재 종료
+                        .type(last.getType())
+                        .build();
+
+                result.set(result.size() - 1, merged); // last를 merge로 바꿈
+                last = merged; // last 업데이트
+            } else{
+                result.add(current); // current 넣기
+                last = current; // last 업데이트
+            }
+        }
         return result;
     }
 
