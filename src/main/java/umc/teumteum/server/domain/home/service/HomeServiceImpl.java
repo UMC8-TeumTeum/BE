@@ -352,12 +352,14 @@ public class HomeServiceImpl implements HomeService {
 
         for (Schedule schedule : schedules) {
             // 시작날짜가 어제인 경우
+            // 전날 시작되었다면 midnight부터 시작되도록 보정
             LocalTime start = schedule.getStartTime().isBefore(today)?
                     LocalTime.MIDNIGHT : schedule.getStartTime().toLocalTime();
 
             // 종료날짜가 내일인 경우
-            LocalTime end = schedule.getEndTime().isAfter(tomorrow)?
-                    LocalTime.MAX : schedule.getEndTime().toLocalTime();
+            // 종료시간이 내일 0시 이전이면 그대로 / 내일 0시 이후면 LocalTime MAX로
+            LocalTime end = schedule.getEndTime().isBefore(tomorrow)
+                    ? schedule.getEndTime().toLocalTime() : LocalTime.MAX;
 
             sleepAndTodo.add(TodayScheduleResponseDto.builder()
                     .startTime(start)
@@ -376,7 +378,7 @@ public class HomeServiceImpl implements HomeService {
         for (TodayScheduleResponseDto dto : sleepAndTodo) {
 
             if (pointer.isBefore(dto.getStartTime())) {
-                // 빈틈이 존재하면 EMPTY 추가
+                // 빈틈이 존재하면(포인터가 시작시간보다 앞설 경우) EMPTY 추가
                 result.add(new TodayScheduleResponseDto(pointer, dto.getStartTime(), "EMPTY"));
             }
 
