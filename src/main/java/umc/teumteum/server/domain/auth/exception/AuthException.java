@@ -3,9 +3,9 @@ package umc.teumteum.server.domain.auth.exception;
 import umc.teumteum.server.global.apiPayload.code.BaseErrorCode;
 import umc.teumteum.server.global.exception.GeneralException;
 
-public class AuthHandler extends GeneralException {
+public class AuthException extends GeneralException {
 
-  public AuthHandler(BaseErrorCode code) {
+  public AuthException(BaseErrorCode code) {
     super(code);
   }
 }

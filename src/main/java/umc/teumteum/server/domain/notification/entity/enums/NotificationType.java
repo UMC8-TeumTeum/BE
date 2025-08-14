@@ -17,6 +17,8 @@ public enum NotificationType {
   TEUM_SUGGESTED("친구와의 요청에 새로운 소식이 있어요", "친구가 새로운 시간을 제안했어요!", RelatedEntityType.TEUM_RESPONSE),// 친구가 시간을 새롭게 제안
   TEUM_CANCELED("친구와의 요청에 새로운 소식이 있어요", "친구와의 약속이 취소됐어요!", RelatedEntityType.SCHEDULE),// 친구가 약속된 틈 취소
 
+  TEUM_REQUEST_REREQUEST("새로운 시간 제안이 도착했어요", "상대가 틈을 다시 제안했어요.", RelatedEntityType.TEUM_REQUEST),
+
   // 팔로워
   FOLLOW("새로운 팔로워가 있어요", "새로운 팔로워가 생겼어요!", RelatedEntityType.FRIEND);;
 

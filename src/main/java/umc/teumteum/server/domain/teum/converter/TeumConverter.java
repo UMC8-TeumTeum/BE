@@ -4,20 +4,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
+import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.teum.dto.common.ParticipantDto;
 import umc.teumteum.server.domain.teum.dto.common.TimeSlot;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
-import umc.teumteum.server.domain.teum.dto.teum.*;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.exception.GeneralException;
-import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
 import java.time.LocalDate;
@@ -36,9 +32,8 @@ import java.util.stream.Collectors;
 public class TeumConverter {
 
     private final TimeUtil timeUtil;
-    private final S3Util s3Util;
 
-    public TeumRequest toTeumRequest(TeumRequestDto dto, User sender) {
+    public TeumRequest toTeumRequest(TeumRequestDto.TeumRequest dto, User sender) {
         return TeumRequest.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
@@ -71,11 +66,11 @@ public class TeumConverter {
                 .toList();
     }
 
-    public TeumReceivedResponseDto toReceivedResponseDto(TeumResponse response, String senderProfileImageUrl) {
+    public TeumResponseDto.TeumReceived toReceivedResponseDto(TeumResponse response, String senderProfileImageUrl) {
         TeumRequest request = response.getTeumRequest();
         User sender = request.getUser();
 
-        return TeumReceivedResponseDto.builder()
+        return TeumResponseDto.TeumReceived.builder()
                 .responseId(response.getId())
                 .requestId(request.getId())
                 .title(request.getTitle())
@@ -97,7 +92,7 @@ public class TeumConverter {
     }
 
 
-    public TeumRequest toResendTeumRequest(TeumRequest parent, TeumResendRequestDto dto, User resender) {
+    public TeumRequest toResendTeumRequest(TeumRequest parent, TeumRequestDto.TeumResend dto, User resender) {
         return TeumRequest.builder()
                 .title(parent.getTitle())
                 .description(parent.getDescription())
@@ -144,8 +139,8 @@ public class TeumConverter {
                 .build();
     }
 
-    public TeumStatusUpdateResponseDto toStatusUpdateResponseDto(ResponseStatus status, boolean isAccepted, Long teumId) {
-        return TeumStatusUpdateResponseDto.builder()
+    public TeumResponseDto.TeumStatusUpdate toStatusUpdateResponseDto(ResponseStatus status, boolean isAccepted, Long teumId) {
+        return TeumResponseDto.TeumStatusUpdate.builder()
                 .status(status)
                 .teumCreated(isAccepted)
                 .teumId(teumId)
@@ -249,12 +244,12 @@ public class TeumConverter {
                 .toList();
     }
 
-    public ScheduledTeumDetailResponseDto toScheduledTeumDetailDto(
+    public TeumResponseDto.ScheduledTeumDetail toScheduledTeumDetailDto(
             Schedule baseSchedule,
             List<Schedule> relatedSchedules,
             Map<Long, String> profileUrlByUserId
     ) {
-        return ScheduledTeumDetailResponseDto.builder()
+        return TeumResponseDto.ScheduledTeumDetail.builder()
                 .teumId(baseSchedule.getTeumRequest().getId())
                 .title(baseSchedule.getTitle())
                 .date(baseSchedule.getDate().toString())
@@ -270,8 +265,8 @@ public class TeumConverter {
                 .build();
     }
 
-    public ScheduledTeumResponseDto toScheduledTeumResponseDto(Schedule schedule) {
-        return ScheduledTeumResponseDto.builder()
+    public TeumResponseDto.ScheduledTeum toScheduledTeumResponseDto(Schedule schedule) {
+        return TeumResponseDto.ScheduledTeum.builder()
                 .teumId(schedule.getId())
                 .title(schedule.getTitle())
                 .date(schedule.getDate().toString())
@@ -282,12 +277,12 @@ public class TeumConverter {
                 .build();
     }
 
-    public static SharedTeumTimeResponseDto toSharedTeumTimeDto(long totalMinutes) {
+    public static TeumResponseDto.SharedTeumTime toSharedTeumTimeDto(long totalMinutes) {
         long days = totalMinutes / (24 * 60);
         long hours = (totalMinutes % (24 * 60)) / 60;
         long minutes = totalMinutes % 60;
 
-        return SharedTeumTimeResponseDto.builder()
+        return TeumResponseDto.SharedTeumTime.builder()
                 .days(days)
                 .hours(hours)
                 .minutes(minutes)
@@ -296,7 +291,7 @@ public class TeumConverter {
     }
 
 
-    public TeumRequestResponseDto toTeumRequestResponseDto(
+    public TeumResponseDto.TeumRequestDetail toTeumRequestResponseDto(
             TeumRequest request,
             boolean isCancelled,
             boolean isResend,
@@ -331,7 +326,7 @@ public class TeumConverter {
             }
         }
 
-        return TeumRequestResponseDto.builder()
+        return TeumResponseDto.TeumRequestDetail.builder()
                 .requestId(request.getId())
                 .title(request.getTitle())
                 .description(request.getDescription())
@@ -348,11 +343,11 @@ public class TeumConverter {
     }
 
 
-    public SharedTeumListResponseDto toSharedTeumListDto(Schedule schedule, Long loginUserId, String senderProfileImageUrl) {
+    public TeumResponseDto.SharedTeumList toSharedTeumListDto(Schedule schedule, Long loginUserId, String senderProfileImageUrl) {
         TeumRequest request = schedule.getTeumRequest();
         User sender = request.getUser();
 
-        return SharedTeumListResponseDto.builder()
+        return TeumResponseDto.SharedTeumList.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .date(request.getDate().toString())

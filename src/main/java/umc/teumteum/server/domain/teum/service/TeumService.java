@@ -1,15 +1,8 @@
 package umc.teumteum.server.domain.teum.service;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeRequestDto;
-import umc.teumteum.server.domain.teum.dto.availability.AvailableTimeResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumDetailResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumCancelResponseDto;
-import umc.teumteum.server.domain.teum.dto.schedule.ScheduledTeumResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumListResponseDto;
-import umc.teumteum.server.domain.teum.dto.shared.SharedTeumTimeResponseDto;
-import umc.teumteum.server.domain.teum.dto.teum.*;
+import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
+import umc.teumteum.server.domain.teum.dto.TeumResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 
@@ -17,31 +10,31 @@ import java.util.List;
 
 public interface TeumService {
 
-    Long createRequest(TeumRequestDto requestDto, User user);
+    Long createRequest(TeumRequestDto.TeumRequest requestDto, User user);
 
-    Long createResendRequest(Long parentRequestId, TeumResendRequestDto resendRequestDto, User user);
+    Long createResendRequest(Long parentRequestId, TeumRequestDto.TeumResend resendRequestDto, User user);
 
-    Page<TeumReceivedResponseDto> getReceivedRequests(Long userId, int page, int size);
+    Page<TeumResponseDto.TeumReceived> getReceivedRequests(Long userId, int page, int size);
 
     Long updateReadStatus(Long responseId, Long userId);
 
-    TeumStatusUpdateResponseDto updateResponseStatus(Long responseId, Long userId, TeumStatusUpdateRequestDto requestDto);
+    TeumResponseDto.TeumStatusUpdate updateResponseStatus(Long responseId, Long userId, TeumRequestDto.TeumStatusUpdate requestDto);
 
     List<String> getTeumRequestsOfMonth(Long userId, String month);
 
     List<String> getScheduledTeumsOfMonth(Long userId, String month);
 
-    List<ScheduledTeumResponseDto> getScheduledTeums(Long userId, String date);
+    List<TeumResponseDto.ScheduledTeum> getScheduledTeums(Long userId, String date);
 
-    ScheduledTeumDetailResponseDto getScheduledTeumDetail(Long scheduleId, Long userId);
+    TeumResponseDto.ScheduledTeumDetail getScheduledTeumDetail(Long scheduleId, Long userId);
 
-    ScheduledTeumCancelResponseDto cancelScheduledTeum(Long scheduleId, Long userId);
+    TeumResponseDto.ScheduledTeumCancel cancelScheduledTeum(Long scheduleId, Long userId);
 
-    AvailableTimeResponseDto getAvailableTime(User user, AvailableTimeRequestDto requestDto);
+    TeumResponseDto.TeumAvailableTime getAvailableTime(User user, TeumRequestDto.TeumAvailableTime requestDto);
 
-    SharedTeumTimeResponseDto getSharedTeumStats(Long userId, Long friendId);
+    TeumResponseDto.SharedTeumTime getSharedTeumStats(Long userId, Long friendId);
 
-    PagingResponseDto<SharedTeumListResponseDto> getSharedTeums(Long loginUserId, Long targetUserId, int page, int size);
+    PagingResponseDto<TeumResponseDto.SharedTeumList> getSharedTeums(Long loginUserId, Long targetUserId, int page, int size);
 
-    List<TeumRequestResponseDto> getTeumRequestsByDate(Long userId, String date);
+    List<TeumResponseDto.TeumRequestDetail> getTeumRequestsByDate(Long userId, String date);
 }

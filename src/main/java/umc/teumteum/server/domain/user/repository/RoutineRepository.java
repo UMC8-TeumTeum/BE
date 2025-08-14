@@ -19,4 +19,7 @@ public interface RoutineRepository extends JpaRepository<Routine, Long> {
 
     @Query("SELECT r FROM Routine r WHERE r.user = :user")
     List<Routine> findByUser(@Param("user") User user);
+
+    @Query("select r from Routine r where r.weekday = :weekday")
+    List<Routine> findByWeekday(@Param("weekday") Weekday weekday);
 }

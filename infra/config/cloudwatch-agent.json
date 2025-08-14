@@ -1,0 +1,31 @@
+{
+  "agent": {
+    "metrics_collection_interval": 60,
+    "run_as_user": "cwagent",
+    "region": "ap-northeast-2"
+  },
+  "metrics": {
+    "aggregation_dimensions": [["InstanceId"]],
+    "append_dimensions": { "InstanceId": "${instance_id}" },
+    "metrics_collected": {
+      "cpu": { "measurement": ["usage_system","usage_user","usage_idle"], "totalcpu": true },
+      "mem": { "measurement": ["mem_used_percent","mem_available"] },
+      "disk": {
+        "measurement": ["used_percent","inodes_free"],
+        "resources": ["/"],
+        "ignore_file_system_types": ["sysfs","devtmpfs","overlay"]
+      },
+      "net": { "measurement": ["bytes_sent","bytes_recv","packets_sent","packets_recv"], "resources": ["*"] }
+    }
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          { "file_path": "/var/log/syslog", "log_group_name": "/teumteum/syslog", "log_stream_name": "{instance_id}", "retention_in_days": 30 },
+          { "file_path": "/var/log/auth.log", "log_group_name": "/teumteum/auth", "log_stream_name": "{instance_id}", "retention_in_days": 30 }
+        ]
+      }
+    }
+  }
+}
