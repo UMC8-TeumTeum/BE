@@ -92,6 +92,11 @@ public class ConflictValidator {
             LocalDateTime teumStart = LocalDateTime.of(request.getDate(), request.getStartTime());
             LocalDateTime teumEnd = LocalDateTime.of(request.getDate(), request.getEndTime());
 
+            // 종료시간이 00:00이면 익일 00:00으로 보정
+            if (request.getEndTime().equals(LocalTime.MIDNIGHT)) {
+                teumEnd = teumEnd.plusDays(1);
+            }
+
             if (isOverlapping(requestStart, requestEnd, teumStart, teumEnd)) {
                 throw new GeneralException(ConflictErrorStatus.TEUM_REQUEST_CONFLICT);
             }
