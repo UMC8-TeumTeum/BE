@@ -88,6 +88,7 @@ public class TeumConverter {
                         .start(request.getStartTime().toString())
                         .end(timeUtil.parseAndFormatEndTime(request.getEndTime()))
                         .build())
+                .isResend(request.getParentRequest() != null)
                 .build();
     }
 
