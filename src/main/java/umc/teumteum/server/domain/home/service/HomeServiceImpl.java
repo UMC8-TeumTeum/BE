@@ -358,12 +358,14 @@ public class HomeServiceImpl implements HomeService {
             if(schedule.getStatus() == ScheduleStatus.CANCELLED) continue;
 
             // 시작날짜가 어제인 경우
+            // 전날 시작되었다면 midnight부터 시작되도록 보정
             LocalTime start = schedule.getStartTime().isBefore(today)?
                     LocalTime.MIDNIGHT : schedule.getStartTime().toLocalTime();
 
             // 종료날짜가 내일인 경우
-            LocalTime end = schedule.getEndTime().isAfter(tomorrow)?
-                    LocalTime.MAX : schedule.getEndTime().toLocalTime();
+            // 종료시간이 내일 0시 이전이면 그대로 / 내일 0시 이후면 LocalTime MAX로
+            LocalTime end = schedule.getEndTime().isBefore(tomorrow)
+                    ? schedule.getEndTime().toLocalTime() : LocalTime.MAX;
 
             sleepAndTodo.add(HomeResponseDto.TodayScheduleDto.builder()
                     .startTime(start)
@@ -374,6 +376,9 @@ public class HomeServiceImpl implements HomeService {
 
         // 3. sleepAndTodo startTime 기준 정렬
         sleepAndTodo.sort(Comparator.comparing(HomeResponseDto.TodayScheduleDto::getStartTime));
+
+        // 3-1. 겹치는 투두 병합
+        sleepAndTodo = mergeSameTime(sleepAndTodo);
 
         // 4. EMPTY 채우기
         List<HomeResponseDto.TodayScheduleDto> result = new ArrayList<>(); // 응답 배열
@@ -399,6 +404,35 @@ public class HomeServiceImpl implements HomeService {
             result.add(new HomeResponseDto.TodayScheduleDto(pointer, LocalTime.MAX, "EMPTY"));
         }
 
+        return result;
+    }
+
+    private List<HomeResponseDto.TodayScheduleDto> mergeSameTime(List<HomeResponseDto.TodayScheduleDto> list) {
+        // 투두 겹침 처리 로직
+        if(list.isEmpty()) return list;
+
+        List<HomeResponseDto.TodayScheduleDto> result = new ArrayList<>();
+        HomeResponseDto.TodayScheduleDto last = list.get(0); // 첫번째 투두
+        result.add(last);
+
+        for(int i = 1; i < list.size(); i++){
+            HomeResponseDto.TodayScheduleDto current = list.get(i);
+
+            if(!current.getStartTime().isAfter(last.getEndTime())){
+                // current 투두의 시작시간이 last 투두의 종료시간과 같거나 이른 경우
+                HomeResponseDto.TodayScheduleDto merged = HomeResponseDto.TodayScheduleDto.builder()
+                        .startTime(last.getStartTime()) // 이전 시작
+                        .endTime(current.getEndTime()) // 현재 종료
+                        .type(last.getType())
+                        .build();
+
+                result.set(result.size() - 1, merged); // last를 merge로 바꿈
+                last = merged; // last 업데이트
+            } else{
+                result.add(current); // current 넣기
+                last = current; // last 업데이트
+            }
+        }
         return result;
     }
 
