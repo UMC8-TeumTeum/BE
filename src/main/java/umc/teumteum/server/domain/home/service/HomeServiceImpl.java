@@ -351,6 +351,12 @@ public class HomeServiceImpl implements HomeService {
         List<Schedule> schedules = scheduleRepository.findSchedulesOnDate(user, today, tomorrow);
 
         for (Schedule schedule : schedules) {
+            // 삭제된 루틴 ->  표시 X
+            if(schedule.getRoutine() != null && schedule.getIsDeleted()) continue;
+
+            // 취소된 틈 -> 표시 X
+            if(schedule.getStatus() == ScheduleStatus.CANCELLED) continue;
+
             // 시작날짜가 어제인 경우
             LocalTime start = schedule.getStartTime().isBefore(today)?
                     LocalTime.MIDNIGHT : schedule.getStartTime().toLocalTime();
@@ -502,7 +508,11 @@ public class HomeServiceImpl implements HomeService {
             LocalDate date = schedule.getDate();
             // 3-1. 삭제된 루틴 ->  표시 X
             if(schedule.getRoutine() != null && schedule.getIsDeleted()) continue;
-            // 3-2. 일정 등록
+
+            // 3-2. 취소된 틈 -> 표시 X
+            if(schedule.getStatus() == ScheduleStatus.CANCELLED) continue;
+
+            // 3-3. 일정 등록
             calendarMap.put(date, true);
         }
 
@@ -558,9 +568,10 @@ public class HomeServiceImpl implements HomeService {
         // 1. 해당 날짜의 모든 스케줄 조회
         List<Schedule> allSchedules = scheduleRepository.findByUserAndDate(user,date);
 
-        // 2. 삭제되지 않은 스케줄 필터링
+        // 2. 삭제되지 않은 스케줄 필터링 & 삭제된 틈 필터링
         List<Schedule> validSchedules = allSchedules.stream()
                 .filter(s -> !s.getIsDeleted())
+                .filter(s -> !s.getStatus().equals(ScheduleStatus.CANCELLED))
                 .toList();
 
         // 3. 알림 상태 판단을 위해,, ScheduleReminder 조회
