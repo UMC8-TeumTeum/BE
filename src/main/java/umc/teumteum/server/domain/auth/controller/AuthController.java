@@ -12,6 +12,8 @@ import umc.teumteum.server.domain.auth.dto.AuthRequestDto;
 import umc.teumteum.server.domain.auth.dto.AuthResponseDto;
 import umc.teumteum.server.domain.auth.exception.status.AuthSuccessStatus;
 import umc.teumteum.server.domain.auth.service.AuthService;
+import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
 @Tag(name = "Auth", description = "인증 관련 API")
@@ -61,9 +63,10 @@ public class AuthController {
     )
     @PostMapping(value = "/logout", produces = "application/json")
     public ApiResponse<Object> logout(
-            HttpServletRequest httpServletRequest
+            HttpServletRequest httpServletRequest,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-        authService.logout(httpServletRequest);
+        authService.logout(httpServletRequest, user);
         return ApiResponse.of(AuthSuccessStatus.LOGOUT_SUCCESS, null);
     }
 }

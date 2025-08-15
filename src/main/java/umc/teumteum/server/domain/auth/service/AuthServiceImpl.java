@@ -199,10 +199,10 @@ public class AuthServiceImpl implements AuthService {
 
     // 인증 - 로그아웃
     @Override
-    public void logout(HttpServletRequest httpServletRequest) {
+    public void logout(HttpServletRequest httpServletRequest, User user) {
         // 1. Authorization 헤더의 AT로 userId & sessionId 추출
+        String userId = user.getId().toString();
         String accessToken = jwtProvider.resolveToken(httpServletRequest);
-        String userId = jwtProvider.getUserIdFromToken(accessToken);
         String sessionId = jwtProvider.getSessionIdFromToken(accessToken);
 
         // 2. RT 화이트리스트 삭제
