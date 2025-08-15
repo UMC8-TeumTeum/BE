@@ -2,14 +2,14 @@ package umc.teumteum.server.domain.user.repository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import umc.teumteum.server.domain.user.entity.Routine;
 
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
 
-@Component
+@Repository
 @RequiredArgsConstructor
 public class RoutineJdbcRepository {
 

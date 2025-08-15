@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.auth.converter.AuthConverter;
@@ -167,7 +166,7 @@ public class AuthServiceImpl implements AuthService {
             // 5. 요청받은 RT와 Redis에 저장된 RT 비교 (불일치 -> 재로그인 필요)
             if (!refreshToken.equals(storedRefreshToken)) {
                 log.warn("[토큰 탈취 의심] : 요청 RT != Redis RT - userId: {}, sessionId: {}", userId, sessionId);
-                
+
                 // 동일한 sessionID를 갖는 AT 블랙리스트 등록
                 String blacklistKey = getBlacklistKey(userId, sessionId);
                 Duration blacklistDuration = Duration.ofMillis(accessExpirationMs);

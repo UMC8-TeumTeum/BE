@@ -7,7 +7,6 @@ import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.user.entity.User;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
 public interface TeumRequestRepository extends JpaRepository<TeumRequest, Long> {

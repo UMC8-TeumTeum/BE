@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.resolver.CurrentUserArgumentResolver;
 

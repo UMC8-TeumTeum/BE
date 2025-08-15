@@ -2,9 +2,9 @@ package umc.teumteum.server.domain.home.converter;
 
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.dto.request.ActivityRequestDto.AiWishSaveRequest;
-import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto;
-import umc.teumteum.server.domain.home.dto.response.*;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
+import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto;
+import umc.teumteum.server.domain.home.dto.response.WishResponseDto;
 import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.Wish;

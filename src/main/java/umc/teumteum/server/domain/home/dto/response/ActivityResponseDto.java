@@ -1,13 +1,13 @@
 package umc.teumteum.server.domain.home.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
+
+import java.util.List;
 
 public class ActivityResponseDto {
 
