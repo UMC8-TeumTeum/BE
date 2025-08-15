@@ -180,6 +180,10 @@ public class TeumResponseDto {
 
         @Schema(description = "요청 시간 구간")
         private TimeSlot timeSlot;
+
+        @Schema(description = "재요청 여부", example = "false")
+        private boolean isResend;
+
     }
 
     @Getter

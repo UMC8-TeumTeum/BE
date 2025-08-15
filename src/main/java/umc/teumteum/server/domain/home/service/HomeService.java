@@ -9,40 +9,40 @@ import java.util.List;
 
 public interface HomeService {
     // Todo 등록
-    TodoIdResponseDto createTodo(TodoRequestDto dto, User user);
+    HomeResponseDto.TodoIdDto createTodo(HomeRequestDto.TodoRequestDto dto, User user);
 
     // Todo(Schedule) 조회
-    TodoInfoResponseDto getTodoInfo(Long scheduleId);
+    HomeResponseDto.TodoInfoDto getTodoInfo(Long scheduleId);
 
     // Todo(Schedule) 수정
-    TodoIdResponseDto updateTodoInfo(TodoRequestDto dto, Long scheduleId, User user);
+    HomeResponseDto.TodoIdDto updateTodoInfo(HomeRequestDto.TodoRequestDto dto, Long scheduleId, User user);
 
     // Todo(Schedule) 삭제
     void deleteTodo(Long scheduleId);
 
     // Wish 등록
-    void createWish(WishRequestDto dto, User user);
+    void createWish(WishRequestDto.CreateDto dto, User user);
 
     // Wish 조회
-    WishInfoResponseDto getWishInfo(Long wishId);
+    WishResponseDto.WishInfoDto getWishInfo(Long wishId);
 
     // Wish 삭제
-    void deleteWishByIds(WishDeleteRequestDto dto);
+    void deleteWishByIds(WishRequestDto.WishDeleteDto dto);
 
     // Wish 수정
-    void updateWishInfo(WishRequestDto dto, Long wishId, User user);
+    void updateWishInfo(WishRequestDto.CreateDto dto, Long wishId);
 
     // Wishlist 조회
-    WishlistResponseDto getWishlist(String duration, Integer page, User user);
+    WishResponseDto.WishlistDto getWishlist(String duration, Integer page, User user);
 
     // 오늘의 시간표 조회
-    List<TodayScheduleResponseDto> getTodaySchedule(LocalDate today, User user);
+    List<HomeResponseDto.TodayScheduleDto> getTodaySchedule(LocalDate today, User user);
 
     // Wish 투두 등록
-    void assignWish(Long wishId, WishAssignRequestDto dto, User user);
+    void assignWish(Long wishId, WishRequestDto.WishAssignDto dto, User user);
 
     // 카테고리 정보 조회
-    List<CategoryResponseDto> getCategory();
+    List<WishResponseDto.CategoryDto> getCategory();
 
     // 빈틈 시간 조회
     HomeResponseDto.TeumTimeDto getTeaumTime(User user);

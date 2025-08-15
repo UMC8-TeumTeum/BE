@@ -2,10 +2,9 @@ package umc.teumteum.server.domain.home.converter;
 
 import java.time.Duration;
 import org.springframework.stereotype.Component;
-import umc.teumteum.server.domain.home.dto.request.TodoRequestDto;
-import umc.teumteum.server.domain.home.dto.request.WishAssignRequestDto;
+import umc.teumteum.server.domain.home.dto.request.HomeRequestDto;
+import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
 import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
-import umc.teumteum.server.domain.home.dto.response.TodoInfoResponseDto;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
@@ -24,7 +23,7 @@ import java.util.*;
 public class ScheduleConverter {
 
     // TodoRequestDTO -> Schedule
-    public Schedule toSchedule(TodoRequestDto dto, User user) {
+    public Schedule toSchedule(HomeRequestDto.TodoRequestDto dto, User user) {
 
         return Schedule.builder()
                 .title(dto.getTitle())
@@ -40,7 +39,7 @@ public class ScheduleConverter {
     }
 
     //  DTO의 remindAlarm 리스트 -> ScheduleReminder
-    public List<ScheduleReminder> toScheduleReminders(Schedule schedule, List<TodoRequestDto.ReminderAlarmDto> remindAlarm) {
+    public List<ScheduleReminder> toScheduleReminders(Schedule schedule, List<HomeRequestDto.ReminderAlarmDto> remindAlarm) {
         return remindAlarm.stream()
                 .map(item -> ScheduleReminder.builder()
                         .schedule(schedule)
@@ -51,9 +50,9 @@ public class ScheduleConverter {
     }
 
     // Schedule -> TodoInfoResponseDTO
-    public TodoInfoResponseDto toTodoInfoResponse(Schedule schedule, List<ScheduleReminder> reminders, List<String> profileUrls) {
+    public HomeResponseDto.TodoInfoDto toTodoInfoResponse(Schedule schedule, List<ScheduleReminder> reminders, List<String> profileUrls) {
 
-        return TodoInfoResponseDto.builder()
+        return HomeResponseDto.TodoInfoDto.builder()
                 .type(schedule.getType())
                 .title(schedule.getTitle())
                 .startTime(schedule.getStartTime())
@@ -67,8 +66,8 @@ public class ScheduleConverter {
     }
 
     // Routine -> TodoInfoResponseDTO (미래의 반복일정 조회)
-    public TodoInfoResponseDto toVirtualRoutineInfo(Routine routine,LocalDate date, List<RemindAlarm> onboardingReminders, List<String> profileUrls) {
-        return TodoInfoResponseDto.builder()
+    public HomeResponseDto.TodoInfoDto toVirtualRoutineInfo(Routine routine,LocalDate date, List<RemindAlarm> onboardingReminders, List<String> profileUrls) {
+        return HomeResponseDto.TodoInfoDto.builder()
                 .type(ScheduleType.ROUTINE)
                 .title(routine.getTitle())
                 .description(routine.getDescription())
@@ -82,12 +81,12 @@ public class ScheduleConverter {
     }
 
     // 리마인드 알림 변환
-    private List<TodoInfoResponseDto.ReminderAlarmDto> toReminderAlarmDtos(List<ScheduleReminder> reminders) {
+    private List<HomeResponseDto.ReminderAlarmDto> toReminderAlarmDtos(List<ScheduleReminder> reminders) {
 
         return reminders.stream()
                 .sorted(Comparator.comparingInt(ScheduleReminder::getReminderTime))
                 .map(r -> {
-                    TodoInfoResponseDto.ReminderAlarmDto dto = new TodoInfoResponseDto.ReminderAlarmDto();
+                    HomeResponseDto.ReminderAlarmDto dto = new HomeResponseDto.ReminderAlarmDto();
                     dto.setAlarm(r.getReminderTime());
                     dto.setStatus(r.getAlarmStatus());
                     return dto;
@@ -114,7 +113,7 @@ public class ScheduleConverter {
     }
 
     // Wish -> Schedule entity
-    public Schedule toScheduleFromWish(Wish wish, WishAssignRequestDto dto) {
+    public Schedule toScheduleFromWish(Wish wish, WishRequestDto.WishAssignDto dto) {
         return Schedule.builder()
                 .user(wish.getUser())
                 .title(wish.getTitle())

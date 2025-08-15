@@ -3,14 +3,11 @@ package umc.teumteum.server.domain.home.converter;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.dto.request.ActivityRequestDto.AiWishSaveRequest;
 import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto;
-import umc.teumteum.server.domain.home.dto.response.CategoryResponseDto;
-import umc.teumteum.server.domain.home.dto.response.WishInfoResponseDto;
+import umc.teumteum.server.domain.home.dto.response.*;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
-import umc.teumteum.server.domain.home.dto.response.WishlistResponseDto;
 import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.Wish;
-import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.entity.mapping.WishCategory;
 import umc.teumteum.server.domain.user.entity.User;
@@ -20,8 +17,8 @@ import java.util.List;
 @Component
 public class WishConverter {
 
-    // WishRequestDTO -> Wish
-    public Wish toWish(WishRequestDto dto, User user) {
+    // CreateDto -> Wish
+    public Wish toWish(WishRequestDto.CreateDto dto, User user) {
         return Wish.builder()
                 .title(dto.getTitle())
                 .content(dto.getContent())
@@ -40,17 +37,17 @@ public class WishConverter {
                 .toList();
     }
 
-    // Wish -> WishInfoResponseDTO
-    public WishInfoResponseDto toWishInfoDTO(Wish wish) {
+    // Wish -> WishInfoDto
+    public WishResponseDto.WishInfoDto toWishInfoDTO(Wish wish) {
         // WishCategory에서 Category 정보를 추출
-        List<WishInfoResponseDto.CategoryDTO> categoryDTOS = wish.getWishCategories().stream()
-                .map(wc -> WishInfoResponseDto.CategoryDTO.builder()
+        List<WishResponseDto.WishCategoryDto> categoryDTOS = wish.getWishCategories().stream()
+                .map(wc -> WishResponseDto.WishCategoryDto.builder()
                         .id(wc.getCategory().getId())
                         .name(wc.getCategory().getName())
                         .build())
                 .toList();
 
-        return WishInfoResponseDto.builder()
+        return WishResponseDto.WishInfoDto.builder()
                 .title(wish.getTitle())
                 .content(wish.getContent())
                 .estimatedDuration(wish.getEstimatedDuration())
@@ -58,10 +55,10 @@ public class WishConverter {
                 .build();
     }
 
-    // wish 엔티티 목록 -> wishDTO 목록
-    public static List<WishlistResponseDto.WishDTO> toWishDTOList(List<Wish> wishes) {
+    // wish 엔티티 목록 -> WishDto 목록
+    public static List<WishResponseDto.WishDto> toWishDTOList(List<Wish> wishes) {
         return wishes.stream()
-                .map(wish -> WishlistResponseDto.WishDTO.builder()
+                .map(wish -> WishResponseDto.WishDto.builder()
                         .id(wish.getId())
                         .title(wish.getTitle())
                         .estimatedDuration(wish.getEstimatedDuration())
@@ -69,9 +66,9 @@ public class WishConverter {
                 .toList();
     }
 
-    // 위시 목록 & 페이지 정보 -> WishlistResponseDTO
-    public WishlistResponseDto toWishlistResponseDTO(List<Wish> wishes, int pageNumber, int pageSize, boolean hasNext, boolean isFirst, boolean isLast) {
-        return WishlistResponseDto.builder()
+    // 위시 목록 & 페이지 정보 -> WishlistDto
+    public WishResponseDto.WishlistDto toWishlistResponseDTO(List<Wish> wishes, int pageNumber, int pageSize, boolean hasNext, boolean isFirst, boolean isLast) {
+        return WishResponseDto.WishlistDto.builder()
                 .wishlist(toWishDTOList(wishes))
                 .pageNumber(pageNumber)
                 .pageSize(pageSize)
@@ -81,9 +78,9 @@ public class WishConverter {
                 .build();
     }
 
-    public List<CategoryResponseDto> toCategoryResponseDTO(List<Category> categories) {
+    public List<WishResponseDto.CategoryDto> toCategoryResponseDTO(List<Category> categories) {
         return categories.stream()
-                .map(category -> CategoryResponseDto.builder()
+                .map(category -> WishResponseDto.CategoryDto.builder()
                         .categoryId(category.getId())
                         .categoryName(category.getName())
                         .build())

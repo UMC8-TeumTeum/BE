@@ -62,7 +62,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public TodoIdResponseDto createTodo(TodoRequestDto dto, User user) {
+    public HomeResponseDto.TodoIdDto createTodo(HomeRequestDto.TodoRequestDto dto, User user) {
         // Todo 등록
 
         // 충돌 검사
@@ -79,11 +79,11 @@ public class HomeServiceImpl implements HomeService {
             scheduleReminderRepository.saveAll(reminders);
         }
 
-        return new TodoIdResponseDto(savedSchedule.getId());
+        return new HomeResponseDto.TodoIdDto(savedSchedule.getId());
     }
 
     @Override
-    public TodoInfoResponseDto getTodoInfo(Long scheduleId) {
+    public HomeResponseDto.TodoInfoDto getTodoInfo(Long scheduleId) {
         // Todo(Schedule) 조회
         // 가상의 루틴 ID일 경우
         if(scheduleId<0){
@@ -152,7 +152,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public TodoIdResponseDto updateTodoInfo(TodoRequestDto dto, Long scheduleId, User user) {
+    public HomeResponseDto.TodoIdDto updateTodoInfo(HomeRequestDto.TodoRequestDto dto, Long scheduleId, User user) {
         // Todo(Schedule) 수정
         if (scheduleId < 0) {
             // 1. 미래의 반복일정은 수정할 수 없음
@@ -183,7 +183,7 @@ public class HomeServiceImpl implements HomeService {
                     scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm());
             scheduleReminderRepository.saveAll(reminders);
         }
-        return new TodoIdResponseDto(schedule.getId());
+        return new HomeResponseDto.TodoIdDto(schedule.getId());
     }
 
     @Transactional
@@ -227,7 +227,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public void createWish(WishRequestDto dto, User user) {
+    public void createWish(WishRequestDto.CreateDto dto, User user) {
         // Wish 등록
 
         // 카테고리 ID 유효성 검사
@@ -244,7 +244,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public WishInfoResponseDto getWishInfo(Long wishId) {
+    public WishResponseDto.WishInfoDto getWishInfo(Long wishId) {
         // Wish 조회
         Wish wish = wishRepository.findById(wishId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
@@ -253,7 +253,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public void deleteWishByIds(WishDeleteRequestDto dto) {
+    public void deleteWishByIds(WishRequestDto.WishDeleteDto dto) {
         // Wish 삭제
         List<Long> ids = dto.getWishIds();
         List<Wish> wishes = wishRepository.findAllById(ids);
@@ -269,7 +269,7 @@ public class HomeServiceImpl implements HomeService {
 
     @Transactional
     @Override
-    public void updateWishInfo(WishRequestDto dto, Long wishId, User user) {
+    public void updateWishInfo(WishRequestDto.CreateDto dto, Long wishId) {
         // Wish 수정
         Wish wish = wishRepository.findById(wishId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
@@ -293,7 +293,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public WishlistResponseDto getWishlist(String duration, Integer page, User user) {
+    public WishResponseDto.WishlistDto getWishlist(String duration, Integer page, User user) {
         // Wishlist 조회
         System.out.println("user = " + user);
         // 페이징 조건:  page는 1부터, pageSize = 10, 정렬조건 = 최신순
@@ -324,9 +324,9 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public List<TodayScheduleResponseDto> getTodaySchedule(LocalDate date, User user) {
+    public List<HomeResponseDto.TodayScheduleDto> getTodaySchedule(LocalDate date, User user) {
         // 오늘의 시간표 조회
-        List<TodayScheduleResponseDto> sleepAndTodo = new ArrayList<>(); // 수면패턴과 투두를 등록한 배열
+        List<HomeResponseDto.TodayScheduleDto> sleepAndTodo = new ArrayList<>(); // 수면패턴과 투두를 등록한 배열
 
         // 1. 수면 패턴 등록
         LocalTime sleepTime = user.getSleepTime();
@@ -335,11 +335,11 @@ public class HomeServiceImpl implements HomeService {
         if(sleepTime != null && wakeTime != null){
             if(sleepTime.isAfter(wakeTime)){
                 // 자정 이전에 자는 경우
-                sleepAndTodo.add(new TodayScheduleResponseDto(LocalTime.MIDNIGHT,wakeTime,"SLEEP"));
-                sleepAndTodo.add(new TodayScheduleResponseDto(sleepTime,LocalTime.MAX,"SLEEP"));
+                sleepAndTodo.add(new HomeResponseDto.TodayScheduleDto(LocalTime.MIDNIGHT,wakeTime,"SLEEP"));
+                sleepAndTodo.add(new HomeResponseDto.TodayScheduleDto(sleepTime,LocalTime.MAX,"SLEEP"));
             } else{
                 // 자정 이후에 자는 경우
-                sleepAndTodo.add(new TodayScheduleResponseDto(sleepTime,wakeTime,"SLEEP"));
+                sleepAndTodo.add(new HomeResponseDto.TodayScheduleDto(sleepTime,wakeTime,"SLEEP"));
             }
         }
 
@@ -361,7 +361,7 @@ public class HomeServiceImpl implements HomeService {
             LocalTime end = schedule.getEndTime().isBefore(tomorrow)
                     ? schedule.getEndTime().toLocalTime() : LocalTime.MAX;
 
-            sleepAndTodo.add(TodayScheduleResponseDto.builder()
+            sleepAndTodo.add(HomeResponseDto.TodayScheduleDto.builder()
                     .startTime(start)
                     .endTime(end)
                     .type("TODO")
@@ -369,20 +369,20 @@ public class HomeServiceImpl implements HomeService {
         }
 
         // 3. sleepAndTodo startTime 기준 정렬
-        sleepAndTodo.sort(Comparator.comparing(TodayScheduleResponseDto::getStartTime));
+        sleepAndTodo.sort(Comparator.comparing(HomeResponseDto.TodayScheduleDto::getStartTime));
 
         // 3-1. 겹치는 투두 병합
         sleepAndTodo = mergeSameTime(sleepAndTodo);
 
         // 4. EMPTY 채우기
-        List<TodayScheduleResponseDto> result = new ArrayList<>(); // 응답 배열
+        List<HomeResponseDto.TodayScheduleDto> result = new ArrayList<>(); // 응답 배열
         LocalTime pointer = LocalTime.MIDNIGHT;
 
-        for (TodayScheduleResponseDto dto : sleepAndTodo) {
+        for (HomeResponseDto.TodayScheduleDto dto : sleepAndTodo) {
 
             if (pointer.isBefore(dto.getStartTime())) {
-                // 빈틈이 존재하면(포인터가 시작시간보다 앞설 경우) EMPTY 추가
-                result.add(new TodayScheduleResponseDto(pointer, dto.getStartTime(), "EMPTY"));
+                // 빈틈이 존재하면 EMPTY 추가
+                result.add(new HomeResponseDto.TodayScheduleDto(pointer, dto.getStartTime(), "EMPTY"));
             }
 
             result.add(dto);
@@ -395,26 +395,26 @@ public class HomeServiceImpl implements HomeService {
 
         // 5. 남은 시간 마지막 EMPTY 채우기
         if (pointer.isBefore(LocalTime.MAX)) {
-            result.add(new TodayScheduleResponseDto(pointer, LocalTime.MAX, "EMPTY"));
+            result.add(new HomeResponseDto.TodayScheduleDto(pointer, LocalTime.MAX, "EMPTY"));
         }
 
         return result;
     }
 
-    private List<TodayScheduleResponseDto> mergeSameTime(List<TodayScheduleResponseDto> list) {
+    private List<HomeResponseDto.TodayScheduleDto> mergeSameTime(List<HomeResponseDto.TodayScheduleDto> list) {
         // 투두 겹침 처리 로직
         if(list.isEmpty()) return list;
 
-        List<TodayScheduleResponseDto> result = new ArrayList<>();
-        TodayScheduleResponseDto last = list.get(0); // 첫번째 투두
+        List<HomeResponseDto.TodayScheduleDto> result = new ArrayList<>();
+        HomeResponseDto.TodayScheduleDto last = list.get(0); // 첫번째 투두
         result.add(last);
 
         for(int i = 1; i < list.size(); i++){
-            TodayScheduleResponseDto current = list.get(i);
+            HomeResponseDto.TodayScheduleDto current = list.get(i);
 
             if(!current.getStartTime().isAfter(last.getEndTime())){
                 // current 투두의 시작시간이 last 투두의 종료시간과 같거나 이른 경우
-                TodayScheduleResponseDto merged = TodayScheduleResponseDto.builder()
+                HomeResponseDto.TodayScheduleDto merged = HomeResponseDto.TodayScheduleDto.builder()
                         .startTime(last.getStartTime()) // 이전 시작
                         .endTime(current.getEndTime()) // 현재 종료
                         .type(last.getType())
@@ -431,7 +431,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public void assignWish(Long wishId, WishAssignRequestDto dto, User user) {
+    public void assignWish(Long wishId, WishRequestDto.WishAssignDto dto, User user) {
         // 위시 투두 등록
 
         // 1. 위시 조회
@@ -463,7 +463,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Override
-    public List<CategoryResponseDto> getCategory() {
+    public List<WishResponseDto.CategoryDto> getCategory() {
         // 카테고리 정보 조회
         List<Category> categories = categoryRepository.findAll();
         return wishConverter.toCategoryResponseDTO(categories);
