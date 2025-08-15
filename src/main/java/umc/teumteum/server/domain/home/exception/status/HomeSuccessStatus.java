@@ -2,7 +2,6 @@ package umc.teumteum.server.domain.home.exception.status;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.http.HttpStatus;
 import umc.teumteum.server.global.apiPayload.code.BaseCode;
 import umc.teumteum.server.global.apiPayload.code.ReasonDto;

@@ -1,21 +1,19 @@
 package umc.teumteum.server.domain.home.ai.generator;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import umc.teumteum.server.domain.home.dto.request.ActivityRequestDto.AiWishOptionRequest;
 import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto.AiWishDto;
-import umc.teumteum.server.domain.home.dto.response.ActivityResponseDto.WishDto;
 import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
 import umc.teumteum.server.global.config.GptConfig;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Component

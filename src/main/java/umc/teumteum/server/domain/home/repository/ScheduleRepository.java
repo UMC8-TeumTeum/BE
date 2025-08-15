@@ -12,8 +12,6 @@ import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
-import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
-import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

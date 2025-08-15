@@ -1,24 +1,19 @@
 package umc.teumteum.server.global.jwt;
 
-    import io.jsonwebtoken.Claims;
-    import io.jsonwebtoken.ExpiredJwtException;
-    import io.jsonwebtoken.Jwts;
-    import io.jsonwebtoken.MalformedJwtException;
-    import io.jsonwebtoken.SignatureAlgorithm;
-    import io.jsonwebtoken.UnsupportedJwtException;
-    import io.jsonwebtoken.security.Keys;
-    import io.jsonwebtoken.security.SecurityException;
-    import jakarta.annotation.PostConstruct;
-    import jakarta.servlet.http.HttpServletRequest;
-    import org.springframework.beans.factory.annotation.Value;
-    import org.springframework.security.authentication.BadCredentialsException;
-    import org.springframework.stereotype.Component;
-    import org.springframework.util.StringUtils;
-    import umc.teumteum.server.global.exception.InvalidTokenTypeException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import umc.teumteum.server.global.exception.InvalidTokenTypeException;
 
-    import java.nio.charset.StandardCharsets;
-    import java.security.Key;
-    import java.util.Date;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.util.Date;
 
 @Component
 public class JwtProvider {

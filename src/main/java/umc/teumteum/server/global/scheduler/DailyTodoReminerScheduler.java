@@ -1,10 +1,5 @@
 package umc.teumteum.server.global.scheduler;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,12 +8,17 @@ import umc.teumteum.server.domain.fcm.entity.FcmToken;
 import umc.teumteum.server.domain.fcm.repository.FcmTokenRepository;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
+import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.UserStatus;
-import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.notification.dto.NotificationPayload;
 import umc.teumteum.server.global.notification.sender.FcmNotificationSender;
-import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component

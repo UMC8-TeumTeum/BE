@@ -2,13 +2,13 @@ package umc.teumteum.server.domain.home.repository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 
 import java.sql.Timestamp;
 import java.util.List;
 
-@Component
+@Repository
 @RequiredArgsConstructor
 public class ScheduleReminderJdbcRepository {
 

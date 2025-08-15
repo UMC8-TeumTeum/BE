@@ -3,7 +3,6 @@ package umc.teumteum.server.domain.home.repository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.entity.Schedule;
@@ -16,7 +15,6 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @Repository
-@Component
 @RequiredArgsConstructor
 public class ScheduleJdbcRepository {
 
