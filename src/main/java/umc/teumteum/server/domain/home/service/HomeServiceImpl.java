@@ -65,6 +65,11 @@ public class HomeServiceImpl implements HomeService {
     public HomeResponseDto.TodoIdDto createTodo(HomeRequestDto.TodoRequestDto dto, User user) {
         // Todo 등록
 
+        // 시간 유효성 검사
+        if(dto.getEndTime().isBefore(dto.getStartTime())){
+            throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
+        }
+
         // 충돌 검사
         conflictValidator.validateTodo(user,dto.getStartTime(), dto.getEndTime());
 
@@ -167,17 +172,23 @@ public class HomeServiceImpl implements HomeService {
             // 3. 현재, 과거의 반복일정은 수정할 수 없음
             throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
         }
-        // 4. 충돌 검사
+
+        // 4. 시간 유효성 검사
+        if(dto.getEndTime().isBefore(dto.getStartTime())){
+            throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
+        }
+
+        // 5. 충돌 검사
         conflictValidator.validateTodo(user,dto.getStartTime(), dto.getEndTime());
 
-        // 5. 스케줄 필드 업데이트
+        // 6. 스케줄 필드 업데이트
         schedule.updateField(dto);
 
-        // 6. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
-        // 6-1. 기존 리마인드 알림 삭제
+        // 7. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
+        // 7-1. 기존 리마인드 알림 삭제
         scheduleReminderRepository.deleteByScheduleId(scheduleId);
 
-        // 6-2. 리마인드 알림 필드 업데이트
+        // 7-2. 리마인드 알림 필드 업데이트
         if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
             List<ScheduleReminder> reminders =
                     scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm());
@@ -444,11 +455,16 @@ public class HomeServiceImpl implements HomeService {
         Wish wish = wishRepository.findById(wishId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
 
-        // 2 중복 스케줄 체크
-        // 2-1. 틈 & 수면패턴 중복 검사 -> 등록 불가
+        // 2. 시간 유효성 검사
+        if(dto.getEndTime().isBefore(dto.getStartTime())){
+            throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
+        }
+
+        // 3 중복 스케줄 체크
+        // 3-1. 틈 & 수면패턴 중복 검사 -> 등록 불가
         conflictValidator.validateTodo(user,dto.getStartTime(),dto.getEndTime());
 
-        // 2-2. 스케줄 중복 검사 -> 등록 가능
+        // 3-2. 스케줄 중복 검사 -> 등록 가능
         LocalDate date = dto.getStartTime().toLocalDate();
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
@@ -462,7 +478,7 @@ public class HomeServiceImpl implements HomeService {
             throw new HomeException(HomeErrorStatus._SCHEDULE_CONFLICT);
         }
 
-        // 3. 스케줄 생성 & 위시 삭제
+        // 4. 스케줄 생성 & 위시 삭제
         Schedule schedule = scheduleConverter.toScheduleFromWish(wish,dto);
         scheduleRepository.save(schedule);
         wishRepository.delete(wish);
