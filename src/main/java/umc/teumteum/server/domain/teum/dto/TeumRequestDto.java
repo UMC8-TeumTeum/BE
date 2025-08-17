@@ -40,17 +40,17 @@ public class TeumRequestDto {
 
         @NotBlank
         @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "날짜 형식은 YYYY-MM-DD이어야 합니다.")
-        @Schema(description = "날짜 (YYYY-MM-DD)", example = "YYYY-MM-DD")
+        @Schema(description = "날짜 (YYYY-MM-DD)", example = "2025-08-20")
         private String date;
 
         @NotBlank
         @Pattern(regexp = "^\\d{2}:\\d{2}$", message = "시간 형식은 HH:MM이어야 합니다.")
-        @Schema(description = "시작 시간 (HH:MM)", example = "00:00")
+        @Schema(description = "시작 시간 (HH:MM)", example = "13:00")
         private String startTime;
 
         @NotBlank
         @Pattern(regexp = "^\\d{2}:\\d{2}$", message = "시간 형식은 HH:MM이어야 합니다.")
-        @Schema(description = "종료 시간 (HH:MM)", example = "00:00")
+        @Schema(description = "종료 시간 (HH:MM)", example = "14:00")
         private String endTime;
 
         @NotNull
@@ -70,10 +70,12 @@ public class TeumRequestDto {
 
         @NotBlank
         @Pattern(regexp = "^\\d{2}:\\d{2}$", message = "시간 형식은 HH:MM이어야 합니다.")
+        @Schema(description = "시작 시간 (HH:MM)", example = "13:00")
         private String startTime;
 
         @NotBlank
         @Pattern(regexp = "^\\d{2}:\\d{2}$", message = "시간 형식은 HH:MM이어야 합니다.")
+        @Schema(description = "종료 시간 (HH:MM)", example = "14:00")
         private String endTime;
 
     }
