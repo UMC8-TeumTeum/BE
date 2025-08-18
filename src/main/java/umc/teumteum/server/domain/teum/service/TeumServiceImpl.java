@@ -68,6 +68,9 @@ public class TeumServiceImpl implements TeumService {
         LocalTime startTime = LocalTime.parse(dto.getStartTime());
         LocalTime endTime = LocalTime.parse(dto.getEndTime());
 
+        // 시작 시간이 현재 시각보다 과거인지 검증
+        validateStartTimeNotPast(date, startTime);
+
         // 모든 사용자 조회 (요청자 + 수신자)
         List<User> receivers = dto.getReceiverUserIds().stream()
                 .map(this::getUserOrThrow)
@@ -124,6 +127,9 @@ public class TeumServiceImpl implements TeumService {
         LocalDate date = parent.getDate();
         LocalTime startTime = LocalTime.parse(dto.getStartTime());
         LocalTime endTime = LocalTime.parse(dto.getEndTime());
+
+        // 시작 시간이 현재 시각보다 과거인지 검증
+        validateStartTimeNotPast(date, startTime);
 
         User originalSender = parent.getUser();  // 부모 요청의 작성자 → 이번 재요청의 수신자
 
@@ -675,5 +681,16 @@ public class TeumServiceImpl implements TeumService {
             throw new GeneralException(TeumErrorStatus.INVALID_TEUM_TIME);
         }
     }
+
+    // 시작 시간이 현재 시각보다 과거인지 검증
+    private void validateStartTimeNotPast(LocalDate date, LocalTime startTime) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime requestStartDateTime = LocalDateTime.of(date, startTime);
+
+        if (requestStartDateTime.isBefore(now)) {
+            throw new GeneralException(TeumErrorStatus.INVALID_TEUM_TIME);
+        }
+    }
+
 
 }
