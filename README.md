@@ -64,7 +64,7 @@
 
 <p align="center">
   <img 
-    src="https://github.com/user-attachments/assets/c002af7b-706d-4a15-9fd4-bb2af883ca32" 
+    src="https://github.com/user-attachments/assets/c44d17cf-e466-4ca2-872f-5acd13f84c05" 
     alt="Backend Architecture Diagram"
     width="85%"
     style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);"
@@ -144,7 +144,6 @@
 <summary><b>🌿 브랜치 전략</b></summary>
 
 **Git Flow 사용**
-- **main** : 배포용 브랜치
 - **develop** : 개발 통합 브랜치 (CI/CD 기준)
 - **feature/** : 기능 개발 브랜치 → `feature/{issue-number}-{feature-name}`
 - **fix/** : 버그 수정 브랜치 → `fix/{issue-number}-{bug-name}`

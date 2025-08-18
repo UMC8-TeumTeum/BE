@@ -1,13 +1,15 @@
 package umc.teumteum.server.domain.user.service;
 
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.repository.ScheduleJdbcRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleReminderJdbcRepository;
-import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.converter.OnboardingConverter;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
@@ -22,6 +24,7 @@ import umc.teumteum.server.domain.user.exception.OnboardingException;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.*;
 import umc.teumteum.server.global.dto.TimeRange;
+import umc.teumteum.server.global.jwt.JwtProvider;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
@@ -41,13 +44,15 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final RoutineJdbcRepository routineJdbcRepository;
     private final ScheduleRepository scheduleRepository;
     private final ScheduleJdbcRepository scheduleJdbcRepository;
-    private final ScheduleReminderRepository scheduleReminderRepository;
     private final ScheduleReminderJdbcRepository scheduleReminderJdbcRepository;
-    private final RemindAlarmRepository remindAlarmRepository;
     private final RemindAlarmJdbcRepository remindAlarmJdbcRepository;
 
     private final TimeUtil timeUtil;
     private final S3Util s3Util;
+    private final JwtProvider jwtProvider;
+
+    @Resource(name = "profileImageRedisTemplate")
+    private RedisTemplate<String, String> profileImageRedisTemplate;
 
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp", "image/svg+xml"
@@ -110,7 +115,10 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     // 온보딩 - 프로필 이미지 업로드용 URl 발급
     @Override
-    public OnboardingResponseDto.ProfileImagePresignedUrlResponse generateProfileImagePresignedUrl(OnboardingRequestDto.ProfileImagePresignedUrlRequest request, User user) {
+    public OnboardingResponseDto.ProfileImagePresignedUrlResponse generateProfileImagePresignedUrl(
+            HttpServletRequest httpServletRequest,
+            OnboardingRequestDto.ProfileImagePresignedUrlRequest request,
+            User user) {
         // 1. 사용자 step 확인
         validateOnboardingStep(user, UserStep.ONBOARDING);
 
@@ -136,7 +144,11 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 6. Presigned URL 생성
         String presignedUrl = s3Util.toUploadPresignedUrl(key, contentType, Duration.ofMinutes(30));
 
-        // 7. TODO S3 업로드 예정인 파일이름 REDIS에 저장
+        // 7. S3 업로드 예정인 파일이름 REDIS에 저장
+        String userId = user.getId().toString();
+        String sessionId = jwtProvider.getSessionIdFromToken(jwtProvider.resolveToken(httpServletRequest));
+        String imageFileKey = getProfileImageKey(userId, sessionId);
+        profileImageRedisTemplate.opsForValue().set(imageFileKey, fileName, Duration.ofMinutes(30));
 
         // 8. 응답 DTO 반환
         return OnboardingConverter.toProfileImagePresignedUrlResponse(presignedUrl, fileName);
@@ -146,15 +158,31 @@ public class OnboardingServiceImpl implements OnboardingService {
     // 온보딩 - 프로필 이미지 등록
     @Override
     @Transactional
-    public void saveProfileImage(OnboardingRequestDto.ProfileImageRequest request, User user) {
+    public void saveProfileImage(HttpServletRequest httpServletRequest, OnboardingRequestDto.ProfileImageRequest request, User user) {
         // 1. 사용자 step 확인
         validateOnboardingStep(user, UserStep.ONBOARDING);
 
-        // 2. TODO REDIS 조회하여 비교
-        // throw new OnboardingHandler(UserErrorStatus.INVALID_IMAGE_NAME);
+        // 2. REDIS 조회하여 비교
+        String userId = user.getId().toString();
+        String sessionId = jwtProvider.getSessionIdFromToken(jwtProvider.resolveToken(httpServletRequest));
+        String imageFileKey = getProfileImageKey(userId, sessionId);
 
-        // 2. 사용자 프로필 이미지 이름 업데이트
-        user.updateProfileImageName(request.getFileName());
+        try {
+            String storedImageFileName = profileImageRedisTemplate.opsForValue().get(imageFileKey);
+            // TTL 만료
+            if (storedImageFileName == null) {
+                throw new OnboardingException(UserErrorStatus.EXPIRED_UPLOAD_SESSION);
+            }
+            // 요청 파일명 != Redis 파일명 (URL 발급부터 재진행 필요)
+            if (!Objects.equals(storedImageFileName, request.getFileName())) {
+                throw new OnboardingException(UserErrorStatus.INVALID_IMAGE_NAME);
+            }
+
+            // 3. 사용자 프로필 이미지 이름 업데이트
+            user.updateProfileImageName(request.getFileName());
+        } finally {
+            profileImageRedisTemplate.delete(imageFileKey);
+        }
     }
 
 
@@ -335,5 +363,10 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         // 2. 같은 날 안에서 끝나는 수면 (ex. 06:00~14:00, 18:00~00:00, 00:00~00:00)
         return List.of(TimeRange.of(sleepTime, wakeTime));
+    }
+
+    // 프로필 이미지 키 get
+    private String getProfileImageKey(String userId, String sessionId) {
+        return String.format("PROFILE_IMAGE_FILE_NAME:%s:%s", userId, sessionId);
     }
 }

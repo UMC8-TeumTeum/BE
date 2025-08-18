@@ -3,6 +3,7 @@ package umc.teumteum.server.domain.user.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -62,11 +63,12 @@ public class OnboardingController {
     )
     @PostMapping(value = "/onboarding/profile-image/presigned-url", produces = "application/json")
     public ApiResponse<OnboardingResponseDto.ProfileImagePresignedUrlResponse> getProfileImagePresignedUrl(
+            HttpServletRequest httpServletRequest,
             @RequestBody @Valid OnboardingRequestDto.ProfileImagePresignedUrlRequest request,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
         OnboardingResponseDto.ProfileImagePresignedUrlResponse response =
-                onboardingService.generateProfileImagePresignedUrl(request, user);
+                onboardingService.generateProfileImagePresignedUrl(httpServletRequest, request, user);
         return ApiResponse.of(UserSuccessStatus.PRESIGNED_URL_ISSUED, response);
     }
 
@@ -77,10 +79,11 @@ public class OnboardingController {
     )
     @PostMapping(value = "/onboarding/profile-image", produces = "application/json")
     public ApiResponse<Object> saveProfileImageKey(
+            HttpServletRequest httpServletRequest,
             @RequestBody @Valid OnboardingRequestDto.ProfileImageRequest request,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
-        onboardingService.saveProfileImage(request, user);
+        onboardingService.saveProfileImage(httpServletRequest, request, user);
         return ApiResponse.of(UserSuccessStatus.PROFILE_IMAGE_SAVED, null);
     }
 

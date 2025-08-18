@@ -64,4 +64,10 @@ public class RedisConfig {
   public RedisTemplate<String, String> atBlacklistRedisTemplate() {
     return createRedisTemplate(createConnectionFactory(3));
   }
+
+  // 프로필 이미지 파일용 Redis(index 4)
+  @Bean
+  public RedisTemplate<String, String> profileImageRedisTemplate() {
+    return createRedisTemplate(createConnectionFactory(4));
+  }
 }
