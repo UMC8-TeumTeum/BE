@@ -70,6 +70,24 @@ public class TeumConverter {
         TeumRequest request = response.getTeumRequest();
         User sender = request.getUser();
 
+        // 현재 요청의 시간
+        TimeSlot currentSlot = TimeSlot.builder()
+                .start(request.getStartTime().toString())
+                .end(timeUtil.parseAndFormatEndTime(request.getEndTime()))
+                .build();
+
+        // 부모 요청의 시간 (재요청일 때만)
+        TeumRequest parent = request.getParentRequest();
+        String originalDate = null;
+        TimeSlot originalSlot = null;
+        if (parent != null) {
+            originalDate = parent.getDate().toString();
+            originalSlot = TimeSlot.builder()
+                    .start(parent.getStartTime().toString())
+                    .end(timeUtil.parseAndFormatEndTime(parent.getEndTime()))
+                    .build();
+        }
+
         return TeumResponseDto.TeumReceived.builder()
                 .responseId(response.getId())
                 .requestId(request.getId())
@@ -84,11 +102,10 @@ public class TeumConverter {
                         .profileImageUrl(senderProfileImageUrl)
                         .build())
                 .date(request.getDate().toString())
-                .timeSlot(TimeSlot.builder()
-                        .start(request.getStartTime().toString())
-                        .end(timeUtil.parseAndFormatEndTime(request.getEndTime()))
-                        .build())
-                .isResend(request.getParentRequest() != null)
+                .timeSlot(currentSlot)
+                .isResend(parent != null)
+                .originalDate(originalDate)
+                .originalTimeSlot(originalSlot)
                 .build();
     }
 

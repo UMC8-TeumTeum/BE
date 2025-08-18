@@ -184,7 +184,13 @@ public class TeumResponseDto {
         @Schema(description = "재요청 여부", example = "false")
         private boolean isResend;
 
+        @Schema(description = "원본 요청 날짜(재요청일 때만 값 존재)", example = "2025-07-10")
+        private String originalDate;
+
+        @Schema(description = "원본 요청 시간 구간(재요청일 때만 값 존재)")
+        private TimeSlot originalTimeSlot;
     }
+
 
     @Getter
     @Builder

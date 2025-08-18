@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.teum.entity.TeumResponse;
+import umc.teumteum.server.domain.teum.entity.enums.RequestStatus;
+import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -15,20 +17,27 @@ import java.util.Optional;
 
 public interface TeumResponseRepository extends JpaRepository<TeumResponse, Long> {
 
-    @EntityGraph(attributePaths = {"teumRequest", "teumRequest.user"})
+    @EntityGraph(attributePaths = {
+            "teumRequest",
+            "teumRequest.user",
+            "teumRequest.parentRequest"
+    })
     @Query("""
-    SELECT r FROM TeumResponse r
-    WHERE r.receiverUser.id = :userId
-      AND r.status = umc.teumteum.server.domain.teum.entity.enums.ResponseStatus.PENDING
-      AND r.teumRequest.status = umc.teumteum.server.domain.teum.entity.enums.RequestStatus.ACTIVE
-      AND (r.teumRequest.date > :today OR (r.teumRequest.date = :today AND r.teumRequest.startTime > :now))
-""")
+        SELECT r FROM TeumResponse r
+        WHERE r.receiverUser.id = :userId
+          AND r.status = :respStatus
+          AND r.teumRequest.status = :reqStatus
+          AND (r.teumRequest.date > :today OR (r.teumRequest.date = :today AND r.teumRequest.startTime > :now))
+    """)
     Page<TeumResponse> findValidPendingResponses(
             @Param("userId") Long userId,
             @Param("today") LocalDate today,
             @Param("now") LocalTime now,
+            @Param("respStatus") ResponseStatus respStatus,
+            @Param("reqStatus") RequestStatus reqStatus,
             Pageable pageable
     );
+
 
     @Query("""
         SELECT DISTINCT tr.date FROM TeumResponse r

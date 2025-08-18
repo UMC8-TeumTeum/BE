@@ -168,7 +168,12 @@ public class TeumServiceImpl implements TeumService {
         Pageable pageable = PageRequest.of(pageIndex, size, sort);
 
         Page<TeumResponse> pageData = teumResponseRepository.findValidPendingResponses(
-                userId, LocalDate.now(), LocalTime.now(), pageable
+                userId,
+                LocalDate.now(),
+                LocalTime.now(),
+                ResponseStatus.PENDING,
+                RequestStatus.ACTIVE,
+                pageable
         );
 
         List<TeumResponseDto.TeumReceived> dtoList = pageData.getContent().stream()
