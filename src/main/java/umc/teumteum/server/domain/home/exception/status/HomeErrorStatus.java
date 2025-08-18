@@ -9,7 +9,7 @@ import umc.teumteum.server.global.apiPayload.code.ErrorReasonDto;
 @Getter
 @AllArgsConstructor
 public enum HomeErrorStatus implements BaseErrorCode {
-    _INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "HOME4001", "endTime은 startTime을 앞설 수 없습니다."),
+    _INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "HOME4001", "종료시간은 시작시간 이후여야 합니다."),
     _INVALID_DURATION(HttpStatus.BAD_REQUEST,"HOME4002","잘못된 조회 기간입니다."),
     _CANNOT_UPDATE_ROUTINE(HttpStatus.BAD_REQUEST,"HOME4003","반복일정은 수정할 수 없습니다."),
     _INVALID_VIRTUAL_ID(HttpStatus.BAD_REQUEST,"HOME4004","잘못된 루틴 ID 형식입니다."),
