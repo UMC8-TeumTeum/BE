@@ -66,7 +66,7 @@ public class HomeServiceImpl implements HomeService {
         // Todo 등록
 
         // 시간 유효성 검사
-        if(dto.getEndTime().isBefore(dto.getStartTime())){
+        if(dto.getEndTime().isBefore(dto.getStartTime()) || dto.getEndTime().isEqual(dto.getStartTime())){
             throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
         }
 
@@ -174,7 +174,7 @@ public class HomeServiceImpl implements HomeService {
         }
 
         // 4. 시간 유효성 검사
-        if(dto.getEndTime().isBefore(dto.getStartTime())){
+        if(dto.getEndTime().isBefore(dto.getStartTime()) || dto.getEndTime().isEqual(dto.getStartTime())){
             throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
         }
 
@@ -456,7 +456,7 @@ public class HomeServiceImpl implements HomeService {
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._WISH_NOT_FOUND));
 
         // 2. 시간 유효성 검사
-        if(dto.getEndTime().isBefore(dto.getStartTime())){
+        if(dto.getEndTime().isBefore(dto.getStartTime()) || dto.getEndTime().isEqual(dto.getStartTime())){
             throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
         }
 
@@ -731,7 +731,7 @@ public class HomeServiceImpl implements HomeService {
 
         // 2. 스케줄 알림 테이블 조회
         List<ScheduleReminder> reminders = scheduleReminderRepository.findByScheduleId(scheduleId);
-        System.out.println("reminders = " + reminders);
+
         // 3. 필드 업데이트
         for(ScheduleReminder reminder : reminders){
             reminder.updateStatus(alarmStatus);
