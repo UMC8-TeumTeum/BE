@@ -1,5 +1,7 @@
 package umc.teumteum.server.unit.fcm.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -19,6 +21,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import umc.teumteum.server.domain.fcm.converter.FcmConverter;
 import umc.teumteum.server.domain.fcm.entity.FcmToken;
+import umc.teumteum.server.domain.fcm.exception.FcmHandler;
+import umc.teumteum.server.domain.fcm.exception.status.FcmErrorStatus;
 import umc.teumteum.server.domain.fcm.repository.FcmTokenRepository;
 import umc.teumteum.server.domain.fcm.service.FcmServiceImpl;
 import umc.teumteum.server.domain.user.entity.User;
@@ -103,6 +107,60 @@ public class FcmServiceTest {
     verify(fcmTokenRepository).save(newToken);
 
   }
+
+  @Test
+  @DisplayName("[detachFcmToken] - TC1 정상적인 활성 토큰이라면 비활성화 처리한다.")
+  void detach_fcm_active_token() {
+    //given
+    String token = "thisismockfcmtoken";
+    FcmToken existingToken = mock(FcmToken.class);
+    when(fcmTokenRepository.findByTokenAndUser(token, testUser)).thenReturn(Optional.of(existingToken));
+    when(existingToken.getIsActive()).thenReturn(true);
+
+    //when
+    fcmService.detachFcmToken(testUser, token);
+
+    //then
+    verify(existingToken).deactivate();
+
+  }
+
+  @Test
+  @DisplayName("[detachFcmToken] - TC2 해당 유저의 토큰이 존재하지 않으면 예외를 발생시킨다.")
+  void detach_fcm_not_found_throws_exception() {
+    //given
+    String token = "thisismockfcmtoken";
+    when(fcmTokenRepository.findByTokenAndUser(token, testUser)).thenReturn(Optional.empty());
+
+    //when
+    //then
+    FcmHandler exception = assertThrows(FcmHandler.class, () -> fcmService.detachFcmToken(testUser, token));
+    assertEquals(FcmErrorStatus.FCM_BAD_REQUEST.getCode(), exception.getErrorReason().getCode());
+    assertEquals(FcmErrorStatus.FCM_BAD_REQUEST.getMessage(), exception.getErrorReason().getMessage());
+
+
+
+
+  }
+
+  @Test
+  @DisplayName("[detachFcmToken] - TC3 이미 비활성화된 토큰이라면 예외를 발생시킨다.")
+  void detach_fcm_already_deactive_throws_exception() {
+    //given
+    String token = "thisismockfcmtoken";
+    FcmToken existingToken = mock(FcmToken.class);
+    when(fcmTokenRepository.findByTokenAndUser(token, testUser)).thenReturn(Optional.of(existingToken));
+    when(existingToken.getIsActive()).thenReturn(false);
+
+    //when
+    //then
+    FcmHandler exception = assertThrows(FcmHandler.class, () -> fcmService.detachFcmToken(testUser, token));
+    assertEquals(FcmErrorStatus.FCM_ALREADY_DEACTIVATED.getCode(), exception.getErrorReason().getCode());
+    assertEquals(FcmErrorStatus.FCM_ALREADY_DEACTIVATED.getMessage(), exception.getErrorReason().getMessage());
+
+  }
+
+
 
 
 
