@@ -149,8 +149,12 @@ public class ActivityServiceImpl implements ActivityService{
   @Transactional
   public AiSaveResponse assginAiWish(User user, AiWishSaveRequest request) {
     // ai 컨텐츠 투두 등록
-
     String wishUUID = request.getId();
+
+    // 요청값 시간 유효성 검사
+    if(request.getEndTime().isBefore(request.getStartTime()) || request.getEndTime().isEqual(request.getStartTime())){
+      throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
+    }
 
     // 1. 중복 스케줄 체크
     LocalDate date = request.getStartTime().toLocalDate();
