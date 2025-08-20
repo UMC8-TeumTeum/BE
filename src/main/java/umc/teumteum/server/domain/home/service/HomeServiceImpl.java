@@ -429,7 +429,8 @@ public class HomeServiceImpl implements HomeService {
         for(int i = 1; i < list.size(); i++){
             HomeResponseDto.TodayScheduleDto current = list.get(i);
 
-            if(!current.getStartTime().isAfter(last.getEndTime())){
+            if(last.getType().equals(current.getType()) &&
+                    !current.getStartTime().isAfter(last.getEndTime())){
                 // current 투두의 시작시간이 last 투두의 종료시간과 같거나 이른 경우
                 HomeResponseDto.TodayScheduleDto merged = HomeResponseDto.TodayScheduleDto.builder()
                         .startTime(last.getStartTime()) // 이전 시작
