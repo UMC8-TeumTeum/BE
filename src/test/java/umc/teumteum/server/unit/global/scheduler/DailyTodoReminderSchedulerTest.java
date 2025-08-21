@@ -41,6 +41,7 @@ import umc.teumteum.server.global.notification.sender.FcmNotificationSender;
 import umc.teumteum.server.global.scheduler.DailyTodoReminerScheduler;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("DailyTodoReminerScheduler - DailyTodoReminerScheduler 관련 단위 테스트")
 public class DailyTodoReminderSchedulerTest {
   @Mock
   private ScheduleRepository scheduleRepository;

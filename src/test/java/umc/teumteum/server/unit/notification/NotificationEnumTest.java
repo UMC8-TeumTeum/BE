@@ -13,7 +13,7 @@ import umc.teumteum.server.domain.notification.entity.enums.RelatedEntityType;
 @DisplayName("NotificationEnum - Notification enum 관련 단위 테스트")
 public class NotificationEnumTest {
   @Test
-  @DisplayName("[shouldBeStored / isPushOnly] DAILY_TODO는 저장 안되고 푸시 전용이다")
+  @DisplayName("[shouldBeStored / isPushOnly] - TC1 DAILY_TODO는 저장 안되고 푸시 전용이다")
   void dailyTodo_pushOnly() {
     // given
     NotificationType type = NotificationType.DAILY_TODO;
@@ -26,7 +26,7 @@ public class NotificationEnumTest {
   }
 
   @Test
-  @DisplayName("[shouldBeStored / isPushOnly] DAILY_TODO를 제외한 나머지는 알림 목록에서 조회가능하애 하기 때문에 저장된다.")
+  @DisplayName("[shouldBeStored / isPushOnly] - TC2 DAILY_TODO를 제외한 나머지는 알림 목록에서 조회가능하애 하기 때문에 저장된다.")
   void others_shouldBeStored() {
     // given
     // when
@@ -40,7 +40,7 @@ public class NotificationEnumTest {
   }
 
   @Test
-  @DisplayName("[NotificatoinType.DAILY_TODO] DAILY_TODO RelatedEntityType은 NONE이다.")
+  @DisplayName("[NotificatoinType.DAILY_TODO] - TC3 DAILY_TODO RelatedEntityType은 NONE이다.")
   void DAILY_TODO_is_NONE() {
     // given
     NotificationType type = NotificationType.DAILY_TODO;
@@ -52,7 +52,7 @@ public class NotificationEnumTest {
   }
 
   @Test
-  @DisplayName("[NotificatoinType.TEUM_REQUEST] TEUM_REQUEST의 RelatedEntityType은 TEUM_REQUEST이다.")
+  @DisplayName("[NotificatoinType.TEUM_REQUEST] - TC4 TEUM_REQUEST의 RelatedEntityType은 TEUM_REQUEST이다.")
   void TEUM_REQUEST_is_TEUM_REQUEST() {
     // given
     NotificationType type = NotificationType.TEUM_REQUEST;
@@ -64,7 +64,7 @@ public class NotificationEnumTest {
   }
 
   @Test
-  @DisplayName("[NotificatoinType.TEUM_ACCEPTED] TEUM_ACCEPTED RelatedEntityType은 TEUM_RESPONSE이다..")
+  @DisplayName("[NotificatoinType.TEUM_ACCEPTED] - TC5 TEUM_ACCEPTED RelatedEntityType은 TEUM_RESPONSE이다..")
   void TEUM_ACCEPTED_is_TEUM_RESPONSE() {
     // given
     NotificationType type = NotificationType.TEUM_ACCEPTED;
@@ -76,7 +76,7 @@ public class NotificationEnumTest {
   }
 
   @Test
-  @DisplayName("[NotificatoinType.TEUM_DECLINED] TEUM_DECLINED의 RelatedEntityType은 TEUM_RESPONSE이다..")
+  @DisplayName("[NotificatoinType.TEUM_DECLINED] - TC6 TEUM_DECLINED의 RelatedEntityType은 TEUM_RESPONSE이다..")
   void TEUM_DECLINED_is_TEUM_RESPONSE() {
     // given
     NotificationType type = NotificationType.TEUM_DECLINED;
@@ -88,7 +88,7 @@ public class NotificationEnumTest {
   }
 
   @Test
-  @DisplayName("[NotificatoinType.TEUM_SUGGESTED] TEUM_SUGGESTED의 RelatedEntityType은 TEUM_RESPONSE이다.")
+  @DisplayName("[NotificatoinType.TEUM_SUGGESTED] - TC7 TEUM_SUGGESTED의 RelatedEntityType은 TEUM_RESPONSE이다.")
   void TEUM_SUGGESTED_is_TEUM_RESPONSE() {
     // given
     NotificationType type = NotificationType.TEUM_SUGGESTED;
@@ -100,7 +100,7 @@ public class NotificationEnumTest {
   }
 
   @Test
-  @DisplayName("[NotificatoinType.TEUM_CANCELED] TEUM_CANCELED의 RelatedEntityType은 SCHEDULE이다.")
+  @DisplayName("[NotificatoinType.TEUM_CANCELED] - TC8 TEUM_CANCELED의 RelatedEntityType은 SCHEDULE이다.")
   void TEUM_CANCELED_is_SCHEDULE() {
     // given
     NotificationType type = NotificationType.TEUM_CANCELED;
@@ -112,7 +112,7 @@ public class NotificationEnumTest {
   }
 
   @Test
-  @DisplayName("[NotificatoinType.TEUM_REQUEST_REREQUEST] TEUM_REQUEST_REREQUEST의 RelatedEntityType은 TEUM_REQUEST이다.")
+  @DisplayName("[NotificatoinType.TEUM_REQUEST_REREQUEST] - TC9 TEUM_REQUEST_REREQUEST의 RelatedEntityType은 TEUM_REQUEST이다.")
   void TEUM_REQUEST_REREQUEST_is_TEUM_REQUEST() {
     // given
     NotificationType type = NotificationType.TEUM_REQUEST_REREQUEST;
@@ -124,7 +124,7 @@ public class NotificationEnumTest {
   }
 
   @Test
-  @DisplayName("[NotificatoinType.FOLLOW] FOLLOW의 RelatedEntityType은 FRIEND이다.")
+  @DisplayName("[NotificatoinType.FOLLOW] - TC10 FOLLOW의 RelatedEntityType은 FRIEND이다.")
   void FOLLOW_is_FRIEND() {
     // given
     NotificationType type = NotificationType.FOLLOW;
@@ -136,7 +136,7 @@ public class NotificationEnumTest {
   }
 
   @Test
-  @DisplayName("[RelationEntityType] RelationEntityType enum이 정상적으로 등록되어 있다.")
+  @DisplayName("[RelationEntityType] - TC11 RelationEntityType enum이 정상적으로 등록되어 있다.")
   void relationEntityType_check() {
     // given
     RelatedEntityType[] values = RelatedEntityType.values();
