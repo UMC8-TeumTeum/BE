@@ -432,9 +432,13 @@ public class HomeServiceImpl implements HomeService {
             if(last.getType().equals(current.getType()) &&
                     !current.getStartTime().isAfter(last.getEndTime())){
                 // current 투두의 시작시간이 last 투두의 종료시간과 같거나 이른 경우
+
+                // 둘중 늦은 endTime 으로 설정
+                LocalTime endTime = last.getEndTime().isAfter(current.getEndTime()) ? last.getEndTime() : current.getEndTime();
+
                 HomeResponseDto.TodayScheduleDto merged = HomeResponseDto.TodayScheduleDto.builder()
                         .startTime(last.getStartTime()) // 이전 시작
-                        .endTime(current.getEndTime()) // 현재 종료
+                        .endTime(endTime) // 현재 종료
                         .type(last.getType())
                         .build();
 
