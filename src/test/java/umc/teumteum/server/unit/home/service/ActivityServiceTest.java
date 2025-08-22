@@ -35,6 +35,7 @@ import umc.teumteum.server.domain.home.service.ActivityServiceImpl;
 import umc.teumteum.server.domain.user.entity.User;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("ActivityServiceImpl - Activity(채움활동) 관련 단위 테스트")
 class ActivityServiceTest {
 
   @Mock
