@@ -25,7 +25,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Query("""
     SELECT s FROM Schedule s
     WHERE s.user.id = :userId
-      AND s.status = :status
+      AND s.status IN (:statuses)
       AND s.endTime >= :startOfDay
       AND s.startTime < :endOfDay
 """)
@@ -33,7 +33,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("userId") Long userId,
             @Param("startOfDay") LocalDateTime startOfDay,
             @Param("endOfDay") LocalDateTime endOfDay,
-            @Param("status") ScheduleStatus status
+            @Param("statuses") Collection<ScheduleStatus> statuses
     );
 
     @Query("""

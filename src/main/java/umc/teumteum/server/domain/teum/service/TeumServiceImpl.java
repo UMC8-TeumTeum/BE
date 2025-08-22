@@ -405,7 +405,7 @@ public class TeumServiceImpl implements TeumService {
             LocalDateTime endOfDay = LocalDateTime.of(date, LocalTime.MAX);
 
             List<Schedule> schedules = scheduleRepository.findOverlappingSchedules(
-                    userId, startOfDay, endOfDay, ScheduleStatus.ACTIVE
+                    userId, startOfDay, endOfDay, Arrays.asList(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED)
             );
 
             schedules.stream()
