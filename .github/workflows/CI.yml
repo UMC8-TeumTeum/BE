@@ -43,12 +43,15 @@ jobs:
           redis-remove-container: true
           redis-password: ${{ secrets.REDIS_TEST_PASSWORD }}
 
-      - name: Build & Test (test profile)
+      - name: Verify Config folders
+        run: ls -al config
+
+      - name: Build & Test (test profile, timed)
         run: |
           /usr/bin/time -f "elapsed=%E cpu=%P mem=%MKB" \
             ./gradlew --no-daemon clean build -Dspring.profiles.active=test --profile |& tee build.log
 
-      - name: Generate coverage (JaCoCo)
+      - name: Generate coverage (JaCoCo, timed)
         run: |
           /usr/bin/time -f "elapsed=%E cpu=%P mem=%MKB (jacoco)" \
             ./gradlew --no-daemon \
@@ -63,13 +66,22 @@ jobs:
         if: always()
         run: |
           set -e
-          FILE="build/reports/jacoco/test/jacocoTestReport.xml"
-          if [ ! -f "$FILE" ]; then
-            FILE=$(ls -1 **/build/reports/jacoco/**/jacocoTestReport.xml 2>/dev/null | head -n1 || true)
+          CAND="build/reports/jacoco/test/jacocoTestReport.xml"
+          if [ -f "$CAND" ] && [ $(wc -c < "$CAND") -gt 100 ]; then
+            FILE="$CAND"
+          else
+            FILE=$(find . -path "*/build/reports/jacoco/*/jacocoTestReport.xml" -type f -size +100c | head -n 1 || true)
           fi
-          if [ -n "$FILE" ] && [ -f "$FILE" ]; then
-            echo "file=$FILE" >> "$GITHUB_OUTPUT"
+          if [ -z "$FILE" ]; then
+            echo "No valid jacocoTestReport.xml found."
+            echo "## Coverage" >> $GITHUB_STEP_SUMMARY
+            echo "_No JaCoCo XML found or file too small to parse._" >> $GITHUB_STEP_SUMMARY
+            exit 0
           fi
+          echo "file=$FILE" >> "$GITHUB_OUTPUT"
+          echo "Found coverage xml: $FILE (bytes: $(wc -c < "$FILE"))"
+          echo "## JaCoCo XML path" >> $GITHUB_STEP_SUMMARY
+          echo "$FILE" >> $GITHUB_STEP_SUMMARY
 
       - name: Coverage summary (markdown)
         if: always() && steps.cov.outputs.file != ''
@@ -85,6 +97,7 @@ jobs:
       - name: Coverage & gate (Job Summary)
         if: always() && steps.cov.outputs.file != ''
         run: |
+          set -e
           FILE="${{ steps.cov.outputs.file }}"
           CMIN="${COVERAGE_MIN:-0.01}"
           CBRMIN="${COVERAGE_BRANCH_MIN:-0.01}"
@@ -133,6 +146,3 @@ jobs:
           files: '**/build/test-results/test/TEST-*.xml'
           comment_mode: always
 
-      - name: Fail on test failures
-        if: failure()
-        run: exit 1
