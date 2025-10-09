@@ -96,30 +96,44 @@ jobs:
 
       - name: Coverage & gate (Job Summary)
         if: always() && steps.cov.outputs.file != ''
+        env:
+          JACOCO_XML: ${{ steps.cov.outputs.file }}
+          COV_MIN: ${{ env.COVERAGE_MIN || '0.01' }}
+          COV_BRANCH_MIN: ${{ env.COVERAGE_BRANCH_MIN || '0.01' }}
         run: |
-          set -e
-          FILE="${{ steps.cov.outputs.file }}"
-          CMIN="${COVERAGE_MIN:-0.01}"
-          CBRMIN="${COVERAGE_BRANCH_MIN:-0.01}"
-          LINE=$(grep -oP '<counter type="LINE"[^>]*/>' "$FILE" | head -n1 || true)
-          BR=$(grep -oP '<counter type="BRANCH"[^>]*/>' "$FILE" | head -n1 || true)
-          LM=$(echo "$LINE" | grep -oP 'missed="\d+"' | cut -d'"' -f2); LC=$(echo "$LINE" | grep -oP 'covered="\d+"' | cut -d'"' -f2)
-          BM=$(echo "$BR"   | grep -oP 'missed="\d+"' | cut -d'"' -f2); BC=$(echo "$BR"   | grep -oP 'covered="\d+"' | cut -d'"' -f2)
-          LT=$(( (${LM:-0}) + (${LC:-0}) )); BT=$(( (${BM:-0}) + (${BC:-0}) ))
-          LP=$(awk -v c=${LC:-0} -v t=${LT:-0} 'BEGIN{printf (t>0?"%.2f":"0.00"), (t>0? c/t*100:0)}')
-          BP=$(awk -v c=${BC:-0} -v t=${BT:-0} 'BEGIN{printf (t>0?"%.2f":"0.00"), (t>0? c/t*100:0)}')
-          LMIN=$(awk -v x=$CMIN   'BEGIN{printf "%.2f", x*100}')
-          BMIN=$(awk -v x=$CBRMIN 'BEGIN{printf "%.2f", x*100}')
-          LRES=$(awk -v a=$LP -v b=$LMIN 'BEGIN{print (a>=b)?"PASS":"FAIL"}')
-          BRES=$(awk -v a=$BP -v b=$BMIN 'BEGIN{print (a>=b)?"PASS":"FAIL"}')
-          {
-            echo "## Coverage & Gate"
-            echo ""
-            echo "| Metric | Current | Gate | Result |"
-            echo "|--------|--------:|-----:|:------:|"
-            echo "| Lines  | ${LP}% | ${LMIN}% | ${LRES} |"
-            echo "| Branch | ${BP}% | ${BMIN}% | ${BRES} |"
-          } >> $GITHUB_STEP_SUMMARY
+          python - <<'PY'
+          import os, xml.etree.ElementTree as ET
+
+          path = os.environ["JACOCO_XML"]
+          cov_min = float(os.environ.get("COV_MIN", "0.01")) * 100.0
+          br_min  = float(os.environ.get("COV_BRANCH_MIN", "0.01")) * 100.0
+
+          tree = ET.parse(path)
+          root = tree.getroot()  # <report ...>
+
+          def pct(counter_type):
+              c = next((x for x in root.findall("counter") if x.get("type")==counter_type), None)
+              if c is None: return 0.0
+              missed = int(c.get("missed", 0)); covered = int(c.get("covered", 0))
+              total = missed + covered
+              return (covered / total * 100.0) if total else 0.0
+
+          line_pct   = pct("LINE")
+          branch_pct = pct("BRANCH")
+
+          line_res   = "PASS" if line_pct   >= cov_min else "FAIL"
+          branch_res = "PASS" if branch_pct >= br_min  else "FAIL"
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write("## JaCoCo XML path\n")
+              f.write(f"{path}\n\n")
+              f.write("## Coverage & Gate\n\n")
+              f.write("| Metric | Current | Gate | Result |\n")
+              f.write("|--------|--------:|-----:|:------:|\n")
+              f.write(f"| Lines  | {line_pct:.2f}% | {cov_min:.2f}% | {line_res} |\n")
+              f.write(f"| Branch | {branch_pct:.2f}% | {br_min:.2f}% | {branch_res} |\n")
+          PY
+      
 
       - name: Upload coverage HTML
         if: always()
