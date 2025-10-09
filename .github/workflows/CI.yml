@@ -80,8 +80,6 @@ jobs:
 
       - name: Generate JaCoCo coverage report (timed + enforce gate)
         run: |
-          # 필요시 여기서 최소치 오버라이드 가능(예: 65% / 40%)
-          # export COVERAGE_MIN=0.60 COVERAGE_BRANCH_MIN=0.30
           /usr/bin/time -f "elapsed=%E cpu=%P mem=%MKB (jacoco)" \
             ./gradlew --no-daemon jacocoTestReport jacocoTestCoverageVerification \
               -Dspring.profiles.active=test \

@@ -28,12 +28,36 @@ jacoco {
 	toolVersion = "0.8.10"
 }
 
-
 def coverageMin       = (project.findProperty('coverage.min') ?: '0.60') as BigDecimal
 def coverageBranchMin = (project.findProperty('coverage.branchMin') ?: '0.30') as BigDecimal
 
+tasks.named('test') {
+	useJUnitPlatform()
+	jvmArgs += [
+			"-Djdk.attach.allowAttachSelf=true",
+			"-XX:+EnableDynamicAgentLoading"
+	]
+	finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.named('jacocoTestReport') {
+	dependsOn tasks.named('test')
+
+	executionData.from = fileTree(dir: "$buildDir", includes: [
+			"jacoco/test.exec",
+			"jacoco/test/*.exec"
+	]).filter { it.exists() && it.length() > 0 }
+
+	reports {
+		xml.required.set(true)
+		html.required.set(true)
+		csv.required.set(false)
+	}
+}
+
 tasks.named('jacocoTestCoverageVerification') {
 	dependsOn tasks.named('test')
+	mustRunAfter tasks.named('jacocoTestReport')
 	violationRules {
 		rule {
 			element = 'BUNDLE'
@@ -50,7 +74,6 @@ tasks.named('jacocoTestCoverageVerification') {
 		}
 	}
 }
-
 
 tasks.named('check') {
 	dependsOn tasks.named('jacocoTestCoverageVerification')
@@ -109,35 +132,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 }
 
-task copyYml(type: Copy){
-	copy{
+task copyYml(type: Copy) {
+	copy {
 		from './config'
 		include '*.properties'
 		into 'src/main/resources'
 	}
 }
-
-tasks.named('test') {
-	useJUnitPlatform()
-	jvmArgs += [
-			"-Djdk.attach.allowAttachSelf=true",
-			"-XX:+EnableDynamicAgentLoading"
-	]
-	finalizedBy(tasks.jacocoTestReport)
-}
-
-tasks.named('jacocoTestReport') {
-	dependsOn tasks.named('test')
-
-	executionData.from = fileTree(dir: "$buildDir", includes: [
-			"jacoco/test.exec",
-			"jacoco/test/*.exec"
-	]).filter { it.exists() && it.length() > 0 }
-
-	reports {
-		xml.required.set(true)
-		html.required.set(true)
-		csv.required.set(false)
-	}
-}
-
