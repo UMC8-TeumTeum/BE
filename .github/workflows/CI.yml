@@ -54,6 +54,10 @@ jobs:
       - name: Verify Config folders
         run: ls -al config
 
+
+
+
+
       - name: Build and Test with 'test' profile (timed)
         run: |
           echo " >>> Running Gradle build with 'test' profile"
@@ -88,31 +92,53 @@ jobs:
               -Pcoverage.branchMin=${COVERAGE_BRANCH_MIN:-0.01} \
               --rerun-tasks --stacktrace --info |& tee jacoco.log
 
-      
+      - name: Locate coverage xml
+        id: covfile
+        if: always()
+        run: |
+          set -e
+          FILES=$(ls -1 **/build/reports/jacoco/**/jacocoTestReport.xml | head -n 1 || true)
+          if [ -z "$FILES" ]; then
+            echo "No jacocoTestReport.xml found."
+            exit 0
+          fi
+          FILE="$FILES"
+          echo "file=$FILE" >> "$GITHUB_OUTPUT"
+          echo "Found coverage xml: $FILE"
+          echo "Size (bytes):"
+          wc -c "$FILE" || true
+          echo "----- HEAD (first 40 lines) -----"
+          head -n 40 "$FILE" || true
+          echo "## JaCoCo XML path" >> $GITHUB_STEP_SUMMARY
+          echo "$FILE" >> $GITHUB_STEP_SUMMARY
 
       - name: Coverage summary
-        if: hashFiles('**/build/reports/jacoco/test/jacocoTestReport.xml') != ''
+        if: always() && steps.covfile.outputs.file != ''
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          filename: '**/build/reports/jacoco/test/jacocoTestReport.xml'
+          filename: ${{ steps.covfile.outputs.file }}
           badge: true
           format: 'markdown'
-          output: 'both'
+          output: 'both'   # Job Summary + code-coverage-results.md
           thresholds: 60 80
           fail_below_min: false
 
+      - name: Print coverage to logs
+        if: always() && steps.covfile.outputs.file != '' && hashFiles('code-coverage-results.md') != ''
+        run: |
+          echo "==== Coverage Summary ===="
+          cat code-coverage-results.md
 
       - name: Add coverage comment to PR
-        if: github.event_name == 'pull_request' && hashFiles('**/build/reports/jacoco/test/jacocoTestReport.xml') != ''
+        if: github.event_name == 'pull_request' && steps.covfile.outputs.file != '' && hashFiles('code-coverage-results.md') != ''
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: coverage
           recreate: true
           path: code-coverage-results.md
 
-
       - name: Upload JaCoCo HTML report
-        if: always() && hashFiles('**/build/reports/jacoco/test/html/index.html') != ''
+        if: always() && steps.covfile.outputs.file != ''
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-html-report
@@ -124,6 +150,7 @@ jobs:
         with:
           name: jacoco-log
           path: jacoco.log
+
 
 
 
