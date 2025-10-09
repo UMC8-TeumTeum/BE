@@ -28,29 +28,33 @@ jacoco {
 	toolVersion = "0.8.10"
 }
 
-jacocoTestReport {
+
+def coverageMin       = (project.findProperty('coverage.min') ?: '0.60') as BigDecimal
+def coverageBranchMin = (project.findProperty('coverage.branchMin') ?: '0.30') as BigDecimal
+
+tasks.named('jacocoTestCoverageVerification') {
 	dependsOn tasks.named('test')
-	reports {
-		xml.required.set(true)
-		html.required.set(true)
-		csv.required.set(false)
-
-	}
-}
-
-jacocoTestCoverageVerification {
 	violationRules {
 		rule {
+			element = 'BUNDLE'
 			limit {
-				counter = 'INSTRUCTION'
+				counter = 'LINE'
 				value   = 'COVEREDRATIO'
-				minimum = 0.60
+				minimum = coverageMin
+			}
+			limit {
+				counter = 'BRANCH'
+				value   = 'COVEREDRATIO'
+				minimum = coverageBranchMin
 			}
 		}
 	}
 }
 
-check.dependsOn jacocoTestCoverageVerification
+
+tasks.named('check') {
+	dependsOn tasks.named('jacocoTestCoverageVerification')
+}
 
 dependencies {
 	// Spring Basic
@@ -103,10 +107,7 @@ dependencies {
 	// Prometheus, Grafana
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-
-
 }
-
 
 task copyYml(type: Copy){
 	copy{
@@ -122,6 +123,21 @@ tasks.named('test') {
 			"-Djdk.attach.allowAttachSelf=true",
 			"-XX:+EnableDynamicAgentLoading"
 	]
-	filter { includeTestsMatching "*" }
-	finalizedBy 'jacocoTestReport'
+	finalizedBy(tasks.jacocoTestReport)
 }
+
+tasks.named('jacocoTestReport') {
+	dependsOn tasks.named('test')
+
+	executionData.from = fileTree(dir: "$buildDir", includes: [
+			"jacoco/test.exec",
+			"jacoco/test/*.exec"
+	]).filter { it.exists() && it.length() > 0 }
+
+	reports {
+		xml.required.set(true)
+		html.required.set(true)
+		csv.required.set(false)
+	}
+}
+
