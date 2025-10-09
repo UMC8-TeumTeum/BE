@@ -54,12 +54,6 @@ jobs:
       - name: Verify Config folders
         run: ls -al config
 
-      - name: Build and Test with 'test' profile
-        run: |
-          echo " >>> Running Gradle build with 'test' profile"
-          ./gradlew --no-daemon clean build -Dspring.profiles.active=test
-          
-
       - name: Build and Test with 'test' profile (timed)
         run: |
           echo " >>> Running Gradle build with 'test' profile"
@@ -79,6 +73,47 @@ jobs:
         with:
           name: build-log-baseline
           path: build.log
+
+
+
+
+      - name: Generate JaCoCo coverage report (timed)
+        if: always()
+        continue-on-error: true
+        run: |
+          /usr/bin/time -f "elapsed=%E cpu=%P mem=%MKB (jacoco)" \
+            ./gradlew --no-daemon jacocoTestReport jacocoTestCoverageVerification |& tee jacoco.log
+
+      - name: Coverage summary
+        if: always() && hashFiles('**/build/reports/jacoco/test/jacocoTestReport.xml') != ''
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: '**/build/reports/jacoco/test/jacocoTestReport.xml'
+          badge: true
+          format: 'markdown'
+          output: 'both'
+
+      - name: Add coverage comment to PR
+        if: github.event_name == 'pull_request' && hashFiles('**/build/reports/jacoco/test/jacocoTestReport.xml') != ''
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: coverage
+          recreate: true
+          path: code-coverage-results.md
+
+      - name: Upload JaCoCo HTML report
+        if: always() && hashFiles('**/build/reports/jacoco/test/html/index.html') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-html-report
+          path: '**/build/reports/jacoco/test/html'
+
+      - name: Upload jacoco log
+        if: always() && hashFiles('jacoco.log') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-log
+          path: jacoco.log
 
 
 

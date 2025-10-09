@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.3'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
 }
 
 group = 'umc.teumteum'
@@ -22,6 +23,34 @@ configurations {
 repositories {
 	mavenCentral()
 }
+
+jacoco {
+	toolVersion = "0.8.10"
+}
+
+jacocoTestReport {
+	dependsOn tasks.named('test')
+	reports {
+		xml.required.set(true)
+		html.required.set(true)
+		csv.required.set(false)
+
+	}
+}
+
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			limit {
+				counter = 'INSTRUCTION'
+				value   = 'COVEREDRATIO'
+				minimum = 0.60
+			}
+		}
+	}
+}
+
+check.dependsOn jacocoTestCoverageVerification
 
 dependencies {
 	// Spring Basic
@@ -91,8 +120,8 @@ tasks.named('test') {
 	useJUnitPlatform()
 	jvmArgs += [
 			"-Djdk.attach.allowAttachSelf=true",
-			"-XX:+EnableDynamicAgentLoading"]
-	filter {
-		includeTestsMatching "*"
-	}
+			"-XX:+EnableDynamicAgentLoading"
+	]
+	filter { includeTestsMatching "*" }
+	finalizedBy 'jacocoTestReport'
 }
