@@ -2,13 +2,9 @@ name: CI with Gradle
 
 on:
   push:
-    branches-ignore:
-      - main
-      - develop
-
+    branches-ignore: [main, develop]
   pull_request:
-    branches:
-      - develop
+    branches: [develop]
 
 jobs:
   CI:
@@ -20,23 +16,22 @@ jobs:
       checks: write
       pull-requests: write
 
-
     steps:
-      - name: Checkout With Submodules
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.ACCESS_TOKEN }}
           submodules: recursive
           fetch-depth: 0
 
-      - name: Update Git Submodules
-        run: git submodule update --init --recursive
-
-      - name: Set up JDK 21
+      - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: '21'
-          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Grant execute permission for Gradlew
         run: chmod +x ./gradlew
@@ -48,41 +43,12 @@ jobs:
           redis-remove-container: true
           redis-password: ${{ secrets.REDIS_TEST_PASSWORD }}
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Verify Config folders
-        run: ls -al config
-
-
-
-
-
-      - name: Build and Test with 'test' profile (timed)
+      - name: Build & Test (test profile)
         run: |
-          echo " >>> Running Gradle build with 'test' profile"
           /usr/bin/time -f "elapsed=%E cpu=%P mem=%MKB" \
             ./gradlew --no-daemon clean build -Dspring.profiles.active=test --profile |& tee build.log
 
-      - name: Upload Gradle profile report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-profile-baseline
-          path: '**/build/reports/profile'
-
-      - name: Upload build log (baseline)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log-baseline
-          path: build.log
-
-
-
-
-
-      - name: Generate JaCoCo coverage report (timed + enforce gate)
+      - name: Generate coverage (JaCoCo)
         run: |
           /usr/bin/time -f "elapsed=%E cpu=%P mem=%MKB (jacoco)" \
             ./gradlew --no-daemon \
@@ -90,84 +56,83 @@ jobs:
               test jacocoTestReport jacocoTestCoverageVerification \
               -Pcoverage.min=${COVERAGE_MIN:-0.01} \
               -Pcoverage.branchMin=${COVERAGE_BRANCH_MIN:-0.01} \
-              --rerun-tasks --stacktrace --info |& tee jacoco.log
+              --rerun-tasks |& tee jacoco.log
 
-      - name: Locate coverage xml
-        id: covfile
+      - name: Find coverage xml
+        id: cov
         if: always()
         run: |
           set -e
-          FILES=$(ls -1 **/build/reports/jacoco/**/jacocoTestReport.xml | head -n 1 || true)
-          if [ -z "$FILES" ]; then
-            echo "No jacocoTestReport.xml found."
-            exit 0
+          FILE="build/reports/jacoco/test/jacocoTestReport.xml"
+          if [ ! -f "$FILE" ]; then
+            FILE=$(ls -1 **/build/reports/jacoco/**/jacocoTestReport.xml 2>/dev/null | head -n1 || true)
           fi
-          FILE="$FILES"
-          echo "file=$FILE" >> "$GITHUB_OUTPUT"
-          echo "Found coverage xml: $FILE"
-          echo "Size (bytes):"
-          wc -c "$FILE" || true
-          echo "----- HEAD (first 40 lines) -----"
-          head -n 40 "$FILE" || true
-          echo "## JaCoCo XML path" >> $GITHUB_STEP_SUMMARY
-          echo "$FILE" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$FILE" ] && [ -f "$FILE" ]; then
+            echo "file=$FILE" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Coverage summary
-        if: always() && steps.covfile.outputs.file != ''
+      - name: Coverage summary (markdown)
+        if: always() && steps.cov.outputs.file != ''
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          filename: ${{ steps.covfile.outputs.file }}
+          filename: ${{ steps.cov.outputs.file }}
           badge: true
-          format: 'markdown'
-          output: 'both'   # Job Summary + code-coverage-results.md
+          format: markdown
+          output: both
           thresholds: 60 80
           fail_below_min: false
 
-      - name: Print coverage to logs
-        if: always() && steps.covfile.outputs.file != '' && hashFiles('code-coverage-results.md') != ''
+      - name: Coverage & gate (Job Summary)
+        if: always() && steps.cov.outputs.file != ''
         run: |
-          echo "==== Coverage Summary ===="
-          cat code-coverage-results.md
+          FILE="${{ steps.cov.outputs.file }}"
+          CMIN="${COVERAGE_MIN:-0.01}"
+          CBRMIN="${COVERAGE_BRANCH_MIN:-0.01}"
+          LINE=$(grep -oP '<counter type="LINE"[^>]*/>' "$FILE" | head -n1 || true)
+          BR=$(grep -oP '<counter type="BRANCH"[^>]*/>' "$FILE" | head -n1 || true)
+          LM=$(echo "$LINE" | grep -oP 'missed="\d+"' | cut -d'"' -f2); LC=$(echo "$LINE" | grep -oP 'covered="\d+"' | cut -d'"' -f2)
+          BM=$(echo "$BR"   | grep -oP 'missed="\d+"' | cut -d'"' -f2); BC=$(echo "$BR"   | grep -oP 'covered="\d+"' | cut -d'"' -f2)
+          LT=$(( (${LM:-0}) + (${LC:-0}) )); BT=$(( (${BM:-0}) + (${BC:-0}) ))
+          LP=$(awk -v c=${LC:-0} -v t=${LT:-0} 'BEGIN{printf (t>0?"%.2f":"0.00"), (t>0? c/t*100:0)}')
+          BP=$(awk -v c=${BC:-0} -v t=${BT:-0} 'BEGIN{printf (t>0?"%.2f":"0.00"), (t>0? c/t*100:0)}')
+          LMIN=$(awk -v x=$CMIN   'BEGIN{printf "%.2f", x*100}')
+          BMIN=$(awk -v x=$CBRMIN 'BEGIN{printf "%.2f", x*100}')
+          LRES=$(awk -v a=$LP -v b=$LMIN 'BEGIN{print (a>=b)?"PASS":"FAIL"}')
+          BRES=$(awk -v a=$BP -v b=$BMIN 'BEGIN{print (a>=b)?"PASS":"FAIL"}')
+          {
+            echo "## Coverage & Gate"
+            echo ""
+            echo "| Metric | Current | Gate | Result |"
+            echo "|--------|--------:|-----:|:------:|"
+            echo "| Lines  | ${LP}% | ${LMIN}% | ${LRES} |"
+            echo "| Branch | ${BP}% | ${BMIN}% | ${BRES} |"
+          } >> $GITHUB_STEP_SUMMARY
 
-      - name: Add coverage comment to PR
-        if: github.event_name == 'pull_request' && steps.covfile.outputs.file != '' && hashFiles('code-coverage-results.md') != ''
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: coverage
-          recreate: true
-          path: code-coverage-results.md
-
-      - name: Upload JaCoCo HTML report
-        if: always() && steps.covfile.outputs.file != ''
+      - name: Upload coverage HTML
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-html-report
           path: '**/build/reports/jacoco/test/html'
+          if-no-files-found: ignore
 
-      - name: Upload jacoco log
-        if: always() && hashFiles('jacoco.log') != ''
+      - name: Upload logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-log
-          path: jacoco.log
-
-
-
+          name: ci-logs
+          path: |
+            build.log
+            jacoco.log
+          if-no-files-found: ignore
 
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: '**/build/test-results/test/TEST-*.xml'
           comment_mode: always
 
-      - name: Build summary
-        if: success()
-        run: |
-          echo "Gradle build successfully completed with tests (profile: test)"
-
-      - name: Mark failure if tests failed
+      - name: Fail on test failures
         if: failure()
-        run: |
-          echo "Tests failed. Please check the test logs for detail"
-          exit 1
+        run: exit 1
