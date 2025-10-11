@@ -105,8 +105,8 @@ jobs:
         if: always() && github.event_name == 'pull_request' && github.base_ref == 'develop' && steps.cov.outputs.file != ''
         env:
           JACOCO_XML: ${{ steps.cov.outputs.file }}
-          COV_MIN: ${{ env.COVERAGE_MIN || '0.01' }}
-          COV_BRANCH_MIN: ${{ env.COVERAGE_BRANCH_MIN || '0.01' }}
+          COV_MIN: ${{ env.COVERAGE_MIN || '0.10' }}
+          COV_BRANCH_MIN: ${{ env.COVERAGE_BRANCH_MIN || '0.05' }}
         run: |
           python - <<'PY'
           import os
