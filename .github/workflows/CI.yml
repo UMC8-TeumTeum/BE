@@ -17,6 +17,8 @@ jobs:
       pull-requests: write
 
     steps:
+    # 1. Checkout & Environment Settings
+    # 저장소와 서브모듈을 가져오고 빌드 환경 설정
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -46,12 +48,27 @@ jobs:
       - name: Verify Config folders
         run: ls -al config
 
-      - name: Build & Test (test profile, timed)
+
+
+    # 2. Build&Test (Branch dependent logic)
+    # 이벤트 종류에 따라 실행되는 로직이 다름
+    # - feature 브랜치 push 시 : build + test 수행
+    # - develop 으로의 PR 시  : build만 수행 (테스트는 아래 JaCoCo 단계에서 수행)
+
+      - name: Build & Test (feature branches)
+        if: github.event_name == 'push'
         run: |
           /usr/bin/time -f "elapsed=%E cpu=%P mem=%MKB" \
             ./gradlew --no-daemon clean build -Dspring.profiles.active=test --profile |& tee build.log
 
+      - name: Build only (for PR to develop)
+        if: github.event_name == 'pull_request' && github.base_ref == 'develop'
+        run: |
+          /usr/bin/time -f "elapsed=%E cpu=%P mem=%MKB (build-only)" \
+            ./gradlew --no-daemon clean assemble -Dspring.profiles.active=test --profile |& tee build.log
+
       - name: Generate coverage (JaCoCo, timed)
+        if: github.event_name == 'pull_request' && github.base_ref == 'develop'
         run: |
           /usr/bin/time -f "elapsed=%E cpu=%P mem=%MKB (jacoco)" \
             ./gradlew --no-daemon \
@@ -61,9 +78,12 @@ jobs:
               -Pcoverage.branchMin=${COVERAGE_BRANCH_MIN:-0.01} \
               --rerun-tasks |& tee jacoco.log
 
+      # 3. Coverage Analysis
+      # (only PR for develop branch)
+      # JaCoCo 결과 파일을 탐색함. 그리고 커버리지 수치를 요약해 Job Summary에 표시
       - name: Find coverage xml
         id: cov
-        if: always()
+        if: always() && github.event_name == 'pull_request' && github.base_ref == 'develop'
         run: |
           set -e
           CAND="build/reports/jacoco/test/jacocoTestReport.xml"
@@ -82,48 +102,62 @@ jobs:
           echo "Found coverage xml: $FILE (bytes: $(wc -c < "$FILE"))"
 
       - name: Coverage & gate (Job Summary)
-        if: always() && steps.cov.outputs.file != ''
+        if: always() && github.event_name == 'pull_request' && github.base_ref == 'develop' && steps.cov.outputs.file != ''
         env:
           JACOCO_XML: ${{ steps.cov.outputs.file }}
           COV_MIN: ${{ env.COVERAGE_MIN || '0.01' }}
           COV_BRANCH_MIN: ${{ env.COVERAGE_BRANCH_MIN || '0.01' }}
         run: |
           python - <<'PY'
-          import os, xml.etree.ElementTree as ET
+          import os
+          import xml.etree.ElementTree as ET
 
-          path = os.environ["JACOCO_XML"]
+          path = os.environ.get("JACOCO_XML")
           cov_min = float(os.environ.get("COV_MIN", "0.01")) * 100.0
           br_min  = float(os.environ.get("COV_BRANCH_MIN", "0.01")) * 100.0
 
-          tree = ET.parse(path)
-          root = tree.getroot()  # <report ...>
-
-          def pct(counter_type):
-              c = next((x for x in root.findall("counter") if x.get("type")==counter_type), None)
-              if c is None: return 0.0
-              missed = int(c.get("missed", 0)); covered = int(c.get("covered", 0))
+          def pct(root, counter_type):
+              c = next((x for x in root.findall("counter") if x.get("type") == counter_type), None)
+              if c is None:
+                  return 0.0
+              missed = int(c.get("missed", 0))
+              covered = int(c.get("covered", 0))
               total = missed + covered
-              return (covered / total * 100.0) if total else 0.0
+              return (covered / total * 100.0) if total > 0 else 0.0
 
-          line_pct   = pct("LINE")
-          branch_pct = pct("BRANCH")
+          try:
+              tree = ET.parse(path)
+              root = tree.getroot()
 
-          line_res   = "PASS" if line_pct   >= cov_min else "FAIL"
-          branch_res = "PASS" if branch_pct >= br_min  else "FAIL"
+              line_pct = pct(root, "LINE")
+              branch_pct = pct(root, "BRANCH")
 
-          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
-              f.write("## JaCoCo XML path\n")
-              f.write(f"{path}\n\n")
-              f.write("## Coverage & Gate\n\n")
-              f.write("| Metric | Current | Gate | Result |\n")
-              f.write("|--------|--------:|-----:|:------:|\n")
-              f.write(f"| Lines  | {line_pct:.2f}% | {cov_min:.2f}% | {line_res} |\n")
-              f.write(f"| Branch | {branch_pct:.2f}% | {br_min:.2f}% | {branch_res} |\n")
+              line_res = "PASS " if line_pct >= cov_min else "FAIL"
+              branch_res = "PASS " if branch_pct >= br_min else "FAIL"
+
+              with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+                  f.write("##  JaCoCo Coverage Report\n\n")
+                  f.write(f"**XML path:** `{path}`\n\n")
+                  f.write("| Metric | Current | Threshold | Result |\n")
+                  f.write("|:--------|---------:|----------:|:-------:|\n")
+                  f.write(f"| Lines  | {line_pct:.2f}% | {cov_min:.2f}% | {line_res} |\n")
+                  f.write(f"| Branch | {branch_pct:.2f}% | {br_min:.2f}% | {branch_res} |\n")
+
+              print(f"Line coverage: {line_pct:.2f}% (gate {cov_min:.2f}%) -> {line_res}")
+              print(f"Branch coverage: {branch_pct:.2f}% (gate {br_min:.2f}%) -> {branch_res}")
+
+          except Exception as e:
+              print(f"Coverage parsing failed: {e}")
+              with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+                  f.write("##Coverage Parsing Failed\n\n")
+                  f.write(f"{str(e)}\n")
           PY
-      
 
+      # 4. Artifact Uploads & Reporting
+      # 빌드 로그, 테스트 리포트, 커버리지 HTML 등을 업로드하고,
+      # GitHub Summary 및 코멘트로 테스트 결과를 표시
       - name: Upload coverage HTML
-        if: always()
+        if: always() && github.event_name == 'pull_request' && github.base_ref == 'develop'
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-html-report
@@ -146,4 +180,3 @@ jobs:
         with:
           files: '**/build/test-results/test/TEST-*.xml'
           comment_mode: always
-
