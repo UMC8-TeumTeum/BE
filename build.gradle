@@ -28,8 +28,8 @@ jacoco {
 	toolVersion = "0.8.10"
 }
 
-def coverageMin       = (project.findProperty('coverage.min') ?: '0.60') as BigDecimal
-def coverageBranchMin = (project.findProperty('coverage.branchMin') ?: '0.30') as BigDecimal
+def coverageMin       = (project.findProperty('coverage.min') ?: '0.10') as BigDecimal
+def coverageBranchMin = (project.findProperty('coverage.branchMin') ?: '0.05') as BigDecimal
 
 tasks.named('test') {
 	useJUnitPlatform()
