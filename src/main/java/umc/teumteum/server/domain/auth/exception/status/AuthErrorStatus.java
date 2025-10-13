@@ -15,6 +15,7 @@ public enum AuthErrorStatus implements BaseErrorCode {
     KAKAO_USER_INFO_FAILED(HttpStatus.BAD_REQUEST, "AUTH4002", "카카오 사용자 정보 조회에 실패했습니다."),
     NAVER_USER_INFO_FAILED(HttpStatus.BAD_REQUEST, "AUTH4003", "네이버 사용자 정보 조회에 실패했습니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "AUTH4004", "유효하지 않은 리프레시 토큰입니다."),
+    GOOGLE_USER_INFO_FAILED(HttpStatus.BAD_REQUEST, "AUTH4005", "구글 사용자 정보 조회에 실패했습니다."),
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH4011", "리프레시 토큰이 존재하지 않습니다."),
     REFRESH_TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "AUTH40112", "리프레시 토큰이 일치하지 않습니다."),
 
