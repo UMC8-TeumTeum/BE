@@ -24,6 +24,7 @@ public enum UserErrorStatus implements BaseErrorCode {
     ROUTINE_SLEEP_CONFLICT(HttpStatus.BAD_REQUEST, "ONBOARDING4008", "수면 패턴과 반복 일정 간 시간 충돌이 발생했습니다."),
     INVALID_REMIND_ALARM_VALUE(HttpStatus.BAD_REQUEST, "ONBOARDING4009", "리마인드 알림은 1분, 3분, 5분, 10분, 30분 중에서만 설정 가능합니다."),
     EXPIRED_UPLOAD_SESSION(HttpStatus.BAD_REQUEST, "ONBOARDING4010", "프로필 이미지 업로드 세션이 만료되었습니다."),
+    INVALID_SLEEP_DURATION(HttpStatus.BAD_REQUEST, "ONBOARDING4011", "수면 패턴은 최대 23시간까지 설정 가능합니다."),
     NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "ONBOARDING4091", "이미 사용 중인 닉네임입니다."),
     ;
 

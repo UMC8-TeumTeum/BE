@@ -2,6 +2,7 @@ package umc.teumteum.server.domain.user.service;
 
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -193,7 +194,10 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 1. 사용자 step 확인
         validateOnboardingStep(user, UserStep.ONBOARDING);
 
-        // 2. 수면패턴 수정
+        // 2. 수면패턴 검증 (최대 23시간)
+        validateSleepPattern(request.getSleepTime(), request.getWakeTime());
+
+        // 3. 수면패턴 등록
         user.updateSleepPattern(request.getSleepTime(), request.getWakeTime());
     }
 
@@ -236,7 +240,6 @@ public class OnboardingServiceImpl implements OnboardingService {
         List<Schedule> routineSchedules = OnboardingConverter.toScheduleList(todayRoutines, user, LocalDate.now());
         scheduleJdbcRepository.batchInsertSchedules(routineSchedules);
     }
-
 
 
     // 온보딩 - 리마인드 알림 설정 등록
@@ -368,5 +371,21 @@ public class OnboardingServiceImpl implements OnboardingService {
     // 프로필 이미지 키 get
     private String getProfileImageKey(String userId, String sessionId) {
         return String.format("PROFILE_IMAGE_FILE_NAME:%s:%s", userId, sessionId);
+    }
+
+    private void validateSleepPattern(LocalTime sleepTime, LocalTime wakeTime) {
+        // sleepTime과 wakeTime 사이의 시간 차이를 분 단위로 계산 (같은 날 기준 계산)
+        long minutesDifference = Duration.between(sleepTime, wakeTime).toMinutes();
+
+        // wakeTime이 sleepTime보다 이전이거나 같으면 음수 또는 0이 되기 때문에, 다음날까지 이어지는 수면으로 간주하여 24시간 보정
+        // ex. 22:00~21:00 => 시간차이 계산 => -60분 => 24시간 보정 => +(23*60)분
+        if (minutesDifference <= 0) {
+            minutesDifference += 24 * 60;
+        }
+
+        // 23시간까지 설정 가능
+        if (minutesDifference > 23 * 60) {
+            throw new OnboardingException(UserErrorStatus.INVALID_SLEEP_DURATION);
+        }
     }
 }
