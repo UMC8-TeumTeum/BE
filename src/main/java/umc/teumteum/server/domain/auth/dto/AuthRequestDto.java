@@ -16,9 +16,9 @@ public class AuthRequestDto {
     @Schema(title = "인증 - 소셜 로그인 Request")
     public static class SocialLoginRequest {
 
-        @NotBlank(message = "액세스 토큰은 필수입니다.")
-        @Schema(description = "소셜 액세스 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
-        private String accessToken;
+        @NotBlank(message = "소셜 타입별 토큰은 필수입니다.")
+        @Schema(description = "소셜 타입별 토큰. 카카오/네이버는 accessToken, 구글은 idToken을 전달", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
+        private String token;
     }
 
 
