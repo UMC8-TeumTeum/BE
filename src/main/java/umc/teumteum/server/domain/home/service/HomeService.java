@@ -61,4 +61,7 @@ public interface HomeService {
 
     // 리마인드 알림 정보 변경
     void updateAlarm(HomeRequestDto.AlarmDto dto);
+
+    // 시간표 조회
+    HomeResponseDto.TimeTableDto getTimeTable(LocalDate date, User user);
 }

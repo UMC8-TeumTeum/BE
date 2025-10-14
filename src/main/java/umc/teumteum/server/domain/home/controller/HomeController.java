@@ -113,4 +113,13 @@ public class HomeController {
         return ApiResponse.of(HomeSuccessStatus._ALARM_UPDATED,null);
     }
 
+    @GetMapping(value = "/timetable", produces = "application/json")
+    @Operation(summary = "시간표 조회 API",description = "오늘의 시간표를 조회하는 API입니다. query string으로 오늘 날짜를 입력해주세요.")
+    public ApiResponse<HomeResponseDto.TimeTableDto> getTimetable(
+            @Parameter(name = "date", description = "조회할 날짜", example = "2025-10-14") @RequestParam("date") LocalDate date,
+            @CurrentUser @Parameter(hidden = true) User user){
+        HomeResponseDto.TimeTableDto response = homeService.getTimeTable(date,user);
+        return ApiResponse.of(HomeSuccessStatus._TIMETABLE_LOADED,response);
+    }
+
 }

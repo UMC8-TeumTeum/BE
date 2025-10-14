@@ -77,7 +77,7 @@ public class HomeResponseDto {
   @Builder
   @Getter
   @AllArgsConstructor
-  @Schema(title = "ReminderDto : 온보딩 리망니드 알림 정보 응답 Dto")
+  @Schema(title = "ReminderDto : 온보딩 리마인드 알림 정보 응답 Dto")
   public static class ReminderDto {
     @Schema(description = "온보딩 리마인드 알림 설정 정보", example = "[1,5]")
     private List<Integer> reminders;
@@ -149,5 +149,31 @@ public class HomeResponseDto {
   public static class ReminderAlarmDto {
     private Integer alarm;
     private AlarmStatus status;
+  }
+
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  @Schema(title = "TimeSlotDto : 단일 시간 구간 Dto")
+  public static class TimeSlotDto {
+    @Schema(description = "시작 시간", example = "10:00")
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime startTime;
+
+    @Schema(description = "종료 시간", example = "10:00")
+    @JsonSerialize(using = TimeSerializer.class)
+    private LocalTime endTime;
+  }
+
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  @Schema(title = "TimeTableDto : 시간표 조회 응답 Dto")
+  public static class TimeTableDto {
+    @Schema(description = "수면 패턴 배열", example = "[{startTime: '00:00', endTime: '07:30'}]")
+    private List<TimeSlotDto> sleep;
+
+    @Schema(description = "투두 배열", example = "[{startTime: '09:00', endTime: '10:30'}]")
+    private List<TimeSlotDto> todo;
   }
 }
