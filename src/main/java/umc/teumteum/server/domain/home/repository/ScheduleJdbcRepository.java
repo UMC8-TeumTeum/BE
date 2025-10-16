@@ -26,12 +26,12 @@ public class ScheduleJdbcRepository {
         INSERT INTO schedule
           (user_id, routine_id, title, description, 
            date, start_time, end_time, type, status,
-           include_teum, is_deleted, is_public,
+           include_teum, is_deleted, is_public, routine_status,
            created_at, updated_at)
         VALUES
           (?, ?, ?, ?, 
            ?, ?, ?, ?, ?,
-           ?, ?, ?,
+           ?, ?, ?, ?,
            NOW(), NOW())
         """;
 
@@ -55,6 +55,7 @@ public class ScheduleJdbcRepository {
                         ps.setBoolean(10,false);
                         ps.setBoolean(11,false);
                         ps.setBoolean(12, false);
+                        ps.setString(13,schedule.getRoutineStatus().toString());
                     }
 
                     @Override
