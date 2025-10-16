@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.home.dto.request.HomeRequestDto;
+import umc.teumteum.server.domain.home.entity.enums.RoutineStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
@@ -69,6 +70,11 @@ public class Schedule extends BaseEntity {
     @Builder.Default
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
+
+    @Builder.Default()
+    @Enumerated(EnumType.STRING)
+    @Column(name = "routine_status", nullable = false)
+    private RoutineStatus routineStatus = RoutineStatus.ORIGINAL;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teum_request_id")
