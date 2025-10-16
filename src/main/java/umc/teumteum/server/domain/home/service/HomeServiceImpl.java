@@ -735,7 +735,7 @@ public class HomeServiceImpl implements HomeService {
 
         // 2. 삭제되지 않은 스케줄 필터링 & 삭제된 틈 필터링
         List<Schedule> validSchedules = allSchedules.stream()
-                .filter(s -> !s.getIsDeleted())
+                .filter(s -> !s.getRoutineStatus().equals(RoutineStatus.DELETED))
                 .filter(s -> !s.getStatus().equals(ScheduleStatus.CANCELLED))
                 .toList();
 
@@ -758,9 +758,6 @@ public class HomeServiceImpl implements HomeService {
                         alarmStatus = AlarmStatus.NONE;
                     } else if(scheduleReminders.stream().anyMatch(r -> r.getAlarmStatus() == AlarmStatus.ACTIVE)){
                         alarmStatus = AlarmStatus.ACTIVE;
-                    } else if(schedule.getType() == ScheduleType.ROUTINE) {
-                        // 데모데이까지 반복일정의 경우 알림은 NONE 수정불가
-                        alarmStatus = AlarmStatus.NONE;
                     } else{
                         alarmStatus = AlarmStatus.INACTIVE;
                     }
@@ -768,9 +765,11 @@ public class HomeServiceImpl implements HomeService {
                 })
                 .toList();
 
-        // 5. 삭제된 루틴 ID
-        Set<Long> deletedRoutineIds = allSchedules.stream()
-                .filter(s-> s.getRoutine() != null && s.getIsDeleted())
+        // 5. 삭제 or 수정된 루틴 ID
+        Set<Long> excludedRoutineIds = allSchedules.stream()
+                .filter(s-> s.getRoutine() != null)
+                .filter(s -> s.getRoutineStatus() ==  RoutineStatus.DELETED
+                                    || s.getRoutineStatus() == RoutineStatus.MODIFIED)
                 .map(s->s.getRoutine().getId())
                 .collect(Collectors.toSet());
 
@@ -782,10 +781,16 @@ public class HomeServiceImpl implements HomeService {
             Weekday todayWeekday = Weekday.valueOf(date.getDayOfWeek().name());
             List<Routine> routines = routineRepository.findByUserAndWeekday(user, todayWeekday);
 
-            // 6-2. 삭제되지 않은 루틴에 대해 가상의 ID 생성
+            // 6-2. 수정 or 삭제되지 않은 루틴에 대해 가상의 ID 생성
             routineDtos = routines.stream()
-                    .filter(r -> !deletedRoutineIds.contains(r.getId()))
-                    .map(r -> scheduleConverter.toVirtualRoutineDto(r, date))
+                    .filter(r -> !excludedRoutineIds.contains(r.getId()))
+                    .map(r -> {
+                        // 알림 상태 설정
+                        boolean hasAlarm = remindAlarmRepository.existsByUser(user);
+                        AlarmStatus alarmStatus = hasAlarm ? AlarmStatus.ACTIVE : AlarmStatus.NONE;
+                        // dto 변환
+                        return scheduleConverter.toVirtualRoutineDto(r, date, alarmStatus);
+                    })
                     .toList();
         }
 

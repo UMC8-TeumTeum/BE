@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface RemindAlarmRepository extends JpaRepository<RemindAlarm, Long> {
     Optional<RemindAlarm> findByUser(User user);
     List<RemindAlarm> findAllByUser(User user);
+    Boolean existsByUser(User user);
 }

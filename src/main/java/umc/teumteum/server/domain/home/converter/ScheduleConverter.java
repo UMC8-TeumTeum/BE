@@ -1,6 +1,8 @@
 package umc.teumteum.server.domain.home.converter;
 
 import java.time.Duration;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.dto.request.HomeRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
@@ -21,6 +23,7 @@ import java.time.LocalTime;
 import java.util.*;
 
 @Component
+@RequiredArgsConstructor
 public class ScheduleConverter {
 
     // TodoRequestDTO -> Schedule
@@ -184,7 +187,7 @@ public class ScheduleConverter {
     }
 
     // Routine -> HomeResponseDto.TodolistDto (미래의 일정일 경우)
-    public HomeResponseDto.TodolistDto toVirtualRoutineDto(Routine routine,LocalDate date) {
+    public HomeResponseDto.TodolistDto toVirtualRoutineDto(Routine routine,LocalDate date, AlarmStatus alarmStatus) {
 
         // 가상의 ID 생성
         String dateStr = String.format("%04d%02d%02d", date.getYear(), date.getMonthValue(), date.getDayOfMonth());
@@ -200,7 +203,7 @@ public class ScheduleConverter {
                 .startTime(routine.getStartTime())
                 .endTime(endtime)
                 .isPublic(false)
-                .alarmStatus(AlarmStatus.NONE)
+                .alarmStatus(alarmStatus)
                 .type(ScheduleType.ROUTINE)
                 .build();
 
@@ -222,5 +225,4 @@ public class ScheduleConverter {
                 .routine(routine)
                 .build();
     }
-
 }
