@@ -473,7 +473,7 @@ public class HomeServiceImpl implements HomeService {
 
         for (Schedule schedule : schedules) {
             // 삭제된 루틴 ->  표시 X
-            if(schedule.getRoutine() != null && schedule.getIsDeleted()) continue;
+            if(schedule.getRoutine() != null && schedule.getRoutineStatus() == RoutineStatus.DELETED) continue;
 
             // 취소된 틈 -> 표시 X
             if(schedule.getStatus() == ScheduleStatus.CANCELLED) continue;
@@ -672,7 +672,7 @@ public class HomeServiceImpl implements HomeService {
         for (Schedule schedule : schedules) {
             LocalDate date = schedule.getDate();
             // 3-1. 삭제된 루틴 ->  표시 X
-            if(schedule.getRoutine() != null && schedule.getIsDeleted()) continue;
+            if(schedule.getRoutine() != null && schedule.getRoutineStatus() == RoutineStatus.DELETED) continue;
 
             // 3-2. 취소된 틈 -> 표시 X
             if(schedule.getStatus() == ScheduleStatus.CANCELLED) continue;
@@ -687,7 +687,7 @@ public class HomeServiceImpl implements HomeService {
 
             // 4-1. 스케줄에서 삭제된 날짜의 루틴ID만 모아둠
             Map<LocalDate, Set<Long>> deletedRoutine = schedules.stream()
-                    .filter(s -> s.getRoutine() != null && s.getIsDeleted())
+                    .filter(s -> s.getRoutine() != null && s.getRoutineStatus() == RoutineStatus.DELETED)
                     .collect(Collectors.groupingBy(
                             Schedule::getDate,
                             Collectors.mapping(

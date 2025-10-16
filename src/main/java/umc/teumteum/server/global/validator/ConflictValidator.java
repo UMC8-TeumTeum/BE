@@ -3,6 +3,7 @@ package umc.teumteum.server.global.validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.entity.enums.RoutineStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
@@ -129,7 +130,7 @@ public class ConflictValidator {
                 }
 
                 // Schedule이 존재하되 isDeleted == false면 → 충돌
-                if (!existing.get().getIsDeleted()) {
+                if (!existing.get().getRoutineStatus().equals(RoutineStatus.DELETED)) {
                     throw new GeneralException(ConflictErrorStatus.ROUTINE_CONFLICT);
                 }
 

@@ -6,6 +6,7 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.entity.enums.RoutineStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
@@ -409,7 +410,7 @@ public class TeumServiceImpl implements TeumService {
             );
 
             schedules.stream()
-                    .filter(schedule -> !Boolean.TRUE.equals(schedule.getIsDeleted()))
+                    .filter(schedule -> schedule.getRoutineStatus() != RoutineStatus.DELETED)
                     .map(schedule -> teumConverter.sliceScheduleToDate(schedule, date))
                     .filter(Objects::nonNull)
                     .forEach(scheduledSlots::add);

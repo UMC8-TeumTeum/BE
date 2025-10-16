@@ -127,7 +127,6 @@ public class ScheduleConverter {
                 .includeTeum(false)
                 .type(ScheduleType.ROUTINE)
                 .status(ScheduleStatus.ACTIVE)
-                .isDeleted(true)
                 .routineStatus(RoutineStatus.DELETED)
                 .build();
     }

@@ -75,10 +75,6 @@ public class Schedule extends BaseEntity {
     @Column(name = "status", nullable = false)
     private ScheduleStatus status = ScheduleStatus.ACTIVE;
 
-    @Builder.Default
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;
-
     @Builder.Default()
     @Enumerated(EnumType.STRING)
     @Column(name = "routine_status", nullable = false)
@@ -114,11 +110,6 @@ public class Schedule extends BaseEntity {
 
     public void complete() {
         this.status = ScheduleStatus.COMPLETED;
-    }
-
-    // 루틴 삭제 처리
-    public void setIsDeleted(boolean isDeleted) {
-        this.isDeleted = isDeleted;
     }
 
     // 과거 & 현재 루틴 수정 처리
