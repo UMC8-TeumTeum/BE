@@ -79,7 +79,7 @@ public class ScheduleConverter {
                 .endTime(date.atTime(routine.getEndTime()))
                 .isPublic(false)
                 .includeTeum(false)
-                .remindAlarm(List.of())
+                .remindAlarm(toOnboardingReminderDtos(onboardingReminders))
                 .profileUrl(profileUrls)
                 .build();
     }
@@ -93,6 +93,21 @@ public class ScheduleConverter {
                     HomeResponseDto.ReminderAlarmDto dto = new HomeResponseDto.ReminderAlarmDto();
                     dto.setAlarm(r.getReminderTime());
                     dto.setStatus(r.getAlarmStatus());
+                    return dto;
+                })
+                .toList();
+    }
+
+    // 온보딩 리마인드 알림 변혼
+    private List<HomeResponseDto.ReminderAlarmDto> toOnboardingReminderDtos(List<RemindAlarm> onboardingReminders) {
+        if (onboardingReminders == null || onboardingReminders.isEmpty()) return List.of();
+
+        return onboardingReminders.stream()
+                .filter(Objects::nonNull)
+                .map(ra -> {
+                    HomeResponseDto.ReminderAlarmDto dto = new HomeResponseDto.ReminderAlarmDto();
+                    dto.setAlarm(ra.getMinutesBefore());
+                    dto.setStatus(AlarmStatus.ACTIVE);
                     return dto;
                 })
                 .toList();
