@@ -9,6 +9,7 @@ import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
+import umc.teumteum.server.domain.home.entity.enums.RoutineStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.user.entity.RemindAlarm;
@@ -202,6 +203,23 @@ public class ScheduleConverter {
                 .type(ScheduleType.ROUTINE)
                 .build();
 
+    }
+
+    // HomeRequestDto.TodoRequestDto -> Schedule (반복일정 수정)
+    public Schedule toScheduleFromRoutine(HomeRequestDto.TodoRequestDto dto,User user,Routine routine) {
+        return Schedule.builder()
+                .user(user)
+                .title(dto.getTitle())
+                .description(dto.getDescription())
+                .type(ScheduleType.ROUTINE)
+                .date(dto.getStartTime().toLocalDate())
+                .startTime(dto.getStartTime())
+                .endTime(dto.getEndTime())
+                .isPublic(dto.getIsPublic())
+                .includeTeum(dto.getIncludeTeum())
+                .routineStatus(RoutineStatus.MODIFIED)
+                .routine(routine)
+                .build();
     }
 
 }

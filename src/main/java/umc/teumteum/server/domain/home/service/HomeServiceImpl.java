@@ -160,8 +160,12 @@ public class HomeServiceImpl implements HomeService {
     public HomeResponseDto.TodoIdDto updateTodoInfo(HomeRequestDto.TodoRequestDto dto, Long scheduleId, User user) {
         // Todo(Schedule) 수정
         if (scheduleId < 0) {
-            // 1. 미래의 반복일정은 수정할 수 없음
-            throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
+            // 1. 미래의 반복일정 수정
+            /**
+             * 여기에 수정 로직 들어가야함
+             * 다른 메소드 호출로 처리하기
+             */
+            return updateRoutine(dto, scheduleId, user);
         }
 
         // 2. 스케줄 테이블 조회
@@ -171,6 +175,9 @@ public class HomeServiceImpl implements HomeService {
         if (schedule.getType() == ScheduleType.ROUTINE) {
             // 3. 현재, 과거의 반복일정은 수정할 수 없음
             throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
+            /**
+             * 여기에 현재 과저 반복일정 수정 로직 추가
+             */
         }
 
         // 4. 시간 유효성 검사
@@ -195,6 +202,47 @@ public class HomeServiceImpl implements HomeService {
             scheduleReminderRepository.saveAll(reminders);
         }
         return new HomeResponseDto.TodoIdDto(schedule.getId());
+    }
+
+    @Transactional
+    public HomeResponseDto.TodoIdDto updateRoutine(HomeRequestDto.TodoRequestDto dto, Long scheduleId, User user) {
+        // 미래의 반복일정 수정로직
+
+        // 1. 루틴 파싱
+        HomeResponseDto.VirtualRoutineDto parsedRoutine =  getVirtualRoutine(scheduleId);
+        LocalDate date = parsedRoutine.getDate();
+        Long  routineId = parsedRoutine.getRoutineId();
+
+        Routine routine = routineRepository.findById(routineId)
+                .orElseThrow(() -> new HomeException(HomeErrorStatus._ROUTINE_NOT_FOUND));
+
+        // 2. 시간 검증
+        LocalDateTime start = dto.getStartTime();
+        LocalDateTime end = dto.getEndTime();
+
+        // 2-1. 당일 날짜인지 검증
+        if(!start.toLocalDate().equals(date) || !end.toLocalDate().equals(date)){
+            throw new HomeException(HomeErrorStatus._ROUTINE_OUT_OF_BOUND);
+        }
+
+        // 2-2. 시간 유효성 검사
+        if(end.isBefore(start) || end.isEqual(start)){
+            throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
+        }
+
+        // 3. 스케줄 테이블에 저장
+        Schedule schedule = scheduleConverter.toScheduleFromRoutine(dto,user,routine);
+        Schedule savedSchedule = scheduleRepository.save(schedule);
+
+        // 4. 리마인드 저장
+        if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
+            List<ScheduleReminder> reminders =
+                    scheduleConverter.toScheduleReminders(savedSchedule, dto.getRemindAlarm());
+            scheduleReminderRepository.saveAll(reminders);
+        }
+
+        // 4. 반환
+        return new HomeResponseDto.TodoIdDto(savedSchedule.getId());
     }
 
     @Transactional
