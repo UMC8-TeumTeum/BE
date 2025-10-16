@@ -283,9 +283,9 @@ public class HomeServiceImpl implements HomeService {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
 
-        // 2-1. 루틴 기반 스케줄일 경우
+        // 2-1. 루틴 기반 스케줄일 경우 -> routine_status = MODIFIED
         if (schedule.getRoutine() != null) {
-            schedule.setIsDeleted(true);
+            schedule.setRoutineStatus(RoutineStatus.DELETED);
             return;
         }
 

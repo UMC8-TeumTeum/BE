@@ -110,6 +110,7 @@ public class ScheduleConverter {
                 .type(ScheduleType.ROUTINE)
                 .status(ScheduleStatus.ACTIVE)
                 .isDeleted(true)
+                .routineStatus(RoutineStatus.DELETED)
                 .build();
     }
 
