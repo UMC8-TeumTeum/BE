@@ -24,7 +24,15 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "schedule")
+@Table(
+        name = "schedule",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_user_routine_date",
+                        columnNames = {"user_id","routine_id","date"}
+                )
+        }
+)
 public class Schedule extends BaseEntity {
 
     @Id
