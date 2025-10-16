@@ -15,10 +15,7 @@ import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
-import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
-import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
-import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
-import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.domain.home.entity.enums.*;
 import umc.teumteum.server.domain.home.entity.mapping.WishCategory;
 import umc.teumteum.server.domain.home.exception.status.HomeErrorStatus;
 import umc.teumteum.server.domain.home.exception.HomeException;
@@ -161,11 +158,7 @@ public class HomeServiceImpl implements HomeService {
         // Todo(Schedule) 수정
         if (scheduleId < 0) {
             // 1. 미래의 반복일정 수정
-            /**
-             * 여기에 수정 로직 들어가야함
-             * 다른 메소드 호출로 처리하기
-             */
-            return updateRoutine(dto, scheduleId, user);
+            return updateFutureRoutine(dto, scheduleId, user);
         }
 
         // 2. 스케줄 테이블 조회
@@ -173,11 +166,8 @@ public class HomeServiceImpl implements HomeService {
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
 
         if (schedule.getType() == ScheduleType.ROUTINE) {
-            // 3. 현재, 과거의 반복일정은 수정할 수 없음
-            throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
-            /**
-             * 여기에 현재 과저 반복일정 수정 로직 추가
-             */
+            // 3. 현재, 과거의 반복일정 수정
+            return updateCurrentRoutine(dto,schedule);
         }
 
         // 4. 시간 유효성 검사
@@ -205,7 +195,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Transactional
-    public HomeResponseDto.TodoIdDto updateRoutine(HomeRequestDto.TodoRequestDto dto, Long scheduleId, User user) {
+    public HomeResponseDto.TodoIdDto updateFutureRoutine(HomeRequestDto.TodoRequestDto dto, Long scheduleId, User user) {
         // 미래의 반복일정 수정로직
 
         // 1. 루틴 파싱
@@ -243,6 +233,38 @@ public class HomeServiceImpl implements HomeService {
 
         // 4. 반환
         return new HomeResponseDto.TodoIdDto(savedSchedule.getId());
+    }
+
+    @Transactional
+    public HomeResponseDto.TodoIdDto updateCurrentRoutine(HomeRequestDto.TodoRequestDto dto, Schedule schedule) {
+        // 과거 & 오늘의 루틴 수정
+
+        // 시간 검증
+         LocalDate targetDate = schedule.getDate();
+
+        // 1-1. 당일 날짜 내 검증
+        if(!dto.getStartTime().toLocalDate().equals(targetDate) ||
+                !dto.getEndTime().toLocalDate().equals(targetDate)){
+            throw new HomeException(HomeErrorStatus._ROUTINE_OUT_OF_BOUND);
+        }
+
+        // 1-2. 시간 유효성 검사
+        if (dto.getEndTime().isBefore(dto.getStartTime()) || dto.getEndTime().isEqual(dto.getStartTime())) {
+            throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
+        }
+
+        // 2-1. 필드 업데이트
+        schedule.updateField(dto);
+        schedule.setRoutineStatus(RoutineStatus.MODIFIED);
+
+        // 2-2. 리마인더 생성
+        scheduleReminderRepository.deleteByScheduleId(schedule.getId());
+        if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
+            List<ScheduleReminder> reminders =
+                    scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm());
+            scheduleReminderRepository.saveAll(reminders);
+        }
+        return new HomeResponseDto.TodoIdDto(schedule.getId());
     }
 
     @Transactional

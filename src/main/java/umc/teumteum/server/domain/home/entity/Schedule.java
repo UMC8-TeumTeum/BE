@@ -113,4 +113,9 @@ public class Schedule extends BaseEntity {
         this.isDeleted = isDeleted;
     }
 
+    // 과거 & 현재 루틴 수정 처리
+    public void setRoutineStatus(RoutineStatus routineStatus) {
+        this.routineStatus = routineStatus;
+    }
+
 }
