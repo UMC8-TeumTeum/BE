@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.home.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -206,58 +207,97 @@ public class HomeServiceImpl implements HomeService {
         Routine routine = routineRepository.findById(routineId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._ROUTINE_NOT_FOUND));
 
-        // 2. 시간 검증
+        // 1. 필드 수정 여부 판단
         LocalDateTime start = dto.getStartTime();
         LocalDateTime end = dto.getEndTime();
 
-        // 2-1. 당일 날짜인지 검증
+        // 2-1. 날짜 수정 여부
         if(!start.toLocalDate().equals(date) || !end.toLocalDate().equals(date)){
-            throw new HomeException(HomeErrorStatus._ROUTINE_OUT_OF_BOUND);
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
         }
 
-        // 2-2. 시간 유효성 검사
-        if(end.isBefore(start) || end.isEqual(start)){
-            throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
+        // 2-2. 기타 필드 수정 여부
+        if(dto.getTitle() != null && !dto.getTitle().equals(routine.getTitle())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getDescription() != null && !dto.getDescription().equals(routine.getDescription())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getIsPublic() != null && !dto.getIsPublic().equals(false)) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getIncludeTeum() != null && !dto.getIncludeTeum().equals(false)) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getStartTime().toLocalTime() != null && !dto.getStartTime().toLocalTime().equals(routine.getStartTime())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getStartTime().toLocalTime() != null && !dto.getEndTime().toLocalTime().equals(routine.getEndTime())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
         }
 
         // 3. 스케줄 테이블에 저장
-        Schedule schedule = scheduleConverter.toScheduleFromRoutine(dto,user,routine);
-        Schedule savedSchedule = scheduleRepository.save(schedule);
+        Schedule schedule = getOrCreateRoutine(user,routine,date,dto);
 
         // 4. 리마인드 저장
+        scheduleReminderRepository.deleteByScheduleId(schedule.getId());
         if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
             List<ScheduleReminder> reminders =
-                    scheduleConverter.toScheduleReminders(savedSchedule, dto.getRemindAlarm());
+                    scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm());
             scheduleReminderRepository.saveAll(reminders);
         }
+        return new HomeResponseDto.TodoIdDto(schedule.getId());
+    }
 
-        // 4. 반환
-        return new HomeResponseDto.TodoIdDto(savedSchedule.getId());
+    @Transactional
+    public Schedule getOrCreateRoutine(User user, Routine routine, LocalDate date, HomeRequestDto.TodoRequestDto dto) {
+        // 1. 이미 존재하는지 먼저 조회
+        Optional<Schedule> existing = scheduleRepository.findByUserAndRoutineAndDate(user, routine, date);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
+        // 2. 없으면 convert로 새로 생성
+        Schedule newSchedule = scheduleConverter.toScheduleFromRoutine(dto, user, routine);
+
+        try {
+            // 저장
+            return scheduleRepository.save(newSchedule);
+        } catch (DataIntegrityViolationException e) {
+            // 동시에 다른 요청이 먼저 저장했을 수도 있으니 다시 조회
+            return scheduleRepository.findByUserAndRoutineAndDate(user, routine, date)
+                    .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
+        }
     }
 
     @Transactional
     public HomeResponseDto.TodoIdDto updateCurrentRoutine(HomeRequestDto.TodoRequestDto dto, Schedule schedule) {
-        // 과거 & 오늘의 루틴 수정
+        // 스케줄테이블의 루틴 수정 (과거 & 현재 & 이미 수정한 미래의 루틴)
 
-        // 시간 검증
-         LocalDate targetDate = schedule.getDate();
-
-        // 1-1. 당일 날짜 내 검증
-        if(!dto.getStartTime().toLocalDate().equals(targetDate) ||
-                !dto.getEndTime().toLocalDate().equals(targetDate)){
-            throw new HomeException(HomeErrorStatus._ROUTINE_OUT_OF_BOUND);
+        // 1. 루틴은 상세 필드 수정 불가
+        if(dto.getTitle() != null && !dto.getTitle().equals(schedule.getTitle())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getDescription() != null && !dto.getDescription().equals(schedule.getDescription())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getIsPublic() != null && !dto.getIsPublic().equals(schedule.getIsPublic())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getIncludeTeum() != null && !dto.getIncludeTeum().equals(schedule.getIncludeTeum())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getStartTime() != null && !dto.getStartTime().isEqual(schedule.getStartTime())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getEndTime() != null && !dto.getEndTime().isEqual(schedule.getEndTime())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
         }
 
-        // 1-2. 시간 유효성 검사
-        if (dto.getEndTime().isBefore(dto.getStartTime()) || dto.getEndTime().isEqual(dto.getStartTime())) {
-            throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
-        }
-
-        // 2-1. 필드 업데이트
-        schedule.updateField(dto);
+        // 2. 필드 업데이트
         schedule.setRoutineStatus(RoutineStatus.MODIFIED);
 
-        // 2-2. 리마인더 생성
+        // 3. 리마인더 생성
         scheduleReminderRepository.deleteByScheduleId(schedule.getId());
         if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
             List<ScheduleReminder> reminders =
