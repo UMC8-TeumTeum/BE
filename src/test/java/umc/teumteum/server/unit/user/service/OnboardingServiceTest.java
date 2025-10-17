@@ -71,6 +71,43 @@ class OnboardingServiceTest {
                 .build();
     }
 
+    // ==================== 수면패턴 시간 길이 검증 ====================
+
+    @Test
+    @DisplayName("수면패턴 23시간 미만 - 정상")
+    void sleep_less23h_ok() {
+        // when & then
+        assertThatCode(() -> {
+            onboardingService.saveSleepPattern(
+                    createSleepPattern(LocalTime.of(22, 0), LocalTime.of(20, 0)), testUser
+            );
+        }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("수면패턴 23시간 - 정상")
+    void sleep_23h_ok() {
+        // when & then
+        assertThatCode(() -> {
+            onboardingService.saveSleepPattern(
+                    createSleepPattern(LocalTime.of(22, 0), LocalTime.of(21, 0)), testUser
+            );
+        }).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("수면패턴 23시간 초과 - 예외")
+    void sleep_over23h_fail() {
+        // when & then
+        assertThatCode(() -> {
+            onboardingService.saveSleepPattern(
+                    createSleepPattern(LocalTime.of(22, 0), LocalTime.of(21, 30)), testUser
+            );
+        }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
+            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_SLEEP_DURATION);
+        });
+    }
+
     // ==================== 수면패턴A (22:00-07:00) ====================
 
     @Test
