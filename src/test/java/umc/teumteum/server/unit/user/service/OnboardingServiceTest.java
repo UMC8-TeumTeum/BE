@@ -376,36 +376,32 @@ class OnboardingServiceTest {
     // ==================== 헬퍼 메서드 ====================
 
     // 수면패턴 생성 메서드
+    private OnboardingRequestDto.SleepPatternRequest createSleepPattern(LocalTime sleepTime, LocalTime wakeTime) {
+        return OnboardingRequestDto.SleepPatternRequest.builder()
+                .sleepTime(sleepTime)
+                .wakeTime(wakeTime)
+                .build();
+    }
+
+
     private OnboardingRequestDto.SleepPatternRequest createSleepPatternA() {
         // A: 22:00-07:00
-        return OnboardingRequestDto.SleepPatternRequest.builder()
-                .sleepTime(LocalTime.of(22, 0))
-                .wakeTime(LocalTime.of(7, 0))
-                .build();
+        return createSleepPattern(LocalTime.of(22, 0), LocalTime.of(7, 0));
     }
 
     private OnboardingRequestDto.SleepPatternRequest createSleepPatternB() {
         // B: 18:00-00:00
-        return OnboardingRequestDto.SleepPatternRequest.builder()
-                .sleepTime(LocalTime.of(18, 0))
-                .wakeTime(LocalTime.MIDNIGHT)
-                .build();
+        return createSleepPattern(LocalTime.of(18, 0), LocalTime.MIDNIGHT);
     }
 
     private OnboardingRequestDto.SleepPatternRequest createSleepPatternC() {
         // C: 00:00-09:00
-        return OnboardingRequestDto.SleepPatternRequest.builder()
-                .sleepTime(LocalTime.MIDNIGHT)
-                .wakeTime(LocalTime.of(9, 0))
-                .build();
+        return createSleepPattern(LocalTime.MIDNIGHT, LocalTime.of(9, 0));
     }
 
     private OnboardingRequestDto.SleepPatternRequest createSleepPatternD() {
         // D: 11:00-20:00
-        return OnboardingRequestDto.SleepPatternRequest.builder()
-                .sleepTime(LocalTime.of(11, 0))
-                .wakeTime(LocalTime.of(20, 0))
-                .build();
+        return createSleepPattern(LocalTime.of(11, 0), LocalTime.of(20, 0));
     }
 
     // 반복일정 생성 메서드
