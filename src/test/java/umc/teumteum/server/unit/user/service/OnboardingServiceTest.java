@@ -1,5 +1,6 @@
 package umc.teumteum.server.unit.user.service;
 
+import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -374,7 +375,6 @@ class OnboardingServiceTest {
     }
 
     // ==================== 헬퍼 메서드 ====================
-
     // 수면패턴 생성 메서드
     private OnboardingRequestDto.SleepPatternRequest createSleepPattern(LocalTime sleepTime, LocalTime wakeTime) {
         return OnboardingRequestDto.SleepPatternRequest.builder()
@@ -382,7 +382,6 @@ class OnboardingServiceTest {
                 .wakeTime(wakeTime)
                 .build();
     }
-
 
     private OnboardingRequestDto.SleepPatternRequest createSleepPatternA() {
         // A: 22:00-07:00
@@ -404,78 +403,17 @@ class OnboardingServiceTest {
         return createSleepPattern(LocalTime.of(11, 0), LocalTime.of(20, 0));
     }
 
+
     // 반복일정 생성 메서드
-    private OnboardingRequestDto.RoutineListRequest createRoutineA() {
-        // A: 09:00-18:00
-        List<OnboardingRequestDto.RoutineDTO> routines = Arrays.asList(
-                createRoutineDTO(Weekday.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), "틈틈 개발")
-        );
-        return OnboardingRequestDto.RoutineListRequest.builder().routine(routines).build();
-    }
+    private OnboardingRequestDto.RoutineListRequest createRoutine(Weekday[] weekdays, LocalTime[] startTimes, LocalTime[] endTimes, String[] titles) {
+        List<OnboardingRequestDto.RoutineDTO> routines = new ArrayList<>();
+        for (int i = 0; i < weekdays.length; i++) {
+            routines.add(createRoutineDTO(weekdays[i], startTimes[i], endTimes[i], titles[i]));
+        }
 
-    private OnboardingRequestDto.RoutineListRequest createRoutineB() {
-        // B: 11:00-19:00
-        List<OnboardingRequestDto.RoutineDTO> routines = Arrays.asList(
-                createRoutineDTO(Weekday.MONDAY, LocalTime.of(11, 0), LocalTime.of(19, 0), "틈틈 개발")
-        );
-        return OnboardingRequestDto.RoutineListRequest.builder().routine(routines).build();
-    }
-
-    private OnboardingRequestDto.RoutineListRequest createRoutineC() {
-        // C: 20:00-00:00
-        List<OnboardingRequestDto.RoutineDTO> routines = Arrays.asList(
-                createRoutineDTO(Weekday.MONDAY, LocalTime.of(20, 0), LocalTime.MIDNIGHT, "틈틈 개발")
-        );
-        return OnboardingRequestDto.RoutineListRequest.builder().routine(routines).build();
-    }
-
-    private OnboardingRequestDto.RoutineListRequest createRoutineD() {
-        // D: 00:00-04:00
-        List<OnboardingRequestDto.RoutineDTO> routines = Arrays.asList(
-                createRoutineDTO(Weekday.TUESDAY, LocalTime.MIDNIGHT, LocalTime.of(4, 0), "틈틈 개발")
-        );
-        return OnboardingRequestDto.RoutineListRequest.builder().routine(routines).build();
-    }
-
-    private OnboardingRequestDto.RoutineListRequest createRoutineE() {
-        // E: 00:00-00:00
-        List<OnboardingRequestDto.RoutineDTO> routines = Arrays.asList(
-                createRoutineDTO(Weekday.MONDAY, LocalTime.MIDNIGHT, LocalTime.MIDNIGHT, "24시간 일정 - 하루 안에서")
-        );
-        return OnboardingRequestDto.RoutineListRequest.builder().routine(routines).build();
-    }
-
-    private OnboardingRequestDto.RoutineListRequest createRoutineF() {
-        // F: 예외 23:00-02:00
-        List<OnboardingRequestDto.RoutineDTO> routines = Arrays.asList(
-                createRoutineDTO(Weekday.MONDAY, LocalTime.of(23, 0), LocalTime.of(2, 0), "다음 날로 넘어감")
-        );
-        return OnboardingRequestDto.RoutineListRequest.builder().routine(routines).build();
-    }
-
-    private OnboardingRequestDto.RoutineListRequest createRoutineG() {
-        // G: 예외 15:00-10:00
-        List<OnboardingRequestDto.RoutineDTO> routines = Arrays.asList(
-                createRoutineDTO(Weekday.MONDAY, LocalTime.of(15, 0), LocalTime.of(10, 0), "잘못된 시간 범위")
-        );
-        return OnboardingRequestDto.RoutineListRequest.builder().routine(routines).build();
-    }
-
-    private OnboardingRequestDto.RoutineListRequest createRoutineH() {
-        // H: 예외 13:00-13:00
-        List<OnboardingRequestDto.RoutineDTO> routines = Arrays.asList(
-                createRoutineDTO(Weekday.MONDAY, LocalTime.of(13, 0), LocalTime.of(13, 0), "24시간 일정 - 다음 날로 넘어감")
-        );
-        return OnboardingRequestDto.RoutineListRequest.builder().routine(routines).build();
-    }
-
-    private OnboardingRequestDto.RoutineListRequest createRoutineI() {
-        // I: 예외 반복일정 충돌
-        List<OnboardingRequestDto.RoutineDTO> routines = Arrays.asList(
-                createRoutineDTO(Weekday.MONDAY, LocalTime.of(10, 0), LocalTime.of(14, 0), "틈틈 개발"),
-                createRoutineDTO(Weekday.MONDAY, LocalTime.of(13, 0), LocalTime.of(17, 0), "틈틈 개발")
-        );
-        return OnboardingRequestDto.RoutineListRequest.builder().routine(routines).build();
+        return OnboardingRequestDto.RoutineListRequest.builder()
+                .routine(routines)
+                .build();
     }
 
     private OnboardingRequestDto.RoutineDTO createRoutineDTO(Weekday weekday, LocalTime startTime, LocalTime endTime, String title) {
@@ -487,6 +425,58 @@ class OnboardingServiceTest {
                 .build();
     }
 
+    private OnboardingRequestDto.RoutineListRequest createRoutineA() {
+        // A: 09:00-18:00
+        return createRoutine(
+                new Weekday[]{Weekday.MONDAY},
+                new LocalTime[]{LocalTime.of(9, 0)},
+                new LocalTime[]{LocalTime.of(18, 0)},
+                new String[]{"틈틈 개발"}
+        );
+    }
+
+    private OnboardingRequestDto.RoutineListRequest createRoutineB() {
+        // B: 11:00-19:00
+        return createRoutine(
+                new Weekday[]{Weekday.MONDAY},
+                new LocalTime[]{LocalTime.of(11, 0)},
+                new LocalTime[]{LocalTime.of(19, 0)},
+                new String[]{"틈틈 개발"}
+        );
+    }
+
+    private OnboardingRequestDto.RoutineListRequest createRoutineC() {
+        // C: 20:00-00:00
+        return createRoutine(
+                new Weekday[]{Weekday.MONDAY},
+                new LocalTime[]{LocalTime.of(20, 0)},
+                new LocalTime[]{LocalTime.MIDNIGHT},
+                new String[]{"틈틈 개발"}
+        );
+    }
+
+    private OnboardingRequestDto.RoutineListRequest createRoutineD() {
+        // D: 00:00-04:00
+        return createRoutine(
+                new Weekday[]{Weekday.MONDAY},
+                new LocalTime[]{LocalTime.MIDNIGHT},
+                new LocalTime[]{LocalTime.of(4, 0)},
+                new String[]{"틈틈 개발"}
+        );
+    }
+
+    private OnboardingRequestDto.RoutineListRequest createRoutineE() {
+        // E: 00:00-00:00
+        return createRoutine(
+                new Weekday[]{Weekday.MONDAY},
+                new LocalTime[]{LocalTime.MIDNIGHT},
+                new LocalTime[]{LocalTime.MIDNIGHT},
+                new String[]{"틈틈 개발"}
+        );
+    }
+
+
+    // 전체 수면패턴&반복일정 생성 메서드
     private List<OnboardingRequestDto.SleepPatternRequest> getAllSleepPatterns() {
         return List.of(
                 createSleepPatternA(),
@@ -502,6 +492,48 @@ class OnboardingServiceTest {
                 createRoutineB(),
                 createRoutineC(),
                 createRoutineD()
+        );
+    }
+
+
+    // 예외 관련
+    private OnboardingRequestDto.RoutineListRequest createRoutineF() {
+        // F: 예외 23:00-02:00
+        return createRoutine(
+                new Weekday[]{Weekday.MONDAY},
+                new LocalTime[]{LocalTime.of(23, 0)},
+                new LocalTime[]{LocalTime.of(2, 0)},
+                new String[]{"다음 날로 넘어감"}
+        );
+    }
+
+    private OnboardingRequestDto.RoutineListRequest createRoutineG() {
+        // G: 예외 15:00-10:00
+        return createRoutine(
+                new Weekday[]{Weekday.MONDAY},
+                new LocalTime[]{LocalTime.of(15, 0)},
+                new LocalTime[]{LocalTime.of(10, 0)},
+                new String[]{"잘못된 시간 범위"}
+        );
+    }
+
+    private OnboardingRequestDto.RoutineListRequest createRoutineH() {
+        // H: 예외 13:00-13:00
+        return createRoutine(
+                new Weekday[]{Weekday.MONDAY},
+                new LocalTime[]{LocalTime.of(13, 0)},
+                new LocalTime[]{LocalTime.of(13, 0)},
+                new String[]{"24시간 일정 - 다음 날로 넘어감"}
+        );
+    }
+
+    private OnboardingRequestDto.RoutineListRequest createRoutineI() {
+        // I: 예외 반복일정 충돌
+        return createRoutine(
+                new Weekday[]{Weekday.MONDAY, Weekday.MONDAY},
+                new LocalTime[]{LocalTime.of(10, 0), LocalTime.of(13, 0)},
+                new LocalTime[]{LocalTime.of(14, 0), LocalTime.of(17, 0)},
+                new String[]{"틈틈 개발", "틈틈 개발"}
         );
     }
 }
