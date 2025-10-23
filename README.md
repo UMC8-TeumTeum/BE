@@ -62,9 +62,10 @@
 > 안정적인 서비스 운영을 위해 **AWS 기반의 이중화 및 모니터링 환경**을 구성했습니다.  
 > GitHub Actions를 통한 CI/CD, Bastion Host를 활용한 보안 강화, Prometheus + Grafana 모니터링을 포함합니다.
 
+
 <p align="center">
   <img 
-    src="https://github.com/user-attachments/assets/c44d17cf-e466-4ca2-872f-5acd13f84c05" 
+    src="https://github.com/user-attachments/assets/35355589-852f-4d38-ae65-c61555529b19"
     alt="Backend Architecture Diagram"
     width="85%"
     style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);"
