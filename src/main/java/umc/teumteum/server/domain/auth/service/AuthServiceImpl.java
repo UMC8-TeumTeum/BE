@@ -40,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Resource(name = "kakaoOAuthServiceImpl") private OAuthService kakaoOAuthService;
     @Resource(name = "naverOAuthServiceImpl") private OAuthService naverOAuthService;
+    @Resource(name = "googleOAuthServiceImpl") private OAuthService googleOAuthService;
     private final UserService userService;
 
     private final JwtProvider jwtProvider;
@@ -61,7 +62,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponseDto.LoginResponse socialLogin(String socialType, AuthRequestDto.SocialLoginRequest request) {
         // 1. 소셜 로그인 - 사용자 정보 불러오기
-        OAuthUserInfo userInfo = getUserInfo(SocialType.valueOf(socialType.toUpperCase()), request.getAccessToken());
+        OAuthUserInfo userInfo = getUserInfo(SocialType.valueOf(socialType.toUpperCase()), request.getToken());
 
         // 2. 사용자 조회 (없으면 생성)
         User user = userService.findOrCreateUser(userInfo);
@@ -220,12 +221,14 @@ public class AuthServiceImpl implements AuthService {
 
 
     // SocialType 따라 로그인 분기 처리
-    private OAuthUserInfo getUserInfo(SocialType socialType, String accessToken) {
+    private OAuthUserInfo getUserInfo(SocialType socialType, String token) {
         switch (socialType) {
             case SocialType.KAKAO:
-                return kakaoOAuthService.getUserInfoWithAccessToken(accessToken);
+                return kakaoOAuthService.getUserInfoWithAccessToken(token);
             case SocialType.NAVER:
-                return naverOAuthService.getUserInfoWithAccessToken(accessToken);
+                return naverOAuthService.getUserInfoWithAccessToken(token);
+            case SocialType.GOOGLE:
+                return googleOAuthService.getUserInfoWithIdToken(token);
             default:
                 throw new AuthException(AuthErrorStatus.INVALID_SOCIAL_TYPE);
         }
