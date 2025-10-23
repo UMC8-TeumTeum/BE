@@ -97,10 +97,6 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Notification> notifications;
 
-    // 알림 설정
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private NotificationSetting notificationSetting;
-
     // 내가 팔로우하는 사람들
     @OneToMany(mappedBy = "follower", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Friend> followings = new ArrayList<>();
