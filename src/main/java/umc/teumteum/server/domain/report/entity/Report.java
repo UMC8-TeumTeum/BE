@@ -23,7 +23,7 @@ public class Report extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "reporter_id", nullable = false)
     private User reporter;
 
@@ -39,7 +39,7 @@ public class Report extends BaseEntity {
     @Column(nullable = false)
     private TargetType targetType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "reason_id", nullable = false)
     private ReportReason reason;
 
@@ -48,6 +48,6 @@ public class Report extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ReportStatus status;
+    private ReportStatus status = ReportStatus.OPEN;
 
 }
