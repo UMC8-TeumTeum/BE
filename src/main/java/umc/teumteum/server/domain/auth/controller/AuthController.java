@@ -26,14 +26,14 @@ public class AuthController {
 
     @Operation(
             summary = "소셜 로그인",
-            description = "카카오, 네이버에 대한 소셜 플랫폼을 통한 로그인을 처리합니다."
+            description = "카카오, 네이버, 구글에 대한 소셜 플랫폼을 통한 로그인을 처리합니다."
     )
     @PostMapping(value = "/social-login/{socialType}", produces = "application/json")
     public ApiResponse<AuthResponseDto.LoginResponse> socialLogin(
             @Parameter(
-                    description = "소셜 로그인 타입 (naver 또는 kakao)",
+                    description = "소셜 로그인 타입 (kakao 또는 naver 또는 google)",
                     required = true,
-                    schema = @Schema(type = "string", allowableValues = {"naver", "kakao"}, example = "kakao")
+                    schema = @Schema(type = "string", allowableValues = {"kakao", "naver", "google"}, example = "kakao")
             )
             @PathVariable("socialType") String socialType,
             @Valid @RequestBody AuthRequestDto.SocialLoginRequest request

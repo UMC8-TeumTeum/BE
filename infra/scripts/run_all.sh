@@ -2,7 +2,6 @@
 set -Eeuo pipefail
 
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
-
 source "${BASE_DIR}/00_common.sh"
 
 ensure_docker
@@ -18,11 +17,19 @@ bash "${BASE_DIR}/01_cloudwatch.sh" || true
 echo "[run_all] 10_app.sh"
 bash "${BASE_DIR}/10_app.sh"
 
-echo "[run_all] 02_prometheus.sh"
-bash "${BASE_DIR}/02_prometheus.sh" || true
+if [[ "${ENABLE_PROMETHEUS:-false}" == "true" ]]; then
+  echo "[run_all] 02_prometheus.sh"
+  bash "${BASE_DIR}/02_prometheus.sh" || true
+else
+  echo "[run_all] 02_prometheus.sh skipped (ENABLE_PROMETHEUS=${ENABLE_PROMETHEUS:-false})"
+fi
 
-echo "[run_all] 03_grafana.sh"
-bash "${BASE_DIR}/03_grafana.sh" || true
+if [[ "${ENABLE_GRAFANA:-false}" == "true" ]]; then
+  echo "[run_all] 03_grafana.sh"
+  bash "${BASE_DIR}/03_grafana.sh" || true
+else
+  echo "[run_all] 03_grafana.sh skipped (ENABLE_GRAFANA=${ENABLE_GRAFANA:-false})"
+fi
 
 docker ps
 docker system df

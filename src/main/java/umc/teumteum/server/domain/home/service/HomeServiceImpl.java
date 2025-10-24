@@ -70,9 +70,6 @@ public class HomeServiceImpl implements HomeService {
             throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
         }
 
-        // 충돌 검사
-        conflictValidator.validateTodo(user,dto.getStartTime(), dto.getEndTime());
-
         // 1. 스케줄 저장
         Schedule schedule = scheduleConverter.toSchedule(dto,user);
         Schedule savedSchedule = scheduleRepository.save(schedule);
@@ -178,17 +175,14 @@ public class HomeServiceImpl implements HomeService {
             throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
         }
 
-        // 5. 충돌 검사
-        conflictValidator.validateTodo(user,dto.getStartTime(), dto.getEndTime());
-
-        // 6. 스케줄 필드 업데이트
+        // 5. 스케줄 필드 업데이트
         schedule.updateField(dto);
 
-        // 7. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
-        // 7-1. 기존 리마인드 알림 삭제
+        // 6. 스케줄 리마인드 알림 제거 -> 새로운 리마인드 알림 저장
+        // 6-1. 기존 리마인드 알림 삭제
         scheduleReminderRepository.deleteByScheduleId(scheduleId);
 
-        // 7-2. 리마인드 알림 필드 업데이트
+        // 6-2. 리마인드 알림 필드 업데이트
         if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
             List<ScheduleReminder> reminders =
                     scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm());
@@ -465,11 +459,7 @@ public class HomeServiceImpl implements HomeService {
             throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
         }
 
-        // 3 중복 스케줄 체크
-        // 3-1. 틈 & 수면패턴 중복 검사 -> 등록 불가
-        conflictValidator.validateTodo(user,dto.getStartTime(),dto.getEndTime());
-
-        // 3-2. 스케줄 중복 검사 -> 등록 가능
+        // 3 중복 스케줄 체크 -> 스케줄 중복 검사
         LocalDate date = dto.getStartTime().toLocalDate();
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
@@ -478,8 +468,7 @@ public class HomeServiceImpl implements HomeService {
                 user.getId(), date, startTime, endTime
         );
 
-        if (hasConflict && !dto.getIsForce()) {
-            // force가 false고 일정이 겹치면 예외
+        if (hasConflict) {
             throw new HomeException(HomeErrorStatus._SCHEDULE_CONFLICT);
         }
 
