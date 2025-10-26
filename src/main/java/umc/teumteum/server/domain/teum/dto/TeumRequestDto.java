@@ -57,9 +57,9 @@ public class TeumRequestDto {
         @Schema(description = "그래픽 ID", example = "1")
         private Long graphicId;
 
-        @NotEmpty
-        @Schema(description = "수신자 ID 배열", example = "[0, 1]")
-        private List<Long> receiverUserIds;
+        @NotNull
+        @Schema(description = "수신자 ID (한 명만 가능)", example = "2")
+        private Long receiverUserId;
 
     }
 

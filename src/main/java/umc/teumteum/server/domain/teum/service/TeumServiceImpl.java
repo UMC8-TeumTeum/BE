@@ -71,45 +71,38 @@ public class TeumServiceImpl implements TeumService {
         // 시작 시간이 현재 시각보다 과거인지 검증
         validateStartTimeNotPast(date, startTime);
 
-        // 모든 사용자 조회 (요청자 + 수신자)
-        List<User> receivers = dto.getReceiverUserIds().stream()
-                .map(this::getUserOrThrow)
-                .toList();
-        List<User> allParticipants = new ArrayList<>(receivers);
-        allParticipants.add(user);
+        // 수신자 조회 (단일 사용자)
+        User receiver = getUserOrThrow(dto.getReceiverUserId());
 
-        // Validator 호출
-        conflictValidator.validateTeumForUsers(allParticipants, date, startTime, endTime);
+        // 요청자와 수신자 둘 다 시간 충돌 여부 검증
+        conflictValidator.validateTeumForUsers(
+                List.of(user, receiver),   // 두 명만 비교
+                date,
+                startTime,
+                endTime
+        );
 
         // 요청 객체 생성 및 저장
         TeumRequest request = teumConverter.toTeumRequest(dto, user);
-        List<TeumResponse> responses = teumConverter.toTeumResponses(
-                dto.getReceiverUserIds(),
+        TeumResponse response = teumConverter.toTeumResponse(
+                dto.getReceiverUserId(),
                 user.getId(),
                 request,
                 this::getUserOrThrow
         );
 
-        request.getTeumResponses().addAll(responses);
+        request.getTeumResponses().add(response);
         teumRequestRepository.save(request);
 
-      // [추가] 알림 전송
-        if (receivers.size() == 1) {
-            notificationUseCases.notifyTeumRequest(
-                user,
-                receivers.get(0),
+      // [추가] 단일 수신자 알림 전송
+        notificationUseCases.notifyTeumRequest(
+                user,          // 요청자
+                receiver,      // 단일 수신자
                 request.getId(),
                 dto
-            );
-        } else if (!receivers.isEmpty()) {
-            notificationUseCases.notifyTeumRequestBatch(
-                user,
-                receivers,
-                request.getId(),
-                dto
-            );
-        }
+        );
         return request.getId();
+
     }
 
     @Override
