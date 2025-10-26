@@ -222,41 +222,43 @@ public class TeumServiceImpl implements TeumService {
         boolean isAccepted = newStatus == ResponseStatus.ACCEPTED;
         Long teumId = null;
 
+        TeumRequest request = response.getTeumRequest();
+        User receiver = response.getReceiverUser();
+        User requester = request.getUser();
+
         if (isAccepted) {
-            TeumRequest request = response.getTeumRequest();
-            User receiver = response.getReceiverUser();
 
-            // 수락 시 응답자 개인 일정 충돌 검증
-            LocalDate date = request.getDate();
-            LocalTime startTime = request.getStartTime();
-            LocalTime endTime = request.getEndTime();
-
-            conflictValidator.validateTeum(receiver, date, startTime, endTime);
-
-            // 수신자(응답자) 일정 생성
+            // 스케줄 생성: 수신자(응답자)
             Schedule receiverSchedule = teumConverter.toScheduleFromTeumRequest(request, receiver);
             scheduleRepository.save(receiverSchedule);
 
-            // 요청자 본인의 스케줄이 없는 경우에만 생성
-            User requester = request.getUser();
+            // 스케줄 생성: 요청자(없으면 생성)
             if (!scheduleRepository.existsByTeumRequestAndUser(request, requester)) {
                 Schedule requesterSchedule = teumConverter.toScheduleFromTeumRequest(request, requester);
                 scheduleRepository.save(requesterSchedule);
             }
 
-            // 수신자 본인 스케줄 ID 반환
+            // 응답자 스케줄 ID 반환
             teumId = receiverSchedule.getId();
+
+            // 1:1 확정 → 요청 종료
+            request.markAsClosed();
+
+        } else {
+            if (newStatus == ResponseStatus.REJECTED || newStatus == ResponseStatus.LEFT) {
+                request.markAsClosed();
+            }
         }
-        // [추가] 알림 전송
-        User sender = response.getReceiverUser();
-        User receiver = response.getTeumRequest().getUser();
+
+        // 알림 (응답자 → 요청자)
         notificationUseCases.notifyTeumResponse(
-            sender,
-            receiver,
-            response.getId(),
-            isAccepted
+                receiver,
+                requester,
+                response.getId(),
+                isAccepted
         );
 
+        // 응답 DTO
         return teumConverter.toStatusUpdateResponseDto(newStatus, isAccepted, teumId);
     }
 
