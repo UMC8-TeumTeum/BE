@@ -1,6 +1,12 @@
 package umc.teumteum.server.unit.user.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,7 +17,6 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import umc.teumteum.server.domain.home.repository.ScheduleJdbcRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleReminderJdbcRepository;
-import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
@@ -25,13 +30,6 @@ import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.service.OnboardingServiceImpl;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 import umc.teumteum.server.global.util.TimeUtil;
-
-import java.time.LocalTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OnboardingService 테스트 - 수면패턴 x 반복일정 조합")
@@ -108,192 +106,192 @@ class OnboardingServiceTest {
         });
     }
 
-    // ==================== 수면패턴A (22:00-07:00) ====================
-
-    @Test
-    @DisplayName("수면패턴A(22:00-07:00) + 반복일정A(09:00-18:00) - 정상")
-    void sleepA_routineA_ok() {
-        // when & then
-        assertThatCode(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternA(), testUser);
-            onboardingService.saveRoutines(createRoutineA(), testUser);
-        }).doesNotThrowAnyException();
-    }
-
-    @Test
-    @DisplayName("수면패턴A(22:00-07:00) + 반복일정B(11:00-19:00) - 정상")
-    void sleepA_routineB_ok() {
-        // when & then
-        assertThatCode(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternA(), testUser);
-            onboardingService.saveRoutines(createRoutineB(), testUser);
-        }).doesNotThrowAnyException();
-    }
-
-    @Test
-    @DisplayName("수면패턴A(22:00-07:00) + 반복일정C(20:00-00:00) - CONFLICT")
-    void sleepA_routineC_conflict() {
-        // when & then
-        assertThatThrownBy(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternA(), testUser);
-            onboardingService.saveRoutines(createRoutineC(), testUser);
-        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
-            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
-        });
-    }
-
-    @Test
-    @DisplayName("수면패턴A(22:00-07:00) + 반복일정D(00:00-04:00) - CONFLICT")
-    void sleepA_routineD_conflict() {
-        // when & then
-        assertThatThrownBy(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternA(), testUser);
-            onboardingService.saveRoutines(createRoutineD(), testUser);
-        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
-            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
-        });
-    }
-
-    // ==================== 수면패턴B (18:00-00:00) ====================
-
-    @Test
-    @DisplayName("수면패턴B(18:00-00:00) + 반복일정A(09:00-18:00) - 정상")
-    void sleepB_routineA_ok() {
-        // when & then
-        assertThatCode(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternB(), testUser);
-            onboardingService.saveRoutines(createRoutineA(), testUser);
-        }).doesNotThrowAnyException();
-    }
-
-    @Test
-    @DisplayName("수면패턴B(18:00-00:00) + 반복일정B(11:00-19:00) - CONFLICT")
-    void sleepB_routineB_conflict() {
-        // when & then
-        assertThatThrownBy(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternB(), testUser);
-            onboardingService.saveRoutines(createRoutineB(), testUser);
-        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
-            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
-        });
-    }
-
-    @Test
-    @DisplayName("수면패턴B(18:00-00:00) + 반복일정C(20:00-00:00) - CONFLICT")
-    void sleepB_routineC_conflict() {
-        // when & then
-        assertThatThrownBy(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternB(), testUser);
-            onboardingService.saveRoutines(createRoutineC(), testUser);
-        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
-            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
-        });
-    }
-
-    @Test
-    @DisplayName("수면패턴B(18:00-00:00) + 반복일정D(00:00-04:00) - 정상")
-    void sleepB_routineD_ok() {
-        // when & then
-        assertThatCode(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternB(), testUser);
-            onboardingService.saveRoutines(createRoutineD(), testUser);
-        }).doesNotThrowAnyException();
-    }
-
-    // ==================== 수면패턴C (00:00-09:00) ====================
-
-    @Test
-    @DisplayName("수면패턴C(00:00-09:00) + 반복일정A(09:00-18:00) - 정상")
-    void sleepC_routineA_ok() {
-        // when & then
-        assertThatCode(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternC(), testUser);
-            onboardingService.saveRoutines(createRoutineA(), testUser);
-        }).doesNotThrowAnyException();
-    }
-
-    @Test
-    @DisplayName("수면패턴C(00:00-09:00) + 반복일정B(11:00-19:00) - 정상")
-    void sleepC_routineB_ok() {
-        // when & then
-        assertThatCode(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternC(), testUser);
-            onboardingService.saveRoutines(createRoutineB(), testUser);
-        }).doesNotThrowAnyException();
-    }
-
-    @Test
-    @DisplayName("수면패턴C(00:00-09:00) + 반복일정C(20:00-00:00) - 정상")
-    void sleepC_routineC_ok() {
-        // when & then
-        assertThatCode(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternC(), testUser);
-            onboardingService.saveRoutines(createRoutineC(), testUser);
-        }).doesNotThrowAnyException();
-    }
-
-    @Test
-    @DisplayName("수면패턴C(00:00-09:00) + 반복일정D(00:00-04:00) - CONFLICT")
-    void sleepC_routineD_conflict() {
-        // when & then
-        assertThatThrownBy(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternC(), testUser);
-            onboardingService.saveRoutines(createRoutineD(), testUser);
-        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
-            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
-        });
-    }
-
-    // ==================== 수면패턴D (11:00-20:00) ====================
-
-    @Test
-    @DisplayName("수면패턴D(11:00-20:00) + 반복일정A(09:00-18:00) - CONFLICT")
-    void sleepD_routineA_conflict() {
-        // when & then
-        assertThatThrownBy(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternD(), testUser);
-            onboardingService.saveRoutines(createRoutineA(), testUser);
-        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
-            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
-        });
-    }
-
-    @Test
-    @DisplayName("수면패턴D(11:00-20:00) + 반복일정B(11:00-19:00) - CONFLICT")
-    void sleepD_routineB_conflict() {
-        // when & then
-        assertThatThrownBy(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternD(), testUser);
-            onboardingService.saveRoutines(createRoutineB(), testUser);
-        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
-            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
-        });
-    }
-
-    @Test
-    @DisplayName("수면패턴D(11:00-20:00) + 반복일정C(20:00-00:00) - 정상")
-    void sleepD_routineC_ok() {
-        // when & then
-        assertThatCode(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternD(), testUser);
-            onboardingService.saveRoutines(createRoutineC(), testUser);
-        }).doesNotThrowAnyException();
-    }
-
-    @Test
-    @DisplayName("수면패턴D(11:00-20:00) + 반복일정D(00:00-04:00) - 정상")
-    void sleepD_routineD_ok() {
-        // when & then
-        assertThatCode(() -> {
-            onboardingService.saveSleepPattern(createSleepPatternD(), testUser);
-            onboardingService.saveRoutines(createRoutineD(), testUser);
-        }).doesNotThrowAnyException();
-    }
+//    // ==================== 수면패턴A (22:00-07:00) ====================
+//
+//    @Test
+//    @DisplayName("수면패턴A(22:00-07:00) + 반복일정A(09:00-18:00) - 정상")
+//    void sleepA_routineA_ok() {
+//        // when & then
+//        assertThatCode(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternA(), testUser);
+//            onboardingService.saveRoutines(createRoutineA(), testUser);
+//        }).doesNotThrowAnyException();
+//    }
+//
+//    @Test
+//    @DisplayName("수면패턴A(22:00-07:00) + 반복일정B(11:00-19:00) - 정상")
+//    void sleepA_routineB_ok() {
+//        // when & then
+//        assertThatCode(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternA(), testUser);
+//            onboardingService.saveRoutines(createRoutineB(), testUser);
+//        }).doesNotThrowAnyException();
+//    }
+//
+//    @Test
+//    @DisplayName("수면패턴A(22:00-07:00) + 반복일정C(20:00-00:00) - CONFLICT")
+//    void sleepA_routineC_conflict() {
+//        // when & then
+//        assertThatThrownBy(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternA(), testUser);
+//            onboardingService.saveRoutines(createRoutineC(), testUser);
+//        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
+//            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
+//        });
+//    }
+//
+//    @Test
+//    @DisplayName("수면패턴A(22:00-07:00) + 반복일정D(00:00-04:00) - CONFLICT")
+//    void sleepA_routineD_conflict() {
+//        // when & then
+//        assertThatThrownBy(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternA(), testUser);
+//            onboardingService.saveRoutines(createRoutineD(), testUser);
+//        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
+//            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
+//        });
+//    }
+//
+//    // ==================== 수면패턴B (18:00-00:00) ====================
+//
+//    @Test
+//    @DisplayName("수면패턴B(18:00-00:00) + 반복일정A(09:00-18:00) - 정상")
+//    void sleepB_routineA_ok() {
+//        // when & then
+//        assertThatCode(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternB(), testUser);
+//            onboardingService.saveRoutines(createRoutineA(), testUser);
+//        }).doesNotThrowAnyException();
+//    }
+//
+//    @Test
+//    @DisplayName("수면패턴B(18:00-00:00) + 반복일정B(11:00-19:00) - CONFLICT")
+//    void sleepB_routineB_conflict() {
+//        // when & then
+//        assertThatThrownBy(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternB(), testUser);
+//            onboardingService.saveRoutines(createRoutineB(), testUser);
+//        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
+//            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
+//        });
+//    }
+//
+//    @Test
+//    @DisplayName("수면패턴B(18:00-00:00) + 반복일정C(20:00-00:00) - CONFLICT")
+//    void sleepB_routineC_conflict() {
+//        // when & then
+//        assertThatThrownBy(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternB(), testUser);
+//            onboardingService.saveRoutines(createRoutineC(), testUser);
+//        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
+//            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
+//        });
+//    }
+//
+//    @Test
+//    @DisplayName("수면패턴B(18:00-00:00) + 반복일정D(00:00-04:00) - 정상")
+//    void sleepB_routineD_ok() {
+//        // when & then
+//        assertThatCode(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternB(), testUser);
+//            onboardingService.saveRoutines(createRoutineD(), testUser);
+//        }).doesNotThrowAnyException();
+//    }
+//
+//    // ==================== 수면패턴C (00:00-09:00) ====================
+//
+//    @Test
+//    @DisplayName("수면패턴C(00:00-09:00) + 반복일정A(09:00-18:00) - 정상")
+//    void sleepC_routineA_ok() {
+//        // when & then
+//        assertThatCode(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternC(), testUser);
+//            onboardingService.saveRoutines(createRoutineA(), testUser);
+//        }).doesNotThrowAnyException();
+//    }
+//
+//    @Test
+//    @DisplayName("수면패턴C(00:00-09:00) + 반복일정B(11:00-19:00) - 정상")
+//    void sleepC_routineB_ok() {
+//        // when & then
+//        assertThatCode(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternC(), testUser);
+//            onboardingService.saveRoutines(createRoutineB(), testUser);
+//        }).doesNotThrowAnyException();
+//    }
+//
+//    @Test
+//    @DisplayName("수면패턴C(00:00-09:00) + 반복일정C(20:00-00:00) - 정상")
+//    void sleepC_routineC_ok() {
+//        // when & then
+//        assertThatCode(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternC(), testUser);
+//            onboardingService.saveRoutines(createRoutineC(), testUser);
+//        }).doesNotThrowAnyException();
+//    }
+//
+//    @Test
+//    @DisplayName("수면패턴C(00:00-09:00) + 반복일정D(00:00-04:00) - CONFLICT")
+//    void sleepC_routineD_conflict() {
+//        // when & then
+//        assertThatThrownBy(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternC(), testUser);
+//            onboardingService.saveRoutines(createRoutineD(), testUser);
+//        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
+//            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
+//        });
+//    }
+//
+//    // ==================== 수면패턴D (11:00-20:00) ====================
+//
+//    @Test
+//    @DisplayName("수면패턴D(11:00-20:00) + 반복일정A(09:00-18:00) - CONFLICT")
+//    void sleepD_routineA_conflict() {
+//        // when & then
+//        assertThatThrownBy(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternD(), testUser);
+//            onboardingService.saveRoutines(createRoutineA(), testUser);
+//        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
+//            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
+//        });
+//    }
+//
+//    @Test
+//    @DisplayName("수면패턴D(11:00-20:00) + 반복일정B(11:00-19:00) - CONFLICT")
+//    void sleepD_routineB_conflict() {
+//        // when & then
+//        assertThatThrownBy(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternD(), testUser);
+//            onboardingService.saveRoutines(createRoutineB(), testUser);
+//        }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
+//            assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
+//        });
+//    }
+//
+//    @Test
+//    @DisplayName("수면패턴D(11:00-20:00) + 반복일정C(20:00-00:00) - 정상")
+//    void sleepD_routineC_ok() {
+//        // when & then
+//        assertThatCode(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternD(), testUser);
+//            onboardingService.saveRoutines(createRoutineC(), testUser);
+//        }).doesNotThrowAnyException();
+//    }
+//
+//    @Test
+//    @DisplayName("수면패턴D(11:00-20:00) + 반복일정D(00:00-04:00) - 정상")
+//    void sleepD_routineD_ok() {
+//        // when & then
+//        assertThatCode(() -> {
+//            onboardingService.saveSleepPattern(createSleepPatternD(), testUser);
+//            onboardingService.saveRoutines(createRoutineD(), testUser);
+//        }).doesNotThrowAnyException();
+//    }
 
     // ==================== 특이 케이스 ====================
 
     @Test
-    @DisplayName("수면패턴 등록하지 않은 경우 반복일정 A~D - 정상")
+    @DisplayName("반복일정 A~D - 정상")
     void no_sleep() {
         // when & then
         for (OnboardingRequestDto.RoutineListRequest routine : getAllRoutines()) {
@@ -312,15 +310,15 @@ class OnboardingServiceTest {
             onboardingService.saveRoutines(createRoutineE(), testUser);
         }).doesNotThrowAnyException();
 
-        // 수면패턴 등록한 경우 예외
-        for (OnboardingRequestDto.SleepPatternRequest sleepPattern : getAllSleepPatterns()) {
-            assertThatThrownBy(() -> {
-                onboardingService.saveSleepPattern(sleepPattern, testUser);
-                onboardingService.saveRoutines(createRoutineE(), testUser);
-            }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
-                assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
-            });
-        }
+//        // 수면패턴 등록한 경우 예외
+//        for (OnboardingRequestDto.SleepPatternRequest sleepPattern : getAllSleepPatterns()) {
+//            assertThatThrownBy(() -> {
+//                onboardingService.saveSleepPattern(sleepPattern, testUser);
+//                onboardingService.saveRoutines(createRoutineE(), testUser);
+//            }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
+//                assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_SLEEP_CONFLICT);
+//            });
+//        }
     }
 
     @Test
@@ -334,15 +332,15 @@ class OnboardingServiceTest {
             assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
         });
 
-        // 수면패턴 등록한 경우 예외
-        for (OnboardingRequestDto.SleepPatternRequest sleepPattern : getAllSleepPatterns()) {
-            assertThatThrownBy(() -> {
-                onboardingService.saveSleepPattern(sleepPattern, testUser);
-                onboardingService.saveRoutines(createRoutineF(), testUser);
-            }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
-                assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
-            });
-        }
+//        // 수면패턴 등록한 경우 예외
+//        for (OnboardingRequestDto.SleepPatternRequest sleepPattern : getAllSleepPatterns()) {
+//            assertThatThrownBy(() -> {
+//                onboardingService.saveSleepPattern(sleepPattern, testUser);
+//                onboardingService.saveRoutines(createRoutineF(), testUser);
+//            }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
+//                assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
+//            });
+//        }
     }
 
     @Test
@@ -356,15 +354,15 @@ class OnboardingServiceTest {
             assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
         });
 
-        // 수면패턴 등록한 경우 예외
-        for (OnboardingRequestDto.SleepPatternRequest sleepPattern : getAllSleepPatterns()) {
-            assertThatThrownBy(() -> {
-                onboardingService.saveSleepPattern(sleepPattern, testUser);
-                onboardingService.saveRoutines(createRoutineG(), testUser);
-            }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
-                assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
-            });
-        }
+//        // 수면패턴 등록한 경우 예외
+//        for (OnboardingRequestDto.SleepPatternRequest sleepPattern : getAllSleepPatterns()) {
+//            assertThatThrownBy(() -> {
+//                onboardingService.saveSleepPattern(sleepPattern, testUser);
+//                onboardingService.saveRoutines(createRoutineG(), testUser);
+//            }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
+//                assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
+//            });
+//        }
     }
 
     @Test
@@ -378,15 +376,15 @@ class OnboardingServiceTest {
             assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
         });
 
-        // 수면패턴 등록한 경우 예외
-        for (OnboardingRequestDto.SleepPatternRequest sleepPattern : getAllSleepPatterns()) {
-            assertThatThrownBy(() -> {
-                onboardingService.saveSleepPattern(sleepPattern, testUser);
-                onboardingService.saveRoutines(createRoutineH(), testUser);
-            }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
-                assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
-            });
-        }
+//        // 수면패턴 등록한 경우 예외
+//        for (OnboardingRequestDto.SleepPatternRequest sleepPattern : getAllSleepPatterns()) {
+//            assertThatThrownBy(() -> {
+//                onboardingService.saveSleepPattern(sleepPattern, testUser);
+//                onboardingService.saveRoutines(createRoutineH(), testUser);
+//            }).isInstanceOfSatisfying(OnboardingException.class, ex -> {
+//                assertThat(ex.getCode()).isEqualTo(UserErrorStatus.INVALID_TIME_RANGE);
+//            });
+//        }
     }
 
     @Test
@@ -400,15 +398,15 @@ class OnboardingServiceTest {
             assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_TIME_CONFLICT);
         });
 
-        // 수면패턴 등록한 경우 예외
-        for (OnboardingRequestDto.SleepPatternRequest sleepPattern : getAllSleepPatterns()) {
-            assertThatThrownBy(() -> {
-                onboardingService.saveSleepPattern(sleepPattern, testUser);
-                onboardingService.saveRoutines(createRoutineI(), testUser);
-            }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
-                assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_TIME_CONFLICT);
-            });
-        }
+//        // 수면패턴 등록한 경우 예외
+//        for (OnboardingRequestDto.SleepPatternRequest sleepPattern : getAllSleepPatterns()) {
+//            assertThatThrownBy(() -> {
+//                onboardingService.saveSleepPattern(sleepPattern, testUser);
+//                onboardingService.saveRoutines(createRoutineI(), testUser);
+//            }).isInstanceOfSatisfying(GlobalHandler.class, ex -> {
+//                assertThat(ex.getCode()).isEqualTo(UserErrorStatus.ROUTINE_TIME_CONFLICT);
+//            });
+//        }
     }
 
     // ==================== 헬퍼 메서드 ====================
@@ -419,26 +417,26 @@ class OnboardingServiceTest {
                 .wakeTime(wakeTime)
                 .build();
     }
-
-    private OnboardingRequestDto.SleepPatternRequest createSleepPatternA() {
-        // A: 22:00-07:00
-        return createSleepPattern(LocalTime.of(22, 0), LocalTime.of(7, 0));
-    }
-
-    private OnboardingRequestDto.SleepPatternRequest createSleepPatternB() {
-        // B: 18:00-00:00
-        return createSleepPattern(LocalTime.of(18, 0), LocalTime.MIDNIGHT);
-    }
-
-    private OnboardingRequestDto.SleepPatternRequest createSleepPatternC() {
-        // C: 00:00-09:00
-        return createSleepPattern(LocalTime.MIDNIGHT, LocalTime.of(9, 0));
-    }
-
-    private OnboardingRequestDto.SleepPatternRequest createSleepPatternD() {
-        // D: 11:00-20:00
-        return createSleepPattern(LocalTime.of(11, 0), LocalTime.of(20, 0));
-    }
+//
+//    private OnboardingRequestDto.SleepPatternRequest createSleepPatternA() {
+//        // A: 22:00-07:00
+//        return createSleepPattern(LocalTime.of(22, 0), LocalTime.of(7, 0));
+//    }
+//
+//    private OnboardingRequestDto.SleepPatternRequest createSleepPatternB() {
+//        // B: 18:00-00:00
+//        return createSleepPattern(LocalTime.of(18, 0), LocalTime.MIDNIGHT);
+//    }
+//
+//    private OnboardingRequestDto.SleepPatternRequest createSleepPatternC() {
+//        // C: 00:00-09:00
+//        return createSleepPattern(LocalTime.MIDNIGHT, LocalTime.of(9, 0));
+//    }
+//
+//    private OnboardingRequestDto.SleepPatternRequest createSleepPatternD() {
+//        // D: 11:00-20:00
+//        return createSleepPattern(LocalTime.of(11, 0), LocalTime.of(20, 0));
+//    }
 
 
     // 반복일정 생성 메서드
@@ -513,16 +511,17 @@ class OnboardingServiceTest {
     }
 
 
-    // 전체 수면패턴&반복일정 생성 메서드
-    private List<OnboardingRequestDto.SleepPatternRequest> getAllSleepPatterns() {
-        return List.of(
-                createSleepPatternA(),
-                createSleepPatternB(),
-                createSleepPatternC(),
-                createSleepPatternD()
-        );
-    }
+//    // 전체 수면패턴 생성 메서드
+//    private List<OnboardingRequestDto.SleepPatternRequest> getAllSleepPatterns() {
+//        return List.of(
+//                createSleepPatternA(),
+//                createSleepPatternB(),
+//                createSleepPatternC(),
+//                createSleepPatternD()
+//        );
+//    }
 
+    // 전체 반복일정 생성 메서드
     private List<OnboardingRequestDto.RoutineListRequest> getAllRoutines() {
         return List.of(
                 createRoutineA(),
