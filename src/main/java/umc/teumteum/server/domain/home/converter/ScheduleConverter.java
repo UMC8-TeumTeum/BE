@@ -95,11 +95,12 @@ public class ScheduleConverter {
                 .toList();
     }
 
-    // 온보딩 리마인드 알림 변혼
+    // 온보딩 리마인드 알림 변환
     private List<HomeResponseDto.ReminderAlarmDto> toOnboardingReminderDtos(List<RemindAlarm> onboardingReminders) {
         if (onboardingReminders == null || onboardingReminders.isEmpty()) return List.of();
 
         return onboardingReminders.stream()
+                .sorted(Comparator.comparingInt(RemindAlarm::getMinutesBefore))
                 .filter(Objects::nonNull)
                 .map(ra -> {
                     HomeResponseDto.ReminderAlarmDto dto = new HomeResponseDto.ReminderAlarmDto();
@@ -223,7 +224,7 @@ public class ScheduleConverter {
     // HomeRequestDto.TodoRequestDto -> Schedule (반복일정 수정)
     public Schedule toScheduleFromRoutine(HomeRequestDto.TodoRequestDto dto,User user,Routine routine) {
         return Schedule.builder()
-                .user(user)
+                .user(routine.getUser())
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .type(ScheduleType.ROUTINE)
