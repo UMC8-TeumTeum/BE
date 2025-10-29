@@ -732,6 +732,7 @@ public class HomeServiceImpl implements HomeService {
         }
     }
 
+    @Transactional(readOnly = true)
     @Override
     public HomeResponseDto.TimeTableDto getTimeTable(LocalDate date, User user) {
         // 시간표 조회
