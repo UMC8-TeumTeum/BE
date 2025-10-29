@@ -879,7 +879,7 @@ public class HomeServiceImpl implements HomeService {
 
         for(Schedule schedule : scheduleList){
             // 삭제된 루틴 ->  표시 X
-            if(schedule.getRoutine() != null && schedule.getIsDeleted()) continue;
+            if(schedule.getRoutine() != null && schedule.getRoutineStatus() ==  RoutineStatus.DELETED) continue;
 
             // 취소된 틈 -> 표시 X
             if(schedule.getStatus() == ScheduleStatus.CANCELLED) continue;
