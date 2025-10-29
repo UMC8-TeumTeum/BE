@@ -731,4 +731,98 @@ public class HomeServiceImpl implements HomeService {
             reminder.updateStatus(alarmStatus);
         }
     }
+
+    @Transactional(readOnly = true)
+    @Override
+    public HomeResponseDto.TimeTableDto getTimeTable(LocalDate date, User user) {
+        // 시간표 조회
+        // 1. 수면패턴, 투두 응답 배열 선언
+        List<HomeResponseDto.TimeSlotDto> sleepList = new ArrayList<>();
+        List<HomeResponseDto.TimeSlotDto> todoList = new ArrayList<>();
+
+        // 2. 수면패턴 불러오기 -> 배열 구성하기
+        LocalTime sleepTime = user.getSleepTime();
+        LocalTime wakeTime = user.getWakeTime();
+
+        if(sleepTime != null && wakeTime != null){
+            if(sleepTime.isAfter(wakeTime)){
+                // 자정 이전에 자는 경우
+                sleepList.add(new HomeResponseDto.TimeSlotDto(LocalTime.MIDNIGHT,wakeTime));
+                sleepList.add(new HomeResponseDto.TimeSlotDto(sleepTime,LocalTime.MAX));
+            } else{
+                // 자정 이후에 자는 경우
+                sleepList.add(new HomeResponseDto.TimeSlotDto(sleepTime,wakeTime));
+            }
+        }
+
+        // 3. 스케줄 정보 등록하기
+        LocalDateTime todayMidnight = date.atStartOfDay(); // 오늘 자정
+        LocalDateTime tomorrowMidnight = date.plusDays(1).atStartOfDay(); // 내일 자정
+
+        // 오늘 날짜에 해당하는 일정 조회
+        List<Schedule> scheduleList = scheduleRepository.findSchedulesOnDate(user, todayMidnight, tomorrowMidnight);
+
+        for(Schedule schedule : scheduleList){
+            // 삭제된 루틴 ->  표시 X
+            if(schedule.getRoutine() != null && schedule.getIsDeleted()) continue;
+
+            // 취소된 틈 -> 표시 X
+            if(schedule.getStatus() == ScheduleStatus.CANCELLED) continue;
+
+            // 시작날짜가 어제인 경우
+            // 전날 시작되었다면 midnight부터 시작되도록 보정
+            LocalTime start = schedule.getStartTime().isBefore(todayMidnight)?
+                    LocalTime.MIDNIGHT : schedule.getStartTime().toLocalTime();
+
+            // 종료날짜가 내일인 경우
+            // 종료시간이 내일 0시 이전이면 그대로 / 내일 0시 이후면 LocalTime MAX로
+            LocalTime end = schedule.getEndTime().isBefore(tomorrowMidnight)?
+                    schedule.getEndTime().toLocalTime() : LocalTime.MAX;
+
+            todoList.add(new HomeResponseDto.TimeSlotDto(start, end));
+        }
+
+        // 4. 각 배열 startTime 기준으로 정렬하기
+        sleepList.sort(Comparator.comparing(HomeResponseDto.TimeSlotDto::getStartTime));
+        todoList.sort(Comparator.comparing(HomeResponseDto.TimeSlotDto::getStartTime));
+
+        // 5. 겹치는 투두 병합하기
+        todoList = mergeConflictTime(todoList);
+
+        // 6. 반환하기
+        HomeResponseDto.TimeTableDto result = scheduleConverter.toTimeTableDto(sleepList,todoList);
+        return result;
+    }
+
+    private List<HomeResponseDto.TimeSlotDto> mergeConflictTime(List<HomeResponseDto.TimeSlotDto> list) {
+        // 겹치는 Todo 일정 로직 처리
+        if(list.isEmpty()) return list;
+
+        List<HomeResponseDto.TimeSlotDto> result = new ArrayList<>();
+        HomeResponseDto.TimeSlotDto last = list.get(0); // 첫번째 투두
+        result.add(last);
+
+        for(int i = 1; i < list.size(); i++){
+            HomeResponseDto.TimeSlotDto current = list.get(i);
+
+            if(!current.getStartTime().isAfter(last.getEndTime())){
+                // current 투두의 시작시간이 last 투두의 종료시간과 같거나 이른 경우
+
+                // 둘중 늦은 endTime 으로 설정
+                LocalTime endTime = last.getEndTime().isAfter(current.getEndTime()) ? last.getEndTime() : current.getEndTime();
+
+                HomeResponseDto.TimeSlotDto merged = HomeResponseDto.TimeSlotDto.builder()
+                        .startTime(last.getStartTime()) // 이전 시작
+                        .endTime(endTime) // 현재 종료
+                        .build();
+
+                result.set(result.size() - 1, merged); // last를 merge로 바꿈
+                last = merged; // last 업데이트
+            } else{
+                result.add(current); // current 넣기
+                last = current; // last 업데이트
+            }
+        }
+        return result;
+    }
 }

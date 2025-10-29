@@ -204,4 +204,14 @@ public class ScheduleConverter {
 
     }
 
+    // Schedule -> TimeTableDto
+    public HomeResponseDto.TimeTableDto toTimeTableDto(
+            List<HomeResponseDto.TimeSlotDto> sleepList,List<HomeResponseDto.TimeSlotDto> todoList) {
+        return HomeResponseDto.TimeTableDto.builder()
+                .sleep(sleepList)
+                .todo(todoList)
+                .build();
+    }
+
+
 }
