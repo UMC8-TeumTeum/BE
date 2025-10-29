@@ -18,19 +18,19 @@ public class LoggingAspect {
     String methodName = joinPoint.getSignature().toShortString();
     Object[] args = joinPoint.getArgs();
 
-    log.info("[START] {} with args: {}", methodName, Arrays.toString(args));
+    log.info("[START] - {} with args: {}", methodName, Arrays.toString(args));
 
     try {
       Object result = joinPoint.proceed();
-      log.info("[RETURN] {} → {}", methodName, result);
+      log.info("[RETURN] - {} → {}", methodName, result);
       return result;
     } catch (Exception e) {
-      log.error("[EXCEPTION] {}: {}", methodName,
+      log.error("[EXCEPTION] - {}: {}", methodName,
           e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
       throw e;
     } finally {
       long elapsedTime = System.currentTimeMillis() - startTime;
-      log.info("[END] {} | time={}ms", methodName, elapsedTime);
+      log.info("[END] - {} | time={}ms", methodName, elapsedTime);
     }
   }
 }
