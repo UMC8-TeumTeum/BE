@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
+import umc.teumteum.server.domain.home.entity.enums.RoutineStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleJdbcRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
@@ -36,7 +37,7 @@ public class RoutineScheduler {
     private final ScheduleJdbcRepository scheduleJdbcRepository;
 
         @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
-//    @Scheduled(cron = "0 0/08 * * * *", zone = "Asia/Seoul")
+//    @Scheduled(cron = "0 0/50 * * * *", zone = "Asia/Seoul")
     public void schedule() {
         log.info("[00:00] 반복일정 스케줄 테이블에 등록 시작");
 
@@ -82,6 +83,7 @@ public class RoutineScheduler {
                         .date(today)
                         .startTime(LocalDateTime.of(today, routine.getStartTime()))
                         .endTime(LocalDateTime.of(today, routine.getEndTime()))
+                        .routineStatus(RoutineStatus.ORIGINAL)
                         .build();
                 schedulesToInsert.add(routineSchedule);
             }

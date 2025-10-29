@@ -57,7 +57,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
       AND s.date = :date
       AND s.startTime = :startTime
       AND s.endTime = :endTime
-      AND s.isDeleted = true
+      AND s.routineStatus = umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
 """)
     boolean existsDeletedRoutineInstance(
             @Param("userId") Long userId,
@@ -72,7 +72,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
       AND s.type = 'TEUM'
       AND s.status IN (:statuses)
       AND s.date BETWEEN :start AND :end
-      AND s.isDeleted = false
+      AND s.routineStatus <> umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
 """)
     List<LocalDate> findScheduledTeumsByDates(
             @Param("userId") Long userId,
@@ -86,23 +86,19 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     WHERE s.teumRequest = :teumRequest
       AND s.status IN :statuses
       AND s.type = 'TEUM'
-      AND s.isDeleted = false
+      AND s.routineStatus <> umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
 """)
     List<Schedule> findByTeumRequestAndStatusIn(
             @Param("teumRequest") TeumRequest teumRequest,
             @Param("statuses") List<ScheduleStatus> statuses
     );
 
-    boolean existsByUserAndDateAndRoutineAndIsDeletedTrue(User user, LocalDate today, Routine routine);
-
-    List<Schedule> findByUserAndDateAndIsDeletedFalseOrderByStartTime(User user, LocalDate date);
-
     @Query("""
     SELECT s FROM Schedule s
     WHERE s.user.id = :userId
       AND s.date = :date
       AND s.status IN :statuses
-      AND s.isDeleted = false
+      AND s.routineStatus <> umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
 """)
     List<Schedule> findByUserIdAndDateAndStatusIn(
             @Param("userId") Long userId,
@@ -114,7 +110,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     SELECT s
     FROM Schedule s
     WHERE s.user = :user
-      AND s.isDeleted = false
+      AND s.routineStatus <> umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
       AND s.startTime < :startOfTomorrow
       AND s.endTime > :startOfToday
     ORDER BY s.startTime ASC
@@ -126,7 +122,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     @Query("""
     SELECT s.routine FROM Schedule s
-    WHERE s.date = :date AND s.isDeleted = true AND s.routine IS NOT NULL""")
+    WHERE s.date = :date 
+    AND s.routineStatus = umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
+    AND s.routine IS NOT NULL""")
     List<Routine> findDeletedRoutinesByDate( @Param("date") LocalDate date);
 
     /**
@@ -195,7 +193,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     SELECT s FROM Schedule s
     WHERE s.user.id = :userId
       AND s.isPublic = true
-      AND s.isDeleted = false
+      AND s.routineStatus <> umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
     ORDER BY s.createdAt DESC
 """)
     List<Schedule> findAllPublicByUserId(@Param("userId") Long userId);
@@ -211,7 +209,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
       AND s.type IN :types
       AND s.status = 'ACTIVE'
       AND s.isPublic = true
-      AND s.isDeleted = false
+      AND s.routineStatus <> umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
       AND s.date BETWEEN :start AND :end
 """)
     List<LocalDate> findPublicActiveTodos(
@@ -227,7 +225,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
       AND s.type = 'TEUM'
       AND s.status IN :statuses
       AND s.isPublic = true
-      AND s.isDeleted = false
+      AND s.routineStatus <> umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
       AND s.date BETWEEN :start AND :end
 """)
     List<LocalDate> findPublicTeumDates(
@@ -266,7 +264,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     WHERE s.user.id = :userId
       AND s.date = :date
       AND s.isPublic = true
-      AND s.isDeleted = false
+      AND s.routineStatus <> umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
 """)
     List<Schedule> findPublicSchedulesByUserAndDate(
             @Param("userId") Long userId,
@@ -299,7 +297,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     SELECT s FROM Schedule s
     WHERE s.type = :type
       AND s.status = :status
-      AND s.isDeleted = false
+      AND s.routineStatus <> umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
       AND s.startTime <= :now
 """)
     List<Schedule> findAllExpiredActiveTeums(
@@ -315,7 +313,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
           and s.type = :type
           and s.routine is not null
           and s.user.id in :userIds
-          and s.isDeleted = false
+          and s.routineStatus <> umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
     """)
     List<Schedule> findRoutines(
             @Param("date") LocalDate date,

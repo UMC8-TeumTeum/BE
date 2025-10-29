@@ -13,6 +13,7 @@ public enum HomeErrorStatus implements BaseErrorCode {
     _INVALID_DURATION(HttpStatus.BAD_REQUEST,"HOME4002","잘못된 조회 기간입니다."),
     _CANNOT_UPDATE_ROUTINE(HttpStatus.BAD_REQUEST,"HOME4003","반복일정은 수정할 수 없습니다."),
     _INVALID_VIRTUAL_ID(HttpStatus.BAD_REQUEST,"HOME4004","잘못된 루틴 ID 형식입니다."),
+    _ROUTINE_FIELDS_IMMUTABLE(HttpStatus.BAD_REQUEST,"HOME4006","반복 일정은 리마인드 알림만 변경할 수 있으며, 기타 내용은 마이페이지에서 수정 가능합니다."),
     _SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "HOME4041", "해당 정보를 찾을 수 없습니다."),
     _CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND,"HOME4042","해당 카테고리를 찾을 수 없습니다."),
     _CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST, "HOME4045", "카테고리는 필수 항목입니다."),

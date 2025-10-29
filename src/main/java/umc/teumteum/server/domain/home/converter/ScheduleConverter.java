@@ -9,6 +9,7 @@ import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
+import umc.teumteum.server.domain.home.entity.enums.RoutineStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.user.entity.RemindAlarm;
@@ -75,7 +76,7 @@ public class ScheduleConverter {
                 .endTime(date.atTime(routine.getEndTime()))
                 .isPublic(false)
                 .includeTeum(false)
-                .remindAlarm(List.of())
+                .remindAlarm(toOnboardingReminderDtos(onboardingReminders))
                 .profileUrl(profileUrls)
                 .build();
     }
@@ -89,6 +90,22 @@ public class ScheduleConverter {
                     HomeResponseDto.ReminderAlarmDto dto = new HomeResponseDto.ReminderAlarmDto();
                     dto.setAlarm(r.getReminderTime());
                     dto.setStatus(r.getAlarmStatus());
+                    return dto;
+                })
+                .toList();
+    }
+
+    // 온보딩 리마인드 알림 변환
+    private List<HomeResponseDto.ReminderAlarmDto> toOnboardingReminderDtos(List<RemindAlarm> onboardingReminders) {
+        if (onboardingReminders == null || onboardingReminders.isEmpty()) return List.of();
+
+        return onboardingReminders.stream()
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparingInt(RemindAlarm::getMinutesBefore))
+                .map(ra -> {
+                    HomeResponseDto.ReminderAlarmDto dto = new HomeResponseDto.ReminderAlarmDto();
+                    dto.setAlarm(ra.getMinutesBefore());
+                    dto.setStatus(AlarmStatus.ACTIVE);
                     return dto;
                 })
                 .toList();
@@ -108,7 +125,7 @@ public class ScheduleConverter {
                 .includeTeum(false)
                 .type(ScheduleType.ROUTINE)
                 .status(ScheduleStatus.ACTIVE)
-                .isDeleted(true)
+                .routineStatus(RoutineStatus.DELETED)
                 .build();
     }
 
@@ -182,7 +199,7 @@ public class ScheduleConverter {
     }
 
     // Routine -> HomeResponseDto.TodolistDto (미래의 일정일 경우)
-    public HomeResponseDto.TodolistDto toVirtualRoutineDto(Routine routine,LocalDate date) {
+    public HomeResponseDto.TodolistDto toVirtualRoutineDto(Routine routine,LocalDate date, AlarmStatus alarmStatus) {
 
         // 가상의 ID 생성
         String dateStr = String.format("%04d%02d%02d", date.getYear(), date.getMonthValue(), date.getDayOfMonth());
@@ -198,10 +215,27 @@ public class ScheduleConverter {
                 .startTime(routine.getStartTime())
                 .endTime(endtime)
                 .isPublic(false)
-                .alarmStatus(AlarmStatus.NONE)
+                .alarmStatus(alarmStatus)
                 .type(ScheduleType.ROUTINE)
                 .build();
 
+    }
+
+    // HomeRequestDto.TodoRequestDto -> Schedule (반복일정 수정)
+    public Schedule toScheduleFromRoutine(HomeRequestDto.TodoRequestDto dto,Routine routine) {
+        return Schedule.builder()
+                .user(routine.getUser())
+                .title(dto.getTitle())
+                .description(dto.getDescription())
+                .type(ScheduleType.ROUTINE)
+                .date(dto.getStartTime().toLocalDate())
+                .startTime(dto.getStartTime())
+                .endTime(dto.getEndTime())
+                .isPublic(dto.getIsPublic())
+                .includeTeum(dto.getIncludeTeum())
+                .routineStatus(RoutineStatus.MODIFIED)
+                .routine(routine)
+                .build();
     }
 
     // Schedule -> TimeTableDto

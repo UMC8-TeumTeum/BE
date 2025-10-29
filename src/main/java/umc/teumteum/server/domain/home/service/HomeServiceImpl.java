@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.home.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -15,10 +16,7 @@ import umc.teumteum.server.domain.home.entity.Category;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
-import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
-import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
-import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
-import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.domain.home.entity.enums.*;
 import umc.teumteum.server.domain.home.entity.mapping.WishCategory;
 import umc.teumteum.server.domain.home.exception.status.HomeErrorStatus;
 import umc.teumteum.server.domain.home.exception.HomeException;
@@ -157,8 +155,8 @@ public class HomeServiceImpl implements HomeService {
     public HomeResponseDto.TodoIdDto updateTodoInfo(HomeRequestDto.TodoRequestDto dto, Long scheduleId, User user) {
         // Todo(Schedule) 수정
         if (scheduleId < 0) {
-            // 1. 미래의 반복일정은 수정할 수 없음
-            throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
+            // 1. 미래의 반복일정 수정
+            return updateFutureRoutine(dto, scheduleId, user);
         }
 
         // 2. 스케줄 테이블 조회
@@ -166,8 +164,8 @@ public class HomeServiceImpl implements HomeService {
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
 
         if (schedule.getType() == ScheduleType.ROUTINE) {
-            // 3. 현재, 과거의 반복일정은 수정할 수 없음
-            throw new HomeException(HomeErrorStatus._CANNOT_UPDATE_ROUTINE);
+            // 3. 현재, 과거의 반복일정 수정
+            return updateCurrentRoutine(dto,schedule);
         }
 
         // 4. 시간 유효성 검사
@@ -192,6 +190,118 @@ public class HomeServiceImpl implements HomeService {
     }
 
     @Transactional
+    public HomeResponseDto.TodoIdDto updateFutureRoutine(HomeRequestDto.TodoRequestDto dto, Long scheduleId, User user) {
+        // 미래의 반복일정 수정로직
+
+        // 1. 루틴 파싱
+        HomeResponseDto.VirtualRoutineDto parsedRoutine =  getVirtualRoutine(scheduleId);
+        LocalDate date = parsedRoutine.getDate();
+        Long  routineId = parsedRoutine.getRoutineId();
+
+        Routine routine = routineRepository.findById(routineId)
+                .orElseThrow(() -> new HomeException(HomeErrorStatus._ROUTINE_NOT_FOUND));
+
+        // 1. 필드 수정 여부 판단
+        LocalDateTime start = dto.getStartTime();
+        LocalDateTime end = dto.getEndTime();
+
+        // 2-1. 날짜 수정 여부
+        if(!start.toLocalDate().equals(date) || !end.toLocalDate().equals(date)){
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+
+        // 2-2. 기타 필드 수정 여부
+        if(dto.getTitle() != null && !dto.getTitle().equals(routine.getTitle())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getDescription() != null && !dto.getDescription().equals(routine.getDescription())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getIsPublic() != null && !dto.getIsPublic().equals(false)) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getIncludeTeum() != null && !dto.getIncludeTeum().equals(false)) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getStartTime().toLocalTime() != null && !dto.getStartTime().toLocalTime().equals(routine.getStartTime())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getStartTime().toLocalTime() != null && !dto.getEndTime().toLocalTime().equals(routine.getEndTime())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+
+        // 3. 스케줄 테이블에 저장
+        Schedule schedule = getOrCreateRoutine(user,routine,date,dto);
+
+        // 4. 리마인드 저장
+        scheduleReminderRepository.deleteByScheduleId(schedule.getId());
+        if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
+            List<ScheduleReminder> reminders =
+                    scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm());
+            scheduleReminderRepository.saveAll(reminders);
+        }
+        return new HomeResponseDto.TodoIdDto(schedule.getId());
+    }
+
+    @Transactional
+    public Schedule getOrCreateRoutine(User user, Routine routine, LocalDate date, HomeRequestDto.TodoRequestDto dto) {
+        // 1. 이미 존재하는지 먼저 조회
+        Optional<Schedule> existing = scheduleRepository.findByUserAndRoutineAndDate(user, routine, date);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
+        // 2. 없으면 convert로 새로 생성
+        Schedule newSchedule = scheduleConverter.toScheduleFromRoutine(dto, routine);
+
+        try {
+            // 저장
+            return scheduleRepository.save(newSchedule);
+        } catch (DataIntegrityViolationException e) {
+            // 동시에 다른 요청이 먼저 저장했을 수도 있으니 다시 조회
+            return scheduleRepository.findByUserAndRoutineAndDate(user, routine, date)
+                    .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
+        }
+    }
+
+    @Transactional
+    public HomeResponseDto.TodoIdDto updateCurrentRoutine(HomeRequestDto.TodoRequestDto dto, Schedule schedule) {
+        // 스케줄테이블의 루틴 수정 (과거 & 현재 & 이미 수정한 미래의 루틴)
+
+        // 1. 루틴은 상세 필드 수정 불가
+        if(dto.getTitle() != null && !dto.getTitle().equals(schedule.getTitle())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getDescription() != null && !dto.getDescription().equals(schedule.getDescription())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getIsPublic() != null && !dto.getIsPublic().equals(schedule.getIsPublic())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getIncludeTeum() != null && !dto.getIncludeTeum().equals(schedule.getIncludeTeum())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getStartTime() != null && !dto.getStartTime().isEqual(schedule.getStartTime())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+        if (dto.getEndTime() != null && !dto.getEndTime().isEqual(schedule.getEndTime())) {
+            throw new HomeException(HomeErrorStatus._ROUTINE_FIELDS_IMMUTABLE);
+        }
+
+        // 2. 필드 업데이트
+        schedule.setRoutineStatus(RoutineStatus.MODIFIED);
+
+        // 3. 리마인더 생성
+        scheduleReminderRepository.deleteByScheduleId(schedule.getId());
+        if (dto.getRemindAlarm() != null && !dto.getRemindAlarm().isEmpty()) {
+            List<ScheduleReminder> reminders =
+                    scheduleConverter.toScheduleReminders(schedule, dto.getRemindAlarm());
+            scheduleReminderRepository.saveAll(reminders);
+        }
+        return new HomeResponseDto.TodoIdDto(schedule.getId());
+    }
+
+    @Transactional
     @Override
     public void deleteTodo(Long scheduleId) {
         // Todo(Schedule) 삭제
@@ -207,9 +317,9 @@ public class HomeServiceImpl implements HomeService {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._SCHEDULE_NOT_FOUND));
 
-        // 2-1. 루틴 기반 스케줄일 경우
+        // 2-1. 루틴 기반 스케줄일 경우 -> routine_status = MODIFIED
         if (schedule.getRoutine() != null) {
-            schedule.setIsDeleted(true);
+            schedule.setRoutineStatus(RoutineStatus.DELETED);
             return;
         }
 
@@ -357,7 +467,7 @@ public class HomeServiceImpl implements HomeService {
 
         for (Schedule schedule : schedules) {
             // 삭제된 루틴 ->  표시 X
-            if(schedule.getRoutine() != null && schedule.getIsDeleted()) continue;
+            if(schedule.getRoutine() != null && schedule.getRoutineStatus() == RoutineStatus.DELETED) continue;
 
             // 취소된 틈 -> 표시 X
             if(schedule.getStatus() == ScheduleStatus.CANCELLED) continue;
@@ -551,7 +661,7 @@ public class HomeServiceImpl implements HomeService {
         for (Schedule schedule : schedules) {
             LocalDate date = schedule.getDate();
             // 3-1. 삭제된 루틴 ->  표시 X
-            if(schedule.getRoutine() != null && schedule.getIsDeleted()) continue;
+            if(schedule.getRoutine() != null && schedule.getRoutineStatus() == RoutineStatus.DELETED) continue;
 
             // 3-2. 취소된 틈 -> 표시 X
             if(schedule.getStatus() == ScheduleStatus.CANCELLED) continue;
@@ -566,7 +676,7 @@ public class HomeServiceImpl implements HomeService {
 
             // 4-1. 스케줄에서 삭제된 날짜의 루틴ID만 모아둠
             Map<LocalDate, Set<Long>> deletedRoutine = schedules.stream()
-                    .filter(s -> s.getRoutine() != null && s.getIsDeleted())
+                    .filter(s -> s.getRoutine() != null && s.getRoutineStatus() == RoutineStatus.DELETED)
                     .collect(Collectors.groupingBy(
                             Schedule::getDate,
                             Collectors.mapping(
@@ -614,7 +724,7 @@ public class HomeServiceImpl implements HomeService {
 
         // 2. 삭제되지 않은 스케줄 필터링 & 삭제된 틈 필터링
         List<Schedule> validSchedules = allSchedules.stream()
-                .filter(s -> !s.getIsDeleted())
+                .filter(s -> !s.getRoutineStatus().equals(RoutineStatus.DELETED))
                 .filter(s -> !s.getStatus().equals(ScheduleStatus.CANCELLED))
                 .toList();
 
@@ -637,9 +747,6 @@ public class HomeServiceImpl implements HomeService {
                         alarmStatus = AlarmStatus.NONE;
                     } else if(scheduleReminders.stream().anyMatch(r -> r.getAlarmStatus() == AlarmStatus.ACTIVE)){
                         alarmStatus = AlarmStatus.ACTIVE;
-                    } else if(schedule.getType() == ScheduleType.ROUTINE) {
-                        // 데모데이까지 반복일정의 경우 알림은 NONE 수정불가
-                        alarmStatus = AlarmStatus.NONE;
                     } else{
                         alarmStatus = AlarmStatus.INACTIVE;
                     }
@@ -647,9 +754,11 @@ public class HomeServiceImpl implements HomeService {
                 })
                 .toList();
 
-        // 5. 삭제된 루틴 ID
-        Set<Long> deletedRoutineIds = allSchedules.stream()
-                .filter(s-> s.getRoutine() != null && s.getIsDeleted())
+        // 5. 삭제 or 수정된 루틴 ID
+        Set<Long> excludedRoutineIds = allSchedules.stream()
+                .filter(s-> s.getRoutine() != null)
+                .filter(s -> s.getRoutineStatus() ==  RoutineStatus.DELETED
+                                    || s.getRoutineStatus() == RoutineStatus.MODIFIED)
                 .map(s->s.getRoutine().getId())
                 .collect(Collectors.toSet());
 
@@ -661,10 +770,16 @@ public class HomeServiceImpl implements HomeService {
             Weekday todayWeekday = Weekday.valueOf(date.getDayOfWeek().name());
             List<Routine> routines = routineRepository.findByUserAndWeekday(user, todayWeekday);
 
-            // 6-2. 삭제되지 않은 루틴에 대해 가상의 ID 생성
+            // 6-2. 수정 or 삭제되지 않은 루틴에 대해 가상의 ID 생성
             routineDtos = routines.stream()
-                    .filter(r -> !deletedRoutineIds.contains(r.getId()))
-                    .map(r -> scheduleConverter.toVirtualRoutineDto(r, date))
+                    .filter(r -> !excludedRoutineIds.contains(r.getId()))
+                    .map(r -> {
+                        // 알림 상태 설정
+                        boolean hasAlarm = remindAlarmRepository.existsByUser(user);
+                        AlarmStatus alarmStatus = hasAlarm ? AlarmStatus.ACTIVE : AlarmStatus.NONE;
+                        // dto 변환
+                        return scheduleConverter.toVirtualRoutineDto(r, date, alarmStatus);
+                    })
                     .toList();
         }
 
@@ -764,7 +879,7 @@ public class HomeServiceImpl implements HomeService {
 
         for(Schedule schedule : scheduleList){
             // 삭제된 루틴 ->  표시 X
-            if(schedule.getRoutine() != null && schedule.getIsDeleted()) continue;
+            if(schedule.getRoutine() != null && schedule.getRoutineStatus() ==  RoutineStatus.DELETED) continue;
 
             // 취소된 틈 -> 표시 X
             if(schedule.getStatus() == ScheduleStatus.CANCELLED) continue;

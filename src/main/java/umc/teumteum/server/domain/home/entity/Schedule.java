@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.home.dto.request.HomeRequestDto;
+import umc.teumteum.server.domain.home.entity.enums.RoutineStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
@@ -23,7 +24,15 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "schedule")
+@Table(
+        name = "schedule",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_user_routine_date",
+                        columnNames = {"user_id","routine_id","date"}
+                )
+        }
+)
 public class Schedule extends BaseEntity {
 
     @Id
@@ -66,9 +75,10 @@ public class Schedule extends BaseEntity {
     @Column(name = "status", nullable = false)
     private ScheduleStatus status = ScheduleStatus.ACTIVE;
 
-    @Builder.Default
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;
+    @Builder.Default()
+    @Enumerated(EnumType.STRING)
+    @Column(name = "routine_status", nullable = false)
+    private RoutineStatus routineStatus = RoutineStatus.ORIGINAL;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teum_request_id")
@@ -102,9 +112,9 @@ public class Schedule extends BaseEntity {
         this.status = ScheduleStatus.COMPLETED;
     }
 
-    // 루틴 삭제 처리
-    public void setIsDeleted(boolean isDeleted) {
-        this.isDeleted = isDeleted;
+    // 과거 & 현재 루틴 수정 처리
+    public void setRoutineStatus(RoutineStatus routineStatus) {
+        this.routineStatus = routineStatus;
     }
 
 }

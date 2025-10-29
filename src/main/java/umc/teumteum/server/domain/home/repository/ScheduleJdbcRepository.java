@@ -25,13 +25,13 @@ public class ScheduleJdbcRepository {
         String sql =  """
         INSERT INTO schedule
           (user_id, routine_id, title, description, 
-           date, start_time, end_time, type, status,
-           include_teum, is_deleted, is_public,
+           date, start_time, end_time, type, 
+           status,include_teum, is_public, routine_status,
            created_at, updated_at)
         VALUES
           (?, ?, ?, ?, 
-           ?, ?, ?, ?, ?,
-           ?, ?, ?,
+           ?, ?, ?, ?,
+           ?, ?, ?, ?,
            NOW(), NOW())
         """;
 
@@ -54,7 +54,7 @@ public class ScheduleJdbcRepository {
 
                         ps.setBoolean(10,false);
                         ps.setBoolean(11,false);
-                        ps.setBoolean(12, false);
+                        ps.setString(12,schedule.getRoutineStatus().toString());
                     }
 
                     @Override
@@ -100,8 +100,9 @@ public class ScheduleJdbcRepository {
         String sql = """
         INSERT INTO schedule (
             user_id, title, description, type, date, start_time, end_time, 
-            is_public, include_teum, status, is_deleted, 
-            routine_id, teum_request_id, created_at, updated_at
+            is_public, include_teum, status,
+            routine_id, teum_request_id, routine_status,
+            created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
@@ -116,9 +117,9 @@ public class ScheduleJdbcRepository {
             ps.setBoolean(8, schedule.getIsPublic());
             ps.setBoolean(9, schedule.getIncludeTeum());
             ps.setString(10, schedule.getStatus().name());
-            ps.setBoolean(11, schedule.getIsDeleted());
-            ps.setObject(12, schedule.getRoutine() != null ? schedule.getRoutine().getId() : null);
-            ps.setObject(13, schedule.getTeumRequest() != null ? schedule.getTeumRequest().getId() : null);
+            ps.setObject(11, schedule.getRoutine() != null ? schedule.getRoutine().getId() : null);
+            ps.setObject(12, schedule.getTeumRequest() != null ? schedule.getTeumRequest().getId() : null);
+            ps.setString(13, schedule.getRoutineStatus().name());
             ps.setTimestamp(14, now);
             ps.setTimestamp(15, now);
         });
