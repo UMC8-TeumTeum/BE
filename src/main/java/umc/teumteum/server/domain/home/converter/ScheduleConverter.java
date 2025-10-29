@@ -1,8 +1,6 @@
 package umc.teumteum.server.domain.home.converter;
 
 import java.time.Duration;
-
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.dto.request.HomeRequestDto;
 import umc.teumteum.server.domain.home.dto.request.WishRequestDto;
@@ -23,7 +21,6 @@ import java.time.LocalTime;
 import java.util.*;
 
 @Component
-@RequiredArgsConstructor
 public class ScheduleConverter {
 
     // TodoRequestDTO -> Schedule
@@ -239,4 +236,15 @@ public class ScheduleConverter {
                 .routine(routine)
                 .build();
     }
+
+    // Schedule -> TimeTableDto
+    public HomeResponseDto.TimeTableDto toTimeTableDto(
+            List<HomeResponseDto.TimeSlotDto> sleepList,List<HomeResponseDto.TimeSlotDto> todoList) {
+        return HomeResponseDto.TimeTableDto.builder()
+                .sleep(sleepList)
+                .todo(todoList)
+                .build();
+    }
+
+
 }

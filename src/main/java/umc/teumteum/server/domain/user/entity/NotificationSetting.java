@@ -32,22 +32,10 @@ public class NotificationSetting extends BaseEntity {
     private Boolean remindAlarm = true;
 
     @Builder.Default
-    @Column(name = "receive_request", nullable = false)
-    private Boolean receiveRequest = true;
+    @Column(name = "teum", nullable = false)
+    private Boolean teum = true;
 
     @Builder.Default
-    @Column(name = "accept_request", nullable = false)
-    private Boolean acceptRequest = true;
-
-    @Builder.Default
-    @Column(name = "reject_request", nullable = false)
-    private Boolean rejectRequest = true;
-
-    @Builder.Default
-    @Column(name = "change_time", nullable = false)
-    private Boolean changeTime = true;
-
-    @Builder.Default
-    @Column(name = "is_canceled", nullable = false)
-    private Boolean isCanceled = true;
+    @Column(name = "follow", nullable = false)
+    private Boolean follow = true;
 }
