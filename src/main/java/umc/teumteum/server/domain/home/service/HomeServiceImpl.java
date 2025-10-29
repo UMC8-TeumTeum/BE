@@ -252,7 +252,7 @@ public class HomeServiceImpl implements HomeService {
         }
 
         // 2. 없으면 convert로 새로 생성
-        Schedule newSchedule = scheduleConverter.toScheduleFromRoutine(dto, user, routine);
+        Schedule newSchedule = scheduleConverter.toScheduleFromRoutine(dto, routine);
 
         try {
             // 저장
