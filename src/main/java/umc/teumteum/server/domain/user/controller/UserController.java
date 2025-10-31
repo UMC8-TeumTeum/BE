@@ -68,4 +68,17 @@ public class UserController {
         return ApiResponse.of(UserSuccessStatus._USER_PRESIGNED_URL_ISSUED, response);
     }
 
+    @Operation(
+            summary = "마이페이지 프로필 이미지 수정",
+            description = ""
+    )
+    @PostMapping(value = "/mypage/prefile-image", produces = "application/json")
+    public ApiResponse<Object> saveProfileImageKey(
+                HttpServletRequest httpServletRequest,
+                @RequestBody @Valid OnboardingRequestDto.ProfileImageRequest request,
+                @CurrentUser @Parameter(hidden = true) User user
+    ) {
+            userService.saveProfileImage(httpServletRequest, request, user);
+            return ApiResponse.of(UserSuccessStatus._USER_PROFILE_IMAGE_UPDATED, null);
+    }
 }

@@ -23,4 +23,6 @@ public interface UserService {
     UserResponseDTO.MyPageDTO getMyPage(User user);
 
     OnboardingResponseDto.ProfileImagePresignedUrlResponse generateProfileImagePresignedUrl(HttpServletRequest httpServletRequest, OnboardingRequestDto.ProfileImagePresignedUrlRequest request, User user);
+
+    void saveProfileImage(HttpServletRequest httpServletRequest, OnboardingRequestDto.ProfileImageRequest request, User user);
 }

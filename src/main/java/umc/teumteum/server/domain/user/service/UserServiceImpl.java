@@ -154,4 +154,42 @@ public class UserServiceImpl implements UserService {
         return String.format("PROFILE_IMAGE_FILE_NAME:%s:%s", userId, sessionId);
     }
 
+    // 마이페이지 - 프로필 이미지 수정
+    @Transactional
+    @Override
+    public void saveProfileImage(HttpServletRequest httpServletRequest, OnboardingRequestDto.ProfileImageRequest request, User user) {
+
+        // 1. Redis 조회하여 비교
+        String userId = user.getId().toString();
+        String sessionId = jwtProvider.getSessionIdFromToken(jwtProvider.resolveToken(httpServletRequest));
+        String imageFileKey = getProfileImageKey(userId, sessionId);
+
+        // 2. 검증
+        try{
+            String storedImageFileName = profileImageRedisTemplate.opsForValue().get(imageFileKey);
+
+            // 2-1. TTL 만료
+            if(storedImageFileName == null){
+                throw new UserException(UserErrorStatus.EXPIRED_UPLOAD_SESSION);
+            }
+
+            // 2-2. 요청 파일명 != Redis 파일명
+            if (!Objects.equals(storedImageFileName, request.getFileName())) {
+                throw new UserException(UserErrorStatus.INVALID_IMAGE_NAME);
+            }
+
+            // 2-3. 기존 객체 삭제
+            String oldFileName = user.getProfileImageName();
+
+            if(oldFileName != null && !oldFileName.isEmpty() && !oldFileName.equals("default.svg")){
+                s3Util.deleteObject("profile/" + oldFileName);
+            }
+
+            // 2-4. DB 저장 키 수정 (사용자 프로필 이미지 이름 업데이트)
+            user.updateProfileImageName(request.getFileName());
+        } finally {
+            // 3. Redis 키 삭제
+            profileImageRedisTemplate.delete(imageFileKey);
+        }
+    }
 }
