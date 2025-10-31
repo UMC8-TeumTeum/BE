@@ -1,16 +1,25 @@
 package umc.teumteum.server.domain.user.service;
 
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
+import umc.teumteum.server.domain.user.converter.OnboardingConverter;
 import umc.teumteum.server.domain.user.converter.UserConverter;
+import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
+import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.domain.user.exception.UserException;
+import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.global.jwt.JwtProvider;
 import umc.teumteum.server.global.util.S3Util;
 
 import java.time.Duration;
@@ -23,6 +32,14 @@ public class UserServiceImpl implements UserService {
     private final UserConverter userConverter;
     private final UserRepository userRepository;
     private final S3Util s3Util;
+    private final JwtProvider jwtProvider;
+
+    @Resource(name = "profileImageRedisTemplate")
+    private RedisTemplate<String, String> profileImageRedisTemplate;
+
+    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp", "image/svg+xml"
+    );
 
     @Override
     public List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long userId) {
@@ -94,4 +111,47 @@ public class UserServiceImpl implements UserService {
         String profileImageUrl = s3Util.toPresignedUrl("profile/" + user.getProfileImageName(), Duration.ofMinutes(30));
         return UserConverter.toMyPageDTO(user, profileImageUrl);
     }
+
+    // 프로필 이미지 업로드, Presigned URL 발급
+    @Override
+    public OnboardingResponseDto.ProfileImagePresignedUrlResponse generateProfileImagePresignedUrl(
+            HttpServletRequest httpServletRequest, OnboardingRequestDto.ProfileImagePresignedUrlRequest request, User user) {
+
+        // 1. content-type 검증
+        String contentType = request.getContentType().toLowerCase();
+        if(!ALLOWED_IMAGE_TYPES.contains(contentType)){
+            throw new UserException(UserErrorStatus.UNSUPPORTED_IMAGE_FORMAT);
+        }
+
+        // 2. 확장자 추출
+        String extension = contentType.substring(contentType.lastIndexOf("/") + 1);
+        // svg+xml의 경우 svg로 변환
+        if ("svg+xml".equals(extension)) {
+            extension = "svg";
+        }
+
+        // 3. 파일명 생성
+        String fileName = UUID.randomUUID() + "." + extension;
+
+        // 4. S3 Key 구성 (profile/{fileName})
+        String key = "profile/" + fileName;
+
+        // 5. Presigned URL 발급
+        String presignedUrl = s3Util.toUploadPresignedUrl(key, contentType, Duration.ofMinutes(30));
+
+        // 6. S3 업로드 예정인 파일이름 redis에 저장
+        String userId = user.getId().toString();
+        String sessionId = jwtProvider.getSessionIdFromToken(jwtProvider.resolveToken(httpServletRequest));
+        String imageFileKey = getProfileImageKey(userId, sessionId);
+        profileImageRedisTemplate.opsForValue().set(imageFileKey, fileName, Duration.ofMinutes(30));
+
+        // 7. 응답 반환
+        return OnboardingConverter.toProfileImagePresignedUrlResponse(presignedUrl, fileName);
+    }
+
+    // 프로필 이미지 키 get
+    private String getProfileImageKey(String userId, String sessionId) {
+        return String.format("PROFILE_IMAGE_FILE_NAME:%s:%s", userId, sessionId);
+    }
+
 }

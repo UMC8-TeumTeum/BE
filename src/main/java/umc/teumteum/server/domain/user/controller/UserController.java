@@ -3,8 +3,12 @@ package umc.teumteum.server.domain.user.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
+import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
@@ -49,5 +53,19 @@ public class UserController {
         return ApiResponse.of(UserSuccessStatus._USER_FOUND, response);
     }
 
+    @Operation(
+            summary = "마이페이지 프로필 수정용 Presigned URL 발급",
+            description = "프로필 수정 과정에서 프로필 이미지를 S3에 직접 업로드할 수 있는 Presigned URL을 발급합니다."
+    )
+    @PostMapping(value = "/mypage/prefile-image/presigned-url", produces = "application/json")
+    public ApiResponse<OnboardingResponseDto.ProfileImagePresignedUrlResponse> getPresignedImagePresignedUrl(
+        HttpServletRequest httpServletRequest,
+        @RequestBody @Valid OnboardingRequestDto.ProfileImagePresignedUrlRequest request,
+        @CurrentUser @Parameter(hidden = true) User user
+    ){
+        OnboardingResponseDto.ProfileImagePresignedUrlResponse response =
+                userService.generateProfileImagePresignedUrl(httpServletRequest, request, user);
+        return ApiResponse.of(UserSuccessStatus._USER_PRESIGNED_URL_ISSUED, response);
+    }
 
 }

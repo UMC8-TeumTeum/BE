@@ -11,6 +11,7 @@ import umc.teumteum.server.global.apiPayload.code.ReasonDto;
 public enum UserSuccessStatus implements BaseCode {
 
     _USER_FOUND(HttpStatus.OK, "USER2001", "사용자 조회 성공"),
+    _USER_PRESIGNED_URL_ISSUED(HttpStatus.OK,"USER2002","프로필 이미지 업로드용 Presigned URL 발급이 완료되었습니다."),
 
 
     // 사용자 온보딩
