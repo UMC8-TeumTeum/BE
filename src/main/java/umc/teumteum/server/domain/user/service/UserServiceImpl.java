@@ -207,11 +207,9 @@ public class UserServiceImpl implements UserService {
         }
 
         // 2. 기존 객체 삭제
-        try{
-            s3Util.deleteObject("profile/" + oldFileName);
-        }  finally {
-            // 3. DB 저장 키 교체 (S3 Key -> default)
-            user.updateProfileImageName(DEFAULT_IMAGE);
-        }
+        s3Util.deleteObject("profile/" + oldFileName);
+
+        // 3. DB 저장 키 교체 (S3 Key -> default)
+        user.updateProfileImageName(DEFAULT_IMAGE);
     }
 }
