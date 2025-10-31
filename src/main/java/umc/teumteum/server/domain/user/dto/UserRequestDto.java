@@ -29,7 +29,7 @@ public class UserRequestDto {
         @Schema(description = "사용자의 분야/직종 (최대 10자)", example = "개발자")
         private String jobField;
 
-        @NotNull
+        @NotNull(message = "빈틈 시간 공개 여부는 필수 입력입니다")
         @Schema(description = "빈틈 시간 공개 여부", example = "true")
         private Boolean timePublic;
     }
