@@ -105,7 +105,7 @@ public class WishConverter {
             .user(user)
             .title(title)
             .description(content)
-            .description(null)
+            .description(content)
             .type(ScheduleType.AI)
             .date(request.getStartTime().toLocalDate())
             .startTime(request.getStartTime())

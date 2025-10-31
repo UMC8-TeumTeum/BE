@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import umc.teumteum.server.domain.home.ai.generator.AiWishGenerator;
@@ -38,6 +39,7 @@ import umc.teumteum.server.domain.home.repository.WishRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.validator.ConflictValidator;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ActivityServiceImpl implements ActivityService{
@@ -199,6 +201,7 @@ public class ActivityServiceImpl implements ActivityService{
     }
 
     // 3. Dto 변환 후 저장
+    log.info("AI wish content: {}", content);
     Schedule schedule = wishConverter.toScheduleFromAiWish(user, request, title, content);
     Long scheduleId = scheduleRepository.save(schedule).getId();
 
