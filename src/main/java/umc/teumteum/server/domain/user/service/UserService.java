@@ -25,4 +25,6 @@ public interface UserService {
     OnboardingResponseDto.ProfileImagePresignedUrlResponse generateProfileImagePresignedUrl(HttpServletRequest httpServletRequest, OnboardingRequestDto.ProfileImagePresignedUrlRequest request, User user);
 
     void saveProfileImage(HttpServletRequest httpServletRequest, OnboardingRequestDto.ProfileImageRequest request, User user);
+
+    void deleteProfileImage(HttpServletRequest httpServletRequest, User user);
 }

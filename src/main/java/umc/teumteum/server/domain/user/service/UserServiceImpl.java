@@ -24,7 +24,6 @@ import umc.teumteum.server.global.util.S3Util;
 
 import java.time.Duration;
 import java.util.*;
-
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -40,6 +39,8 @@ public class UserServiceImpl implements UserService {
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp", "image/svg+xml"
     );
+
+    private static final String DEFAULT_IMAGE = "default.svg";
 
     @Override
     public List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long userId) {
@@ -181,7 +182,7 @@ public class UserServiceImpl implements UserService {
             // 2-3. 기존 객체 삭제
             String oldFileName = user.getProfileImageName();
 
-            if(oldFileName != null && !oldFileName.isEmpty() && !oldFileName.equals("default.svg")){
+            if(oldFileName != null && !oldFileName.isEmpty() && !oldFileName.equals(DEFAULT_IMAGE)){
                 s3Util.deleteObject("profile/" + oldFileName);
             }
 
@@ -190,6 +191,27 @@ public class UserServiceImpl implements UserService {
         } finally {
             // 3. Redis 키 삭제
             profileImageRedisTemplate.delete(imageFileKey);
+        }
+    }
+
+    // 마이페이지 - 프로필 이미지 삭제
+    @Transactional
+    @Override
+    public void deleteProfileImage(HttpServletRequest httpServletRequest, User user) {
+
+        String oldFileName = user.getProfileImageName();
+
+        // 1. default 이미지 삭제 예외처리
+        if(oldFileName == null || oldFileName.equals(DEFAULT_IMAGE)){
+            throw new UserException(UserErrorStatus.CANNOT_DELETE_DEFAULT_IMAGE);
+        }
+
+        // 2. 기존 객체 삭제
+        try{
+            s3Util.deleteObject("profile/" + oldFileName);
+        }  finally {
+            // 3. DB 저장 키 교체 (S3 Key -> default)
+            user.updateProfileImageName(DEFAULT_IMAGE);
         }
     }
 }

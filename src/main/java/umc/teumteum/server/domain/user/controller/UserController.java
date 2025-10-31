@@ -70,7 +70,7 @@ public class UserController {
 
     @Operation(
             summary = "마이페이지 프로필 이미지 수정",
-            description = ""
+            description = "Presigned URL로 업로드된 새 프로필 이미지를 등록합니다. 기존 프로필 이미지는 삭제되고, 새 이미지 파일명이 저장됩니다."
     )
     @PostMapping(value = "/mypage/prefile-image", produces = "application/json")
     public ApiResponse<Object> saveProfileImageKey(
@@ -79,6 +79,20 @@ public class UserController {
                 @CurrentUser @Parameter(hidden = true) User user
     ) {
             userService.saveProfileImage(httpServletRequest, request, user);
-            return ApiResponse.of(UserSuccessStatus._USER_PROFILE_IMAGE_UPDATED, null);
+            return ApiResponse.of(UserSuccessStatus._PROFILE_IMAGE_UPDATED, null);
     }
+
+    @Operation(
+            summary = "마이페이지 프로필 이미지 삭제",
+            description = "기존 프로필 이미지를 삭제 후, default 이미지로 수정합니다."
+    )
+    @DeleteMapping(value = "/mypage/prefile-image", produces = "application/json")
+    public ApiResponse<Object> deleteProfileImage(
+            HttpServletRequest httpServletRequest,
+            @CurrentUser @Parameter(hidden = true) User user
+    ) {
+        userService.deleteProfileImage(httpServletRequest, user);
+        return ApiResponse.of(UserSuccessStatus._PROFILE_IMAGE_DELETED, null);
+    }
+
 }

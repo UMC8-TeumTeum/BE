@@ -10,6 +10,7 @@ import umc.teumteum.server.global.apiPayload.code.ErrorReasonDto;
 @AllArgsConstructor
 public enum UserErrorStatus implements BaseErrorCode {
 
+    CANNOT_DELETE_DEFAULT_IMAGE(HttpStatus.BAD_REQUEST,"USER4000","기본 프로필 이미지는 삭제할 수 없습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER4040", "존재하지 않는 사용자입니다."),
 
 
