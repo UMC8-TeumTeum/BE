@@ -46,6 +46,9 @@ public class ActivityResponseDto {
     @Schema(description = "위시 제목", example = "성북천 산책하기")
     private String title;
 
+    @Schema(description = "위시 내용", example = "성북천 산책하면서 오리가족 구경하기")
+    private String content;
+
     @Schema(description = "예상 소요 시간", example = "TEN_MINUTES")
     private EstimatedDuration estimatedDuration;
 

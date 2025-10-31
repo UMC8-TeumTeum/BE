@@ -91,6 +91,7 @@ public class WishConverter {
         return ActivityResponseDto.WishDto.builder()
             .id(wish.getId())
             .title(wish.getTitle())
+            .content(wish.getContent())
             .estimatedDuration(wish.getEstimatedDuration())
             .build();
     }
