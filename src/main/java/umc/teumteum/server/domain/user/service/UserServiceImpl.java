@@ -6,10 +6,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.user.converter.UserConverter;
+import umc.teumteum.server.domain.user.dto.UserRequestDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.domain.user.exception.UserException;
+import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.util.S3Util;
 
@@ -93,5 +96,28 @@ public class UserServiceImpl implements UserService {
     public UserResponseDTO.MyPageDTO getMyPage(User user) {
         String profileImageUrl = s3Util.toPresignedUrl("profile/" + user.getProfileImageName(), Duration.ofMinutes(30));
         return UserConverter.toMyPageDTO(user, profileImageUrl);
+    }
+
+    // 마이페이지 - 개인정보 수정
+    @Transactional
+    @Override
+    public void updateProfile(UserRequestDto.ProfileRequest request, User user) {
+        // 1. 유저 조회
+        User existingUser = userRepository.findById(user.getId())
+                .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
+
+        // 2. 닉네임 수정 시, 닉네임 중복 검증
+        if (existingUser.getNickname() != null &&
+            !existingUser.getNickname().equals(request.getNickname()) &&
+            userRepository.existsByNickname(request.getNickname())) {
+            throw new UserException(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+        }
+
+        // 3. 프로필 수정
+        existingUser.updateProfile(
+                request.getNickname(),
+                request.getJobField(),
+                request.getTimePublic()
+        );
     }
 }
