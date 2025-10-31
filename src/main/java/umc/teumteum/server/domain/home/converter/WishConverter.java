@@ -100,10 +100,11 @@ public class WishConverter {
             .map(this::toActivityWishDto)
             .toList();
     }
-    public Schedule toScheduleFromAiWish(User user, AiWishSaveRequest request, String title){
+    public Schedule toScheduleFromAiWish(User user, AiWishSaveRequest request, String title, String content){
         return Schedule.builder()
             .user(user)
             .title(title)
+            .description(content)
             .description(null)
             .type(ScheduleType.AI)
             .date(request.getStartTime().toLocalDate())
