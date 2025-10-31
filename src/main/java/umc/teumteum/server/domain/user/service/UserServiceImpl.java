@@ -197,7 +197,7 @@ public class UserServiceImpl implements UserService {
     // 마이페이지 - 프로필 이미지 삭제
     @Transactional
     @Override
-    public void deleteProfileImage(HttpServletRequest httpServletRequest, User user) {
+    public void deleteProfileImage(User user) {
 
         String oldFileName = user.getProfileImageName();
 

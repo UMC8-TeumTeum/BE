@@ -26,5 +26,5 @@ public interface UserService {
 
     void saveProfileImage(HttpServletRequest httpServletRequest, OnboardingRequestDto.ProfileImageRequest request, User user);
 
-    void deleteProfileImage(HttpServletRequest httpServletRequest, User user);
+    void deleteProfileImage(User user);
 }

@@ -88,10 +88,9 @@ public class UserController {
     )
     @DeleteMapping(value = "/mypage/profile-image", produces = "application/json")
     public ApiResponse<Object> deleteProfileImage(
-            HttpServletRequest httpServletRequest,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
-        userService.deleteProfileImage(httpServletRequest, user);
+        userService.deleteProfileImage(user);
         return ApiResponse.of(UserSuccessStatus._PROFILE_IMAGE_DELETED, null);
     }
 
