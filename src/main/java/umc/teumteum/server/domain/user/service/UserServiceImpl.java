@@ -107,9 +107,8 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
 
         // 2. 닉네임 수정 시, 닉네임 중복 검증
-        if (existingUser.getNickname() != null &&
-            !existingUser.getNickname().equals(request.getNickname()) &&
-            userRepository.existsByNickname(request.getNickname())) {
+        if (!Objects.equals(existingUser.getNickname(), request.getNickname()) &&
+                userRepository.existsByNickname(request.getNickname())) {
             throw new UserException(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
         }
 
