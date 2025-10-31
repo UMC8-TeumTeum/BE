@@ -170,8 +170,8 @@ public class ActivityServiceImpl implements ActivityService{
     boolean hasConflict = scheduleRepository.existsConflictSchedule(
         user.getId(), date, startTime, endTime
     );
-    if (hasConflict && !request.getIsForce()) {
-      // force가 false고 일정이 겹치면 예외
+    if (hasConflict) {
+      // 일정이 겹치면 예외
       throw new HomeException(HomeErrorStatus._SCHEDULE_CONFLICT);
     }
 
