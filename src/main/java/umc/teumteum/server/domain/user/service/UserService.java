@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.user.service;
 
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
+import umc.teumteum.server.domain.user.dto.UserRequestDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
@@ -18,4 +19,6 @@ public interface UserService {
     Optional<User> findUser(Long userId);
 
     UserResponseDTO.MyPageDTO getMyPage(User user);
+
+    void updateProfile(UserRequestDto.ProfileRequest request, User user);
 }

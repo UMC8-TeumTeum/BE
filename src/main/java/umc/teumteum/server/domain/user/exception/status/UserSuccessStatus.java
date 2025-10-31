@@ -13,6 +13,10 @@ public enum UserSuccessStatus implements BaseCode {
     _USER_FOUND(HttpStatus.OK, "USER2001", "사용자 조회 성공"),
 
 
+
+    _PROFILE_UPDATED(HttpStatus.OK,"USER2005","개인정보 수정이 완료되었습니다."),
+
+
     // 사용자 온보딩
     AGREEMENT_SAVED(HttpStatus.OK, "ONBOARDING2001", "약관 동의가 완료되었습니다."),
     NICKNAME_JOB_SAVED(HttpStatus.OK, "ONBOARDING2002", "닉네임과 분야/직종 등록이 완료되었습니다."),

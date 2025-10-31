@@ -81,6 +81,10 @@ public class User extends BaseEntity {
     @Column(name = "inactive_at")
     private LocalDateTime inactiveAt;
 
+    @Builder.Default
+    @Column(name = "time_public")
+    private Boolean timePublic = true;
+
 
     /*
         양방향 연관관계
@@ -143,5 +147,11 @@ public class User extends BaseEntity {
     public void clearSleepPattern() {
         this.sleepTime = null;
         this.wakeTime = null;
+    }
+
+    public void updateProfile(String nickname, String jobField, Boolean timePublic) {
+        this.nickname = nickname;
+        this.job = jobField;
+        this.timePublic = timePublic;
     }
 }
