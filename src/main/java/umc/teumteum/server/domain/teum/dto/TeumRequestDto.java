@@ -85,7 +85,7 @@ public class TeumRequestDto {
     @Schema(title = "TeumStatusUpdate : 틈 응답 상태 변경 DTO")
     public static class TeumStatusUpdate {
 
-        @Schema(description = "응답 상태", example = "ACCEPTED", allowableValues = {"ACCEPTED", "DECLINED", "SUGGESTED"})
+        @Schema(description = "응답 상태", example = "ACCEPTED", allowableValues = {"ACCEPTED", "REJECTED"})
         private String status;
     }
 
