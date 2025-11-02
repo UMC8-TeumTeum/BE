@@ -31,14 +31,13 @@ public class ConflictValidator {
     /**
      * 단일 사용자에 대한 Teum 시간 중복 검증 로직
      * - 사용자가 일정 생성 또는 Teum 응답을 시도할 때 호출
-     * - 일정, 미확정된 틈 요청, 반복 일정, 수면 시간과 겹침 여부를 검사
+     * - 일정, 반복 일정, 수면 시간과 겹침 여부를 검사
      */
     public void validateTeum(User user, LocalDate date, LocalTime startTime, LocalTime endTime) {
         LocalDateTime startDateTime = LocalDateTime.of(date, startTime);
         LocalDateTime endDateTime = LocalDateTime.of(date, endTime);
 
         checkWithSchedules(user, startDateTime, endDateTime);
-        checkWithTeumRequests(user, startDateTime, endDateTime);
         checkWithRoutines(user, date, startDateTime, endDateTime);
         checkWithSleepPattern(user, date, startDateTime, endDateTime);
     }

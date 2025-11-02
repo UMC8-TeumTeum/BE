@@ -57,34 +57,6 @@ public class NotificationUseCases {
     );
   }
 
-  // 틈 요청 알림(1:다) : sender -> receivers
-  public void notifyTeumRequestBatch(User sender, List<User> receivers, Long requestId, TeumRequestDto.TeumRequest request) {
-    String content = NotificationType.TEUM_REQUEST.getContent();
-
-    int totalReceivers = (request.getReceiverUserIds() == null) ? 0 : request.getReceiverUserIds().size();
-    int othersCount = Math.max(0, totalReceivers - 1);
-
-    Map<String, String> data = new java.util.HashMap<>();
-    data.put("senderId", String.valueOf(sender.getId()));
-    data.put("senderName", sender.getNickname());
-    data.put("title", request.getTitle());
-    data.put("description", request.getDescription() == null ? "" : request.getDescription());
-    data.put("date", request.getDate());
-    data.put("startTime", request.getStartTime());
-    data.put("endTime", request.getEndTime());
-    data.put("graphicId", String.valueOf(request.getGraphicId()));
-    data.put("isGroup", String.valueOf(othersCount > 0));
-    data.put("othersCount", String.valueOf(othersCount));
-
-    orchestrator.saveAndPushToMany(
-        receivers,
-        NotificationType.TEUM_REQUEST,
-        content,
-        requestId,
-        data
-    );
-  }
-
   // 틈 응답 알림
   public void notifyTeumResponse(User sender, User receiver, Long teumResponseId, boolean accepted) {
     NotificationType type = accepted ? NotificationType.TEUM_ACCEPTED : NotificationType.TEUM_DECLINED;
