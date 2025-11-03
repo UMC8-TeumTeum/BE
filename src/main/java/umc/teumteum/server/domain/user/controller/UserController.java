@@ -3,9 +3,12 @@ package umc.teumteum.server.domain.user.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
+import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.dto.UserRequestDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
@@ -63,4 +66,45 @@ public class UserController {
         userService.updateProfile(request, user);
         return ApiResponse.of(UserSuccessStatus._PROFILE_UPDATED,null);
     }
+    @Operation(
+            summary = "마이페이지 프로필 수정용 Presigned URL 발급",
+            description = "프로필 수정 과정에서 프로필 이미지를 S3에 직접 업로드할 수 있는 Presigned URL을 발급합니다."
+    )
+    @PostMapping(value = "/mypage/profile-image/presigned-url", produces = "application/json")
+    public ApiResponse<OnboardingResponseDto.ProfileImagePresignedUrlResponse> getPresignedImagePresignedUrl(
+        HttpServletRequest httpServletRequest,
+        @RequestBody @Valid OnboardingRequestDto.ProfileImagePresignedUrlRequest request,
+        @CurrentUser @Parameter(hidden = true) User user
+    ){
+        OnboardingResponseDto.ProfileImagePresignedUrlResponse response =
+                userService.generateProfileImagePresignedUrl(httpServletRequest, request, user);
+        return ApiResponse.of(UserSuccessStatus._USER_PRESIGNED_URL_ISSUED, response);
+    }
+
+    @Operation(
+            summary = "마이페이지 프로필 이미지 수정",
+            description = "Presigned URL로 업로드된 새 프로필 이미지를 등록합니다. 기존 프로필 이미지는 삭제되고, 새 이미지 파일명이 저장됩니다."
+    )
+    @PostMapping(value = "/mypage/profile-image", produces = "application/json")
+    public ApiResponse<Object> saveProfileImageKey(
+                HttpServletRequest httpServletRequest,
+                @RequestBody @Valid OnboardingRequestDto.ProfileImageRequest request,
+                @CurrentUser @Parameter(hidden = true) User user
+    ) {
+            userService.saveProfileImage(httpServletRequest, request, user);
+            return ApiResponse.of(UserSuccessStatus._PROFILE_IMAGE_UPDATED, null);
+    }
+
+    @Operation(
+            summary = "마이페이지 프로필 이미지 삭제",
+            description = "기존 프로필 이미지를 삭제 후, default 이미지로 수정합니다."
+    )
+    @DeleteMapping(value = "/mypage/profile-image", produces = "application/json")
+    public ApiResponse<Object> deleteProfileImage(
+            @CurrentUser @Parameter(hidden = true) User user
+    ) {
+        userService.deleteProfileImage(user);
+        return ApiResponse.of(UserSuccessStatus._PROFILE_IMAGE_DELETED, null);
+    }
+
 }

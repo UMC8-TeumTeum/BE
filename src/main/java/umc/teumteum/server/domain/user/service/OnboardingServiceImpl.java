@@ -35,6 +35,8 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static umc.teumteum.server.domain.user.util.ImageConstants.ALLOWED_IMAGE_TYPES;
+
 @Service
 @RequiredArgsConstructor
 public class OnboardingServiceImpl implements OnboardingService {
@@ -54,10 +56,6 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     @Resource(name = "profileImageRedisTemplate")
     private RedisTemplate<String, String> profileImageRedisTemplate;
-
-    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
-            "image/jpeg", "image/png", "image/webp", "image/svg+xml"
-    );
 
     private static final Set<Integer> ALLOWED_REMIND_ALARM_VALUES = Set.of(1, 3, 5, 10, 30);
 

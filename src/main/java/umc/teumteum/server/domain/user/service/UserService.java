@@ -1,7 +1,10 @@
 package umc.teumteum.server.domain.user.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.user.dto.UserRequestDto;
+import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
+import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
@@ -21,4 +24,10 @@ public interface UserService {
     UserResponseDTO.MyPageDTO getMyPage(User user);
 
     void updateProfile(UserRequestDto.ProfileRequest request, User user);
+
+    OnboardingResponseDto.ProfileImagePresignedUrlResponse generateProfileImagePresignedUrl(HttpServletRequest httpServletRequest, OnboardingRequestDto.ProfileImagePresignedUrlRequest request, User user);
+
+    void saveProfileImage(HttpServletRequest httpServletRequest, OnboardingRequestDto.ProfileImageRequest request, User user);
+
+    void deleteProfileImage(User user);
 }
