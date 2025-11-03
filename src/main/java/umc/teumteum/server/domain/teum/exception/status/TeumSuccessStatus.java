@@ -24,7 +24,8 @@ public enum TeumSuccessStatus implements BaseCode {
     _AVAILABLE_TIME_LOADED(HttpStatus.OK, "TEUM2011", "공통 가능한 시간대가 조회되었습니다."),
     _SHARED_TIME_LOADED(HttpStatus.OK, "TEUM2012", "함께한 빈틈 시간 정보가 조회되었습니다."),
     _SHARED_LIST_LOADED(HttpStatus.OK, "TEUM2013", "함께한 틈 목록이 조회되었습니다."),
-    _TEUM_READ_SUCCESS(HttpStatus.OK, "TEUM2014", "틈 요청이 읽음 처리되었습니다.");
+    _TEUM_READ_SUCCESS(HttpStatus.OK, "TEUM2014", "틈 요청이 읽음 처리되었습니다."),
+    _TEUM_REQUEST_CANCELLED(HttpStatus.OK, "TEUM2015", "틈 요청이 취소되었습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
