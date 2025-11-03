@@ -22,6 +22,8 @@ import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.jwt.JwtProvider;
 import umc.teumteum.server.global.util.S3Util;
 
+import static umc.teumteum.server.domain.user.util.ImageConstants.ALLOWED_IMAGE_TYPES;
+
 import java.time.Duration;
 import java.util.*;
 @Service
@@ -35,10 +37,6 @@ public class UserServiceImpl implements UserService {
 
     @Resource(name = "profileImageRedisTemplate")
     private RedisTemplate<String, String> profileImageRedisTemplate;
-
-    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
-            "image/jpeg", "image/png", "image/webp", "image/svg+xml"
-    );
 
     private static final String DEFAULT_IMAGE = "default.svg";
 
