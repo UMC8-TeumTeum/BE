@@ -37,4 +37,6 @@ public interface TeumService {
     PagingResponseDto<TeumResponseDto.SharedTeumList> getSharedTeums(Long loginUserId, Long targetUserId, int page, int size);
 
     List<TeumResponseDto.TeumRequestDetail> getTeumRequestsByDate(Long userId, String date);
+
+    TeumResponseDto.ScheduledTeumCancel cancelTeumRequest(Long requestId, Long userId);
 }

@@ -232,5 +232,19 @@ public class TeumController {
         return ApiResponse.of(TeumSuccessStatus._SHARED_LIST_LOADED, result);
     }
 
+    @Operation(
+            summary = "틈 요청 취소",
+            description = "요청자가 본인의 틈 요청을 취소합니다. 취소된 요청은 더 이상 응답할 수 없습니다."
+    )
+    @PatchMapping("/request/{requestId}/cancel")
+    public ApiResponse<TeumResponseDto.ScheduledTeumCancel> cancelTeumRequest(
+            @PathVariable("requestId") Long requestId,
+            @CurrentUser @Parameter(hidden = true) User user
+    ) {
+        TeumResponseDto.ScheduledTeumCancel result = teumService.cancelTeumRequest(requestId, user.getId());
+        return ApiResponse.of(TeumSuccessStatus._TEUM_REQUEST_CANCELLED, result);
+    }
+
+
 
 }
