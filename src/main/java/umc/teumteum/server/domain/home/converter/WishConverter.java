@@ -91,6 +91,7 @@ public class WishConverter {
         return ActivityResponseDto.WishDto.builder()
             .id(wish.getId())
             .title(wish.getTitle())
+            .content(wish.getContent())
             .estimatedDuration(wish.getEstimatedDuration())
             .build();
     }
@@ -100,11 +101,12 @@ public class WishConverter {
             .map(this::toActivityWishDto)
             .toList();
     }
-    public Schedule toScheduleFromAiWish(User user, AiWishSaveRequest request, String title){
+    public Schedule toScheduleFromAiWish(User user, AiWishSaveRequest request, String title, String content){
         return Schedule.builder()
             .user(user)
             .title(title)
-            .description(null)
+            .description(content)
+            .description(content)
             .type(ScheduleType.AI)
             .date(request.getStartTime().toLocalDate())
             .startTime(request.getStartTime())

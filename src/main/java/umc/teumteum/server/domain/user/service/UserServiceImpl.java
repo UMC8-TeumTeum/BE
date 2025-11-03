@@ -12,6 +12,7 @@ import umc.teumteum.server.domain.user.converter.OnboardingConverter;
 import umc.teumteum.server.domain.user.converter.UserConverter;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
+import umc.teumteum.server.domain.user.dto.UserRequestDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
@@ -26,6 +27,7 @@ import static umc.teumteum.server.domain.user.util.ImageConstants.ALLOWED_IMAGE_
 
 import java.time.Duration;
 import java.util.*;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -109,6 +111,28 @@ public class UserServiceImpl implements UserService {
     public UserResponseDTO.MyPageDTO getMyPage(User user) {
         String profileImageUrl = s3Util.toPresignedUrl("profile/" + user.getProfileImageName(), Duration.ofMinutes(30));
         return UserConverter.toMyPageDTO(user, profileImageUrl);
+    }
+
+    // 마이페이지 - 개인정보 수정
+    @Transactional
+    @Override
+    public void updateProfile(UserRequestDto.ProfileRequest request, User user) {
+        // 1. 유저 조회
+        User existingUser = userRepository.findById(user.getId())
+                .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
+
+        // 2. 닉네임 수정 시, 닉네임 중복 검증
+        if (!Objects.equals(existingUser.getNickname(), request.getNickname()) &&
+                userRepository.existsByNickname(request.getNickname())) {
+            throw new UserException(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+        }
+
+        // 3. 프로필 수정
+        existingUser.updateProfile(
+                request.getNickname(),
+                request.getJobField(),
+                request.getTimePublic()
+        );
     }
 
     // 프로필 이미지 업로드, Presigned URL 발급

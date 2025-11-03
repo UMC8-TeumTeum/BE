@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
+import umc.teumteum.server.domain.user.dto.UserRequestDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
@@ -53,6 +54,18 @@ public class UserController {
         return ApiResponse.of(UserSuccessStatus._USER_FOUND, response);
     }
 
+    @Operation(
+            summary = "마이페이지 프로필 수정",
+            description = "사용자의 닉네임, 직업 분야, 빈틈 시간 공개 여부를 수정합니다."
+    )
+    @PatchMapping(value = "/mypage/profile", produces = "application/json")
+    public ApiResponse<Void> updateProfile(
+            @Valid @RequestBody UserRequestDto.ProfileRequest request,
+            @Parameter(hidden = true) @CurrentUser User user
+    ){
+        userService.updateProfile(request, user);
+        return ApiResponse.of(UserSuccessStatus._PROFILE_UPDATED,null);
+    }
     @Operation(
             summary = "마이페이지 프로필 수정용 Presigned URL 발급",
             description = "프로필 수정 과정에서 프로필 이미지를 S3에 직접 업로드할 수 있는 Presigned URL을 발급합니다."

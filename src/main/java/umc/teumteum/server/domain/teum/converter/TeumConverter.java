@@ -45,26 +45,19 @@ public class TeumConverter {
                 .build();
     }
 
-    public List<TeumResponse> toTeumResponses(
-            List<Long> receiverUserIds, Long senderId,
-            TeumRequest request, Function<Long, User> userFetcher
-    ) {
-        return receiverUserIds.stream()
-                .distinct()
-                .map(receiverId -> {
-                    if (receiverId.equals(senderId)) {
-                        throw new GeneralException(TeumErrorStatus.CANNOT_REQUEST_SELF);
-                    }
-                    User receiver = userFetcher.apply(receiverId);
-                    return TeumResponse.builder()
-                            .teumRequest(request)
-                            .receiverUser(receiver)
-                            .status(ResponseStatus.PENDING)
-                            .readAt(null)
-                            .build();
-                })
-                .toList();
+    public TeumResponse toTeumResponse(Long receiverUserId, Long senderId, TeumRequest request, Function<Long, User> userFetcher) {
+        if (receiverUserId.equals(senderId)) {
+            throw new GeneralException(TeumErrorStatus.CANNOT_REQUEST_SELF);
+        }
+        User receiver = userFetcher.apply(receiverUserId);
+        return TeumResponse.builder()
+                .teumRequest(request)
+                .receiverUser(receiver)
+                .status(ResponseStatus.PENDING)
+                .readAt(null)
+                .build();
     }
+
 
     public TeumResponseDto.TeumReceived toReceivedResponseDto(TeumResponse response, String senderProfileImageUrl) {
         TeumRequest request = response.getTeumRequest();

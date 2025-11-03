@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import umc.teumteum.server.domain.home.ai.generator.AiWishGenerator;
@@ -38,6 +39,7 @@ import umc.teumteum.server.domain.home.repository.WishRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.validator.ConflictValidator;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ActivityServiceImpl implements ActivityService{
@@ -102,10 +104,11 @@ public class ActivityServiceImpl implements ActivityService{
       Long userId = user.getId();
       String locatoinName = extractLocationName(request.getLocationId(), request.getCustomLocation());
       String categoryName = extractCategoryName(request.getCategoryId(), request.getCustomCategory());
+      String userJob = user.getJob();
 
       // 1. Redis 키 생성, 캐시 확인 및 Redis 캐시 삭제 (기존 추천 초기화)
       // - Redis 키 생성
-      String parentKey = generateRedisKey(userId, request, categoryName, locatoinName);
+      String parentKey = generateRedisKey(userId, request, categoryName, locatoinName, userJob);
 
       // 1-1) 동일 키가 이미 있으면 부모 + 보조키 전부 삭제
       if (Boolean.TRUE.equals(aiContentsRedisTemplate.hasKey(parentKey))) {
@@ -123,7 +126,7 @@ public class ActivityServiceImpl implements ActivityService{
       }
 
       // 2. AI 콘텐츠 생성 (새로운 추천 생성)
-      List<AiWishDto> generated = aiWishGenerator.generate(request, categoryName, locatoinName);
+      List<AiWishDto> generated = aiWishGenerator.generate(request, categoryName, locatoinName, userJob);
 
       // 3. Redis 캐시에 저장 (TTL 1시간) + 보조키 생성
       String serialized = contentSerializer.serialize(generated);
@@ -167,8 +170,8 @@ public class ActivityServiceImpl implements ActivityService{
     boolean hasConflict = scheduleRepository.existsConflictSchedule(
         user.getId(), date, startTime, endTime
     );
-    if (hasConflict && !request.getIsForce()) {
-      // force가 false고 일정이 겹치면 예외
+    if (hasConflict) {
+      // 일정이 겹치면 예외
       throw new HomeException(HomeErrorStatus._SCHEDULE_CONFLICT);
     }
 
@@ -179,8 +182,27 @@ public class ActivityServiceImpl implements ActivityService{
       throw new HomeException(HomeErrorStatus._AI_WISH_NOT_FOUND);
     }
 
+    // * content 부분 추가 (스케줄 엔티티의 description 부분에 해당됨)
+    String content = null;
+    if (parentKey != null) {
+      String serialized = aiContentsRedisTemplate.opsForValue().get(parentKey);
+      if (serialized != null) {
+        List<AiWishDto> dtos = contentSerializer.deserialize(serialized);
+        if (dtos != null) {
+          AiWishDto target = dtos.stream()
+              .filter(dto -> wishUUID.equals(dto.getId()))
+              .findFirst()
+              .orElse(null);
+          if (target != null) {
+            content = target.getContent();
+          }
+        }
+      }
+    }
+
     // 3. Dto 변환 후 저장
-    Schedule schedule = wishConverter.toScheduleFromAiWish(user, request, title);
+    log.info("AI wish content: {}", content);
+    Schedule schedule = wishConverter.toScheduleFromAiWish(user, request, title, content);
     Long scheduleId = scheduleRepository.save(schedule).getId();
 
     // 4. Redis 정리 (Redis에 저장된 데이터 삭제)
@@ -208,12 +230,13 @@ public class ActivityServiceImpl implements ActivityService{
 
   }
 
-  private String generateRedisKey(Long userId, AiWishOptionRequest request, String categoryName, String locatoinName) {
-    return String.format(CONTENT_PREFIX + "%s:%s:%s:%s",
+  private String generateRedisKey(Long userId, AiWishOptionRequest request, String categoryName, String locatoinName, String userJob) {
+    return String.format(CONTENT_PREFIX + "%s:%s:%s:%s:%s",
         userId,
         request.getEstimatedDuration(),
         categoryName,
-        locatoinName
+        locatoinName,
+        userJob
     );
   }
 

@@ -85,7 +85,11 @@ public class TeumController {
 
     @Operation(
             summary = "틈 응답 상태 변경",
-            description = "응답 ID(responseId)에 해당하는 응답의 상태를 변경합니다. 상태가 'accepted'인 경우 틈 생성 여부를 판단하여 반환합니다."
+            description = """
+            응답 ID(responseId)에 해당하는 응답의 상태를 변경합니다.
+            - ACCEPTED: 틈 요청을 수락하며, 일정이 생성됩니다.
+            - REJECTED: 틈 요청을 거절하며, 요청이 종료됩니다.
+            """
     )
     @PatchMapping("/response/{responseId}/status")
     public ApiResponse<TeumResponseDto.TeumStatusUpdate> updateResponseStatus(

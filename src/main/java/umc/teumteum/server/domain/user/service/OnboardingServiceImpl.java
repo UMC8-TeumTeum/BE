@@ -223,18 +223,15 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 4. 반복 일정끼리의 충돌 확인
         validateRoutineConflictsByDay(routinesByDay);
 
-        // 5. 수면패턴과의 충돌 확인
-        validateSleepPatternConflictsByDay(routinesByDay, user);
-
-        // 6. 반복 일정 저장
+        // 5. 반복 일정 저장
         List<Routine> newRoutines = OnboardingConverter.toRoutineList(request.getRoutine(), user);
         routineJdbcRepository.batchInsertRoutines(newRoutines);
 
-        // 7. 오늘 요일에 해당하는 저장된 Routine만 조회 (기본키값 필요)
+        // 6. 오늘 요일에 해당하는 저장된 Routine만 조회 (기본키값 필요)
         Weekday todayWeekday = Weekday.from(LocalDate.now().getDayOfWeek());
         List<Routine> todayRoutines = routineRepository.findByUserAndWeekday(user, todayWeekday);
 
-        // 8. 오늘에 해당하는 반복일정은 스케줄에 추가
+        // 7. 오늘에 해당하는 반복일정은 스케줄에 추가
         List<Schedule> routineSchedules = OnboardingConverter.toScheduleList(todayRoutines, user, LocalDate.now());
         scheduleJdbcRepository.batchInsertSchedules(routineSchedules);
     }
@@ -321,55 +318,11 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
 
-    // 수면패턴과 반복일정 간의 충돌 확인
-    private void validateSleepPatternConflictsByDay(Map<Weekday, List<OnboardingRequestDto.RoutineDTO>> routinesByDay, User user) {
-        // 1. 수면패턴 저장 여부 확인 (선택입력이기 때문)
-        if (user.getSleepTime() == null && user.getWakeTime() == null) {
-            return;
-        }
-
-        // 2. 수면패턴을 TimeRange로 변환
-        List<TimeRange> sleepTimeRanges = getSleepTimeRanges(user.getSleepTime(), user.getWakeTime());
-
-        // 3. 반복일정과 수면패턴 시간 충돌 검증
-        routinesByDay.values().stream()
-                .map(dayRoutines -> {
-
-                    List<TimeRange> allTimeRanges = new ArrayList<>();
-
-                    // 반복일정 추가
-                    allTimeRanges.addAll(dayRoutines.stream()
-                            .map(TimeRange::from)
-                            .toList());
-
-                    // 수면패턴 추가
-                    allTimeRanges.addAll(sleepTimeRanges);
-
-                    return allTimeRanges;
-                })
-                .forEach(allTimeRanges ->
-                        timeUtil.validateTimeRangeConflicts(allTimeRanges, UserErrorStatus.ROUTINE_SLEEP_CONFLICT));
-    }
-
-
-    // 수면패턴을 TimeRange 리스트로 변환
-    private List<TimeRange> getSleepTimeRanges(LocalTime sleepTime, LocalTime wakeTime) {
-        // 1. 다음 날까지 이어지는 수면 (ex. 22:00~08:00)
-        if (sleepTime.isAfter(wakeTime) && !wakeTime.equals(LocalTime.MIDNIGHT)) {
-            return List.of(
-                    TimeRange.of(sleepTime, LocalTime.MIDNIGHT),
-                    TimeRange.of(LocalTime.MIDNIGHT, wakeTime)
-            );
-        }
-
-        // 2. 같은 날 안에서 끝나는 수면 (ex. 06:00~14:00, 18:00~00:00, 00:00~00:00)
-        return List.of(TimeRange.of(sleepTime, wakeTime));
-    }
-
     // 프로필 이미지 키 get
     private String getProfileImageKey(String userId, String sessionId) {
         return String.format("PROFILE_IMAGE_FILE_NAME:%s:%s", userId, sessionId);
     }
+
 
     private void validateSleepPattern(LocalTime sleepTime, LocalTime wakeTime) {
         // sleepTime과 wakeTime 사이의 시간 차이를 분 단위로 계산 (같은 날 기준 계산)

@@ -68,10 +68,6 @@ public class ActivityRequestDto {
     @Schema(description = "종료 시간", example = "2025-07-24T11:00")
     private LocalDateTime endTime;
 
-    @NotNull
-    @Schema(description = "강제 등록 여부", example = "false")
-    private Boolean isForce;
-
   }
 
 }
