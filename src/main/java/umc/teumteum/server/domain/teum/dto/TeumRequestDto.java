@@ -57,9 +57,9 @@ public class TeumRequestDto {
         @Schema(description = "그래픽 ID", example = "1")
         private Long graphicId;
 
-        @NotEmpty
-        @Schema(description = "수신자 ID 배열", example = "[0, 1]")
-        private List<Long> receiverUserIds;
+        @NotNull
+        @Schema(description = "수신자 ID (한 명만 가능)", example = "2")
+        private Long receiverUserId;
 
     }
 
@@ -85,7 +85,7 @@ public class TeumRequestDto {
     @Schema(title = "TeumStatusUpdate : 틈 응답 상태 변경 DTO")
     public static class TeumStatusUpdate {
 
-        @Schema(description = "응답 상태", example = "ACCEPTED", allowableValues = {"ACCEPTED", "DECLINED", "SUGGESTED"})
+        @Schema(description = "응답 상태", example = "ACCEPTED", allowableValues = {"ACCEPTED", "REJECTED"})
         private String status;
     }
 
