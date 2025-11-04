@@ -4,19 +4,28 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Min;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import umc.teumteum.server.domain.friend.dto.FriendRequestDto;
 import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
 import umc.teumteum.server.domain.friend.exception.status.FriendSuccessStatus;
+import umc.teumteum.server.domain.friend.service.FriendLockService;
+import umc.teumteum.server.domain.friend.service.FriendLockServiceImpl;
 import umc.teumteum.server.domain.friend.service.FriendService;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 import umc.teumteum.server.global.dto.PagingResponseDto;
-
-import java.util.List;
 
 @Validated
 @Tag(name = "Friend", description = "친구 관련 API")
@@ -26,6 +35,7 @@ import java.util.List;
 public class FriendController {
 
     private final FriendService friendService;
+    private final FriendLockService friendLockService;
 
     @Operation(
             summary = "유저 팔로우",
@@ -37,7 +47,7 @@ public class FriendController {
             @Parameter(name = "userId", description = "팔로우할 대상 유저의 ID", example = "1")
             @PathVariable("userId") Long targetUserId
     ) {
-        friendService.follow(loginUser, targetUserId);
+        friendLockService.followWithLock(loginUser, targetUserId);
         return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, null);
     }
 
