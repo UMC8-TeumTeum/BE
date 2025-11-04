@@ -14,6 +14,9 @@ public enum ErrorStatus implements BaseErrorCode {
   _UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON401", "인증이 필요합니다."),
   _FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON403", "금지된 요청입니다."),
 
+  // 동시성 관련
+  LOCK_ACQUISITION_FAILED(HttpStatus.CONFLICT, "COMMON4091", "요청이 처리 중입니다. 잠시 후 다시 시도해주세요."),
+
 
   // 인증 관련
   MALFORMED_JWT_TOKEN(HttpStatus.BAD_REQUEST, "AUTH4101", "잘못 구성된 JWT 형식입니다."),
@@ -29,6 +32,8 @@ public enum ErrorStatus implements BaseErrorCode {
 
   // 회원 관련
   INVALID_USER(HttpStatus.BAD_REQUEST, "USER4001", "존재하지 않는 유저입니다."),
+
+
   ;
 
   private final HttpStatus httpStatus;

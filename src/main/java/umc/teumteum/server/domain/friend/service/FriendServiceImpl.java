@@ -1,5 +1,15 @@
 package umc.teumteum.server.domain.friend.service;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,17 +33,6 @@ import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.util.S3Util;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 @Service
 @RequiredArgsConstructor
 public class FriendServiceImpl implements FriendService {
@@ -54,7 +53,9 @@ public class FriendServiceImpl implements FriendService {
             EnumSet.of(ScheduleStatus.ACTIVE, ScheduleStatus.COMPLETED);
 
     private String toProfileUrl(User user) {
-        if (user == null || user.getProfileImageName() == null) return null;
+        if (user == null || user.getProfileImageName() == null) {
+            return null;
+        }
         return s3Util.toPresignedUrl("profile/" + user.getProfileImageName(), Duration.ofMinutes(30));
     }
 
@@ -78,9 +79,7 @@ public class FriendServiceImpl implements FriendService {
 
         // 5. 알림 전송
         notificationUseCases.notifyFollow(loginUser, targetUser, friend.getId());
-
     }
-
 
     @Override
     @Transactional
@@ -102,7 +101,8 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagingResponseDto<FriendResponseDto.MutualFriend> getMutualFriends(User loginUser, Long excludeUserId, int page, int size) {
+    public PagingResponseDto<FriendResponseDto.MutualFriend> getMutualFriends(User loginUser, Long excludeUserId,
+                                                                              int page, int size) {
         // 1. 자기 자신을 제외하는지 확인
         validateNotSelf(loginUser.getId(), excludeUserId);
 
@@ -114,18 +114,19 @@ public class FriendServiceImpl implements FriendService {
                 Sort.by(Sort.Order.asc("following.nickname")));
 
         // 4. 맞팔로우 관계 조회 (특정 사용자 제외)
-        Slice<Friend> mutualFriendsSlice = friendRepository.findMutualFriendsExcluding(loginUser, excludeUser, pageable);
+        Slice<Friend> mutualFriendsSlice = friendRepository.findMutualFriendsExcluding(loginUser, excludeUser,
+                pageable);
 
         // 5. 맞팔로우한 상대방들에 대한 S3 프리사인드 URL 생성 및 Dto 변환
         List<FriendResponseDto.MutualFriend> mutualFriendList = mutualFriendsSlice.getContent()
                 .stream()
                 .map(friend -> {
                     User targetUser = friend.getFollowing();
-                    String profileImageUrl = s3Util.toPresignedUrl("profile/" + targetUser.getProfileImageName(), Duration.ofMinutes(30));
+                    String profileImageUrl = s3Util.toPresignedUrl("profile/" + targetUser.getProfileImageName(),
+                            Duration.ofMinutes(30));
                     return FriendConverter.toMutualFriendDto(targetUser, profileImageUrl);
                 })
-                .collect(Collectors.toList())
-                ;
+                .collect(Collectors.toList());
 
         // 6. PagingResponseDto 생성
         return new PagingResponseDto<>(mutualFriendList, mutualFriendsSlice.hasNext());
@@ -266,7 +267,8 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FriendResponseDto.FriendPublicTodo> getDailyPublicTodos(Long loginUserId, Long targetUserId, String date) {
+    public List<FriendResponseDto.FriendPublicTodo> getDailyPublicTodos(Long loginUserId, Long targetUserId,
+                                                                        String date) {
         validateNotSelf(loginUserId, targetUserId);
         validateUserExists(targetUserId);
 
@@ -299,10 +301,12 @@ public class FriendServiceImpl implements FriendService {
         LocalDate end = ym.atEndOfMonth();
 
         // TODO/WISH/AI 일정 (status: ACTIVE)
-        List<LocalDate> generalDates = scheduleRepository.findPublicActiveTodos(targetUserId, GENERAL_SCHEDULE_TYPES, start, end);
+        List<LocalDate> generalDates = scheduleRepository.findPublicActiveTodos(targetUserId, GENERAL_SCHEDULE_TYPES,
+                start, end);
 
         // TEUM 일정 (status: ACTIVE, COMPLETED)
-        List<LocalDate> teumDates = scheduleRepository.findPublicTeumDates(targetUserId, TEUM_VALID_STATUSES, start, end);
+        List<LocalDate> teumDates = scheduleRepository.findPublicTeumDates(targetUserId, TEUM_VALID_STATUSES, start,
+                end);
 
         List<LocalDate> allDates = Stream.concat(generalDates.stream(), teumDates.stream())
                 .distinct()
@@ -314,9 +318,7 @@ public class FriendServiceImpl implements FriendService {
 
 
     /**
-     * 주어진 ID에 해당하는 User를 조회합니다.
-     * - User 객체 자체가 필요한 경우에 사용합니다.
-     * - 존재하지 않으면 예외를 던집니다.
+     * 주어진 ID에 해당하는 User를 조회합니다. - User 객체 자체가 필요한 경우에 사용합니다. - 존재하지 않으면 예외를 던집니다.
      */
     private User getUserOrThrow(Long userId) {
         return userRepository.findById(userId)
@@ -324,9 +326,7 @@ public class FriendServiceImpl implements FriendService {
     }
 
     /**
-     * 주어진 ID에 해당하는 User가 존재하는지만 확인합니다.
-     * - 객체 자체가 필요하지 않고, 존재 여부만 확인할 때 사용합니다.
-     * - 존재하지 않으면 예외를 던집니다.
+     * 주어진 ID에 해당하는 User가 존재하는지만 확인합니다. - 객체 자체가 필요하지 않고, 존재 여부만 확인할 때 사용합니다. - 존재하지 않으면 예외를 던집니다.
      */
     private void validateUserExists(Long userId) {
         if (!userRepository.existsById(userId)) {

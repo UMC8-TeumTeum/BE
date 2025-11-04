@@ -42,7 +42,7 @@ jobs:
         uses: supercharge/redis-github-action@1.7.0
         with:
           redis-version: ${{ secrets.REDIS_TEST_VERSION }}
-          redis-remove-container: true
+#          redis-remove-container: true
           redis-password: ${{ secrets.REDIS_TEST_PASSWORD }}
 
       - name: Verify Config folders

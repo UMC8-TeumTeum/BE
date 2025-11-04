@@ -91,7 +91,7 @@ public class DailyTodoReminderSchedulerTest {
             .isPublic(true)
             .includeTeum(false)
             .status(ScheduleStatus.ACTIVE)
-            .isDeleted(false)
+//            .isDeleted(false)
             .build();
         schedules.add(schedule);
       }
