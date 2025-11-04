@@ -35,7 +35,7 @@ import umc.teumteum.server.global.exception.handler.GlobalHandler;
 import umc.teumteum.server.global.util.TimeUtil;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("OnboardingService 테스트")
+@DisplayName("OnboardingService 관련 단위 테스트")
 class OnboardingServiceTest {
 
     @InjectMocks
