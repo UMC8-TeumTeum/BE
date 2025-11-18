@@ -250,7 +250,7 @@ public class UserServiceImpl implements UserService {
         user.updateProfileImageName(DEFAULT_IMAGE);
     }
 
-    // 마이페이지 - 알림 설졍 변경
+    // 마이페이지 - 알림 설정 변경
     @Transactional
     @Override
     public void updateAlarm(UserRequestDto.NotificationSettingRequest request, User user) {
