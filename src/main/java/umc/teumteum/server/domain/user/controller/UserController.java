@@ -107,4 +107,17 @@ public class UserController {
         return ApiResponse.of(UserSuccessStatus._PROFILE_IMAGE_DELETED, null);
     }
 
+    @Operation(
+            summary = "마이페이지 알림 설정 수정",
+            description = "오늘의 일정, 리마인드 알림, 팔로워, 틈 요청에 대해 알림 여부를 수정합니다."
+    )
+    @PatchMapping(value = "/alarm", produces = "application/json")
+    public ApiResponse<Object> updateAlarm(
+            @RequestBody @Valid UserRequestDto.NotificationSettingRequest request,
+            @CurrentUser @Parameter(hidden = true) User user
+    ) {
+        userService.updateAlarm(request, user);
+        return ApiResponse.of(UserSuccessStatus._ALARM_STATE_UPDATED, null);
+    }
+
 }

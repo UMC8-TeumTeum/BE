@@ -38,4 +38,11 @@ public class NotificationSetting extends BaseEntity {
     @Builder.Default
     @Column(name = "follow", nullable = false)
     private Boolean follow = true;
+
+    public void update(Boolean todayTodo, Boolean remindAlarm, Boolean follow, Boolean teum) {
+        this.todayTodo = todayTodo;
+        this.remindAlarm = remindAlarm;
+        this.follow = follow;
+        this.teum = teum;
+    }
 }

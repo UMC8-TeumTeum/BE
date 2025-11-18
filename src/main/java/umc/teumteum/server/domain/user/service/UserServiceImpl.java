@@ -249,4 +249,18 @@ public class UserServiceImpl implements UserService {
         // 3. DB 저장 키 교체 (S3 Key -> default)
         user.updateProfileImageName(DEFAULT_IMAGE);
     }
+
+    // 마이페이지 - 알림 설졍 변경
+    @Transactional
+    @Override
+    public void updateAlarm(UserRequestDto.NotificationSettingRequest request, User user) {
+        NotificationSetting setting = notificationSettingRepository.findByUser(user)
+                .orElseThrow(() -> new UserException(UserErrorStatus.NOTIFICATION_NOT_FOUND));
+
+        setting.update(
+                request.getTodayTodo(),
+                request.getRemindAlarm(),
+                request.getTeum(), request.getFollow()
+        );
+    }
 }
