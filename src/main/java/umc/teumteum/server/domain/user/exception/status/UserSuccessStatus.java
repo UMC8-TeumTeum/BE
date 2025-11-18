@@ -14,10 +14,9 @@ public enum UserSuccessStatus implements BaseCode {
     _USER_PRESIGNED_URL_ISSUED(HttpStatus.OK,"USER2002","프로필 이미지 업로드용 Presigned URL 발급이 완료되었습니다."),
     _PROFILE_IMAGE_UPDATED(HttpStatus.OK,"USER2003","프로필 이미지 수정이 완료되었습니다."),
     _PROFILE_IMAGE_DELETED(HttpStatus.OK,"USER2004","프로필 이미지 삭제가 완료되었습니다."),
-
-
-
     _PROFILE_UPDATED(HttpStatus.OK,"USER2005","개인정보 수정이 완료되었습니다."),
+    _ALARM_STATE_UPDATED(HttpStatus.OK,"USER2006","사용자의 알림 설정 변경이 완료되었습니다."),
+
 
 
     // 사용자 온보딩

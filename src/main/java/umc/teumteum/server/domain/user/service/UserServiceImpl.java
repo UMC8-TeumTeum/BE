@@ -15,10 +15,12 @@ import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.dto.UserRequestDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
+import umc.teumteum.server.domain.user.entity.NotificationSetting;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.exception.UserException;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
+import umc.teumteum.server.domain.user.repository.NotificationSettingRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.jwt.JwtProvider;
 import umc.teumteum.server.global.util.S3Util;
@@ -35,6 +37,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserConverter userConverter;
     private final UserRepository userRepository;
+    private final NotificationSettingRepository notificationSettingRepository;
     private final S3Util s3Util;
     private final JwtProvider jwtProvider;
 
@@ -70,6 +73,7 @@ public class UserServiceImpl implements UserService {
 
         return userRepository.findBySocialTypeAndSocialId(socialType, socialId)
                 .orElseGet(() -> {
+                    // 1. User 생성
                     User newUser = User.builder()
                             .socialType(socialType)
                             .socialId(socialId)
@@ -77,7 +81,19 @@ public class UserServiceImpl implements UserService {
                             .build()
                             ;
 
-                    return userRepository.save(newUser);
+                    User savedUser = userRepository.save(newUser);
+
+                    // 2. NotificationSetting 생성
+                    NotificationSetting notificationSetting = NotificationSetting.builder()
+                            .user(savedUser)
+                            .teum(true)
+                            .follow(true)
+                            .todayTodo(true)
+                            .remindAlarm(true)
+                            .build();
+                    notificationSettingRepository.save(notificationSetting);
+
+                    return savedUser;
                 });
     }
 
@@ -232,5 +248,19 @@ public class UserServiceImpl implements UserService {
 
         // 3. DB 저장 키 교체 (S3 Key -> default)
         user.updateProfileImageName(DEFAULT_IMAGE);
+    }
+
+    // 마이페이지 - 알림 설정 변경
+    @Transactional
+    @Override
+    public void updateAlarm(UserRequestDto.NotificationSettingRequest request, User user) {
+        NotificationSetting setting = notificationSettingRepository.findByUser(user)
+                .orElseThrow(() -> new UserException(UserErrorStatus.NOTIFICATION_NOT_FOUND));
+
+        setting.update(
+                request.getTodayTodo(),
+                request.getRemindAlarm(),
+                request.getTeum(), request.getFollow()
+        );
     }
 }

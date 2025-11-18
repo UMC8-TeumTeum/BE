@@ -30,4 +30,6 @@ public interface UserService {
     void saveProfileImage(HttpServletRequest httpServletRequest, OnboardingRequestDto.ProfileImageRequest request, User user);
 
     void deleteProfileImage(User user);
+
+    void updateAlarm(UserRequestDto.NotificationSettingRequest request, User user);
 }

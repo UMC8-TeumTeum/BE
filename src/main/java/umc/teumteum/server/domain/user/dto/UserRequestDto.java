@@ -33,4 +33,28 @@ public class UserRequestDto {
         @Schema(description = "빈틈 시간 공개 여부", example = "true")
         private Boolean timePublic;
     }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(title = "마이페이지 - 알림 설정 수정")
+    public static class NotificationSettingRequest {
+
+        @NotNull
+        @Schema(description = "오늘의 일정 - 오전 9시 투두 일림 여부", example = "true")
+        private Boolean todayTodo;
+
+        @NotNull
+        @Schema(description = "리마인드 알림 - 투두에 등록한 리마인드 알림 여부", example = "true")
+        private Boolean remindAlarm;
+
+        @NotNull
+        @Schema(description = "새로운 팔로워 - 나를 팔로우한 새로운 친구가 있을 때", example = "true")
+        private Boolean follow;
+
+        @NotNull
+        @Schema(description = "틈 요청 - 맞팔로우한 사용자의 틈 요청 알림", example = "true")
+        private Boolean teum;
+    }
 }
