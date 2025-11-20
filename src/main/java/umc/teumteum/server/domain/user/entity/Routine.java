@@ -46,11 +46,16 @@ public class Routine extends BaseEntity {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
-    public void updateField(OnboardingRequestDto.RoutineDTO request) {
-        this.title = request.getTitle();
-        this.description = request.getDescription();
-        this.weekday = request.getWeekday();
-        this.startTime = request.getStartTime();
-        this.endTime = request.getEndTime();
+    public void updateField(String title,
+                            String description,
+                            Weekday weekday,
+                            LocalTime startTime,
+                            LocalTime endTime){
+
+        this.title = title;
+        this.description = description;
+        this.weekday = weekday;
+        this.startTime = startTime;
+        this.endTime = endTime;
     }
 }

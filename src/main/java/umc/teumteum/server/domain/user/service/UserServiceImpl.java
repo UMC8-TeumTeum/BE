@@ -397,7 +397,13 @@ public class UserServiceImpl implements UserService {
         validateExistingRoutineConflicts(request, routinesToCheck);
 
         // 4. 반복일정 필드 수정
-        routine.updateField(request);
+        routine.updateField(
+                request.getTitle(),
+                request.getDescription(),
+                request.getWeekday(),
+                request.getStartTime(),
+                request.getEndTime()
+        );
 
         // 5. 해당 날짜가 오늘이라면 오늘 이후의 스케줄 수정
         Weekday todayWeekday = Weekday.from(LocalDate.now().getDayOfWeek());
