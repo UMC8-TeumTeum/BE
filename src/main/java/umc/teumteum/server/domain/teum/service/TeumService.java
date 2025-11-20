@@ -39,4 +39,7 @@ public interface TeumService {
     List<TeumResponseDto.TeumRequestDetail> getTeumRequestsByDate(Long userId, String date);
 
     Long cancelTeumRequest(Long requestId, Long userId);
+
+    TeumResponseDto.ConflictingScheduleResponse checkConflictingSchedules(Long userId, TeumRequestDto.ConflictCheckRequest request);
+
 }

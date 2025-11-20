@@ -381,5 +381,23 @@ public class TeumConverter {
                 .build();
     }
 
+    // 충돌 스케줄 리스트 응답 DTO 반환
+    public TeumResponseDto.ConflictingScheduleResponse toConflictingScheduleResponse(List<Schedule> schedules) {
+        List<TeumResponseDto.ConflictingSchedule> conflictDtos = schedules.stream()
+                .map(schedule -> TeumResponseDto.ConflictingSchedule.builder()
+                        .id(schedule.getId())
+                        .title(schedule.getTitle())
+                        // "HH:mm" 포맷으로 변환 (초 단위 제거)
+                        .startTime(schedule.getStartTime().toLocalTime().toString().substring(0, 5))
+                        .endTime(schedule.getEndTime().toLocalTime().toString().substring(0, 5))
+                        .build())
+                .toList();
+
+        return TeumResponseDto.ConflictingScheduleResponse.builder()
+                .hasConflict(!conflictDtos.isEmpty())
+                .conflictingSchedules(conflictDtos)
+                .build();
+    }
+
 
 }

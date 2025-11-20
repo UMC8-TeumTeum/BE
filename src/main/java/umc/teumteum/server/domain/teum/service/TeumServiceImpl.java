@@ -579,6 +579,27 @@ public class TeumServiceImpl implements TeumService {
         return requestId;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public TeumResponseDto.ConflictingScheduleResponse checkConflictingSchedules(Long userId, TeumRequestDto.ConflictCheckRequest request) {
+        // 입력받은 시간(LocalTime)을 날짜(LocalDate)와 합쳐 LocalDateTime으로 변환
+        LocalDateTime checkStart = request.getDate().atTime(request.getStartTime());
+        LocalDateTime checkEnd = request.getDate().atTime(request.getEndTime());
+
+        // Repository 조회
+        List<Schedule> conflicts = scheduleRepository.findConflictingSchedules(
+                userId,
+                request.getDate(),
+                checkStart,
+                checkEnd,
+                ScheduleStatus.ACTIVE,
+                RoutineStatus.DELETED
+        );
+
+        // Converter를 통해 DTO 변환 후 반환
+        return teumConverter.toConflictingScheduleResponse(conflicts);
+    }
+
 
     // 사용자가 해당 요청의 요청자 또는 응답자인지 여부
     private boolean isParticipant(TeumRequest req, Long userId) {
