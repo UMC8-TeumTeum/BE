@@ -4,6 +4,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,11 +17,14 @@ import umc.teumteum.server.domain.user.dto.UserRequestDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.NotificationSetting;
+import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.domain.user.exception.UserException;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.NotificationSettingRepository;
+import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.jwt.JwtProvider;
 import umc.teumteum.server.global.util.S3Util;
@@ -43,6 +47,8 @@ public class UserServiceImpl implements UserService {
 
     @Resource(name = "profileImageRedisTemplate")
     private RedisTemplate<String, String> profileImageRedisTemplate;
+    @Autowired
+    private RoutineRepository routineRepository;
 
     @Override
     public List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long userId) {
@@ -262,5 +268,22 @@ public class UserServiceImpl implements UserService {
                 request.getRemindAlarm(),
                 request.getTeum(), request.getFollow()
         );
+    }
+
+    // 마이페이지 - 반복일정 조회
+    @Override
+    public List<UserResponseDTO.RoutineDTO> getRoutines(Weekday weekday, User user) {
+        // 1. 유저 조회
+        User existingUser = userRepository.findById(user.getId())
+                .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
+
+        // 2. 요일별 반복일정 조회
+        List<Routine> routines = routineRepository.findByUserAndWeekday(existingUser, weekday);
+
+
+        // 3. 응답 변환
+        return routines.stream()
+                .map(UserConverter::toRoutineDTO)
+                .toList();
     }
 }

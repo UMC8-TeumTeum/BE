@@ -8,6 +8,7 @@ import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.entity.enums.Weekday;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,4 +33,6 @@ public interface UserService {
     void deleteProfileImage(User user);
 
     void updateAlarm(UserRequestDto.NotificationSettingRequest request, User user);
+
+    List<UserResponseDTO.RoutineDTO> getRoutines(Weekday weekday, User user);
 }

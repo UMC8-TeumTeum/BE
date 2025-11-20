@@ -5,19 +5,24 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
+import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.dto.UserRequestDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.domain.user.exception.status.UserSuccessStatus;
 import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -118,6 +123,19 @@ public class UserController {
     ) {
         userService.updateAlarm(request, user);
         return ApiResponse.of(UserSuccessStatus._ALARM_STATE_UPDATED, null);
+    }
+
+    @Operation(
+            summary = "마이페이지 반복일정 조회",
+            description = "요일별 반복일정을 조회합니다. query string으로 요일을 입력해주세요."
+    )
+    @GetMapping(value = "/routines", produces = "application/json")
+    public ApiResponse<List<UserResponseDTO.RoutineDTO>> getRoutines(
+            @Parameter(name = "weekday",description = "조회할 요일", example = "MONDAY") @RequestParam("weekday") Weekday weekday,
+            @CurrentUser @Parameter(hidden = true) User user
+    ){
+        List<UserResponseDTO.RoutineDTO> response = userService.getRoutines(weekday, user);
+        return ApiResponse.of(UserSuccessStatus._ROUTINE_LOADED,response);
     }
 
 }

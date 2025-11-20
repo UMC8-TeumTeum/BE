@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
+import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
 
@@ -32,5 +33,16 @@ public class UserConverter {
             .job(user.getJob())
             .build();
 
+    }
+
+    // routine -> UserResponseDTO.RoutineDTO
+    public static UserResponseDTO.RoutineDTO toRoutineDTO(Routine routine) {
+        return UserResponseDTO.RoutineDTO.builder()
+                .title(routine.getTitle())
+                .description(routine.getDescription())
+                .weekday(routine.getWeekday())
+                .startTime(routine.getStartTime())
+                .endTime(routine.getEndTime())
+                .build();
     }
 }
