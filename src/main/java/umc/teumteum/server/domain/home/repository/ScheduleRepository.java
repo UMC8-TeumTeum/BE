@@ -346,4 +346,12 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("routineStatus") RoutineStatus routineStatus // 추가됨
     );
 
+    /**
+     * 오늘 이후의 루틴 검색 (오늘 & 미래)
+     */
+    @Query("select s from Schedule s where s.routine = :routine and s.date >= :date")
+    List<Schedule> findByRoutineAndDateGreaterThanEqual(Routine routine, LocalDate date);
+
+    // 루틴Id로 스케줄 조회
+    List<Schedule> findByRoutineId(Long routineId);
 }

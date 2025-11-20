@@ -50,6 +50,20 @@ public class ScheduleConverter {
                 .toList();
     }
 
+    // RemindAlarm 리스트 -> ScheduleReminder
+    public static List<ScheduleReminder> remindAlarmToScheduleReminders(Schedule schedule, List<RemindAlarm> remindAlarm, AlarmStatus alarmStatus) {
+        if(remindAlarm == null || remindAlarm.isEmpty()){
+            return List.of();
+        }
+        return remindAlarm.stream()
+                .map(item -> ScheduleReminder.builder()
+                    .schedule(schedule)
+                    .reminderTime(item.getMinutesBefore())
+                    .alarmStatus(alarmStatus)
+                    .build())
+                .toList();
+    }
+
     // Schedule -> TodoInfoResponseDTO
     public HomeResponseDto.TodoInfoDto toTodoInfoResponse(Schedule schedule, List<ScheduleReminder> reminders, List<String> profileUrls) {
 
@@ -111,8 +125,8 @@ public class ScheduleConverter {
                 .toList();
     }
 
-    // Routine -> Schedule(isDeleted = true)
-    public Schedule toDeleteRoutine(Routine routine,LocalDate date){
+    // Routine -> Schedule
+    public static Schedule routineToSchedule(Routine routine, LocalDate date, RoutineStatus routineStatus) {
         return Schedule.builder()
                 .user(routine.getUser())
                 .routine(routine)
@@ -125,7 +139,7 @@ public class ScheduleConverter {
                 .includeTeum(false)
                 .type(ScheduleType.ROUTINE)
                 .status(ScheduleStatus.ACTIVE)
-                .routineStatus(RoutineStatus.DELETED)
+                .routineStatus(routineStatus)
                 .build();
     }
 

@@ -336,7 +336,7 @@ public class HomeServiceImpl implements HomeService {
         Routine routine = routineRepository.findById(routineId)
                 .orElseThrow(() -> new HomeException(HomeErrorStatus._ROUTINE_NOT_FOUND));
 
-        Schedule deletedSchedule = scheduleConverter.toDeleteRoutine(routine,date);
+        Schedule deletedSchedule = scheduleConverter.routineToSchedule(routine,date,RoutineStatus.DELETED);
         scheduleRepository.save(deletedSchedule);
     }
 
