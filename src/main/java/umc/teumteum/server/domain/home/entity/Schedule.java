@@ -129,4 +129,9 @@ public class Schedule extends BaseEntity {
         this.routineStatus = routineStatus;
     }
 
+    // 루틴 설정
+    public void setRoutine(Routine routine) {
+        this.routine = routine;
+    }
+
 }

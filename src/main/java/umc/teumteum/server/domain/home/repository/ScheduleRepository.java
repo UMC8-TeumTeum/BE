@@ -327,4 +327,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Query("select s from Schedule s where s.routine = :routine and s.date >= :date")
     List<Schedule> findByRoutineAndDateGreaterThanEqual(Routine routine, LocalDate date);
 
+    // 루틴Id로 스케줄 조회
+    List<Schedule> findByRoutineId(Long routineId);
 }

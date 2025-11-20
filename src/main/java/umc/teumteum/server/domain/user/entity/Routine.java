@@ -46,12 +46,6 @@ public class Routine extends BaseEntity {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
-    /*
-        양방향 연관관계
-    */
-    @OneToMany(mappedBy = "routine", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Schedule> schedules = new ArrayList<>();
-
     public void updateField(OnboardingRequestDto.RoutineDTO request) {
         this.title = request.getTitle();
         this.description = request.getDescription();

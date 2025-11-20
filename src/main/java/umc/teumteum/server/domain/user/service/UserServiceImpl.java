@@ -311,7 +311,26 @@ public class UserServiceImpl implements UserService {
         Routine routine = routineRepository.findById(routineId)
                 .orElseThrow(() -> new UserException(UserErrorStatus.ROUTINE_NOT_FOUND));
 
-        // 2. 루틴 삭제
+        // 2. 오늘 & 미래 스케줄 조회
+        LocalDate today = LocalDate.now();
+        List<Schedule> schedules = scheduleRepository.findByRoutineAndDateGreaterThanEqual(routine, today);
+
+        // 3. 스케줄 리마인드 삭제
+        for (Schedule schedule : schedules) {
+            scheduleReminderRepository.deleteByScheduleId(schedule.getId());
+        }
+
+        // 4. 스케줄 삭제
+        scheduleRepository.deleteAll(schedules);
+
+        // 5. 과거 스케줄의 연관관계 제거
+        List<Schedule> pastSchedules = scheduleRepository.findByRoutineId(routineId);
+        pastSchedules.forEach(s -> {
+            s.setRoutine(null);
+        });
+        scheduleRepository.saveAll(pastSchedules);
+
+        // 6. 루틴 삭제
         routineRepository.delete(routine);
     }
 
