@@ -52,6 +52,9 @@ public class ScheduleConverter {
 
     // RemindAlarm 리스트 -> ScheduleReminder
     public static List<ScheduleReminder> remindAlarmToScheduleReminders(Schedule schedule, List<RemindAlarm> remindAlarm, AlarmStatus alarmStatus) {
+        if(remindAlarm == null || remindAlarm.isEmpty()){
+            return List.of();
+        }
         return remindAlarm.stream()
                 .map(item -> ScheduleReminder.builder()
                     .schedule(schedule)
