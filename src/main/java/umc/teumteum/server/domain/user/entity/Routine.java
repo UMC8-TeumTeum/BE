@@ -5,10 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.global.common.BaseEntity;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -41,4 +44,10 @@ public class Routine extends BaseEntity {
 
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
+
+    /*
+        양방향 연관관계
+    */
+    @OneToMany(mappedBy = "routine", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Schedule> schedules = new ArrayList<>();
 }
