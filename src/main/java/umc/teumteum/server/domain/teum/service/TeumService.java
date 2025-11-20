@@ -38,5 +38,5 @@ public interface TeumService {
 
     List<TeumResponseDto.TeumRequestDetail> getTeumRequestsByDate(Long userId, String date);
 
-    TeumResponseDto.ScheduledTeumCancel cancelTeumRequest(Long requestId, Long userId);
+    Long cancelTeumRequest(Long requestId, Long userId);
 }

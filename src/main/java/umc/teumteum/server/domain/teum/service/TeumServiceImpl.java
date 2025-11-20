@@ -552,7 +552,8 @@ public class TeumServiceImpl implements TeumService {
     }
 
     @Override
-    public TeumResponseDto.ScheduledTeumCancel cancelTeumRequest(Long requestId, Long userId) {
+    @Transactional
+    public Long cancelTeumRequest(Long requestId, Long userId) {
         TeumRequest request = teumRequestRepository.findById(requestId)
                 .orElseThrow(() -> new GeneralException(TeumErrorStatus.TEUM_REQUEST_NOT_FOUND));
 
@@ -576,9 +577,7 @@ public class TeumServiceImpl implements TeumService {
             }
         }
 
-        return TeumResponseDto.ScheduledTeumCancel.builder()
-                .cancelledUserIds(List.of(userId))
-                .build();
+        return requestId;
     }
 
 
