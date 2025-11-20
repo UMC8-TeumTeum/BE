@@ -138,4 +138,16 @@ public class UserController {
         return ApiResponse.of(UserSuccessStatus._ROUTINE_LOADED,response);
     }
 
+    @Operation(
+            summary = "마이페이지 반복일정 삭제",
+            description = "특정 반복일정을 삭제합니다."
+    )
+    @DeleteMapping(value = "/routines/{routineId}", produces = "application/json")
+    public ApiResponse<Object> deleteRoutine(
+            @Parameter(name= "routineId", description = "삭제할 routine Id", example = "123") @PathVariable("routineId") Long routineId
+    ){
+        userService.deleteRoutine(routineId);
+        return ApiResponse.of(UserSuccessStatus._ROUTINE_DELETED, null);
+    }
+
 }

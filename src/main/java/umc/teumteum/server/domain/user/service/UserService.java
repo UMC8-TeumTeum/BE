@@ -35,4 +35,6 @@ public interface UserService {
     void updateAlarm(UserRequestDto.NotificationSettingRequest request, User user);
 
     List<UserResponseDTO.RoutineDTO> getRoutines(Weekday weekday, User user);
+
+    void deleteRoutine(Long routineId);
 }

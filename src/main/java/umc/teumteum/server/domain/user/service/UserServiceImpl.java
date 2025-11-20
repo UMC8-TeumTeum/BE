@@ -4,7 +4,6 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.similarity.LevenshteinDistance;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,8 +46,7 @@ public class UserServiceImpl implements UserService {
 
     @Resource(name = "profileImageRedisTemplate")
     private RedisTemplate<String, String> profileImageRedisTemplate;
-    @Autowired
-    private RoutineRepository routineRepository;
+    private final RoutineRepository routineRepository;
 
     @Override
     public List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long userId) {
@@ -285,5 +283,17 @@ public class UserServiceImpl implements UserService {
         return routines.stream()
                 .map(UserConverter::toRoutineDTO)
                 .toList();
+    }
+
+    // 마이페이지 - 반복일정 삭제
+    @Transactional
+    @Override
+    public void deleteRoutine(Long routineId) {
+        // 1. 루틴 존재 여부 확인
+        Routine routine = routineRepository.findById(routineId)
+                .orElseThrow(() -> new UserException(UserErrorStatus.ROUTINE_NOT_FOUND));
+
+        // 2. 루틴 삭제
+        routineRepository.delete(routine);
     }
 }
