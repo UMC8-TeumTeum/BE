@@ -551,6 +551,34 @@ public class TeumServiceImpl implements TeumService {
                 .toList();
     }
 
+    @Override
+    @Transactional
+    public Long cancelTeumRequest(Long requestId, Long userId) {
+        TeumRequest request = findActiveRequestOrThrow(requestId);
+
+        // 요청자 본인만 취소 가능
+        if (!request.getUser().getId().equals(userId)) {
+            throw new GeneralException(TeumErrorStatus.USER_NOT_ELIGIBLE);
+        }
+
+        // 이미 종료되었거나 취소된 요청은 중복 취소 불가
+        if (request.getStatus() != RequestStatus.ACTIVE) {
+            throw new GeneralException(TeumErrorStatus.REQUEST_ALREADY_CLOSED);
+        }
+
+        // 요청 상태를 CANCELED로 변경
+        request.markAsCanceled();
+
+        // 연결된 응답을 모두 비활성화 처리 (응답 불가하도록)
+        for (TeumResponse response : request.getTeumResponses()) {
+            if (response.getStatus() == ResponseStatus.PENDING) {
+                response.changeStatus(ResponseStatus.CANCELED_BY_REQUESTER);
+            }
+        }
+
+        return requestId;
+    }
+
 
     // 사용자가 해당 요청의 요청자 또는 응답자인지 여부
     private boolean isParticipant(TeumRequest req, Long userId) {
@@ -574,7 +602,8 @@ public class TeumServiceImpl implements TeumService {
 
         // 응답자가 모두 거절 또는 취소한 경우
         boolean allResponsesCancelled = request.getTeumResponses().stream()
-                .allMatch(r -> r.getStatus() == ResponseStatus.REJECTED || r.getStatus() == ResponseStatus.LEFT);
+                .allMatch(r -> r.getStatus() == ResponseStatus.REJECTED || r.getStatus() == ResponseStatus.LEFT ||
+                        r.getStatus() == ResponseStatus.CANCELED_BY_REQUESTER);
 
         // 최종 취소 판단 조건
         return hasNoPending && (allSchedulesCancelled || (hasNoSchedules && allResponsesCancelled));

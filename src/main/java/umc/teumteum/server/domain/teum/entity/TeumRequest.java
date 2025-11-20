@@ -75,4 +75,6 @@ public class TeumRequest extends BaseEntity {
     public void markAsClosed() {
         this.status = RequestStatus.CLOSED;
     }
+
+    public void markAsCanceled() { this.status = RequestStatus.CANCELED; }
 }
