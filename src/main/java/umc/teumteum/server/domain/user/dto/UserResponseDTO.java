@@ -35,6 +35,9 @@ public class UserResponseDTO {
   @AllArgsConstructor
   public static class RoutineDTO {
 
+    @Schema(description = "반복일정 ID", example = "1")
+    private Long routineId;
+
     @Schema(description = "제목", example = "매주 산책")
     private String title;
 

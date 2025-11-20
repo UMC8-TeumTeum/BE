@@ -38,6 +38,7 @@ public class UserConverter {
     // routine -> UserResponseDTO.RoutineDTO
     public static UserResponseDTO.RoutineDTO toRoutineDTO(Routine routine) {
         return UserResponseDTO.RoutineDTO.builder()
+                .routineId(routine.getId())
                 .title(routine.getTitle())
                 .description(routine.getDescription())
                 .weekday(routine.getWeekday())
