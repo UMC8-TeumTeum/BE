@@ -104,6 +104,18 @@ public class Schedule extends BaseEntity {
         this.includeTeum = dto.getIncludeTeum();
     }
 
+    public void updateFromRoutine(Routine routine) {
+        // 1. startTime, endTime 변환
+        LocalDateTime newStartTime = LocalDateTime.of(this.getDate(),routine.getStartTime());
+        LocalDateTime newEndTime = LocalDateTime.of(this.getDate(),routine.getEndTime());
+
+        // 2. 필드 업데이트
+        this.title = routine.getTitle();
+        this.description = routine.getDescription();
+        this.startTime = newStartTime;
+        this.endTime = newEndTime;
+    }
+
     public void cancel() {
         this.status = ScheduleStatus.CANCELLED;
     }

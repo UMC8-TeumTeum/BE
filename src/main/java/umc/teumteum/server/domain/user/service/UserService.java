@@ -39,4 +39,6 @@ public interface UserService {
     void deleteRoutine(Long routineId);
 
     void saveRoutine(OnboardingRequestDto.RoutineDTO request, User user);
+
+    void updateRoutine(Long routineId, OnboardingRequestDto.RoutineDTO request, User user);
 }

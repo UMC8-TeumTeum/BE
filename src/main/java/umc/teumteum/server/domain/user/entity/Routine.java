@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.global.common.BaseEntity;
 
@@ -50,4 +51,12 @@ public class Routine extends BaseEntity {
     */
     @OneToMany(mappedBy = "routine", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Schedule> schedules = new ArrayList<>();
+
+    public void updateField(OnboardingRequestDto.RoutineDTO request) {
+        this.title = request.getTitle();
+        this.description = request.getDescription();
+        this.weekday = request.getWeekday();
+        this.startTime = request.getStartTime();
+        this.endTime = request.getEndTime();
+    }
 }

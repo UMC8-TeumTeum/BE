@@ -5,11 +5,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
-import umc.teumteum.server.domain.home.exception.status.HomeSuccessStatus;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.dto.UserRequestDto;
@@ -22,7 +19,6 @@ import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
-import java.time.LocalDate;
 import java.util.List;
 
 
@@ -144,7 +140,7 @@ public class UserController {
     )
     @DeleteMapping(value = "/mypage/routines/{routineId}", produces = "application/json")
     public ApiResponse<Object> deleteRoutine(
-            @Parameter(name= "routineId", description = "삭제할 routine Id", example = "123") @PathVariable("routineId") Long routineId
+            @Parameter(name= "routineId", description = "삭제할 Routine Id", example = "123") @PathVariable("routineId") Long routineId
     ){
         userService.deleteRoutine(routineId);
         return ApiResponse.of(UserSuccessStatus._ROUTINE_DELETED, null);
@@ -161,6 +157,20 @@ public class UserController {
     ){
         userService.saveRoutine(request, user);
         return ApiResponse.of(UserSuccessStatus._ROUTINE_ADDED,null);
+    }
+
+    @Operation(
+            summary = "마이페이지 반복일정 수정",
+            description = "특정 반복일정을 수정합니다."
+    )
+    @PatchMapping(value = "/mypage/routines/{routineId}", produces = "application/json")
+    public ApiResponse<Object> updateRoutine(
+            @Parameter(name= "routineId", description = "수정할 Routine Id", example = "123") @PathVariable("routineId") Long routineId,
+            @RequestBody @Valid OnboardingRequestDto.RoutineDTO request,
+            @CurrentUser @Parameter(hidden = true) User user
+    ){
+        userService.updateRoutine(routineId, request, user);
+        return ApiResponse.of(UserSuccessStatus._ROUTINE_UPDATED, null);
     }
 
 }

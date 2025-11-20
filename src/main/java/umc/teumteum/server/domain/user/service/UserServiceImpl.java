@@ -4,7 +4,6 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.similarity.LevenshteinDistance;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -354,6 +353,48 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    // 마이페이지 -  반복일정 수정
+    @Transactional
+    @Override
+    public void updateRoutine(Long routineId, OnboardingRequestDto.RoutineDTO request, User user) {
+        // 1. 루틴 존재 여부 확인
+        Routine routine = routineRepository.findById(routineId)
+                .orElseThrow(() -> new UserException(UserErrorStatus.ROUTINE_NOT_FOUND));
+
+        // 2. 단일 일정 내에서 시작 & 종료시간 확인
+        LocalTime startTime = request.getStartTime();
+        LocalTime endTime = request.getEndTime();
+        validateRoutineTimeRange(startTime, endTime);
+
+        // 3. 기존 루틴들과의 시간 충돌 여부 검사
+        // 3-1. 요일과 유저로 루틴 조회
+        List<Routine> existingRoutines = routineRepository.findByUserAndWeekday(user, request.getWeekday());
+
+        // 3-2. 현재 수정 중인 루틴 (ID 일치)을 제외하고 필터링
+        List<Routine> routinesToCheck = existingRoutines.stream()
+                .filter(r -> !r.getId().equals(routineId))
+                .collect(Collectors.toList());
+
+        validateExistingRoutineConflicts(request, routinesToCheck);
+
+        // 4. 반복일정 필드 수정
+        routine.updateField(request);
+
+        // 5. 해당 날짜가 오늘이라면 오늘 이후의 스케줄 수정
+        Weekday todayWeekday = Weekday.from(LocalDate.now().getDayOfWeek());
+        LocalDate today = LocalDate.now();
+
+        if(request.getWeekday().equals(todayWeekday)){
+            // 5-1. 오늘 이후의 루틴 ID가 같은 스케줄 조회
+            List<Schedule> scheduleList = scheduleRepository.findByRoutineAndDateGreaterThanEqual(routine, today);
+
+            // 5-2. 기존 스케줄에서 필드 수정
+            scheduleList.forEach(schedule -> {
+                schedule.updateFromRoutine(routine);
+            });
+        }
+    }
+
     // 단일 일정 내에서 시작 & 종료시간 확인
     private void validateRoutineTimeRange(LocalTime startTime, LocalTime endTime) {
         // 1. 종료시간 00:00의 경우 무조건 허용 (=다음날 자정에 종료를 의미)
@@ -392,5 +433,4 @@ public class UserServiceImpl implements UserService {
         // 2-3. 충돌 여부 검증
         timeUtil.validateTimeRangeConflicts(timeRanges,UserErrorStatus.ROUTINE_TIME_CONFLICT);
     }
-
 }
