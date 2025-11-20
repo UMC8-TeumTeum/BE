@@ -554,8 +554,7 @@ public class TeumServiceImpl implements TeumService {
     @Override
     @Transactional
     public Long cancelTeumRequest(Long requestId, Long userId) {
-        TeumRequest request = teumRequestRepository.findById(requestId)
-                .orElseThrow(() -> new GeneralException(TeumErrorStatus.TEUM_REQUEST_NOT_FOUND));
+        TeumRequest request = findActiveRequestOrThrow(requestId);
 
         // 요청자 본인만 취소 가능
         if (!request.getUser().getId().equals(userId)) {
@@ -571,7 +570,7 @@ public class TeumServiceImpl implements TeumService {
         request.markAsCanceled();
 
         // 연결된 응답을 모두 비활성화 처리 (응답 불가하도록)
-        for (TeumResponse response : request.getTeumResponses()) { //
+        for (TeumResponse response : request.getTeumResponses()) {
             if (response.getStatus() == ResponseStatus.PENDING) {
                 response.changeStatus(ResponseStatus.CANCELED_BY_REQUESTER);
             }

@@ -237,7 +237,7 @@ public class TeumController {
             description = "요청자가 본인의 틈 요청을 취소합니다. 취소된 요청은 더 이상 응답할 수 없습니다."
     )
     @PatchMapping("/request/{requestId}/cancel")
-    public ApiResponse<Long> cancelTeumRequest( // 반환 타입 변경: DTO -> Long
+    public ApiResponse<Long> cancelTeumRequest(
                                                 @PathVariable("requestId") Long requestId,
                                                 @CurrentUser @Parameter(hidden = true) User user
     ) {
