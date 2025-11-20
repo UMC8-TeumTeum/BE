@@ -37,4 +37,6 @@ public interface UserService {
     List<UserResponseDTO.RoutineDTO> getRoutines(Weekday weekday, User user);
 
     void deleteRoutine(Long routineId);
+
+    void saveRoutine(OnboardingRequestDto.RoutineDTO request, User user);
 }

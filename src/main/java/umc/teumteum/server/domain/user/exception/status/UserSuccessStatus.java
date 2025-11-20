@@ -18,6 +18,7 @@ public enum UserSuccessStatus implements BaseCode {
     _ALARM_STATE_UPDATED(HttpStatus.OK,"USER2006","사용자의 알림 설정 변경이 완료되었습니다."),
     _ROUTINE_LOADED(HttpStatus.OK,"USER2007","반복일정 조회가 완료되었습니다."),
     _ROUTINE_DELETED(HttpStatus.OK,"USER2008","반복일정 삭제가 완료되었습니다."),
+    _ROUTINE_ADDED(HttpStatus.OK,"USER2009","반복일정 등록이 완료되었습니다."),
 
 
 
