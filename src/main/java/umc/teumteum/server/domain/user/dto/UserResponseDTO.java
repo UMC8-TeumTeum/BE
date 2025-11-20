@@ -1,9 +1,16 @@
 package umc.teumteum.server.domain.user.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import umc.teumteum.server.domain.user.entity.enums.Weekday;
+
+import java.time.LocalTime;
+import java.util.List;
 
 public class UserResponseDTO {
 
@@ -21,5 +28,31 @@ public class UserResponseDTO {
     private String job;
 
 
+  }
+
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  public static class RoutineDTO {
+
+    @Schema(description = "반복일정 ID", example = "1")
+    private Long routineId;
+
+    @Schema(description = "제목", example = "매주 산책")
+    private String title;
+
+    @Schema(description = "상세 내용", example = "한강에서 산책")
+    private String description;
+
+    @Schema(description = "반복 요일", example = "WEDNESDAY")
+    private Weekday weekday;
+
+    @JsonFormat(pattern = "HH:mm")
+    @Schema(description = "시작 시간 (HH:mm 형식)", example = "13:00")
+    private LocalTime startTime;
+
+    @JsonFormat(pattern = "HH:mm")
+    @Schema(description = "종료 시간 (HH:mm 형식)", example = "00:00")
+    private LocalTime endTime;
   }
 }

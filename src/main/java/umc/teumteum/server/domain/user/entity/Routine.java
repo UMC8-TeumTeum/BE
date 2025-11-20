@@ -5,10 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.global.common.BaseEntity;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -41,4 +45,17 @@ public class Routine extends BaseEntity {
 
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
+
+    public void updateField(String title,
+                            String description,
+                            Weekday weekday,
+                            LocalTime startTime,
+                            LocalTime endTime){
+
+        this.title = title;
+        this.description = description;
+        this.weekday = weekday;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
 }

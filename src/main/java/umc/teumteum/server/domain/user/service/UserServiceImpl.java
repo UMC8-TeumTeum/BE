@@ -8,6 +8,13 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
+import umc.teumteum.server.domain.home.converter.ScheduleConverter;
+import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.entity.ScheduleReminder;
+import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
+import umc.teumteum.server.domain.home.entity.enums.RoutineStatus;
+import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
+import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.converter.OnboardingConverter;
 import umc.teumteum.server.domain.user.converter.UserConverter;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
@@ -16,20 +23,31 @@ import umc.teumteum.server.domain.user.dto.UserRequestDto;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.NotificationSetting;
+import umc.teumteum.server.domain.user.entity.RemindAlarm;
+import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.domain.user.entity.enums.Weekday;
+import umc.teumteum.server.domain.user.exception.OnboardingException;
 import umc.teumteum.server.domain.user.exception.UserException;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.NotificationSettingRepository;
+import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
+import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.global.dto.TimeRange;
 import umc.teumteum.server.global.jwt.JwtProvider;
 import umc.teumteum.server.global.util.S3Util;
+import umc.teumteum.server.global.util.TimeUtil;
 
 import static umc.teumteum.server.domain.user.util.ImageConstants.ALLOWED_IMAGE_TYPES;
 import static umc.teumteum.server.domain.user.util.ImageConstants.DEFAULT_IMAGE;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +61,11 @@ public class UserServiceImpl implements UserService {
 
     @Resource(name = "profileImageRedisTemplate")
     private RedisTemplate<String, String> profileImageRedisTemplate;
+    private final RoutineRepository routineRepository;
+    private final TimeUtil timeUtil;
+    private final ScheduleRepository scheduleRepository;
+    private final RemindAlarmRepository remindAlarmRepository;
+    private final ScheduleReminderRepository scheduleReminderRepository;
 
     @Override
     public List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long userId) {
@@ -262,5 +285,177 @@ public class UserServiceImpl implements UserService {
                 request.getRemindAlarm(),
                 request.getTeum(), request.getFollow()
         );
+    }
+
+    // 마이페이지 - 반복일정 조회
+    @Override
+    public List<UserResponseDTO.RoutineDTO> getRoutines(Weekday weekday, User user) {
+        // 1. 유저 조회
+        User existingUser = userRepository.findById(user.getId())
+                .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
+
+        // 2. 요일별 반복일정 조회
+        List<Routine> routines = routineRepository.findByUserAndWeekday(existingUser, weekday);
+
+        // 3. 응답 변환
+        return routines.stream()
+                .map(UserConverter::toRoutineDTO)
+                .toList();
+    }
+
+    // 마이페이지 - 반복일정 삭제
+    @Transactional
+    @Override
+    public void deleteRoutine(Long routineId) {
+        // 1. 루틴 존재 여부 확인
+        Routine routine = routineRepository.findById(routineId)
+                .orElseThrow(() -> new UserException(UserErrorStatus.ROUTINE_NOT_FOUND));
+
+        // 2. 오늘 & 미래 스케줄 조회
+        LocalDate today = LocalDate.now();
+        List<Schedule> schedules = scheduleRepository.findByRoutineAndDateGreaterThanEqual(routine, today);
+
+        // 3. 스케줄 리마인드 삭제
+        for (Schedule schedule : schedules) {
+            scheduleReminderRepository.deleteByScheduleId(schedule.getId());
+        }
+
+        // 4. 스케줄 삭제
+        scheduleRepository.deleteAll(schedules);
+
+        // 5. 과거 스케줄의 연관관계 제거
+        List<Schedule> pastSchedules = scheduleRepository.findByRoutineId(routineId);
+        pastSchedules.forEach(s -> {
+            s.setRoutine(null);
+        });
+        scheduleRepository.saveAll(pastSchedules);
+
+        // 6. 루틴 삭제
+        routineRepository.delete(routine);
+    }
+
+    // 마이페이지 - 반복일정 등록
+    @Transactional
+    @Override
+    public void saveRoutine(OnboardingRequestDto.RoutineDTO request, User user) {
+
+        // 1. 단일 일정 내에서 시작 & 종료시간 확인
+        LocalTime startTime = request.getStartTime();
+        LocalTime endTime = request.getEndTime();
+
+        validateRoutineTimeRange(startTime, endTime);
+
+        // 2. 기존 존재하는 루틴과 충돌이 없는지 여부 검토
+        List<Routine> existingRoutines = routineRepository.findByUserAndWeekday(user, request.getWeekday());
+        validateExistingRoutineConflicts(request, existingRoutines);
+
+        // 3. 저장
+        Routine routine = OnboardingConverter.toRoutine(request, user);
+        routineRepository.save(routine);
+
+        // 4. 해당 날짜가 오늘이라면 스케줄 테이블에 삽입
+        Weekday todayWeekday = Weekday.from(LocalDate.now().getDayOfWeek());
+        LocalDate today = LocalDate.now();
+
+        if(request.getWeekday().equals(todayWeekday)){
+            Schedule schedule = ScheduleConverter.routineToSchedule(routine,today, RoutineStatus.ORIGINAL);
+            Schedule savedSchedule = scheduleRepository.save(schedule);
+
+            // 4-1. 리마인드 알림 조회
+            List<RemindAlarm> remindAlarms = remindAlarmRepository.findAllByUser(user);
+
+            // 4-2. 스케줄 리마인드 생성
+            List<ScheduleReminder> scheduleReminder = ScheduleConverter.remindAlarmToScheduleReminders(savedSchedule, remindAlarms, AlarmStatus.ACTIVE);
+
+            // 4-3. 저장
+            scheduleReminderRepository.saveAll(scheduleReminder);
+        }
+    }
+
+    // 마이페이지 -  반복일정 수정
+    @Transactional
+    @Override
+    public void updateRoutine(Long routineId, OnboardingRequestDto.RoutineDTO request, User user) {
+        // 1. 루틴 존재 여부 확인
+        Routine routine = routineRepository.findById(routineId)
+                .orElseThrow(() -> new UserException(UserErrorStatus.ROUTINE_NOT_FOUND));
+
+        // 2. 단일 일정 내에서 시작 & 종료시간 확인
+        LocalTime startTime = request.getStartTime();
+        LocalTime endTime = request.getEndTime();
+        validateRoutineTimeRange(startTime, endTime);
+
+        // 3. 기존 루틴들과의 시간 충돌 여부 검사
+        // 3-1. 요일과 유저로 루틴 조회
+        List<Routine> existingRoutines = routineRepository.findByUserAndWeekday(user, request.getWeekday());
+
+        // 3-2. 현재 수정 중인 루틴 (ID 일치)을 제외하고 필터링
+        List<Routine> routinesToCheck = existingRoutines.stream()
+                .filter(r -> !r.getId().equals(routineId))
+                .collect(Collectors.toList());
+
+        validateExistingRoutineConflicts(request, routinesToCheck);
+
+        // 4. 반복일정 필드 수정
+        routine.updateField(
+                request.getTitle(),
+                request.getDescription(),
+                request.getWeekday(),
+                request.getStartTime(),
+                request.getEndTime()
+        );
+
+        // 5. 해당 날짜가 오늘이라면 오늘 이후의 스케줄 수정
+        Weekday todayWeekday = Weekday.from(LocalDate.now().getDayOfWeek());
+        LocalDate today = LocalDate.now();
+
+        if(request.getWeekday().equals(todayWeekday)){
+            // 5-1. 오늘 이후의 루틴 ID가 같은 스케줄 조회
+            List<Schedule> scheduleList = scheduleRepository.findByRoutineAndDateGreaterThanEqual(routine, today);
+
+            // 5-2. 기존 스케줄에서 필드 수정
+            scheduleList.forEach(schedule -> {
+                schedule.updateFromRoutine(routine);
+            });
+        }
+    }
+
+    // 단일 일정 내에서 시작 & 종료시간 확인
+    private void validateRoutineTimeRange(LocalTime startTime, LocalTime endTime) {
+        // 1. 종료시간 00:00의 경우 무조건 허용 (=다음날 자정에 종료를 의미)
+        if (endTime.equals(LocalTime.MIDNIGHT)) {
+            return;
+        }
+
+        // 2. 기본 유효성 검증 (시작시간 < 종료시간)
+        if (!startTime.isBefore(endTime)) {
+            // ex) 13:00~03:00, 10:00~10:00 등이 해당
+            throw new OnboardingException(UserErrorStatus.INVALID_TIME_RANGE);
+        }
+    }
+
+    // 기존 루틴들과의 시간 충돌 여부 검사
+    private void validateExistingRoutineConflicts(
+            OnboardingRequestDto.RoutineDTO newRoutineRequest,
+            List<Routine> existingRoutines
+    ){
+        // 1. 기존 루틴이 없으면 검증 통과
+        if(existingRoutines.isEmpty()){
+            return;
+        }
+
+        // 2. 기존 루틴들과 새 루틴을 모두 TimeRange 리스트로 변환
+        List<TimeRange> timeRanges = new ArrayList<>();
+
+        // 2-1. 기존 루틴들을 TimeRange로 변환하여 추가 (Routine::toTimeRange 필요)
+        existingRoutines.stream()
+                .map(TimeRange::from)
+                .forEach(timeRanges::add);
+
+        // 2-2. 새로 등록한 루틴 TimeRange로 변환 후 추가
+        timeRanges.add(TimeRange.from(newRoutineRequest));
+
+        // 2-3. 충돌 여부 검증
+        timeUtil.validateTimeRangeConflicts(timeRanges,UserErrorStatus.ROUTINE_TIME_CONFLICT);
     }
 }

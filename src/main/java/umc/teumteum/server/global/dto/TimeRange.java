@@ -3,6 +3,7 @@ package umc.teumteum.server.global.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
+import umc.teumteum.server.domain.user.entity.Routine;
 
 import java.time.LocalTime;
 
@@ -14,6 +15,11 @@ public class TimeRange {
 
     // RoutineDTO에서 TimeRange로 변환
     public static TimeRange from(OnboardingRequestDto.RoutineDTO routine) {
+        return new TimeRange(routine.getStartTime(), routine.getEndTime());
+    }
+
+    // Routine에서 TimeRange로 변환
+    public static TimeRange from(Routine routine) {
         return new TimeRange(routine.getStartTime(), routine.getEndTime());
     }
 
