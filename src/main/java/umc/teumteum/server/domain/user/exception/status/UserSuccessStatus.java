@@ -20,6 +20,7 @@ public enum UserSuccessStatus implements BaseCode {
     _ROUTINE_DELETED(HttpStatus.OK,"USER2008","반복일정 삭제가 완료되었습니다."),
     _ROUTINE_ADDED(HttpStatus.OK,"USER2009","반복일정 등록이 완료되었습니다."),
     _ROUTINE_UPDATED(HttpStatus.OK,"USER20010","반복일정 수정이 완료되었습니다."),
+    _SLEEP_PATTERN_UPDATED(HttpStatus.OK,"USER20011","수면 패턴 수정이 완료되었습니다."),
 
 
 

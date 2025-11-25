@@ -458,4 +458,15 @@ public class UserServiceImpl implements UserService {
         // 2-3. 충돌 여부 검증
         timeUtil.validateTimeRangeConflicts(timeRanges,UserErrorStatus.ROUTINE_TIME_CONFLICT);
     }
+
+    // 마이페이지 - 수면패턴 수정
+    @Transactional
+    @Override
+    public void updateSleepPattern(OnboardingRequestDto.SleepPatternRequest request, User user) {
+        // 1. 수면패턴 검증 (최대 23시간)
+        OnboardingServiceImpl.validateSleepPattern(request.getSleepTime(), request.getWakeTime());
+
+        // 2. 수면패턴 업데이트ㅌ
+        user.updateSleepPattern(request.getSleepTime(), request.getWakeTime());
+    }
 }
