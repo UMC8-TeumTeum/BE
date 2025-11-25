@@ -41,4 +41,6 @@ public interface UserService {
     void saveRoutine(OnboardingRequestDto.RoutineDTO request, User user);
 
     void updateRoutine(Long routineId, OnboardingRequestDto.RoutineDTO request, User user);
+
+    void updateSleepPattern(OnboardingRequestDto.SleepPatternRequest request, User user);
 }

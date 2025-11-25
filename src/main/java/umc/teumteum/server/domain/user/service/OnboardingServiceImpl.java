@@ -324,7 +324,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
 
-    private void validateSleepPattern(LocalTime sleepTime, LocalTime wakeTime) {
+    public static void validateSleepPattern(LocalTime sleepTime, LocalTime wakeTime) {
         // sleepTime과 wakeTime 사이의 시간 차이를 분 단위로 계산 (같은 날 기준 계산)
         long minutesDifference = Duration.between(sleepTime, wakeTime).toMinutes();
 

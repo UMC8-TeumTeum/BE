@@ -173,4 +173,17 @@ public class UserController {
         return ApiResponse.of(UserSuccessStatus._ROUTINE_UPDATED, null);
     }
 
+    @Operation(
+            summary = "마이페이지 수면패턴 수정",
+            description = "수면 패턴을 수정합니다."
+    )
+    @PatchMapping(value = "/mypage/sleep-pattern", produces = "application/json")
+    public ApiResponse<Object> updateSleepPattern(
+            @RequestBody @Valid OnboardingRequestDto.SleepPatternRequest request,
+            @CurrentUser @Parameter(hidden = true) User user
+    ){
+        userService.updateSleepPattern(request, user);
+        return ApiResponse.of(UserSuccessStatus._SLEEP_PATTERN_UPDATED, null);
+    }
+
 }
