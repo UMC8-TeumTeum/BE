@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 public class TeumConverter {
 
     private final TimeUtil timeUtil;
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     public TeumRequest toTeumRequest(TeumRequestDto.TeumRequest dto, User sender) {
         return TeumRequest.builder()
@@ -387,9 +388,8 @@ public class TeumConverter {
                 .map(schedule -> TeumResponseDto.ConflictingSchedule.builder()
                         .id(schedule.getId())
                         .title(schedule.getTitle())
-                        // "HH:mm" 포맷으로 변환 (초 단위 제거)
-                        .startTime(schedule.getStartTime().toLocalTime().toString().substring(0, 5))
-                        .endTime(schedule.getEndTime().toLocalTime().toString().substring(0, 5))
+                        .startTime(schedule.getStartTime().toLocalTime().format(TIME_FORMATTER))
+                        .endTime(schedule.getEndTime().toLocalTime().format(TIME_FORMATTER))
                         .build())
                 .toList();
 
