@@ -299,5 +299,44 @@ public class TeumResponseDto {
         private String endTime;
     }
 
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(title = "ConflictingRequestResponse : 틈 요청 충돌 응답을 감싸는 DTO")
+    public static class ConflictingRequestResponse {
+
+        @Schema(description = "충돌 여부 (true: 겹치는 틈 요청 있음, false: 없음)", example = "true")
+        private boolean hasConflict;
+
+        @Schema(description = "겹치는 틈 요청 목록 (충돌이 없으면 빈 리스트 반환)")
+        private List<ConflictingRequest> conflictingRequests;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(title = "ConflictingRequest : 개별 충돌 요청 정보 DTO")
+    public static class ConflictingRequest {
+
+        @Schema(description = "틈 요청 ID", example = "5")
+        private Long id;
+
+        @Schema(description = "수신자 닉네임 (누구에게 보낸 요청인지)", example = "디자이너 수박")
+        private String receiverNickname;
+
+        @Schema(description = "틈 요청 제목", example = "디자인 회의")
+        private String title;
+
+        @Schema(description = "틈 요청 설명(멘트)", example = "이번 주 스프린트 UI 점검해요")
+        private String description;
+
+        @Schema(description = "시작 시간 (HH:mm)", example = "15:20")
+        private String startTime;
+
+        @Schema(description = "종료 시간 (HH:mm)", example = "16:10")
+        private String endTime;
+    }
 
 }

@@ -4,9 +4,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
+import umc.teumteum.server.domain.teum.entity.enums.RequestStatus;
 import umc.teumteum.server.domain.user.entity.User;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 public interface TeumRequestRepository extends JpaRepository<TeumRequest, Long> {
@@ -47,5 +49,28 @@ public interface TeumRequestRepository extends JpaRepository<TeumRequest, Long> 
     );
 
     List<TeumRequest> findByDate(LocalDate date);
+
+    /**
+     * 충돌 스케줄 조회 조건:
+     * 1. 내가 보낸 요청일 것
+     * 2. ACTIVE 상태일 것
+     * 3. 시간이 겹칠 것 (등호 제외: 접하는 시간 허용)
+     */
+    @Query("""
+        SELECT DISTINCT tr FROM TeumRequest tr
+        JOIN FETCH tr.teumResponses tr_res
+        JOIN FETCH tr_res.receiverUser
+        WHERE tr.user.id = :userId
+          AND tr.status = :status  
+          AND tr.date = :date
+          AND (tr.startTime < :checkEnd AND tr.endTime > :checkStart)
+    """)
+    List<TeumRequest> findConflictingRequests(
+            @Param("userId") Long userId,
+            @Param("date") LocalDate date,
+            @Param("checkStart") LocalTime checkStart,
+            @Param("checkEnd") LocalTime checkEnd,
+            @Param("status") RequestStatus status
+    );
 
 }
