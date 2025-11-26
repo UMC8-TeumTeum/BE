@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.entity.enums.RoutineStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
@@ -23,16 +24,16 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByUserIdAndIncludeTeumIsTrue(Long userId);
 
     @Query("""
-    SELECT s FROM Schedule s
-    WHERE s.user.id = :userId
-      AND s.status IN (:statuses)
-      AND s.endTime >= :startOfDay
-      AND s.startTime < :endOfDay
-""")
+        SELECT s FROM Schedule s
+        WHERE s.user.id = :userId
+          AND s.status IN (:statuses)
+          AND s.endTime > :checkStart
+          AND s.startTime < :checkEnd
+    """)
     List<Schedule> findOverlappingSchedules(
             @Param("userId") Long userId,
-            @Param("startOfDay") LocalDateTime startOfDay,
-            @Param("endOfDay") LocalDateTime endOfDay,
+            @Param("checkStart") LocalDateTime checkStart,
+            @Param("checkEnd") LocalDateTime checkEnd,
             @Param("statuses") Collection<ScheduleStatus> statuses
     );
 
@@ -319,6 +320,30 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("date") LocalDate date,
             @Param("type") ScheduleType type,
             @Param("userIds") Collection<Long> userIds
+    );
+
+    /**
+     * 충돌 스케줄 조회 조건:
+     * 1. ACTIVE 상태일 것
+     * 2. RoutineStatus가 DELETED가 아닐 것
+     * 3. 시간이 겹칠 것 (등호 제외: 접하는 시간 허용)
+     */
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.status = :status
+      AND s.routineStatus <> :routineStatus
+      AND s.date = :date
+      AND s.startTime < :checkEnd
+      AND s.endTime > :checkStart
+""")
+    List<Schedule> findConflictingSchedules(
+            @Param("userId") Long userId,
+            @Param("date") LocalDate date,
+            @Param("checkStart") LocalDateTime checkStart,
+            @Param("checkEnd") LocalDateTime checkEnd,
+            @Param("status") ScheduleStatus status,        // 추가됨
+            @Param("routineStatus") RoutineStatus routineStatus // 추가됨
     );
 
     /**

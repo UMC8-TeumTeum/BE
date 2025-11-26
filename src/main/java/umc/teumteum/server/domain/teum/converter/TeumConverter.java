@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 public class TeumConverter {
 
     private final TimeUtil timeUtil;
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     public TeumRequest toTeumRequest(TeumRequestDto.TeumRequest dto, User sender) {
         return TeumRequest.builder()
@@ -378,6 +379,23 @@ public class TeumConverter {
                 .userId(user.getId())
                 .nickname(user.getNickname())
                 .profileImageUrl(profileImageUrl)
+                .build();
+    }
+
+    // 충돌 스케줄 리스트 응답 DTO 반환
+    public TeumResponseDto.ConflictingScheduleResponse toConflictingScheduleResponse(List<Schedule> schedules) {
+        List<TeumResponseDto.ConflictingSchedule> conflictDtos = schedules.stream()
+                .map(schedule -> TeumResponseDto.ConflictingSchedule.builder()
+                        .id(schedule.getId())
+                        .title(schedule.getTitle())
+                        .startTime(schedule.getStartTime().toLocalTime().format(TIME_FORMATTER))
+                        .endTime(schedule.getEndTime().toLocalTime().format(TIME_FORMATTER))
+                        .build())
+                .toList();
+
+        return TeumResponseDto.ConflictingScheduleResponse.builder()
+                .hasConflict(!conflictDtos.isEmpty())
+                .conflictingSchedules(conflictDtos)
                 .build();
     }
 

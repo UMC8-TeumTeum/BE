@@ -267,5 +267,37 @@ public class TeumResponseDto {
         private Long id;
     }
 
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ConflictingScheduleResponse {
+
+        @Schema(description = "충돌 여부 (true: 겹치는 일정 있음, false: 없음)", example = "true")
+        private boolean hasConflict;
+
+        @Schema(description = "겹치는 스케줄 목록 (충돌이 없으면 빈 리스트 반환)")
+        private List<ConflictingSchedule> conflictingSchedules;
+    }
+
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ConflictingSchedule {
+
+        @Schema(description = "스케줄 ID", example = "1")
+        private Long id;
+
+        @Schema(description = "스케줄 제목", example = "팀 회의")
+        private String title;
+
+        @Schema(description = "시작 시간 (HH:mm)", example = "14:00")
+        private String startTime;
+
+        @Schema(description = "종료 시간 (HH:mm)", example = "16:00")
+        private String endTime;
+    }
+
 
 }

@@ -7,7 +7,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 public class TeumRequestDto {
@@ -87,6 +91,28 @@ public class TeumRequestDto {
 
         @Schema(description = "응답 상태", example = "ACCEPTED", allowableValues = {"ACCEPTED", "REJECTED"})
         private String status;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @Schema(description = "일정 충돌 확인 요청 DTO")
+    public static class ConflictCheckRequest {
+
+        @Schema(description = "확인할 날짜 (YYYY-MM-DD)", example = "2025-05-20", type = "string")
+        @NotNull(message = "날짜는 필수입니다.")
+        @DateTimeFormat(pattern = "yyyy-MM-dd")
+        private LocalDate date;
+
+        @Schema(description = "시작 시간 (HH:mm)", example = "14:00", type = "string")
+        @NotNull(message = "시작 시간은 필수입니다.")
+        @DateTimeFormat(pattern = "HH:mm")
+        private LocalTime startTime;
+
+        @Schema(description = "종료 시간 (HH:mm)", example = "16:00", type = "string")
+        @NotNull(message = "종료 시간은 필수입니다.")
+        @DateTimeFormat(pattern = "HH:mm")
+        private LocalTime endTime;
     }
 
 }

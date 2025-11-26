@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
@@ -245,6 +246,18 @@ public class TeumController {
         return ApiResponse.of(TeumSuccessStatus._TEUM_REQUEST_CANCELLED, cancelledId);
     }
 
+    @Operation(
+            summary = "일정 충돌 확인",
+            description = "지정한 날짜와 시간대에 겹치는 사용자의 기존 스케줄 목록을 반환합니다. 겹치는 일정이 없으면 빈 리스트를 반환합니다."
+    )
+    @GetMapping("/conflicts")
+    public ApiResponse<TeumResponseDto.ConflictingScheduleResponse> checkConflictingSchedules(
+            @Parameter(hidden = true) @CurrentUser User user,
+            @ParameterObject @Valid @ModelAttribute TeumRequestDto.ConflictCheckRequest request
+    ) {
+        TeumResponseDto.ConflictingScheduleResponse response =
+                teumService.checkConflictingSchedules(user.getId(), request);
 
-
+        return ApiResponse.of(TeumSuccessStatus._TEUM_CONFLICT_CHECK_SUCCESS, response);
+    }
 }
