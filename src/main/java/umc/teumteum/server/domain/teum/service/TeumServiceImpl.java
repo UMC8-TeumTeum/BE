@@ -582,6 +582,12 @@ public class TeumServiceImpl implements TeumService {
     @Override
     @Transactional(readOnly = true)
     public TeumResponseDto.ConflictingScheduleResponse checkConflictingSchedules(Long userId, TeumRequestDto.ConflictCheckRequest request) {
+        validateUserExists(userId);
+
+        if (!request.getStartTime().isBefore(request.getEndTime())) {
+            throw new GeneralException(TeumErrorStatus.INVALID_TEUM_TIME);
+        }
+
         // 입력받은 시간(LocalTime)을 날짜(LocalDate)와 합쳐 LocalDateTime으로 변환
         LocalDateTime checkStart = request.getDate().atTime(request.getStartTime());
         LocalDateTime checkEnd = request.getDate().atTime(request.getEndTime());
