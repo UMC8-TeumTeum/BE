@@ -606,6 +606,30 @@ public class TeumServiceImpl implements TeumService {
         return teumConverter.toConflictingScheduleResponse(conflicts);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public TeumResponseDto.ConflictingRequestResponse checkConflictingRequests(Long userId, TeumRequestDto.ConflictCheckRequest request) {
+        // 사용자 검증
+        validateUserExists(userId);
+
+        // 시간 순서 검증 (Start < End)
+        if (!request.getStartTime().isBefore(request.getEndTime())) {
+            throw new GeneralException(TeumErrorStatus.INVALID_TEUM_TIME);
+        }
+
+        // 겹치는 요청 조회 (ACTIVE 상태인 요청만)
+        List<TeumRequest> conflicts = teumRequestRepository.findConflictingRequests(
+                userId,
+                request.getDate(),
+                request.getStartTime(),
+                request.getEndTime(),
+                RequestStatus.ACTIVE
+        );
+
+        // 변환 및 반환
+        return teumConverter.toConflictingRequestResponse(conflicts);
+    }
+
 
     // 사용자가 해당 요청의 요청자 또는 응답자인지 여부
     private boolean isParticipant(TeumRequest req, Long userId) {

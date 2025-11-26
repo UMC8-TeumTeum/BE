@@ -399,5 +399,23 @@ public class TeumConverter {
                 .build();
     }
 
+    // 충돌 틈 요청 리스트 응답 DTO 반환
+    public TeumResponseDto.ConflictingRequestResponse toConflictingRequestResponse(List<TeumRequest> requests) {
+        List<TeumResponseDto.ConflictingRequest> conflictDtos = requests.stream()
+                .map(req -> TeumResponseDto.ConflictingRequest.builder()
+                        .id(req.getId())
+                        .receiverNickname(req.getTeumResponses().getFirst().getReceiverUser().getNickname())
+                        .title(req.getTitle())
+                        .description(req.getDescription())
+                        .startTime(req.getStartTime().format(TIME_FORMATTER))
+                        .endTime(req.getEndTime().format(TIME_FORMATTER))
+                        .build())
+                .toList();
+
+        return TeumResponseDto.ConflictingRequestResponse.builder()
+                .hasConflict(!conflictDtos.isEmpty())
+                .conflictingRequests(conflictDtos)
+                .build();
+    }
 
 }

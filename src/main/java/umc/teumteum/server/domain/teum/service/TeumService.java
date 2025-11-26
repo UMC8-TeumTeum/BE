@@ -42,4 +42,5 @@ public interface TeumService {
 
     TeumResponseDto.ConflictingScheduleResponse checkConflictingSchedules(Long userId, TeumRequestDto.ConflictCheckRequest request);
 
+    TeumResponseDto.ConflictingRequestResponse checkConflictingRequests(Long userId, TeumRequestDto.ConflictCheckRequest request);
 }
