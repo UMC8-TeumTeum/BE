@@ -75,8 +75,7 @@ public class UserServiceImpl implements UserService {
 
         Comparator<Map.Entry<User, Integer>> byDistance = Comparator.comparingInt(Map.Entry::getValue);
 
-        return userRepository.findByNicknameContaining(keyword).stream()
-                .filter(user -> !user.getId().equals(userId))
+        return userRepository.searchUserWithBlockCheck(keyword, userId).stream()
                 .map(user -> Map.entry(user,
                         distanceCalculator.apply(keywordLower, user.getNickname().toLowerCase())))
                 .sorted(byDistance)
