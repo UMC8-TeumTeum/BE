@@ -260,4 +260,19 @@ public class TeumController {
 
         return ApiResponse.of(TeumSuccessStatus._TEUM_CONFLICT_CHECK_SUCCESS, response);
     }
+
+    @Operation(
+            summary = "틈 요청 간 충돌 확인",
+            description = "지정한 날짜와 시간대에 겹치는 '내가 보낸 대기 중(ACTIVE)인 틈 요청' 목록을 반환합니다."
+    )
+    @GetMapping("/request/conflicts")
+    public ApiResponse<TeumResponseDto.ConflictingRequestResponse> checkConflictingRequests(
+            @Parameter(hidden = true) @CurrentUser User user,
+            @ParameterObject @Valid @ModelAttribute TeumRequestDto.ConflictCheckRequest request
+    ) {
+        TeumResponseDto.ConflictingRequestResponse response =
+                teumService.checkConflictingRequests(user.getId(), request);
+
+        return ApiResponse.of(TeumSuccessStatus._TEUM_CONFLICT_CHECK_SUCCESS, response);
+    }
 }

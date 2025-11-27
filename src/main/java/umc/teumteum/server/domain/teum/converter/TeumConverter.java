@@ -389,7 +389,7 @@ public class TeumConverter {
                         .id(schedule.getId())
                         .title(schedule.getTitle())
                         .startTime(schedule.getStartTime().toLocalTime().format(TIME_FORMATTER))
-                        .endTime(schedule.getEndTime().toLocalTime().format(TIME_FORMATTER))
+                        .endTime(formatEndTime(schedule.getEndTime().toLocalTime()))
                         .build())
                 .toList();
 
@@ -399,5 +399,33 @@ public class TeumConverter {
                 .build();
     }
 
+    // 충돌 틈 요청 리스트 응답 DTO 반환
+    public TeumResponseDto.ConflictingRequestResponse toConflictingRequestResponse(List<TeumRequest> requests) {
+        List<TeumResponseDto.ConflictingRequest> conflictDtos = requests.stream()
+                .map(req -> TeumResponseDto.ConflictingRequest.builder()
+                        .id(req.getId())
+                        .receiverNickname(req.getTeumResponses().get(0).getReceiverUser().getNickname())
+                        .title(req.getTitle())
+                        .description(req.getDescription())
+                        .startTime(req.getStartTime().format(TIME_FORMATTER))
+                        // [수정] 종료 시간 포맷팅 시 별도 메서드 사용
+                        .endTime(formatEndTime(req.getEndTime()))
+                        .build())
+                .toList();
+
+        return TeumResponseDto.ConflictingRequestResponse.builder()
+                .hasConflict(!conflictDtos.isEmpty())
+                .conflictingRequests(conflictDtos)
+                .build();
+    }
+
+    // 종료 시간 포맷팅 헬퍼 메서드
+    // 00:00 -> 24:00
+    private String formatEndTime(LocalTime time) {
+        if (time.equals(LocalTime.MIDNIGHT)) {
+            return "24:00";
+        }
+        return time.format(TIME_FORMATTER);
+    }
 
 }
