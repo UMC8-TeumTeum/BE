@@ -5,11 +5,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.friend.dto.BlockResponseDto;
 import umc.teumteum.server.domain.friend.exception.status.FriendSuccessStatus;
 import umc.teumteum.server.domain.friend.service.BlockService;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
+import umc.teumteum.server.global.dto.PagingResponseDto;
 
 @Tag(name = "Block", description = "사용자 차단 관련 API")
 @RestController
@@ -37,5 +39,16 @@ public class BlockController {
     ) {
         blockService.unblockUser(loginUser, userId);
         return ApiResponse.of(FriendSuccessStatus._UNBLOCK_SUCCESS, null);
+    }
+
+    @Operation(summary = "차단한 유저 목록 조회", description = "내가 차단한 유저 목록을 조회합니다.")
+    @GetMapping
+    public ApiResponse<PagingResponseDto<BlockResponseDto.BlockedFriend>> getBlockedUsers(
+            @CurrentUser @Parameter(hidden = true) User loginUser,
+            @Parameter(description = "페이지 번호 (1부터 시작)") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size
+    ) {
+        PagingResponseDto<BlockResponseDto.BlockedFriend> response = blockService.getBlockedUsers(loginUser, page, size);
+        return ApiResponse.of(FriendSuccessStatus._GET_BLOCKED_LIST_SUCCESS, response);
     }
 }
