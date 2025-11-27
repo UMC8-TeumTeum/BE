@@ -22,6 +22,7 @@ import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.friend.exception.FriendException;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
+import umc.teumteum.server.domain.friend.repository.BlockRepository;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
@@ -40,6 +41,7 @@ public class FriendServiceImpl implements FriendService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
     private final ScheduleRepository scheduleRepository;
+    private final BlockRepository blockRepository;
 
     private final FriendConverter friendConverter;
     private final NotificationUseCases notificationUseCases;
@@ -73,7 +75,13 @@ public class FriendServiceImpl implements FriendService {
             throw new FriendException(FriendErrorStatus.ALREADY_FOLLOWING);
         }
 
-        // 4. Friend 생성 및 저장
+        // 4. 차단 관계 확인 (내가 차단했거나, 상대방이 나를 차단했으면 팔로우 불가)
+        if (blockRepository.existsByBlockerAndBlocked(loginUser, targetUser) ||
+                blockRepository.existsByBlockerAndBlocked(targetUser, loginUser)) {
+            throw new FriendException(FriendErrorStatus.BLOCK_ACTION_FORBIDDEN);
+        }
+
+        // 5. Friend 생성 및 저장
         Friend friend = FriendConverter.toFriend(loginUser, targetUser);
         friendRepository.save(friend);
 
