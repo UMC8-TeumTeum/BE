@@ -477,6 +477,7 @@ public class UserServiceImpl implements UserService {
         List<Integer> remindAlarms = remindAlarmRepository.findAllByUser(user)
                 .stream()
                 .map(RemindAlarm::getMinutesBefore)
+                .sorted()
                 .toList();
 
         return UserResponseDTO.RemindAlarmList.builder()
