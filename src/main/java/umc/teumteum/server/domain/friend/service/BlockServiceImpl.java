@@ -1,7 +1,7 @@
 package umc.teumteum.server.domain.friend.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException; // import 추가
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -80,17 +80,15 @@ public class BlockServiceImpl implements BlockService {
         blockRepository.delete(block);
     }
 
-    // ... import 문에 BlockConverter 확인 ...
-
     @Override
     public PagingResponseDto<BlockResponseDto.BlockedFriend> getBlockedUsers(User loginUser, int page, int size) {
-        // 1. 가나다순(닉네임 오름차순) 정렬 적용
+        // 가나다순(닉네임 오름차순) 정렬 적용
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("blocked.nickname").ascending());
 
-        // 2. DB 조회
+        // DB 조회
         Slice<Block> slice = blockRepository.findByBlockerId(loginUser.getId(), pageable);
 
-        // 3. Converter를 사용하여 DTO 변환
+        // Converter를 사용하여 DTO 변환
         List<BlockResponseDto.BlockedFriend> dtoList = slice.getContent().stream()
                 .map(block -> {
                     User blockedUser = block.getBlocked();
