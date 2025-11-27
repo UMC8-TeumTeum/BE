@@ -17,6 +17,7 @@ import java.util.Optional;
 
 public interface TeumResponseRepository extends JpaRepository<TeumResponse, Long> {
 
+    // 목록 조회
     @EntityGraph(attributePaths = {
             "teumRequest",
             "teumRequest.user",
@@ -28,6 +29,11 @@ public interface TeumResponseRepository extends JpaRepository<TeumResponse, Long
           AND r.status = :respStatus
           AND r.teumRequest.status = :reqStatus
           AND (r.teumRequest.date > :today OR (r.teumRequest.date = :today AND r.teumRequest.startTime > :now))
+          AND NOT EXISTS (
+              SELECT 1 FROM Block b 
+              WHERE (b.blocker.id = :userId AND b.blocked.id = r.teumRequest.user.id)
+                 OR (b.blocker.id = r.teumRequest.user.id AND b.blocked.id = :userId)
+          )
     """)
     Page<TeumResponse> findValidPendingResponses(
             @Param("userId") Long userId,
@@ -39,6 +45,7 @@ public interface TeumResponseRepository extends JpaRepository<TeumResponse, Long
     );
 
 
+    // 달력 날짜 조회 (유령 알림 방지용)
     @Query("""
         SELECT DISTINCT tr.date FROM TeumResponse r
         JOIN r.teumRequest tr
@@ -57,11 +64,9 @@ public interface TeumResponseRepository extends JpaRepository<TeumResponse, Long
         JOIN r.teumRequest tr
         WHERE tr.id = :requestId
           AND r.receiverUser.id = :receiverUserId
-""")
+    """)
     Optional<TeumResponse> findRequestAndReceiver(
             @Param("requestId") Long requestId,
             @Param("receiverUserId") Long receiverUserId
     );
-
-
 }
