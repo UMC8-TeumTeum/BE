@@ -389,7 +389,7 @@ public class TeumConverter {
                         .id(schedule.getId())
                         .title(schedule.getTitle())
                         .startTime(schedule.getStartTime().toLocalTime().format(TIME_FORMATTER))
-                        .endTime(schedule.getEndTime().toLocalTime().format(TIME_FORMATTER))
+                        .endTime(formatEndTime(schedule.getEndTime().toLocalTime()))
                         .build())
                 .toList();
 
