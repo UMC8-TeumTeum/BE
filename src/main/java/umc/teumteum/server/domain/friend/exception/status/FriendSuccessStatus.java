@@ -14,7 +14,12 @@ public enum FriendSuccessStatus implements BaseCode {
     _GET_FRIENDS_SUCCESS(HttpStatus.OK, "FRIEND2002", "친구 목록 조회에 성공하였습니다."),
     _FAVORITE_UPDATE_SUCCESS(HttpStatus.OK, "FRIEND2003", "즐겨찾기 설정/해제가 완료되었습니다."),
     _GET_FRIEND_TEUM_TIME_SUCCESS(HttpStatus.OK, "FRIEND2004", "친구 빈틈 시간 조회에 성공하였습니다."),
-    _GET_FRIEND_PUBLIC_TODO_SUCCESS(HttpStatus.OK, "FRIEND2005", "친구의 공개 투두 조회에 성공하였습니다.");
+    _GET_FRIEND_PUBLIC_TODO_SUCCESS(HttpStatus.OK, "FRIEND2005", "친구의 공개 투두 조회에 성공하였습니다."),
+    _BLOCK_SUCCESS(HttpStatus.OK, "FRIEND2006", "유저 차단에 성공하였습니다."),
+    _UNBLOCK_SUCCESS(HttpStatus.OK, "FRIEND2007", "유저 차단 해제에 성공하였습니다."),
+    _GET_BLOCKED_LIST_SUCCESS(HttpStatus.OK, "FRIEND2008", "차단한 유저 목록 조회에 성공하였습니다."),
+
+    ;
 
 
     private final HttpStatus httpStatus;
