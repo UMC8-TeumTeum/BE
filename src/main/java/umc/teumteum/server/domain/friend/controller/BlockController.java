@@ -4,10 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.friend.exception.status.FriendSuccessStatus;
 import umc.teumteum.server.domain.friend.service.BlockService;
 import umc.teumteum.server.domain.user.entity.User;
@@ -30,5 +27,15 @@ public class BlockController {
     ) {
         blockService.blockUser(loginUser, userId);
         return ApiResponse.of(FriendSuccessStatus._BLOCK_SUCCESS, null);
+    }
+
+    @Operation(summary = "유저 차단 해제하기", description = "특정 유저의 차단을 해제합니다.")
+    @DeleteMapping("/{userId}")
+    public ApiResponse<Object> unblockUser(
+            @CurrentUser @Parameter(hidden = true) User loginUser,
+            @Parameter(description = "차단 해제할 유저 ID", example = "1") @PathVariable("userId") Long userId
+    ) {
+        blockService.unblockUser(loginUser, userId);
+        return ApiResponse.of(FriendSuccessStatus._UNBLOCK_SUCCESS, null);
     }
 }

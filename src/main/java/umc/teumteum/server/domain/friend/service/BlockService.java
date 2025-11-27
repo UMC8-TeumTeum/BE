@@ -4,4 +4,6 @@ import umc.teumteum.server.domain.user.entity.User;
 
 public interface BlockService {
     void blockUser(User loginUser, Long targetUserId);
+
+    void unblockUser(User loginUser, Long targetUserId);
 }

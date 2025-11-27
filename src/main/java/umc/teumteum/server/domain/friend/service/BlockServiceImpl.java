@@ -47,4 +47,24 @@ public class BlockServiceImpl implements BlockService {
             throw new FriendException(FriendErrorStatus.ALREADY_BLOCKED);
         }
     }
+
+    @Override
+    @Transactional
+    public void unblockUser(User loginUser, Long targetUserId) {
+        // 자기 자신 해제 불가
+        if (loginUser.getId().equals(targetUserId)) {
+            throw new FriendException(FriendErrorStatus.INVALID_SELF_REQUEST);
+        }
+
+        // 대상 유저 존재 확인
+        User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new FriendException(FriendErrorStatus.USER_NOT_FOUND));
+
+        // 차단 관계 조회
+        Block block = blockRepository.findByBlockerAndBlocked(loginUser, targetUser)
+                .orElseThrow(() -> new FriendException(FriendErrorStatus.NOT_BLOCKED));
+
+        // 삭제
+        blockRepository.delete(block);
+    }
 }
