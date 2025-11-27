@@ -76,10 +76,7 @@ public class FriendServiceImpl implements FriendService {
         }
 
         // 4. 차단 관계 확인 (내가 차단했거나, 상대방이 나를 차단했으면 팔로우 불가)
-        if (blockRepository.existsByBlockerAndBlocked(loginUser, targetUser) ||
-                blockRepository.existsByBlockerAndBlocked(targetUser, loginUser)) {
-            throw new FriendException(FriendErrorStatus.BLOCK_ACTION_FORBIDDEN);
-        }
+        validateBlockRelationship(loginUser, targetUser);
 
         // 5. Friend 생성 및 저장
         Friend friend = FriendConverter.toFriend(loginUser, targetUser);
@@ -212,7 +209,13 @@ public class FriendServiceImpl implements FriendService {
     @Override
     public FriendResponseDto.FriendProfile getFriendProfile(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
+
+        // 차단 검증을 위해 loginUser도 조회
+        User loginUser = getUserOrThrow(loginUserId);
         User targetUser = getUserOrThrow(targetUserId);
+
+        // 차단 관계 검증
+        validateBlockRelationship(loginUser, targetUser);
 
         Optional<Friend> followRelationOpt =
                 friendRepository.findByFollowerIdAndFollowingId(loginUserId, targetUser.getId());
@@ -224,7 +227,12 @@ public class FriendServiceImpl implements FriendService {
     @Override
     public FriendResponseDto.FriendTeumTime getFriendTeumTime(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
-        validateUserExists(targetUserId);
+
+        User loginUser = getUserOrThrow(loginUserId);
+        User targetUser = getUserOrThrow(targetUserId);
+
+        // 차단 관계 검증
+        validateBlockRelationship(loginUser, targetUser);
 
         List<ScheduleType> targetTypes = List.of(
                 ScheduleType.AI,
@@ -254,7 +262,12 @@ public class FriendServiceImpl implements FriendService {
     @Transactional(readOnly = true)
     public List<FriendResponseDto.FriendPublicTodo> getRecentPublicTodos(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
-        validateUserExists(targetUserId);
+
+        User loginUser = getUserOrThrow(loginUserId);
+        User targetUser = getUserOrThrow(targetUserId);
+
+        // 차단 관계 검증
+        validateBlockRelationship(loginUser, targetUser);
 
         List<Schedule> rawSchedules = scheduleRepository.findAllPublicByUserId(targetUserId);
 
@@ -278,7 +291,12 @@ public class FriendServiceImpl implements FriendService {
     public List<FriendResponseDto.FriendPublicTodo> getDailyPublicTodos(Long loginUserId, Long targetUserId,
                                                                         String date) {
         validateNotSelf(loginUserId, targetUserId);
-        validateUserExists(targetUserId);
+
+        User loginUser = getUserOrThrow(loginUserId);
+        User targetUser = getUserOrThrow(targetUserId);
+
+        // 차단 관계 검증
+        validateBlockRelationship(loginUser, targetUser);
 
         LocalDate localDate = LocalDate.parse(date);
 
@@ -302,7 +320,12 @@ public class FriendServiceImpl implements FriendService {
     @Override
     public List<String> getTodoDatesOfMonth(Long loginUserId, Long targetUserId, String month) {
         validateNotSelf(loginUserId, targetUserId);
-        validateUserExists(targetUserId);
+
+        User loginUser = getUserOrThrow(loginUserId);
+        User targetUser = getUserOrThrow(targetUserId);
+
+        // 차단 관계 검증
+        validateBlockRelationship(loginUser, targetUser);
 
         YearMonth ym = YearMonth.parse(month);
         LocalDate start = ym.atDay(1);
@@ -345,6 +368,14 @@ public class FriendServiceImpl implements FriendService {
     private void validateNotSelf(Long loginUserId, Long targetUserId) {
         if (loginUserId.equals(targetUserId)) {
             throw new FriendException(FriendErrorStatus.INVALID_SELF_REQUEST);
+        }
+    }
+
+    // 치딘 관계 검증
+    private void validateBlockRelationship(User user1, User user2) {
+        if (blockRepository.existsByBlockerAndBlocked(user1, user2) ||
+                blockRepository.existsByBlockerAndBlocked(user2, user1)) {
+            throw new FriendException(FriendErrorStatus.BLOCK_ACTION_FORBIDDEN);
         }
     }
 }
