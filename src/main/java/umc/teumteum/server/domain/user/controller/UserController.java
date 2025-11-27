@@ -188,7 +188,7 @@ public class UserController {
 
     @Operation(
             summary = "마이페이지 리마인드 알림 조회",
-            description = "마이페이지에서 리마인드 알림 상태를 조회헙니다. 등록된 정보가 없을 경우 빈배열로 반환합니다."
+            description = "마이페이지에서 리마인드 알림 상태를 조회합니다. 등록된 정보가 없을 경우 빈배열로 반환합니다."
     )
     @GetMapping(value = "/mypage/reminders", produces = "application/json")
     public ApiResponse<UserResponseDTO.RemindAlarmList> getReminders(
@@ -196,5 +196,18 @@ public class UserController {
     ){
         UserResponseDTO.RemindAlarmList response = userService.getReminders(user);
         return ApiResponse.of(UserSuccessStatus._REMIND_ALARM_LOADED, response);
+    }
+
+    @Operation(
+            summary = "마페이지 리마인드 알림 수정",
+            description = "마이페이지에서 리마인드 알림을 수정합니다. 등록하려는 정보가 없을 경우 빈배열로 호출합니다."
+    )
+    @PatchMapping(value = "/mypage/reminders", produces = "application/json")
+    public ApiResponse<Object> updateReminders(
+            @RequestBody @Valid OnboardingRequestDto.RemindAlarmList request,
+            @CurrentUser @Parameter(hidden = true) User user
+    ){
+        userService.updateReminders(request, user);
+        return ApiResponse.of(UserSuccessStatus._REMIND_ALARM_UPDATED, null);
     }
 }

@@ -45,4 +45,6 @@ public interface UserService {
     void updateSleepPattern(OnboardingRequestDto.SleepPatternRequest request, User user);
 
     UserResponseDTO.RemindAlarmList getReminders(User user);
+
+    void updateReminders(OnboardingRequestDto.RemindAlarmList request, User user);
 }
