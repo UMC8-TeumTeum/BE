@@ -221,10 +221,11 @@ public class TeumServiceImpl implements TeumService {
         TeumResponse response = getResponseOrThrow(responseId);
         validateReceiver(response, userId);
 
-        // 차단 관계 검증 (응답자 <-> 요청자)
-        User requester = response.getTeumRequest().getUser(); // 요청 보낸 사람
-        User receiver = response.getReceiverUser();           // 나 (응답하는 사람)
+        TeumRequest request = response.getTeumRequest();
+        User requester = request.getUser();      // 요청 보낸 사람
+        User receiver = response.getReceiverUser(); // 나 (응답하는 사람)
 
+        // 차단 관계 검증 (응답자 <-> 요청자)
         validateBlockRelationship(receiver, requester);
 
         // 이미 처리된 응답인 경우 예외
@@ -246,12 +247,7 @@ public class TeumServiceImpl implements TeumService {
         boolean isAccepted = newStatus == ResponseStatus.ACCEPTED;
         Long teumId = null;
 
-        TeumRequest request = response.getTeumRequest();
-        User receiver = response.getReceiverUser();
-        User requester = request.getUser();
-
         if (isAccepted) {
-
             // 스케줄 생성: 수신자(응답자)
             Schedule receiverSchedule = teumConverter.toScheduleFromTeumRequest(request, receiver);
             scheduleRepository.save(receiverSchedule);
