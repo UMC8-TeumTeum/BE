@@ -609,24 +609,21 @@ public class TeumServiceImpl implements TeumService {
     @Override
     @Transactional(readOnly = true)
     public TeumResponseDto.ConflictingRequestResponse checkConflictingRequests(Long userId, TeumRequestDto.ConflictCheckRequest request) {
-        // 사용자 검증
         validateUserExists(userId);
 
-        // 시간 순서 검증 (Start < End)
-        if (!request.getStartTime().isBefore(request.getEndTime())) {
-            throw new GeneralException(TeumErrorStatus.INVALID_TEUM_TIME);
-        }
+        // 시간 순서 검증
+        validateTimeOrder(request.getStartTime(), request.getEndTime());
 
-        // 겹치는 요청 조회 (ACTIVE 상태인 요청만)
+        // 겹치는 요청 조회
         List<TeumRequest> conflicts = teumRequestRepository.findConflictingRequests(
                 userId,
                 request.getDate(),
                 request.getStartTime(),
-                request.getEndTime(),
-                RequestStatus.ACTIVE
+                request.getEndTime(), // 00:00 그대로 전달
+                RequestStatus.ACTIVE,
+                LocalTime.MIDNIGHT
         );
 
-        // 변환 및 반환
         return teumConverter.toConflictingRequestResponse(conflicts);
     }
 
@@ -759,6 +756,14 @@ public class TeumServiceImpl implements TeumService {
         LocalTime end = endTime.equals("00:00") ? LocalTime.MAX : LocalTime.parse(endTime);
 
         if (!start.isBefore(end)) {
+            throw new GeneralException(TeumErrorStatus.INVALID_TEUM_TIME);
+        }
+    }
+
+    private void validateTimeOrder(LocalTime startTime, LocalTime endTime) {
+        LocalTime effectiveEnd = endTime.equals(LocalTime.MIDNIGHT) ? LocalTime.MAX : endTime;
+
+        if (!startTime.isBefore(effectiveEnd)) {
             throw new GeneralException(TeumErrorStatus.INVALID_TEUM_TIME);
         }
     }

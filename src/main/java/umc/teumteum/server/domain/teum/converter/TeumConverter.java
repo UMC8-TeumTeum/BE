@@ -404,11 +404,12 @@ public class TeumConverter {
         List<TeumResponseDto.ConflictingRequest> conflictDtos = requests.stream()
                 .map(req -> TeumResponseDto.ConflictingRequest.builder()
                         .id(req.getId())
-                        .receiverNickname(req.getTeumResponses().getFirst().getReceiverUser().getNickname())
+                        .receiverNickname(req.getTeumResponses().get(0).getReceiverUser().getNickname())
                         .title(req.getTitle())
                         .description(req.getDescription())
                         .startTime(req.getStartTime().format(TIME_FORMATTER))
-                        .endTime(req.getEndTime().format(TIME_FORMATTER))
+                        // [수정] 종료 시간 포맷팅 시 별도 메서드 사용
+                        .endTime(formatEndTime(req.getEndTime()))
                         .build())
                 .toList();
 
@@ -416,6 +417,15 @@ public class TeumConverter {
                 .hasConflict(!conflictDtos.isEmpty())
                 .conflictingRequests(conflictDtos)
                 .build();
+    }
+
+    // 종료 시간 포맷팅 헬퍼 메서드
+    // 00:00 -> 24:00
+    private String formatEndTime(LocalTime time) {
+        if (time.equals(LocalTime.MIDNIGHT)) {
+            return "24:00";
+        }
+        return time.format(TIME_FORMATTER);
     }
 
 }

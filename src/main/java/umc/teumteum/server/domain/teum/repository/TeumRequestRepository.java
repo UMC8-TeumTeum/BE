@@ -61,16 +61,20 @@ public interface TeumRequestRepository extends JpaRepository<TeumRequest, Long> 
         JOIN FETCH tr.teumResponses tr_res
         JOIN FETCH tr_res.receiverUser
         WHERE tr.user.id = :userId
-          AND tr.status = :status  
+          AND tr.status = :status
           AND tr.date = :date
-          AND (tr.startTime < :checkEnd AND tr.endTime > :checkStart)
+          AND (
+              (tr.startTime < :checkEnd OR :checkEnd = :midnight)
+              AND (tr.endTime > :checkStart OR tr.endTime = :midnight)
+          )
     """)
     List<TeumRequest> findConflictingRequests(
             @Param("userId") Long userId,
             @Param("date") LocalDate date,
             @Param("checkStart") LocalTime checkStart,
             @Param("checkEnd") LocalTime checkEnd,
-            @Param("status") RequestStatus status
+            @Param("status") RequestStatus status,
+            @Param("midnight") LocalTime midnight
     );
 
 }
