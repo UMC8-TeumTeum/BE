@@ -15,8 +15,7 @@ public enum FriendErrorStatus implements BaseErrorCode {
     INVALID_SELF_REQUEST(HttpStatus.BAD_REQUEST, "FRIEND4002", "자기 자신에 대한 요청은 처리할 수 없습니다."),
     NOT_FOLLOWING(HttpStatus.BAD_REQUEST, "FRIEND4003", "팔로우하지 않은 유저입니다."),
     FAVORITE_ALREADY_SET(HttpStatus.BAD_REQUEST, "FRIEND4004", "즐겨찾기가 이미 요청한 상태로 설정되어 있습니다"),
-
-
+    ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "FRIEND4005", "이미 차단된 사용자입니다."),
 
     ;
 
