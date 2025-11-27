@@ -43,4 +43,6 @@ public interface UserService {
     void updateRoutine(Long routineId, OnboardingRequestDto.RoutineDTO request, User user);
 
     void updateSleepPattern(OnboardingRequestDto.SleepPatternRequest request, User user);
+
+    UserResponseDTO.RemindAlarmList getReminders(User user);
 }

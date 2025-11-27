@@ -21,6 +21,7 @@ public enum UserSuccessStatus implements BaseCode {
     _ROUTINE_ADDED(HttpStatus.OK,"USER2009","반복일정 등록이 완료되었습니다."),
     _ROUTINE_UPDATED(HttpStatus.OK,"USER20010","반복일정 수정이 완료되었습니다."),
     _SLEEP_PATTERN_UPDATED(HttpStatus.OK,"USER20011","수면 패턴 수정이 완료되었습니다."),
+    _REMIND_ALARM_LOADED(HttpStatus.OK,"USER20012","리마인드 알림 설정 조회가 완료되었습니다."),
 
 
 

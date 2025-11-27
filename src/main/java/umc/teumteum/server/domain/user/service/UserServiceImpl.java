@@ -61,6 +61,7 @@ public class UserServiceImpl implements UserService {
 
     @Resource(name = "profileImageRedisTemplate")
     private RedisTemplate<String, String> profileImageRedisTemplate;
+
     private final RoutineRepository routineRepository;
     private final TimeUtil timeUtil;
     private final ScheduleRepository scheduleRepository;
@@ -468,5 +469,18 @@ public class UserServiceImpl implements UserService {
 
         // 2. 수면패턴 업데이트ㅌ
         user.updateSleepPattern(request.getSleepTime(), request.getWakeTime());
+    }
+
+    // 마이페이지 - 리마인드 알림 설정 조회
+    @Override
+    public UserResponseDTO.RemindAlarmList getReminders(User user) {
+        List<Integer> remindAlarms = remindAlarmRepository.findAllByUser(user)
+                .stream()
+                .map(RemindAlarm::getMinutesBefore)
+                .toList();
+
+        return UserResponseDTO.RemindAlarmList.builder()
+                .remindAlarms(remindAlarms)
+                .build();
     }
 }
