@@ -31,10 +31,7 @@ import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.domain.user.exception.OnboardingException;
 import umc.teumteum.server.domain.user.exception.UserException;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
-import umc.teumteum.server.domain.user.repository.NotificationSettingRepository;
-import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
-import umc.teumteum.server.domain.user.repository.RoutineRepository;
-import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.domain.user.repository.*;
 import umc.teumteum.server.global.dto.TimeRange;
 import umc.teumteum.server.global.jwt.JwtProvider;
 import umc.teumteum.server.global.util.S3Util;
@@ -61,11 +58,15 @@ public class UserServiceImpl implements UserService {
 
     @Resource(name = "profileImageRedisTemplate")
     private RedisTemplate<String, String> profileImageRedisTemplate;
+
     private final RoutineRepository routineRepository;
     private final TimeUtil timeUtil;
     private final ScheduleRepository scheduleRepository;
     private final RemindAlarmRepository remindAlarmRepository;
     private final ScheduleReminderRepository scheduleReminderRepository;
+    private final RemindAlarmJdbcRepository remindAlarmJdbcRepository;
+
+    private static final Set<Integer> ALLOWED_REMIND_ALARM_VALUES = Set.of(1, 3, 5, 10, 30);
 
     @Override
     public List<UserSearchResponseDto> searchUsersByKeyword(String keyword, Long userId) {
@@ -466,7 +467,63 @@ public class UserServiceImpl implements UserService {
         // 1. 수면패턴 검증 (최대 23시간)
         OnboardingServiceImpl.validateSleepPattern(request.getSleepTime(), request.getWakeTime());
 
-        // 2. 수면패턴 업데이트ㅌ
+        // 2. 수면패턴 업데이트
         user.updateSleepPattern(request.getSleepTime(), request.getWakeTime());
+    }
+
+    // 마이페이지 - 리마인드 알림 설정 조회
+    @Override
+    public UserResponseDTO.RemindAlarmList getReminders(User user) {
+        List<Integer> remindAlarms = remindAlarmRepository.findAllByUser(user)
+                .stream()
+                .map(RemindAlarm::getMinutesBefore)
+                .sorted()
+                .toList();
+
+        return UserResponseDTO.RemindAlarmList.builder()
+                .remindAlarms(remindAlarms)
+                .build();
+    }
+
+    // 마이페이지 - 리마인드 알림 수정
+    @Transactional
+    @Override
+    public void updateReminders(OnboardingRequestDto.RemindAlarmList request, User user) {
+        // 1. 기존 등록된 RemindAlarm 조회
+        List<RemindAlarm> remindAlarms = remindAlarmRepository.findAllByUser(user);
+
+        // 2. 유효성 검증 :알림 설정 범위 확인 (1, 3, 5, 10, 30)
+        if (!ALLOWED_REMIND_ALARM_VALUES.containsAll(request.getRemindAlarms())) {
+            throw new OnboardingException(UserErrorStatus.INVALID_REMIND_ALARM_VALUE);
+        }
+
+        // 3. 요청 값과 비교해 추가 & 삭제할 값 고르기
+        // 기존 값들 (minutesBefore만 추출)
+        Set<Integer> currentSet = remindAlarms.stream()
+                .map(RemindAlarm::getMinutesBefore)
+                .collect(Collectors.toSet());
+
+        // 요청 값들
+        Set<Integer> requestSet = new HashSet<>(request.getRemindAlarms());
+
+        // diff 계산
+        Set<Integer> toAdd = requestSet.stream()
+                .filter(v-> !currentSet.contains(v))
+                .collect(Collectors.toSet());
+
+        Set<Integer> toRemove = currentSet.stream()
+                .filter(v-> !requestSet.contains(v))
+                .collect(Collectors.toSet());
+
+        // 4. 리마인드 알림 삭제 처리
+        if (!toRemove.isEmpty()) {
+            remindAlarmRepository.deleteByUserAndMinutesBeforeIn(user, toRemove);
+        }
+
+        // 5. 리마인드 알림 추가 처리
+        if (!toAdd.isEmpty()) {
+            List<RemindAlarm> alarmsToAdd = OnboardingConverter.toRemindAlarmList(new ArrayList<>(toAdd), user);
+            remindAlarmJdbcRepository.batchInsertRemindAlarms(alarmsToAdd);
+        }
     }
 }

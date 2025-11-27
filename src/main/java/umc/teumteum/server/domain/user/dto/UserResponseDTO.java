@@ -2,8 +2,6 @@ package umc.teumteum.server.domain.user.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -54,5 +52,14 @@ public class UserResponseDTO {
     @JsonFormat(pattern = "HH:mm")
     @Schema(description = "종료 시간 (HH:mm 형식)", example = "00:00")
     private LocalTime endTime;
+  }
+
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  public static class RemindAlarmList {
+
+    @Schema(description = "리마인드 알림 설정 (1, 3, 5, 10, 30, 빈 배열)", example = "[1, 5, 30]")
+    private List<Integer> remindAlarms;
   }
 }
