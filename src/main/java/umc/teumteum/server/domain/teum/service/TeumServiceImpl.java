@@ -5,6 +5,8 @@ import org.springframework.boot.autoconfigure.http.client.reactive.AbstractClien
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
+import umc.teumteum.server.domain.friend.repository.BlockRepository;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.RoutineStatus;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
@@ -45,10 +47,13 @@ public class TeumServiceImpl implements TeumService {
 
     private final S3Util s3Util;
     private final ConflictValidator conflictValidator;
+
     private final UserRepository userRepository;
     private final TeumRequestRepository teumRequestRepository;
     private final TeumResponseRepository teumResponseRepository;
     private final ScheduleRepository scheduleRepository;
+    private final BlockRepository blockRepository;
+
     private final TeumConverter teumConverter;
     private final TimeUtil timeUtil;
     private final NotificationUseCases notificationUseCases;
@@ -74,6 +79,9 @@ public class TeumServiceImpl implements TeumService {
 
         // 수신자 조회 (단일 사용자)
         User receiver = getUserOrThrow(dto.getReceiverUserId());
+
+        // 차단 관계 검증 (요청자 <-> 수신자)
+        validateBlockRelationship(user, receiver);
 
         // 요청자와 수신자 둘 다 시간 충돌 여부 검증
         conflictValidator.validateTeumForUsers(
@@ -126,6 +134,9 @@ public class TeumServiceImpl implements TeumService {
         validateStartTimeNotPast(date, startTime);
 
         User originalSender = parent.getUser();  // 부모 요청의 작성자 → 이번 재요청의 수신자
+
+        // 차단 관계 검증 (재요청자 <-> 기존 요청자)
+        validateBlockRelationship(user, originalSender);
 
         List<User> participants = List.of(user, originalSender);
         conflictValidator.validateTeumForUsers(participants, date, startTime, endTime);
@@ -193,6 +204,12 @@ public class TeumServiceImpl implements TeumService {
         TeumResponse response = getResponseOrThrow(responseId);
         validateReceiver(response, userId);
 
+        // 차단 관계 검증 (읽으려는 사람 <-> 보낸 사람)
+        User reader = response.getReceiverUser();
+        User sender = response.getTeumRequest().getUser();
+
+        validateBlockRelationship(reader, sender);
+
         response.markAsRead();
         return responseId;
     }
@@ -203,6 +220,12 @@ public class TeumServiceImpl implements TeumService {
         // 응답 조회 및 권한 검증
         TeumResponse response = getResponseOrThrow(responseId);
         validateReceiver(response, userId);
+
+        // 차단 관계 검증 (응답자 <-> 요청자)
+        User requester = response.getTeumRequest().getUser(); // 요청 보낸 사람
+        User receiver = response.getReceiverUser();           // 나 (응답하는 사람)
+
+        validateBlockRelationship(receiver, requester);
 
         // 이미 처리된 응답인 경우 예외
         if (response.getStatus() != ResponseStatus.PENDING) {
@@ -780,5 +803,12 @@ public class TeumServiceImpl implements TeumService {
         }
     }
 
+    // 차단 관계 확인
+    private void validateBlockRelationship(User user1, User user2) {
+        if (blockRepository.existsByBlockerAndBlocked(user1, user2) ||
+                blockRepository.existsByBlockerAndBlocked(user2, user1)) {
+            throw new GeneralException(FriendErrorStatus.BLOCK_ACTION_FORBIDDEN);
+        }
+    }
 
 }
