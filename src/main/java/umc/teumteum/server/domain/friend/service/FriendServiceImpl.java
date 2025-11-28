@@ -318,6 +318,7 @@ public class FriendServiceImpl implements FriendService {
 
 
     @Override
+    @Transactional(readOnly = true)
     public List<String> getTodoDatesOfMonth(Long loginUserId, Long targetUserId, String month) {
         validateNotSelf(loginUserId, targetUserId);
 
