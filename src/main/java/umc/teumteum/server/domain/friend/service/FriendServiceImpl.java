@@ -22,6 +22,7 @@ import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.friend.exception.FriendException;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
+import umc.teumteum.server.domain.friend.repository.BlockRepository;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
@@ -40,6 +41,7 @@ public class FriendServiceImpl implements FriendService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
     private final ScheduleRepository scheduleRepository;
+    private final BlockRepository blockRepository;
 
     private final FriendConverter friendConverter;
     private final NotificationUseCases notificationUseCases;
@@ -73,7 +75,10 @@ public class FriendServiceImpl implements FriendService {
             throw new FriendException(FriendErrorStatus.ALREADY_FOLLOWING);
         }
 
-        // 4. Friend 생성 및 저장
+        // 4. 차단 관계 확인 (내가 차단했거나, 상대방이 나를 차단했으면 팔로우 불가)
+        validateBlockRelationship(loginUser, targetUser);
+
+        // 5. Friend 생성 및 저장
         Friend friend = FriendConverter.toFriend(loginUser, targetUser);
         friendRepository.save(friend);
 
@@ -204,7 +209,13 @@ public class FriendServiceImpl implements FriendService {
     @Override
     public FriendResponseDto.FriendProfile getFriendProfile(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
+
+        // 차단 검증을 위해 loginUser도 조회
+        User loginUser = getUserOrThrow(loginUserId);
         User targetUser = getUserOrThrow(targetUserId);
+
+        // 차단 관계 검증
+        validateBlockRelationship(loginUser, targetUser);
 
         Optional<Friend> followRelationOpt =
                 friendRepository.findByFollowerIdAndFollowingId(loginUserId, targetUser.getId());
@@ -216,7 +227,12 @@ public class FriendServiceImpl implements FriendService {
     @Override
     public FriendResponseDto.FriendTeumTime getFriendTeumTime(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
-        validateUserExists(targetUserId);
+
+        User loginUser = getUserOrThrow(loginUserId);
+        User targetUser = getUserOrThrow(targetUserId);
+
+        // 차단 관계 검증
+        validateBlockRelationship(loginUser, targetUser);
 
         List<ScheduleType> targetTypes = List.of(
                 ScheduleType.AI,
@@ -246,7 +262,12 @@ public class FriendServiceImpl implements FriendService {
     @Transactional(readOnly = true)
     public List<FriendResponseDto.FriendPublicTodo> getRecentPublicTodos(Long loginUserId, Long targetUserId) {
         validateNotSelf(loginUserId, targetUserId);
-        validateUserExists(targetUserId);
+
+        User loginUser = getUserOrThrow(loginUserId);
+        User targetUser = getUserOrThrow(targetUserId);
+
+        // 차단 관계 검증
+        validateBlockRelationship(loginUser, targetUser);
 
         List<Schedule> rawSchedules = scheduleRepository.findAllPublicByUserId(targetUserId);
 
@@ -270,7 +291,12 @@ public class FriendServiceImpl implements FriendService {
     public List<FriendResponseDto.FriendPublicTodo> getDailyPublicTodos(Long loginUserId, Long targetUserId,
                                                                         String date) {
         validateNotSelf(loginUserId, targetUserId);
-        validateUserExists(targetUserId);
+
+        User loginUser = getUserOrThrow(loginUserId);
+        User targetUser = getUserOrThrow(targetUserId);
+
+        // 차단 관계 검증
+        validateBlockRelationship(loginUser, targetUser);
 
         LocalDate localDate = LocalDate.parse(date);
 
@@ -292,9 +318,15 @@ public class FriendServiceImpl implements FriendService {
 
 
     @Override
+    @Transactional(readOnly = true)
     public List<String> getTodoDatesOfMonth(Long loginUserId, Long targetUserId, String month) {
         validateNotSelf(loginUserId, targetUserId);
-        validateUserExists(targetUserId);
+
+        User loginUser = getUserOrThrow(loginUserId);
+        User targetUser = getUserOrThrow(targetUserId);
+
+        // 차단 관계 검증
+        validateBlockRelationship(loginUser, targetUser);
 
         YearMonth ym = YearMonth.parse(month);
         LocalDate start = ym.atDay(1);
@@ -337,6 +369,14 @@ public class FriendServiceImpl implements FriendService {
     private void validateNotSelf(Long loginUserId, Long targetUserId) {
         if (loginUserId.equals(targetUserId)) {
             throw new FriendException(FriendErrorStatus.INVALID_SELF_REQUEST);
+        }
+    }
+
+    // 차단 관계 검증
+    private void validateBlockRelationship(User user1, User user2) {
+        if (blockRepository.existsByBlockerAndBlocked(user1, user2) ||
+                blockRepository.existsByBlockerAndBlocked(user2, user1)) {
+            throw new FriendException(FriendErrorStatus.BLOCK_ACTION_FORBIDDEN);
         }
     }
 }

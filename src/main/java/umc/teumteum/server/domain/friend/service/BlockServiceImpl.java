@@ -14,6 +14,7 @@ import umc.teumteum.server.domain.friend.entity.Block;
 import umc.teumteum.server.domain.friend.exception.FriendException;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
 import umc.teumteum.server.domain.friend.repository.BlockRepository;
+import umc.teumteum.server.domain.friend.repository.FriendRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
@@ -30,6 +31,7 @@ public class BlockServiceImpl implements BlockService {
 
     private final UserRepository userRepository;
     private final BlockRepository blockRepository;
+    private final FriendRepository friendRepository;
     private final S3Util s3Util;
 
     @Override
@@ -58,6 +60,9 @@ public class BlockServiceImpl implements BlockService {
             // 동시성 문제로 인해 중복 저장이 시도되었을 경우
             throw new FriendException(FriendErrorStatus.ALREADY_BLOCKED);
         }
+
+        // 기존 팔로우 관계 삭제 (맞팔/단방향 모두 끊기)
+        friendRepository.deleteFriendshipsBetween(loginUser, targetUser);
     }
 
     @Override
