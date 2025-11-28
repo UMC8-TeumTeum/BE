@@ -371,7 +371,7 @@ public class FriendServiceImpl implements FriendService {
         }
     }
 
-    // 치딘 관계 검증
+    // 차단 관계 검증
     private void validateBlockRelationship(User user1, User user2) {
         if (blockRepository.existsByBlockerAndBlocked(user1, user2) ||
                 blockRepository.existsByBlockerAndBlocked(user2, user1)) {
