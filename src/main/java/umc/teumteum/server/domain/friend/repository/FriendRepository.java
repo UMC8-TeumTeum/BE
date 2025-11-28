@@ -31,7 +31,7 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
     Slice<Friend> findMutualFriendsExcluding(User user, User excludeUser, Pageable pageable);
 
     // 차단 시 두 유저 간의 모든 팔로우 관계(A->B, B->A)를 삭제
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Friend f " +
             "WHERE (f.follower = :user1 AND f.following = :user2) " +
             "OR (f.follower = :user2 AND f.following = :user1)")
