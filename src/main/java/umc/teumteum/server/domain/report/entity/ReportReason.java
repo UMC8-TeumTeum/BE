@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.report.entity.enums.ReportReasonType;
 import umc.teumteum.server.global.common.BaseEntity;
 
 @Entity
@@ -25,4 +26,11 @@ public class ReportReason extends BaseEntity {
     @Column(name = "content", nullable = false, length = 255)
     private String content;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reason_type", nullable = false)
+    private ReportReasonType type;
+
+    public boolean isOther() {
+        return this.type == ReportReasonType.OTHER;
+    }
 }
