@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,14 +17,14 @@ import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
-@Tag(name = "Report", description = "사용자 차단 관련 API")
+@Tag(name = "Report", description = "사용자 신고 관련 API")
 @Validated
 @RestController
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
 public class ReportController {
 
-    private final ReportService reportService; // 인터페이스 사용
+    private final ReportService reportService;
 
     @PostMapping
     @Operation(summary = "신고하기 API", description = "사용자(USER) 또는 틈 요청(TEUM_REQUEST)을 신고합니다. 기타 사유 선택 시 내용을 함께 보내야 합니다.")
