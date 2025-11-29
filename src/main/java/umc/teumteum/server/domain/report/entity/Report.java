@@ -58,6 +58,7 @@ public class Report extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private ReportStatus status = ReportStatus.OPEN;
 
 }
