@@ -14,6 +14,8 @@ public enum ReportErrorStatus implements BaseErrorCode {
     REPORT_TARGET_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT4002", "신고 대상이 존재하지 않습니다."),
     REPORT_SELF_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "REPORT4003", "자기 자신은 신고할 수 없습니다."),
     REPORT_OTHER_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "REPORT4004", "기타 사유 선택 시, 구체적인 내용을 입력해야 합니다."),
+    REPORT_INVALID_TARGET_TYPE(HttpStatus.BAD_REQUEST, "REPORT4005", "지원하지 않는 신고 대상입니다."),
+
     ;
 
     private final HttpStatus httpStatus;

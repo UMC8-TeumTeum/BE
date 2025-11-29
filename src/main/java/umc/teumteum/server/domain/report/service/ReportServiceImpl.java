@@ -59,6 +59,8 @@ public class ReportServiceImpl implements ReportService {
         } else if (request.getTargetType() == TargetType.TEUM_REQUEST) {
             targetTeum = teumRequestRepository.findById(request.getTargetId())
                     .orElseThrow(() -> new ReportException(ReportErrorStatus.REPORT_TARGET_NOT_FOUND));
+        } else {
+            throw new ReportException(ReportErrorStatus.REPORT_INVALID_TARGET_TYPE);
         }
 
         // Report 생성
