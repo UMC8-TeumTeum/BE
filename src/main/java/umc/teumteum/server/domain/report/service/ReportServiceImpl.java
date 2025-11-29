@@ -27,9 +27,6 @@ public class ReportServiceImpl implements ReportService {
     private final UserRepository userRepository;
     private final TeumRequestRepository teumRequestRepository;
 
-    // 신고 사유 중 기타 (id 7번)
-    private static final Long OTHER_REASON_ID = 7L;
-
     @Override
     public void createReport(User reporter, ReportRequestDto.CreateReport request) {
 
@@ -38,7 +35,7 @@ public class ReportServiceImpl implements ReportService {
                 .orElseThrow(() -> new ReportException(ReportErrorStatus.REPORT_REASON_NOT_FOUND));
 
         // 기타 사유에 내용이 없는 경우
-        if (reason.getId().equals(OTHER_REASON_ID)) {
+        if (reason.isOther()) {
             if (request.getOtherReason() == null || request.getOtherReason().isBlank()) {
                 throw new ReportException(ReportErrorStatus.REPORT_OTHER_REASON_REQUIRED);
             }

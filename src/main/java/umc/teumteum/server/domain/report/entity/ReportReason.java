@@ -25,4 +25,7 @@ public class ReportReason extends BaseEntity {
     @Column(name = "content", nullable = false, length = 255)
     private String content;
 
+    public boolean isOther() {
+        return this.id == 7L;
+    }
 }
