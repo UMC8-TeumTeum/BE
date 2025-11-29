@@ -18,8 +18,9 @@ public class ReportConverter {
                 .teumRequest(targetTeum);
 
         // 기타 사유 처리
-        if (request.getOtherReason() != null && !request.getOtherReason().isBlank()) {
-            reportBuilder.otherReason(request.getOtherReason());
+        if (reason.isOther() && request.getOtherReason() != null) {
+            // trim으로 앞뒤 공백 제거
+            reportBuilder.otherReason(request.getOtherReason().trim());
         }
 
         return reportBuilder.build();
