@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-jammy
+FROM amazoncorretto:21
 
 RUN addgroup --system app && adduser --system --ingroup app app
 
