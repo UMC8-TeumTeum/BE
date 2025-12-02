@@ -6,14 +6,13 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.util.Date;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import umc.teumteum.server.global.exception.InvalidTokenTypeException;
-
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.util.Date;
 
 @Component
 public class JwtProvider {
@@ -44,22 +43,23 @@ public class JwtProvider {
     }
 
     // 액세스 토큰 생성
-    public String generateAccessToken(Long userId, String sessionId) {
-        return generateToken(userId, sessionId, accessExpirationMs, "ACCESS");
+    public String generateAccessToken(String userId, String sessionId, String role) {
+        return generateToken(userId, sessionId, role, "ACCESS", accessExpirationMs);
     }
 
     // 리프레시 토큰 생성
-    public String generateRefreshToken(Long userId, String sessionId) {
-        return generateToken(userId, sessionId, refreshExpirationMs, "REFRESH");
+    public String generateRefreshToken(String userId, String sessionId, String role) {
+        return generateToken(userId, sessionId, role, "REFRESH", refreshExpirationMs);
     }
 
     // 토큰 생성 (타입 구분)
-    private String generateToken(Long userId, String sessionId, long expiration, String tokenType) {
+    private String generateToken(String userId, String sessionId, String role, String tokenType, long expiration) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
         return Jwts.builder()
-                .setSubject(userId.toString())
+                .setSubject(userId)
                 .claim("sessionId", sessionId)
+                .claim("role", role)
                 .claim("type", tokenType)   // ACCESS or REFRESH
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
@@ -116,6 +116,18 @@ public class JwtProvider {
                 ;
 
         return claims.get("sessionId", String.class);
+    }
+
+    // 토큰에서 사용자 role 추출
+    public String getUserRoleFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                ;
+
+        return claims.get("role", String.class);
     }
 
     // 토큰 남은 유효시간 계산

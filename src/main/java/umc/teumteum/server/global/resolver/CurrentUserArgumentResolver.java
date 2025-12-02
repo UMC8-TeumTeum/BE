@@ -34,12 +34,12 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         // 2. 인증 정보가 없거나 principal이 userdetails.User 타입이 아니면 예외
-        if (authentication == null || !(authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User user)) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof String)) {
             throw new GlobalHandler(ErrorStatus._UNAUTHORIZED);
         }
 
         // 3. userId로 DB에서 조회해서 반환
-        Long userId = Long.parseLong(user.getUsername());
+        Long userId = Long.parseLong((String) authentication.getPrincipal());
 
         return userService.findUser(userId)
                 .orElseThrow(() -> new GlobalHandler(ErrorStatus.USER_NOT_FOUND));
