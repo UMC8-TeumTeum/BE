@@ -6,6 +6,8 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SecurityException;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Duration;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,13 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.auth.converter.AuthConverter;
 import umc.teumteum.server.domain.auth.dto.AuthRequestDto;
 import umc.teumteum.server.domain.auth.dto.AuthResponseDto;
+import umc.teumteum.server.domain.auth.dto.AuthTokens;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.auth.exception.AuthException;
 import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
-import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.service.UserService;
@@ -29,9 +31,6 @@ import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.exception.InvalidTokenTypeException;
 import umc.teumteum.server.global.jwt.JwtProvider;
 import umc.teumteum.server.global.util.S3Util;
-
-import java.time.Duration;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -62,137 +61,67 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponseDto.LoginResponse socialLogin(String socialType, AuthRequestDto.SocialLoginRequest request) {
         // 1. 소셜 로그인 - 사용자 정보 불러오기
-        OAuthUserInfo userInfo = getUserInfo(SocialType.valueOf(socialType.toUpperCase()), request.getToken());
+        OAuthUserInfo userInfo = getOAuthUserInfo(SocialType.valueOf(socialType.toUpperCase()), request.getToken());
 
         // 2. 사용자 조회 (없으면 생성)
         User user = userService.findOrCreateUser(userInfo);
 
-        // 3. 사용자 status 확인
-        if (user.getStatus() == UserStatus.INACTIVE) {
-            throw new AuthException(ErrorStatus.INACTIVE_USER);
+        // 3. 토큰 생성 & RT 저장
+        AuthTokens authTokens = issueAndSaveTokens(user);
+
+        // 4. 온보딩 초기화
+        if (user.getStep() == UserStep.ONBOARDING) {
+            resetOnboarding(user);
         }
 
-        // 4. 토큰 생성
-        String sessionId = UUID.randomUUID().toString();
-        String accessToken = jwtProvider.generateAccessToken(user.getId(), sessionId);
-        String refreshToken = jwtProvider.generateRefreshToken(user.getId(), sessionId);
-
-        // 5. RT 저장
-        String refreshKey = getRefreshKey(user.getId().toString(), sessionId);
-        Duration refreshDuration = Duration.ofMillis(refreshExpirationMs);
-        rtWhitelistRedisTemplate.opsForValue().set(refreshKey, refreshToken, refreshDuration);
-
-        // 6. 다음 전환할 화면
-        UserStep nextStep = user.getStep();
-        // 온보딩 중단 예외 고려
-        if (nextStep == UserStep.ONBOARDING) {
-            // 1) 기본 이미지가 아닌 업로드된 이미지가 있다면 S3에서 삭제 후 초기화
-            String currentProfileImage = user.getProfileImageName();
-            boolean isCustomImage = !User.DEFAULT_PROFILE_IMAGE.equals(currentProfileImage);
-
-            if (isCustomImage) {
-                try {
-                    s3Util.deleteObject("profile/" + currentProfileImage);
-                } catch (Exception e) {
-                    // 삭제 실패 시 로그
-                    log.error("S3 프로필 이미지 삭제 실패 - userId : {}, imageName : {}, error : {}",
-                            user.getId(), currentProfileImage, e.getMessage());
-                }
-
-                // 삭제 성공/실패와 관계없이 DB 프로필 이미지명 초기화
-                user.updateProfileImageName(User.DEFAULT_PROFILE_IMAGE);
-            }
-
-            // 2) 수면패턴 초기화
-            user.clearSleepPattern();
-
-            // 3) 스케줄 초기화 (외래키로 인해 먼저 삭제)
-            scheduleRepository.deleteByUser(user);
-
-            // 4) 반복일정 초기화
-            routineRepository.deleteByUser(user);
-        }
-
-        // 7. converter 작업
-        return AuthConverter.toLoginResponse(accessToken, refreshToken, nextStep);
+        // 5. converter 작업
+        return AuthConverter.toLoginResponse(authTokens.getAccessToken(), authTokens.getRefreshToken(), user.getStep());
     }
 
 
     // 인증 - 개발용 토큰 발급
     @Override
     @Transactional
-    public AuthResponseDto.DevTokenResponse generateDevAccessToken() {
+    public AuthResponseDto.DevTokenResponse generateDevTokens() {
         // 1. 더미 사용자 조회 (없으면 생성)
         User masterUser = userService.createDevUser();
 
-        // 2. 토큰 발급
-        String sessionId = UUID.randomUUID().toString();
-        String accessToken = jwtProvider.generateAccessToken(masterUser.getId(), sessionId);
-        String refreshToken = jwtProvider.generateRefreshToken(masterUser.getId(), sessionId);
+        // 2. 토큰 생성 & RT 저장
+        AuthTokens authTokens = issueAndSaveTokens(masterUser);
 
-        // 3. RT 저장
-        String refreshKey = getRefreshKey(masterUser.getId().toString(), sessionId);
-        Duration refreshDuration = Duration.ofMillis(refreshExpirationMs);
-        rtWhitelistRedisTemplate.opsForValue().set(refreshKey, refreshToken, refreshDuration);
-
-        // 4. converter 작업
-        return AuthConverter.toDevTokenResponse(accessToken, refreshToken);
+        // 3. converter 작업
+        return AuthConverter.toDevTokenResponse(authTokens.getAccessToken(), authTokens.getRefreshToken());
     }
 
 
     // 인증 - 토큰 재발급
     @Override
     public AuthResponseDto.ReissueResponse reissueToken(AuthRequestDto.ReissueRequest request) {
-        String refreshKey = null;
+        String userId = null;
+        String sessionId = null;
 
         try {
-            // 1. 전달받은 RT 유효성 검증 (검증 실패 -> 재로그인 필요)
+            // 1. 전달받은 RT 유효성 검증
             String refreshToken = request.getRefreshToken();
-            validateRefreshTokenForService(refreshToken);
+            validateRefreshTokenOrThrow(refreshToken);
 
-            // 2. 토큰에서 userId와 sessionId 추출
-            String userId = jwtProvider.getUserIdFromToken(refreshToken);
-            String sessionId = jwtProvider.getSessionIdFromToken(refreshToken);
+            // 2. 토큰에서 정보 추출
+            userId = jwtProvider.getUserIdFromToken(refreshToken);
+            sessionId = jwtProvider.getSessionIdFromToken(refreshToken);
+            String userRole = jwtProvider.getUserRoleFromToken(refreshToken);
 
-            // 3. Redis에 저장된 RT 조회 (null -> 재로그인 필요)
-            refreshKey = getRefreshKey(userId, sessionId);
-            String storedRefreshToken = rtWhitelistRedisTemplate.opsForValue().get(refreshKey);
-            if (storedRefreshToken == null) {
-                throw new AuthException(AuthErrorStatus.REFRESH_TOKEN_NOT_FOUND);
-            }
+            // 3. Redis RT 확인 및 탈취 감지
+            verifyRefreshTokenMatch(userId, sessionId, refreshToken);
 
-            // 4. Redis에 저장된 RT 유효성 검증 (검증 실패 -> 재로그인 필요)
-            validateRefreshTokenForService(storedRefreshToken);
+            // 4. 기존 sessionId로 토큰 재발급 및 RT 저장
+            AuthTokens newTokens = reissueAndStoreTokens(userId, sessionId, userRole);
 
-            // 5. 요청받은 RT와 Redis에 저장된 RT 비교 (불일치 -> 재로그인 필요)
-            if (!refreshToken.equals(storedRefreshToken)) {
-                log.warn("[토큰 탈취 의심] : 요청 RT != Redis RT - userId: {}, sessionId: {}", userId, sessionId);
-
-                // 동일한 sessionID를 갖는 AT 블랙리스트 등록
-                String blacklistKey = getBlacklistKey(userId, sessionId);
-                Duration blacklistDuration = Duration.ofMillis(accessExpirationMs);
-                atBlacklistRedisTemplate.opsForValue().set(blacklistKey, "blacklisted", blacklistDuration);
-
-                throw new AuthException(AuthErrorStatus.REFRESH_TOKEN_MISMATCH);
-            }
-
-            // 6. 기존 sessionId로 토큰 재발급
-            String newAccessToken = jwtProvider.generateAccessToken(Long.valueOf(userId), sessionId);
-            String newRefreshToken = jwtProvider.generateRefreshToken(Long.valueOf(userId), sessionId);
-
-            // 7. Redis RT 업데이트
-            Duration refreshDuration = Duration.ofMillis(refreshExpirationMs);
-            rtWhitelistRedisTemplate.opsForValue().set(refreshKey, newRefreshToken, refreshDuration);
-
-            // 8. converter 작업
-            return AuthConverter.toReissueResponse(newAccessToken, newRefreshToken);
+            // 5. converter 작업
+            return AuthConverter.toReissueResponse(newTokens.getAccessToken(), newTokens.getRefreshToken());
 
         } catch (AuthException e) {
-            // 예외 발생 시, RT Redis 초기화하여 동일한 sessionID로 토큰 재발급 불가
-            if (refreshKey != null) {
-                rtWhitelistRedisTemplate.delete(refreshKey);
-            }
-
+            // 예외 발생 시, 동일한 sessionID로 토큰 재발급 불가하도록 Redis RT 삭제
+            deleteRefreshTokenWhitelist(userId, sessionId);
             throw e;
         }
     }
@@ -207,36 +136,93 @@ public class AuthServiceImpl implements AuthService {
         String sessionId = jwtProvider.getSessionIdFromToken(accessToken);
 
         // 2. RT 화이트리스트 삭제
-        String refreshKey = getRefreshKey(userId, sessionId);
-        rtWhitelistRedisTemplate.delete(refreshKey);
+        deleteRefreshTokenWhitelist(userId, sessionId);
 
-        // 3. AT 블랙리스트 등록 (남은 시간만큼)
-        String blacklistKey = getBlacklistKey(userId, sessionId);
+        // 3. AT 블랙리스트 저장 (남은 시간만큼)
         long remainingTime = jwtProvider.getRemainingTime(accessToken);
         if (remainingTime > 0) {
-            Duration blacklistDuration = Duration.ofMillis(remainingTime);
-            atBlacklistRedisTemplate.opsForValue().set(blacklistKey, "blacklisted", blacklistDuration);
+            saveAccessTokenBlacklist(userId, sessionId, remainingTime);
         }
     }
 
 
-    // SocialType 따라 로그인 분기 처리
-    private OAuthUserInfo getUserInfo(SocialType socialType, String token) {
-        switch (socialType) {
-            case SocialType.KAKAO:
-                return kakaoOAuthService.getUserInfoWithAccessToken(token);
-            case SocialType.NAVER:
-                return naverOAuthService.getUserInfoWithAccessToken(token);
-            case SocialType.GOOGLE:
-                return googleOAuthService.getUserInfoWithIdToken(token);
-            default:
-                throw new AuthException(AuthErrorStatus.INVALID_SOCIAL_TYPE);
-        }
+    // OAuth 사용자 정보 조회
+    private OAuthUserInfo getOAuthUserInfo(SocialType socialType, String token) {
+        return switch (socialType) {
+            case SocialType.KAKAO -> kakaoOAuthService.getUserInfoWithAccessToken(token);
+            case SocialType.NAVER -> naverOAuthService.getUserInfoWithAccessToken(token);
+            case SocialType.GOOGLE -> googleOAuthService.getUserInfoWithIdToken(token);
+            default -> throw new AuthException(AuthErrorStatus.INVALID_SOCIAL_TYPE);
+        };
     }
 
 
-    // 서비스용 RT 유효성 검증
-    private void validateRefreshTokenForService(String token) {
+    // 토큰 발급&저장
+    private AuthTokens issueAndSaveTokens(User user) {
+        // 고유ID & 사용자 ID/ROLE
+        String sessionId = UUID.randomUUID().toString();
+        String userId = user.getId().toString();
+        String userRole = user.getRole().toString();
+
+        // 토큰 생성
+        AuthTokens authTokens = issueTokens(userId, sessionId, userRole);
+
+        // RT 저장
+        saveRefreshTokenWhitelist(userId, sessionId, authTokens.getRefreshToken());
+
+        return authTokens;
+    }
+
+
+    // 토큰 발급
+    private AuthTokens issueTokens(String userId, String sessionId, String userRole) {
+        String accessToken = jwtProvider.generateAccessToken(userId, sessionId, userRole);
+        String refreshToken = jwtProvider.generateRefreshToken(userId, sessionId, userRole);
+        return AuthConverter.toAuthTokens(accessToken, refreshToken);
+    }
+
+
+    // RT 화이트리스트 저장
+    private void saveRefreshTokenWhitelist(String userId, String sessionId, String refreshToken) {
+        String refreshKey = getWhitelistKey(userId, sessionId);
+        Duration refreshDuration = Duration.ofMillis(refreshExpirationMs);
+        rtWhitelistRedisTemplate.opsForValue().set(refreshKey, refreshToken, refreshDuration);
+    }
+
+
+    // 온보딩 내용 초기화
+    private void resetOnboarding(User user) {
+        // 닉네임 초기화
+        user.updateNickname(null);
+
+        // 이미지 초기화
+        String currentProfileImage = user.getProfileImageName();
+        if (!User.DEFAULT_PROFILE_IMAGE.equals(currentProfileImage)) {
+            try {
+                // S3에 업로드된 이미지 삭제
+                s3Util.deleteObject("profile/" + currentProfileImage);
+            } catch (Exception e) {
+                log.error("S3 프로필 이미지 삭제 실패 - userId : {}, imageName : {}, error : {}",
+                        user.getId(), currentProfileImage, e.getMessage());
+            }
+
+            // DB 프로필 이미지명 초기화
+            user.updateProfileImageName(User.DEFAULT_PROFILE_IMAGE);
+        }
+
+        // 수면패턴 초기화
+        user.updateSleepPattern(null, null);
+
+        // 스케줄 초기화 (외래키로 인해 먼저 삭제)
+        scheduleRepository.deleteByUser(user);
+
+        // 반복일정 초기화
+        routineRepository.deleteByUser(user);
+    }
+
+
+    // RT 유효성 검증
+    private void validateRefreshTokenOrThrow(String token) {
         try {
             jwtProvider.validateRefreshToken(token);
         } catch (SecurityException e) {
@@ -258,7 +244,7 @@ public class AuthServiceImpl implements AuthService {
 
 
     // RT 화이트리스트 키 get
-    private String getRefreshKey(String userId, String sessionId) {
+    private String getWhitelistKey(String userId, String sessionId) {
         return String.format("RT_WHITELIST:%s:%s", userId, sessionId);
     }
 
@@ -266,5 +252,59 @@ public class AuthServiceImpl implements AuthService {
     // AT 블랙리스트 키 get
     private String getBlacklistKey(String userId, String sessionId) {
         return String.format("AT_BLACKLIST:%s:%s", userId, sessionId);
+    }
+
+
+    // 토큰 재발급&저장
+    private AuthTokens reissueAndStoreTokens(String userId, String sessionId, String userRole) {
+        // 토큰 생성
+        AuthTokens authTokens = issueTokens(userId, sessionId, userRole);
+
+        // RT 저장
+        saveRefreshTokenWhitelist(userId, sessionId, authTokens.getRefreshToken());
+
+        return authTokens;
+    }
+
+
+    // RT 동일한지 확인
+    private void verifyRefreshTokenMatch(String userId, String sessionId, String refreshToken) {
+        String refreshKey = getWhitelistKey(userId, sessionId);
+        String storedRefreshToken = rtWhitelistRedisTemplate.opsForValue().get(refreshKey);
+
+        // Redis에 저장된 RT 없음
+        if (storedRefreshToken == null) {
+            throw new AuthException(AuthErrorStatus.REFRESH_TOKEN_NOT_FOUND);
+        }
+
+        // Redis에 저장된 RT 유효성 검증
+        validateRefreshTokenOrThrow(storedRefreshToken);
+
+        // 요청받은 RT와 Redis에 저장된 RT 다름
+        if (!refreshToken.equals(storedRefreshToken)) {
+            log.warn("[토큰 탈취 의심] : 요청 RT != Redis RT - userId: {}, sessionId: {}", userId, sessionId);
+
+            // 동일한 sessionID를 갖는 AT 블랙리스트 저장
+            saveAccessTokenBlacklist(userId, sessionId, accessExpirationMs);
+
+            throw new AuthException(AuthErrorStatus.REFRESH_TOKEN_MISMATCH);
+        }
+    }
+
+
+    // AT 블랙리스트 저장
+    private void saveAccessTokenBlacklist(String userId, String sessionId, long durationMs) {
+        String blacklistKey = getBlacklistKey(userId, sessionId);
+        Duration blacklistDuration = Duration.ofMillis(durationMs);
+        atBlacklistRedisTemplate.opsForValue().set(blacklistKey, "blacklisted", blacklistDuration);
+    }
+
+
+    // RT 화이트리스트 삭제
+    private void deleteRefreshTokenWhitelist(String userId, String sessionId) {
+        if (userId != null && sessionId != null) {
+            String refreshKey = getWhitelistKey(userId, sessionId);
+            rtWhitelistRedisTemplate.delete(refreshKey);
+        }
     }
 }

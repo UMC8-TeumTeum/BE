@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.auth.converter;
 
 import umc.teumteum.server.domain.auth.dto.AuthResponseDto;
+import umc.teumteum.server.domain.auth.dto.AuthTokens;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
@@ -12,6 +13,14 @@ public class AuthConverter {
                 .socialType(socialType)
                 .socialId(socialId)
                 .email(email)
+                .build()
+                ;
+    }
+
+    public static AuthTokens toAuthTokens (String accessToken, String refreshToken) {
+        return AuthTokens.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .build()
                 ;
     }

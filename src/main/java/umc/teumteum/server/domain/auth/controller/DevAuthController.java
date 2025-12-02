@@ -24,8 +24,8 @@ public class DevAuthController {
             description = "개발 진행 과정에서의 테스트를 위한 액세스 토큰을 발급합니다."
     )
     @PostMapping(value = "/dev-token", produces = "application/json")
-    public ApiResponse<AuthResponseDto.DevTokenResponse> generateDevAccessToken() {
-        AuthResponseDto.DevTokenResponse response = authService.generateDevAccessToken();
+    public ApiResponse<AuthResponseDto.DevTokenResponse> generateDevToken() {
+        AuthResponseDto.DevTokenResponse response = authService.generateDevTokens();
 
         return ApiResponse.of(AuthSuccessStatus.DEV_TOKEN_ISSUED, response);
     }
