@@ -1,7 +1,23 @@
 package umc.teumteum.server.domain.user.service;
 
+import static umc.teumteum.server.domain.user.util.ImageConstants.ALLOWED_IMAGE_TYPES;
+import static umc.teumteum.server.domain.user.util.ImageConstants.DEFAULT_IMAGE;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -27,24 +43,21 @@ import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.domain.user.exception.OnboardingException;
 import umc.teumteum.server.domain.user.exception.UserException;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
-import umc.teumteum.server.domain.user.repository.*;
+import umc.teumteum.server.domain.user.repository.NotificationSettingRepository;
+import umc.teumteum.server.domain.user.repository.RemindAlarmJdbcRepository;
+import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
+import umc.teumteum.server.domain.user.repository.RoutineRepository;
+import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.dto.TimeRange;
 import umc.teumteum.server.global.jwt.JwtProvider;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
-
-import static umc.teumteum.server.domain.user.util.ImageConstants.ALLOWED_IMAGE_TYPES;
-import static umc.teumteum.server.domain.user.util.ImageConstants.DEFAULT_IMAGE;
-
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -89,24 +102,29 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User findOrCreateUser(OAuthUserInfo userInfo) {
-
         SocialType socialType = userInfo.getSocialType();
         String socialId = userInfo.getSocialId();
         String email = userInfo.getEmail();
 
         return userRepository.findBySocialTypeAndSocialId(socialType, socialId)
+                // 이미 존재하는 경우
+                .map(user -> {
+                    if (user.getStatus() == UserStatus.INACTIVE) {
+                        throw new UserException(ErrorStatus.INACTIVE_USER);
+                    }
+                    return user;
+                })
+                // 존재하지 않는 경우
                 .orElseGet(() -> {
-                    // 1. User 생성
+                    // 1) User 생성
                     User newUser = User.builder()
                             .socialType(socialType)
                             .socialId(socialId)
                             .email(email)
-                            .build()
-                            ;
-
+                            .build();
                     User savedUser = userRepository.save(newUser);
 
-                    // 2. NotificationSetting 생성
+                    // 2) NotificationSetting 생성
                     NotificationSetting notificationSetting = NotificationSetting.builder()
                             .user(savedUser)
                             .teum(true)
