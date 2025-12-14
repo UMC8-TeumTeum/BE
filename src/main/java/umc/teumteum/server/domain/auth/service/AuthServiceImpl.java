@@ -11,44 +11,30 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.auth.converter.AuthConverter;
-import umc.teumteum.server.domain.auth.dto.AuthRequestDto;
-import umc.teumteum.server.domain.auth.dto.AuthResponseDto;
-import umc.teumteum.server.domain.auth.dto.AuthTokens;
-import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
+import umc.teumteum.server.domain.auth.dto.*;
+import umc.teumteum.server.domain.auth.event.ProfileImageDeleteEvent;
 import umc.teumteum.server.domain.auth.exception.AuthException;
 import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.domain.user.entity.enums.UserRole;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.exception.InvalidTokenTypeException;
 import umc.teumteum.server.global.jwt.JwtProvider;
-import umc.teumteum.server.global.util.S3Util;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-
-    @Resource(name = "kakaoOAuthServiceImpl") private OAuthService kakaoOAuthService;
-    @Resource(name = "naverOAuthServiceImpl") private OAuthService naverOAuthService;
-    @Resource(name = "googleOAuthServiceImpl") private OAuthService googleOAuthService;
-    private final UserService userService;
-
-    private final JwtProvider jwtProvider;
-    private final S3Util s3Util;
-
-    private final RoutineRepository routineRepository;
-    private final ScheduleRepository scheduleRepository;
-    @Resource(name = "rtWhitelistRedisTemplate") private RedisTemplate<String, String> rtWhitelistRedisTemplate;
-    @Resource(name = "atBlacklistRedisTemplate") private RedisTemplate<String, String> atBlacklistRedisTemplate;
 
     @Value("${jwt.access-expiration-ms}")
     private long accessExpirationMs;
@@ -56,25 +42,45 @@ public class AuthServiceImpl implements AuthService {
     @Value("${jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
 
+    @Resource(name = "kakaoOAuthServiceImpl") private OAuthService kakaoOAuthService;
+    @Resource(name = "naverOAuthServiceImpl") private OAuthService naverOAuthService;
+    @Resource(name = "googleOAuthServiceImpl") private OAuthService googleOAuthService;
+    private final UserService userService;
+
+    private final JwtProvider jwtProvider;
+    private final ApplicationEventPublisher applicationEventPublisher;
+
+    private final RoutineRepository routineRepository;
+    private final ScheduleRepository scheduleRepository;
+
+    @Resource(name = "rtWhitelistRedisTemplate") private RedisTemplate<String, String> rtWhitelistRedisTemplate;
+    @Resource(name = "atBlacklistRedisTemplate") private RedisTemplate<String, String> atBlacklistRedisTemplate;
+
+
+
+
     // 인증 - 소셜로그인
     @Override
     @Transactional
     public AuthResponseDto.LoginResponse socialLogin(String socialType, AuthRequestDto.SocialLoginRequest request) {
-        // 1. 소셜 로그인 - 사용자 정보 불러오기
-        OAuthUserInfo userInfo = getOAuthUserInfo(SocialType.valueOf(socialType.toUpperCase()), request.getToken());
+        // 1. enum 변환
+        SocialType type = SocialType.from(socialType);
 
-        // 2. 사용자 조회 (없으면 생성)
+        // 2. 소셜 로그인 - 사용자 정보 불러오기
+        OAuthUserInfo userInfo = getOAuthUserInfo(type, request.getToken());
+
+        // 3. 사용자 조회 (없으면 생성)
         User user = userService.findOrCreateUser(userInfo);
 
-        // 3. 토큰 생성 & RT 저장
-        AuthTokens authTokens = issueAndSaveTokens(user);
+        // 4. 토큰 생성 & RT 저장
+        AuthTokens authTokens = issueAndSaveTokens(user.getId(), user.getRole());
 
-        // 4. 온보딩 초기화
+        // 5. 온보딩 초기화
         if (user.getStep() == UserStep.ONBOARDING) {
             resetOnboarding(user);
         }
 
-        // 5. converter 작업
+        // 6. converter 작업
         return AuthConverter.toLoginResponse(authTokens.getAccessToken(), authTokens.getRefreshToken(), user.getStep());
     }
 
@@ -87,7 +93,7 @@ public class AuthServiceImpl implements AuthService {
         User masterUser = userService.createDevUser();
 
         // 2. 토큰 생성 & RT 저장
-        AuthTokens authTokens = issueAndSaveTokens(masterUser);
+        AuthTokens authTokens = issueAndSaveTokens(masterUser.getId(), masterUser.getRole());
 
         // 3. converter 작업
         return AuthConverter.toDevTokenResponse(authTokens.getAccessToken(), authTokens.getRefreshToken());
@@ -114,7 +120,7 @@ public class AuthServiceImpl implements AuthService {
             verifyRefreshTokenMatch(userId, sessionId, refreshToken);
 
             // 4. 기존 sessionId로 토큰 재발급 및 RT 저장
-            AuthTokens newTokens = reissueAndStoreTokens(userId, sessionId, userRole);
+            AuthTokens newTokens = reissueAndSaveTokens(userId, sessionId, userRole);
 
             // 5. converter 작업
             return AuthConverter.toReissueResponse(newTokens.getAccessToken(), newTokens.getRefreshToken());
@@ -152,23 +158,22 @@ public class AuthServiceImpl implements AuthService {
             case SocialType.KAKAO -> kakaoOAuthService.getUserInfoWithAccessToken(token);
             case SocialType.NAVER -> naverOAuthService.getUserInfoWithAccessToken(token);
             case SocialType.GOOGLE -> googleOAuthService.getUserInfoWithIdToken(token);
-            default -> throw new AuthException(AuthErrorStatus.INVALID_SOCIAL_TYPE);
         };
     }
 
 
     // 토큰 발급&저장
-    private AuthTokens issueAndSaveTokens(User user) {
+    private AuthTokens issueAndSaveTokens(Long userId, UserRole userRole) {
         // 고유ID & 사용자 ID/ROLE
         String sessionId = UUID.randomUUID().toString();
-        String userId = user.getId().toString();
-        String userRole = user.getRole().toString();
+        String id = userId.toString();
+        String role = userRole.toString();
 
         // 토큰 생성
-        AuthTokens authTokens = issueTokens(userId, sessionId, userRole);
+        AuthTokens authTokens = issueTokens(id, sessionId, role);
 
         // RT 저장
-        saveRefreshTokenWhitelist(userId, sessionId, authTokens.getRefreshToken());
+        saveRefreshTokenWhitelist(id, sessionId, authTokens.getRefreshToken());
 
         return authTokens;
     }
@@ -198,16 +203,16 @@ public class AuthServiceImpl implements AuthService {
         // 이미지 초기화
         String currentProfileImage = user.getProfileImageName();
         if (!User.DEFAULT_PROFILE_IMAGE.equals(currentProfileImage)) {
-            try {
-                // S3에 업로드된 이미지 삭제
-                s3Util.deleteObject("profile/" + currentProfileImage);
-            } catch (Exception e) {
-                log.error("S3 프로필 이미지 삭제 실패 - userId : {}, imageName : {}, error : {}",
-                        user.getId(), currentProfileImage, e.getMessage());
-            }
-
             // DB 프로필 이미지명 초기화
             user.updateProfileImageName(User.DEFAULT_PROFILE_IMAGE);
+
+            // 이미지 삭제 이벤트 발행
+            applicationEventPublisher.publishEvent(
+                    ProfileImageDeleteEvent.builder()
+                            .userId(user.getId())
+                            .imageName(currentProfileImage)
+                            .build()
+            );
         }
 
         // 수면패턴 초기화
@@ -256,7 +261,7 @@ public class AuthServiceImpl implements AuthService {
 
 
     // 토큰 재발급&저장
-    private AuthTokens reissueAndStoreTokens(String userId, String sessionId, String userRole) {
+    private AuthTokens reissueAndSaveTokens(String userId, String sessionId, String userRole) {
         // 토큰 생성
         AuthTokens authTokens = issueTokens(userId, sessionId, userRole);
 
@@ -270,18 +275,18 @@ public class AuthServiceImpl implements AuthService {
     // RT 동일한지 확인
     private void verifyRefreshTokenMatch(String userId, String sessionId, String refreshToken) {
         String refreshKey = getWhitelistKey(userId, sessionId);
-        String storedRefreshToken = rtWhitelistRedisTemplate.opsForValue().get(refreshKey);
+        String savedRefreshToken = rtWhitelistRedisTemplate.opsForValue().get(refreshKey);
 
         // Redis에 저장된 RT 없음
-        if (storedRefreshToken == null) {
+        if (savedRefreshToken == null) {
             throw new AuthException(AuthErrorStatus.REFRESH_TOKEN_NOT_FOUND);
         }
 
         // Redis에 저장된 RT 유효성 검증
-        validateRefreshTokenOrThrow(storedRefreshToken);
+        validateRefreshTokenOrThrow(savedRefreshToken);
 
         // 요청받은 RT와 Redis에 저장된 RT 다름
-        if (!refreshToken.equals(storedRefreshToken)) {
+        if (!refreshToken.equals(savedRefreshToken)) {
             log.warn("[토큰 탈취 의심] : 요청 RT != Redis RT - userId: {}, sessionId: {}", userId, sessionId);
 
             // 동일한 sessionID를 갖는 AT 블랙리스트 저장
