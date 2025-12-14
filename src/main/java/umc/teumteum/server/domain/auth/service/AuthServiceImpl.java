@@ -198,7 +198,7 @@ public class AuthServiceImpl implements AuthService {
     // 온보딩 내용 초기화
     private void resetOnboarding(User user) {
         // 닉네임 초기화
-        user.updateNickname(null);
+        user.updateNicknameAndJob(null, null);
 
         // 이미지 초기화
         String currentProfileImage = user.getProfileImageName();

@@ -158,8 +158,4 @@ public class User extends BaseEntity {
         this.job = jobField;
         this.timePublic = timePublic;
     }
-
-    public void updateNickname(String nickname) {
-        this.nickname = nickname;
-    }
 }
