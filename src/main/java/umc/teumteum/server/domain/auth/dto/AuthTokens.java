@@ -7,6 +7,6 @@ import lombok.Getter;
 @Builder
 public class AuthTokens {
 
-    private String accessToken;     // AT
-    private String refreshToken;    // RT
+    private final String accessToken;     // AT
+    private final String refreshToken;    // RT
 }
