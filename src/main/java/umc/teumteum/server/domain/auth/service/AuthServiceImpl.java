@@ -72,13 +72,13 @@ public class AuthServiceImpl implements AuthService {
         // 3. 사용자 조회 (없으면 생성)
         User user = userService.findOrCreateUser(userInfo);
 
-        // 4. 토큰 생성 & RT 저장
-        AuthTokens authTokens = issueAndSaveTokens(user.getId(), user.getRole());
-
-        // 5. 온보딩 초기화
+        // 4. 온보딩 초기화
         if (user.getStep() == UserStep.ONBOARDING) {
             resetOnboarding(user);
         }
+
+        // 5. 토큰 생성 & RT 저장
+        AuthTokens authTokens = issueAndSaveTokens(user.getId(), user.getRole());
 
         // 6. converter 작업
         return AuthConverter.toLoginResponse(authTokens.getAccessToken(), authTokens.getRefreshToken(), user.getStep());
@@ -125,7 +125,7 @@ public class AuthServiceImpl implements AuthService {
             // 5. converter 작업
             return AuthConverter.toReissueResponse(newTokens.getAccessToken(), newTokens.getRefreshToken());
 
-        } catch (AuthException e) {
+        } catch (Exception e) {
             // 예외 발생 시, 동일한 sessionID로 토큰 재발급 불가하도록 Redis RT 삭제
             deleteRefreshTokenWhitelist(userId, sessionId);
             throw e;
