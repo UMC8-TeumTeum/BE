@@ -63,6 +63,21 @@ public class ConflictValidator {
         checkWithSleepPattern(user,date,startTime,endTime);
     }
 
+    /**
+     * Wish 투두 등록시 중복 검증 로직
+     * - 수면패턴과 충돌 여부 검사
+     */
+    public void validateWish(User user, LocalDateTime startTime, LocalDateTime endTime) {
+        LocalDate startDate = startTime.toLocalDate();
+        LocalDate endDate = endTime.toLocalDate();
+
+        checkWithSleepPattern(user,startDate,startTime,endTime);
+
+        // 일정이 날짜를 넘기는 경우, 종료 날짜 기준 수면 패턴 검사
+        if(!startDate.equals(endDate)){
+            checkWithSleepPattern(user,endDate,startTime,endTime);
+        }
+    }
 
     // 내부 충돌 검사 메서드들
     private void checkWithSchedules(User user, LocalDateTime requestStart, LocalDateTime requestEnd) {
