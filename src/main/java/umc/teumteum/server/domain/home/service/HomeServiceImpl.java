@@ -569,11 +569,15 @@ public class HomeServiceImpl implements HomeService {
             throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
         }
 
-        // 3 중복 스케줄 체크 -> 스케줄 중복 검사
+        // 3. 중복 검사
         LocalDate date = dto.getStartTime().toLocalDate();
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
 
+        // 3-1. 수면시간 충돌 체크
+        conflictValidator.validateWish(user, startTime, endTime);
+
+        // 3-2. 중복 스케줄 체크 -> 스케줄 중복 검사
         boolean hasConflict = scheduleRepository.existsConflictSchedule(
                 user.getId(), date, startTime, endTime
         );
