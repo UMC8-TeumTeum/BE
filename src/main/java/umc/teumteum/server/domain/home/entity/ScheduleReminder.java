@@ -6,7 +6,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
+import umc.teumteum.server.domain.home.entity.enums.DispatchStatus;
 import umc.teumteum.server.global.common.BaseEntity;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -31,6 +34,16 @@ public class ScheduleReminder extends BaseEntity {
     @Column(name = "alarm_status", nullable = false)
     @Enumerated(EnumType.STRING)
     private AlarmStatus alarmStatus = AlarmStatus.INACTIVE;
+
+    @Column(name = "send_at")
+    private LocalDateTime sendAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "dispatch_status", nullable = false)
+    @Builder.Default
+    private DispatchStatus dispatchStatus = DispatchStatus.PENDING;
+
+
 
     /**
      *  필드 변경 메소드
