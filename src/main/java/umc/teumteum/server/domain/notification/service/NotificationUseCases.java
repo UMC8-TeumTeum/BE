@@ -1,10 +1,16 @@
 package umc.teumteum.server.domain.notification.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import umc.teumteum.server.domain.home.entity.Schedule;
+import umc.teumteum.server.domain.home.entity.ScheduleReminder;
+import umc.teumteum.server.domain.home.entity.enums.DispatchStatus;
+import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
 import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
 import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
@@ -13,8 +19,9 @@ import umc.teumteum.server.domain.user.entity.User;
 @Service
 @RequiredArgsConstructor
 public class NotificationUseCases {
-  // 팔로우(1:1), 틈요청(1:1, 1:다), 틈응답(1:1)
+  // 팔로우(1:1), 틈요청(1:1, 1:다), 틈응답(1:1), 리마인드 알림
   private final NotificationOrchestrator orchestrator;
+  private final ScheduleReminderRepository scheduleReminderRepository;
 
   // 팔로우 알림
   public void notifyFollow(User sender, User reciver, Long friendId){
@@ -105,4 +112,42 @@ public class NotificationUseCases {
     );
   }
 
+  // 리마인드 알림
+  @Transactional
+  public void notifyReminder(List<ScheduleReminder> reminders){
+    if (reminders == null || reminders.isEmpty()) return;
+
+    List<Long> sentIds = new ArrayList<>();
+
+    for(ScheduleReminder r : reminders){
+      Schedule schedule = r.getSchedule();
+      User receiver = schedule.getUser();
+
+      int minutes = r.getReminderTime();
+      String content = minutes + "분 뒤 투두가 시작돼요";
+
+      Map<String,String> data = new HashMap<>();
+      data.put("scheduleId", String.valueOf(schedule.getId()));
+      data.put("title", schedule.getTitle());
+      data.put("startTime", String.valueOf(schedule.getStartTime()));
+      data.put("endTime", String.valueOf(schedule.getEndTime()));
+      data.put("reminderMinutes", String.valueOf(r.getReminderTime()));
+
+      orchestrator.saveAndPush(
+              receiver,
+              NotificationType.REMIND_ALARM,
+              content,
+              schedule.getId(),
+              data
+      );
+
+      sentIds.add(r.getId());
+    }
+
+    scheduleReminderRepository.updateDispatchStatusByIds(
+            sentIds,
+            DispatchStatus.PROCESSING,
+            DispatchStatus.SENT
+    );
+  }
 }
