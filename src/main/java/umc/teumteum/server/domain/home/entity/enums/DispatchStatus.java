@@ -5,5 +5,6 @@ public enum DispatchStatus {
     PROCESSING, // 발송중 (중복방지용)
     SENT,       // 발송완료
     CANCELLED,  // 스케줄 취소, 설정 변경으로 발송 취소
+    SKIPPED,    // 발송 대상 아님 (INACTIVE / 시간 지남)
     FAILED      // 발송 실패
 }

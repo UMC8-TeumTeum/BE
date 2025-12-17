@@ -59,11 +59,11 @@ public class ScheduleReminder extends BaseEntity {
 
         // INACTIVE인 경우
         if(alarmStatus == AlarmStatus.INACTIVE){
-            this.dispatchStatus = DispatchStatus.CANCELLED;
+            this.dispatchStatus = DispatchStatus.SKIPPED;
             return;
         }
         // ACTIVE인 경우
         this.dispatchStatus = (this.sendAt != null && this.sendAt.isAfter(now))
-                ? DispatchStatus.PENDING : DispatchStatus.CANCELLED;
+                ? DispatchStatus.PENDING : DispatchStatus.SKIPPED;
     }
 }

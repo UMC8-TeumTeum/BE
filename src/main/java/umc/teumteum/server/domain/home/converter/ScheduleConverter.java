@@ -274,7 +274,7 @@ public class ScheduleConverter {
         DispatchStatus dispatchStatus =
                 (alarmStatus == AlarmStatus.ACTIVE && sendAt.isAfter(now))
                         ? DispatchStatus.PENDING
-                        : DispatchStatus.CANCELLED;
+                        : DispatchStatus.SKIPPED;
 
         return ScheduleReminder.builder()
                 .schedule(schedule)
