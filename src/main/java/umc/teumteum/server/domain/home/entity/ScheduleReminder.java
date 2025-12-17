@@ -33,7 +33,7 @@ public class ScheduleReminder extends BaseEntity {
     @Builder.Default
     @Column(name = "alarm_status", nullable = false)
     @Enumerated(EnumType.STRING)
-    private AlarmStatus alarmStatus = AlarmStatus.INACTIVE;
+    private AlarmStatus alarmStatus = AlarmStatus.ACTIVE;
 
     @Column(name = "send_at")
     private LocalDateTime sendAt;
@@ -48,7 +48,22 @@ public class ScheduleReminder extends BaseEntity {
     /**
      *  필드 변경 메소드
      */
-    public void updateStatus(AlarmStatus alarmStatus) {
+    public void updateStatus(AlarmStatus alarmStatus, LocalDateTime now) {
+
         this.alarmStatus = alarmStatus;
+
+        // 이미 전송된 경우
+        if (this.dispatchStatus == DispatchStatus.SENT) {
+            return;
+        }
+
+        // INACTIVE인 경우
+        if(alarmStatus == AlarmStatus.INACTIVE){
+            this.dispatchStatus = DispatchStatus.CANCELLED;
+            return;
+        }
+        // ACTIVE인 경우
+        this.dispatchStatus = (this.sendAt != null && this.sendAt.isAfter(now))
+                ? DispatchStatus.PENDING : DispatchStatus.CANCELLED;
     }
 }
