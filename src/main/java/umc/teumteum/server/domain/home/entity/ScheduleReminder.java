@@ -33,7 +33,7 @@ public class ScheduleReminder extends BaseEntity {
     @Builder.Default
     @Column(name = "alarm_status", nullable = false)
     @Enumerated(EnumType.STRING)
-    private AlarmStatus alarmStatus = AlarmStatus.ACTIVE;
+    private AlarmStatus alarmStatus = AlarmStatus.INACTIVE;
 
     @Column(name = "send_at")
     private LocalDateTime sendAt;
