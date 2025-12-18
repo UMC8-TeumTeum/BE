@@ -12,7 +12,6 @@ import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
 import umc.teumteum.server.domain.notification.service.NotificationUseCases;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -34,17 +33,17 @@ public class RemindAlarmScheduler {
 
         if(targets.isEmpty()) return;
 
-        // 2. 선점 성공한 것  (발송 상태 변경하기 PENDING -> PROCESSING)
-        List<ScheduleReminder> locked = new ArrayList<>();
-        for(ScheduleReminder r : targets){
-            int ok = scheduleReminderRepository.updateDispatchStatus(
-                    r.getId(), DispatchStatus.PENDING, DispatchStatus.PROCESSING
-            );
-            if(ok == 1) locked.add(r);
-        }
+        // 2. 선점하기  (발송 상태 변경하기 PENDING -> PROCESSING)
+        List<Long> targetIds = targets.stream().map(ScheduleReminder::getId).toList();
 
-        // 3. DB 저장 & 푸시알림 & 상태변경 UseCase에 위임
-        if (locked.isEmpty()) return;
+        int lockedCount = scheduleReminderRepository.updateDispatchStatus(targetIds,DispatchStatus.PENDING,DispatchStatus.PROCESSING);
+        if(lockedCount == 0) return;
+
+        // 3. 선점 성공한 것들 다시 조회
+        List<ScheduleReminder> locked = scheduleReminderRepository.findByIdsWithScheduleAndUser(targetIds,DispatchStatus.PROCESSING);
+        if(locked.isEmpty()) return;
+
+        // 4. DB 저장 & 푸시알림 & 상태변경 UseCase에 위임
         try{
             notificationUseCases.notifyReminder(locked);
         } catch(Exception e){
