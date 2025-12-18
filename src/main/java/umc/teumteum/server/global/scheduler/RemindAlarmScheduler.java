@@ -45,6 +45,15 @@ public class RemindAlarmScheduler {
 
         // 3. DB 저장 & 푸시알림 & 상태변경 UseCase에 위임
         if (locked.isEmpty()) return;
-        notificationUseCases.notifyReminder(locked);
+        try{
+            notificationUseCases.notifyReminder(locked);
+        } catch(Exception e){
+            log.error("리마인드 알림 발송 실패. locked count={}", locked.size(), e);
+            // PROCESSING 상태인 리마인더들 -> FAILED로 변경
+            List<Long> lockedIds = locked.stream().map(ScheduleReminder::getId).toList();
+            scheduleReminderRepository.updateDispatchStatusByIds(
+                    lockedIds, DispatchStatus.PROCESSING, DispatchStatus.FAILED
+            );
+        }
     }
 }
