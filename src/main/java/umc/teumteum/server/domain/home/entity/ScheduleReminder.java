@@ -52,8 +52,9 @@ public class ScheduleReminder extends BaseEntity {
 
         this.alarmStatus = alarmStatus;
 
-        // 이미 전송된 경우
-        if (this.dispatchStatus == DispatchStatus.SENT) {
+        // 이미 전송되었거나 발송 중인 경우
+        if (this.dispatchStatus == DispatchStatus.SENT
+                || this.dispatchStatus == DispatchStatus.PROCESSING) {
             return;
         }
 
@@ -62,6 +63,7 @@ public class ScheduleReminder extends BaseEntity {
             this.dispatchStatus = DispatchStatus.SKIPPED;
             return;
         }
+
         // ACTIVE인 경우
         this.dispatchStatus = (this.sendAt != null && this.sendAt.isAfter(now))
                 ? DispatchStatus.PENDING : DispatchStatus.SKIPPED;
