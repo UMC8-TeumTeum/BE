@@ -49,14 +49,14 @@ public interface ScheduleReminderRepository extends JpaRepository<ScheduleRemind
             @Param("next") DispatchStatus next
     );
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         update ScheduleReminder r
         set r.dispatchStatus = :next
         where r.id in :ids
         and r.dispatchStatus = :current
     """)
-    int updateDispatchStatusByIds(
+    void updateDispatchStatusByIds(
             @Param("ids") List<Long> ids,
             @Param("current") DispatchStatus current,
             @Param("next") DispatchStatus next
