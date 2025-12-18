@@ -152,8 +152,7 @@ public class NotificationUseCases {
         failIds.add(r.getId());
         log.warn("푸시 알림 전송 실패: reminderId={}, reason={}", r.getId(), e.toString());
       }
-
-      notificationService.updateDispatchStatus(sentIds, failIds);
     }
+    notificationService.updateDispatchStatus(sentIds, failIds);
   }
 }
