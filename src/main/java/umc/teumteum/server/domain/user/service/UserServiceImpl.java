@@ -53,6 +53,7 @@ import umc.teumteum.server.domain.user.repository.RemindAlarmJdbcRepository;
 import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
 import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.domain.user.util.UserDataCleaner;
 import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.dto.TimeRange;
 import umc.teumteum.server.global.jwt.JwtProvider;
@@ -68,16 +69,16 @@ public class UserServiceImpl implements UserService {
     private final NotificationSettingRepository notificationSettingRepository;
     private final S3Util s3Util;
     private final JwtProvider jwtProvider;
-
-    @Resource(name = "profileImageRedisTemplate")
-    private RedisTemplate<String, String> profileImageRedisTemplate;
-
     private final RoutineRepository routineRepository;
     private final TimeUtil timeUtil;
     private final ScheduleRepository scheduleRepository;
     private final RemindAlarmRepository remindAlarmRepository;
     private final ScheduleReminderRepository scheduleReminderRepository;
     private final RemindAlarmJdbcRepository remindAlarmJdbcRepository;
+    private final UserDataCleaner userDataCleaner;
+
+    @Resource(name = "profileImageRedisTemplate")
+    private RedisTemplate<String, String> profileImageRedisTemplate;
 
     private static final Set<Integer> ALLOWED_REMIND_ALARM_VALUES = Set.of(1, 3, 5, 10, 30);
 
@@ -552,8 +553,10 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
 
         // 1. 유저 관련 데이터 삭제
+        userDataCleaner.clean(u.getId());
 
         // 2. 유저 익명화
-        user.withdraw();
+        u.withdraw();
+        userRepository.save(u);
     }
 }
