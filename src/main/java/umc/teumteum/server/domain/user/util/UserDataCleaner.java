@@ -8,9 +8,12 @@ import umc.teumteum.server.domain.friend.repository.BlockRepository;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.Wish;
+import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
+import umc.teumteum.server.domain.home.repository.WishCategoryRepository;
 import umc.teumteum.server.domain.home.repository.WishRepository;
 import umc.teumteum.server.domain.notification.repository.NotificationRepository;
+import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.AgreementRepository;
 import umc.teumteum.server.domain.user.repository.NotificationSettingRepository;
 import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
@@ -22,8 +25,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserDataCleaner {
     private final ScheduleRepository scheduleRepository;
-    private final WishRepository wishRepository;
+    private final ScheduleReminderRepository scheduleReminderRepository;
 
+    private final WishRepository wishRepository;
+    private final WishCategoryRepository wishCategoryRepository;
     private final BlockRepository blockRepository;
     private final FriendRepository friendRepository;
 
@@ -38,15 +43,11 @@ public class UserDataCleaner {
     @Transactional
     public void clean(Long userId) {
         // 1. 스케줄 & 스케줄 리마인드
-        List<Schedule> schedules = scheduleRepository.findByUserId(userId);
-        if(!schedules.isEmpty()){
-            scheduleRepository.deleteAll(schedules);
-        }
-        // 2. 위시
-        List<Wish> wishes = wishRepository.findByUserId(userId);
-        if(!wishes.isEmpty()){
-            wishRepository.deleteAll(wishes);
-        }
+        scheduleReminderRepository.deleteAllByUserId(userId);
+        scheduleRepository.deleteAllByUserId(userId);
+        // 2. 위시 & 위시카테고리
+        wishCategoryRepository.deleteAllByUserId(userId);
+        wishRepository.deleteAllByUserId(userId);
         // 3. 차단
         blockRepository.deleteAllByUserId(userId);
         // 4. 친구
