@@ -556,9 +556,29 @@ public class UserServiceImpl implements UserService {
         userDataCleaner.clean(u.getId());
 
         // 2. 프로필 이미지 삭제
-        deleteProfileImage(user);
+        deleteUserImage(user);
 
         // 3. 유저 익명화
         u.withdraw();
+    }
+
+    /**
+     * 유저 프로필 삭제 헬퍼 메서드
+     */
+    @Transactional
+    public void deleteUserImage(User user) {
+
+        String oldFileName = user.getProfileImageName();
+
+        // 1. default 이미지 -> 삭제하지 않고 통과
+        if(oldFileName == null || oldFileName.equals(DEFAULT_IMAGE)){
+            return;
+        }
+
+        // 2. 기존 객체 삭제
+        s3Util.deleteObject("profile/" + oldFileName);
+
+        // 3. DB 저장 키 교체 (S3 Key -> default)
+        user.updateProfileImageName(DEFAULT_IMAGE);
     }
 }
