@@ -38,4 +38,6 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
         "WHERE w.user = :user AND LOWER(c.name) LIKE LOWER(CONCAT('%', :categoryName, '%'))")
     List<Wish> findByUserAndCategoryLike(User user, String categoryName);
 
+    // userId로 조회
+    List<Wish> findByUserId(Long userId);
 }

@@ -22,4 +22,8 @@ public interface RoutineRepository extends JpaRepository<Routine, Long> {
 
     @Query("select r from Routine r where r.weekday = :weekday")
     List<Routine> findByWeekday(@Param("weekday") Weekday weekday);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM Routine r WHERE r.user.id = :userId")
+    void deleteAllByUserId(Long userId);
 }

@@ -354,4 +354,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     // 루틴Id로 스케줄 조회
     List<Schedule> findByRoutineId(Long routineId);
+
+    // userId로 스케줄 조회
+    List<Schedule> findByUserId(Long userId);
 }
