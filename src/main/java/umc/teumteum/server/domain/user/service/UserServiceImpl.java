@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -60,6 +61,7 @@ import umc.teumteum.server.global.jwt.JwtProvider;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -565,7 +567,6 @@ public class UserServiceImpl implements UserService {
     /**
      * 유저 프로필 삭제 헬퍼 메서드
      */
-    @Transactional
     public void deleteUserImage(User user) {
 
         String oldFileName = user.getProfileImageName();
@@ -576,7 +577,11 @@ public class UserServiceImpl implements UserService {
         }
 
         // 2. 기존 객체 삭제
-        s3Util.deleteObject("profile/" + oldFileName);
+        try{
+            s3Util.deleteObject("profile/" + oldFileName);
+        } catch(Exception e){
+            log.warn("S3 profile delete failed. userId={}, file={}", user.getId(), oldFileName, e);
+        }
 
         // 3. DB 저장 키 교체 (S3 Key -> default)
         user.updateProfileImageName(DEFAULT_IMAGE);
