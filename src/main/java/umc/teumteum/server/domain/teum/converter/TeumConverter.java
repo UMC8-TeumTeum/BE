@@ -34,7 +34,7 @@ public class TeumConverter {
 
     private final TimeUtil timeUtil;
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
-
+    private static final String WITHDRAWN_USER_NICKNAME = "탈퇴한 사용자";
     public TeumRequest toTeumRequest(TeumRequestDto.TeumRequest dto, User sender) {
         return TeumRequest.builder()
                 .title(dto.getTitle())
@@ -431,8 +431,11 @@ public class TeumConverter {
 
     // 회원 익명화 헬퍼 메서드
     private String maskedNickName(User user){
+        if(user == null){
+            return WITHDRAWN_USER_NICKNAME;
+        }
         if(user.getStatus() == UserStatus.INACTIVE){
-            return "탈퇴한 사용자";
+            return WITHDRAWN_USER_NICKNAME;
         }
         return user.getNickname();
     }

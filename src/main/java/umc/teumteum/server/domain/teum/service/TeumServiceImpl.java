@@ -82,7 +82,7 @@ public class TeumServiceImpl implements TeumService {
         User receiver = getUserOrThrow(dto.getReceiverUserId());
 
         // 수신자가 ACTIVE 유저인지 검증
-        validActiveUser(receiver.getId());
+        validActiveUser(receiver);
 
         // 차단 관계 검증 (요청자 <-> 수신자)
         validateBlockRelationship(user, receiver);
@@ -122,7 +122,7 @@ public class TeumServiceImpl implements TeumService {
     @Transactional
     public Long createResendRequest(Long parentRequestId, TeumRequestDto.TeumResend dto, User user) {
       // 재요청자 ACTIVE 검증
-      validActiveUser(user.getId());
+      validActiveUser(user);
 
       // 원본 요청 확인 및 권한 검증
         TeumRequest parent = findActiveRequestOrThrow(parentRequestId);
@@ -141,7 +141,7 @@ public class TeumServiceImpl implements TeumService {
         validateStartTimeNotPast(date, startTime);
 
         User originalSender = parent.getUser();  // 부모 요청의 작성자 → 이번 재요청의 수신자
-        validActiveUser(originalSender.getId()); // 기존 요청자가 ACTIVE인지 검증
+        validActiveUser(originalSender); // 기존 요청자가 ACTIVE인지 검증
 
         // 차단 관계 검증 (재요청자 <-> 기존 요청자)
         validateBlockRelationship(user, originalSender);
@@ -711,11 +711,8 @@ public class TeumServiceImpl implements TeumService {
     /**
      * 사용자가 INACTIVE인 경우 USER_NOT_FOUND 에러를 발생시킵니다.
      */
-    private void validActiveUser(Long userId) {
-        User u = userRepository.findById(userId)
-                .orElseThrow(()-> new GlobalHandler(UserErrorStatus.USER_NOT_FOUND));
-
-        if(u.getStatus() == UserStatus.INACTIVE){
+    private void validActiveUser(User user) {
+        if(user.getStatus() == UserStatus.INACTIVE){
             throw new GlobalHandler(UserErrorStatus.USER_DELETED);
         }
     }
