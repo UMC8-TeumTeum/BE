@@ -558,7 +558,7 @@ public class UserServiceImpl implements UserService {
         userDataCleaner.clean(u.getId());
 
         // 2. 프로필 이미지 삭제
-        deleteUserImage(user);
+        deleteUserImage(u);
 
         // 3. 유저 익명화
         u.withdraw();
