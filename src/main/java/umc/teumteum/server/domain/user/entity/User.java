@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -157,5 +159,24 @@ public class User extends BaseEntity {
         this.nickname = nickname;
         this.job = jobField;
         this.timePublic = timePublic;
+    }
+
+    // 회원 탈퇴
+    public void withdraw(){
+        this.status = UserStatus.INACTIVE;
+        this.inactiveAt = LocalDateTime.now();
+
+        String token = UUID.randomUUID().toString();
+
+        this.socialId = "deleted-" + this.id + "-" + token;
+        this.email = "deleted-" + this.id + "-" + token + "@deleted.local";
+
+        this.nickname = "탈퇴회원-" + this.id + "-" + token.substring(0, 8);
+        this.sleepTime = null;
+        this.wakeTime = null;
+        this.job = null;
+        this.timePublic = false;
+
+        this.profileImageName = DEFAULT_PROFILE_IMAGE;
     }
 }

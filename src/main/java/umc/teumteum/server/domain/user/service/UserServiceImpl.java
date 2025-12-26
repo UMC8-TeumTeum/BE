@@ -543,4 +543,17 @@ public class UserServiceImpl implements UserService {
             remindAlarmJdbcRepository.batchInsertRemindAlarms(alarmsToAdd);
         }
     }
+
+    // 회원탈퇴
+    @Transactional
+    @Override
+    public void deleteUser(User user) {
+        User u = userRepository.findById(user.getId())
+                .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
+
+        // 1. 유저 관련 데이터 삭제
+
+        // 2. 유저 익명화
+        user.withdraw();
+    }
 }

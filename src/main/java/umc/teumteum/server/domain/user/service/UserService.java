@@ -47,4 +47,6 @@ public interface UserService {
     UserResponseDTO.RemindAlarmList getReminders(User user);
 
     void updateReminders(OnboardingRequestDto.RemindAlarmList request, User user);
+
+    void deleteUser(User user);
 }
