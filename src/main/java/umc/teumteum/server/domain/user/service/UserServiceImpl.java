@@ -557,6 +557,5 @@ public class UserServiceImpl implements UserService {
 
         // 2. 유저 익명화
         u.withdraw();
-        userRepository.save(u);
     }
 }

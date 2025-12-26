@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.auth.service.AuthService;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.dto.UserRequestDto;
@@ -29,6 +30,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final AuthService authService;
 
     @Operation(
             summary = "닉네임 사용자 검색",
@@ -217,8 +219,10 @@ public class UserController {
     )
     @DeleteMapping(value = "/mypage", produces = "application/json")
     public ApiResponse<Object> deleteUser(
+            HttpServletRequest httpServletRequest,
             @CurrentUser @Parameter(hidden = true) User user
     ){
+        authService.logout(httpServletRequest, user);
         userService.deleteUser(user);
         return ApiResponse.of(UserSuccessStatus._USER_DELETED, null);
     }
