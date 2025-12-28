@@ -653,7 +653,16 @@ public class TeumServiceImpl implements TeumService {
                 LocalTime.MIDNIGHT
         );
 
-        return teumConverter.toConflictingRequestResponse(conflicts);
+        Map<Long, String> profileUrlMap = conflicts.stream()
+                .map(req -> req.getTeumResponses().get(0).getReceiverUser()) // 수신자 추출
+                .distinct()
+                .collect(Collectors.toMap(
+                        User::getId,
+                        this::toProfileUrl, // S3 Presigned URL 생성
+                        (existing, replacement) -> existing
+                ));
+
+        return teumConverter.toConflictingRequestResponse(conflicts, profileUrlMap);
     }
 
 
