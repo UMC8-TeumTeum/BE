@@ -141,14 +141,14 @@ public class NotificationEnumTest {
     // given
     RelatedEntityType[] values = RelatedEntityType.values();
     // when
-    assertEquals(5, values.length);
+    assertEquals(6, values.length);
     // then
     assertNotNull(RelatedEntityType.valueOf("NONE"));
     assertNotNull(RelatedEntityType.valueOf("TEUM_REQUEST"));
     assertNotNull(RelatedEntityType.valueOf("TEUM_RESPONSE"));
     assertNotNull(RelatedEntityType.valueOf("SCHEDULE"));
     assertNotNull(RelatedEntityType.valueOf("FRIEND"));
-
+    assertNotNull(RelatedEntityType.valueOf("REMINDER"));
   }
 
 

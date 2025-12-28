@@ -11,7 +11,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
+import umc.teumteum.server.domain.home.entity.enums.DispatchStatus;
+import umc.teumteum.server.domain.home.repository.ScheduleReminderRepository;
+import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.notification.converter.NotificationConverter;
 import umc.teumteum.server.domain.notification.dto.NotificationResponseDto;
 import umc.teumteum.server.domain.notification.entity.Notification;
@@ -31,6 +35,7 @@ public class NotificationServiceImpl implements NotificationService {
   private final TeumResponseRepository teumResponseRepository;
   private final TeumRequestRepository teumRequestRepository;
   private final FriendRepository friendRepository;
+  private final ScheduleReminderRepository scheduleReminderRepository;
 
   private final S3Util s3Util;
 
@@ -91,4 +96,25 @@ public class NotificationServiceImpl implements NotificationService {
     return exists;
   }
 
+  // DispatchStatus 업데이트
+  @Transactional
+  @Override
+  public void updateDispatchStatus(List<Long> sentIds, List<Long> failIds) {
+
+    if (sentIds != null && !sentIds.isEmpty()) {
+      scheduleReminderRepository.updateDispatchStatusByIds(
+              sentIds,
+              DispatchStatus.PROCESSING,
+              DispatchStatus.SENT
+      );
+    }
+    if (failIds != null && !failIds.isEmpty()) {
+      scheduleReminderRepository.updateDispatchStatusByIds(
+              failIds,
+              DispatchStatus.PROCESSING,
+              DispatchStatus.FAILED
+      );
+    }
+
+  }
 }

@@ -847,7 +847,7 @@ public class HomeServiceImpl implements HomeService {
 
         // 3. 필드 업데이트
         for(ScheduleReminder reminder : reminders){
-            reminder.updateStatus(alarmStatus);
+            reminder.updateStatus(alarmStatus, LocalDateTime.now());
         }
     }
 
