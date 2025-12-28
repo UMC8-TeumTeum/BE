@@ -326,6 +326,9 @@ public class TeumResponseDto {
         @Schema(description = "수신자 닉네임 (누구에게 보낸 요청인지)", example = "디자이너 수박")
         private String receiverNickname;
 
+        @Schema(description = "수신자 프로필 이미지 URL", example = "https://example.com")
+        private String receiverProfileImageUrl;
+
         @Schema(description = "틈 요청 제목", example = "디자인 회의")
         private String title;
 

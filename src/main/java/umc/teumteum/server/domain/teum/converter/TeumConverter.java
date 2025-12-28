@@ -401,17 +401,24 @@ public class TeumConverter {
     }
 
     // 충돌 틈 요청 리스트 응답 DTO 반환
-    public TeumResponseDto.ConflictingRequestResponse toConflictingRequestResponse(List<TeumRequest> requests) {
+    public TeumResponseDto.ConflictingRequestResponse toConflictingRequestResponse(
+            List<TeumRequest> requests,
+            Map<Long, String> profileUrlMap // 각 유저 ID별 프로필 URL 맵 추가
+    ) {
         List<TeumResponseDto.ConflictingRequest> conflictDtos = requests.stream()
-                .map(req -> TeumResponseDto.ConflictingRequest.builder()
-                        .id(req.getId())
-                        .receiverNickname(maskedNickName(req.getTeumResponses().get(0).getReceiverUser()))
-                        .title(req.getTitle())
-                        .description(req.getDescription())
-                        .startTime(req.getStartTime().format(TIME_FORMATTER))
-                        // [수정] 종료 시간 포맷팅 시 별도 메서드 사용
-                        .endTime(formatEndTime(req.getEndTime()))
-                        .build())
+                .map(req -> {
+                    User receiver = req.getTeumResponses().get(0).getReceiverUser(); // 수신자 추출
+
+                    return TeumResponseDto.ConflictingRequest.builder()
+                            .id(req.getId())
+                            .receiverNickname(maskedNickName(receiver)) // 닉네임 유지
+                            .receiverProfileImageUrl(profileUrlMap.get(receiver.getId())) // 프로필 이미지 추가
+                            .title(req.getTitle())
+                            .description(req.getDescription())
+                            .startTime(req.getStartTime().format(TIME_FORMATTER))
+                            .endTime(formatEndTime(req.getEndTime()))
+                            .build();
+                })
                 .toList();
 
         return TeumResponseDto.ConflictingRequestResponse.builder()
