@@ -3,6 +3,7 @@ package umc.teumteum.server.domain.friend.repository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.friend.entity.Block;
@@ -20,4 +21,9 @@ public interface BlockRepository extends JpaRepository<Block, Long> {
     // 목록 조회: 내가 차단한 목록을 페이징(Slice)으로 조회
     @Query("SELECT b FROM Block b JOIN FETCH b.blocked WHERE b.blocker.id = :blockerId")
     Slice<Block> findByBlockerId(@Param("blockerId") Long blockerId, Pageable pageable);
+
+    // 삭제
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM Block b WHERE b.blocker.id = :userId or b.blocked.id = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }

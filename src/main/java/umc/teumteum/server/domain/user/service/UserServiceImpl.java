@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -53,12 +54,14 @@ import umc.teumteum.server.domain.user.repository.RemindAlarmJdbcRepository;
 import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
 import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.domain.user.util.UserDataCleaner;
 import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.dto.TimeRange;
 import umc.teumteum.server.global.jwt.JwtProvider;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -68,16 +71,16 @@ public class UserServiceImpl implements UserService {
     private final NotificationSettingRepository notificationSettingRepository;
     private final S3Util s3Util;
     private final JwtProvider jwtProvider;
-
-    @Resource(name = "profileImageRedisTemplate")
-    private RedisTemplate<String, String> profileImageRedisTemplate;
-
     private final RoutineRepository routineRepository;
     private final TimeUtil timeUtil;
     private final ScheduleRepository scheduleRepository;
     private final RemindAlarmRepository remindAlarmRepository;
     private final ScheduleReminderRepository scheduleReminderRepository;
     private final RemindAlarmJdbcRepository remindAlarmJdbcRepository;
+    private final UserDataCleaner userDataCleaner;
+
+    @Resource(name = "profileImageRedisTemplate")
+    private RedisTemplate<String, String> profileImageRedisTemplate;
 
     private static final Set<Integer> ALLOWED_REMIND_ALARM_VALUES = Set.of(1, 3, 5, 10, 30);
 
@@ -542,5 +545,45 @@ public class UserServiceImpl implements UserService {
             List<RemindAlarm> alarmsToAdd = OnboardingConverter.toRemindAlarmList(new ArrayList<>(toAdd), user);
             remindAlarmJdbcRepository.batchInsertRemindAlarms(alarmsToAdd);
         }
+    }
+
+    // 회원탈퇴
+    @Transactional
+    @Override
+    public void deleteUser(User user) {
+        User u = userRepository.findById(user.getId())
+                .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
+
+        // 1. 유저 관련 데이터 삭제
+        userDataCleaner.clean(u.getId());
+
+        // 2. 프로필 이미지 삭제
+        deleteUserImage(u);
+
+        // 3. 유저 익명화
+        u.withdraw();
+    }
+
+    /**
+     * 유저 프로필 삭제 헬퍼 메서드
+     */
+    public void deleteUserImage(User user) {
+
+        String oldFileName = user.getProfileImageName();
+
+        // 1. default 이미지 -> 삭제하지 않고 통과
+        if(oldFileName == null || oldFileName.equals(DEFAULT_IMAGE)){
+            return;
+        }
+
+        // 2. 기존 객체 삭제
+        try{
+            s3Util.deleteObject("profile/" + oldFileName);
+        } catch(Exception e){
+            log.warn("S3 profile delete failed. userId={}, file={}", user.getId(), oldFileName, e);
+        }
+
+        // 3. DB 저장 키 교체 (S3 Key -> default)
+        user.updateProfileImageName(DEFAULT_IMAGE);
     }
 }

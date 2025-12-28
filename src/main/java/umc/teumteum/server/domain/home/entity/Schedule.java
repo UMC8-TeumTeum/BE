@@ -91,7 +91,7 @@ public class Schedule extends BaseEntity {
     /*
         양방향 연관관계
     */
-    @OneToMany(mappedBy = "schedule", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "schedule", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ScheduleReminder> scheduleReminders = new ArrayList<>();
 
     public void updateField(HomeRequestDto.TodoRequestDto dto) {

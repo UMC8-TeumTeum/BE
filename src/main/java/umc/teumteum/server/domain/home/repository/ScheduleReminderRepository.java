@@ -17,6 +17,10 @@ public interface ScheduleReminderRepository extends JpaRepository<ScheduleRemind
     void deleteByScheduleId(Long scheduleId);
     List<ScheduleReminder> findByScheduleIdIn(List<Long> scheduleIds);
 
+    @Modifying(clearAutomatically = true,flushAutomatically = true)
+    @Query("DELETE FROM ScheduleReminder sr WHERE sr.schedule.user.id = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
+
     // 발송 대상 조회
     @Query("""
         select r from ScheduleReminder r

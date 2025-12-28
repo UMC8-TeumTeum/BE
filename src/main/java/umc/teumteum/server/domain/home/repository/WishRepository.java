@@ -3,7 +3,9 @@ package umc.teumteum.server.domain.home.repository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.home.entity.Wish;
 import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
 import umc.teumteum.server.domain.user.entity.User;
@@ -38,4 +40,7 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
         "WHERE w.user = :user AND LOWER(c.name) LIKE LOWER(CONCAT('%', :categoryName, '%'))")
     List<Wish> findByUserAndCategoryLike(User user, String categoryName);
 
+    @Modifying(clearAutomatically = true,flushAutomatically = true)
+    @Query("DELETE FROM Wish w WHERE w.user.id = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }

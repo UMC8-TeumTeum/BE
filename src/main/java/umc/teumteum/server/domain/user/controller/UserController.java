@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import umc.teumteum.server.domain.auth.service.AuthService;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.dto.UserRequestDto;
@@ -29,6 +30,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final AuthService authService;
 
     @Operation(
             summary = "닉네임 사용자 검색",
@@ -199,7 +201,7 @@ public class UserController {
     }
 
     @Operation(
-            summary = "마페이지 리마인드 알림 수정",
+            summary = "마이페이지 리마인드 알림 수정",
             description = "마이페이지에서 리마인드 알림을 수정합니다. 등록하려는 정보가 없을 경우 빈배열로 호출합니다."
     )
     @PatchMapping(value = "/mypage/reminders", produces = "application/json")
@@ -209,5 +211,19 @@ public class UserController {
     ){
         userService.updateReminders(request, user);
         return ApiResponse.of(UserSuccessStatus._REMIND_ALARM_UPDATED, null);
+    }
+
+    @Operation(
+            summary = "마이페이지 회원 탈퇴",
+            description = "마이페이지에서 회원을 탈퇴합니다."
+    )
+    @DeleteMapping(value = "/mypage", produces = "application/json")
+    public ApiResponse<Object> deleteUser(
+            HttpServletRequest httpServletRequest,
+            @CurrentUser @Parameter(hidden = true) User user
+    ){
+        authService.logout(httpServletRequest, user);
+        userService.deleteUser(user);
+        return ApiResponse.of(UserSuccessStatus._USER_DELETED, null);
     }
 }
