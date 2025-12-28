@@ -654,11 +654,12 @@ public class TeumServiceImpl implements TeumService {
         );
 
         Map<Long, String> profileUrlMap = conflicts.stream()
-                .map(req -> req.getTeumResponses().get(0).getReceiverUser()) // 수신자 추출
-                .distinct()
+                .flatMap(req -> req.getTeumResponses().stream()) // 모든 응답 스트림으로 평탄화
+                .map(TeumResponse::getReceiverUser)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toMap(
                         User::getId,
-                        this::toProfileUrl, // S3 Presigned URL 생성
+                        this::toProfileUrl,
                         (existing, replacement) -> existing
                 ));
 
