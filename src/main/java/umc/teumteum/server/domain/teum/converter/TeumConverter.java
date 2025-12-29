@@ -334,7 +334,7 @@ public class TeumConverter {
             switch (response.getStatus()) {
                 case PENDING -> pending.add(participant);
                 case ACCEPTED -> accepted.add(participant);
-                case REJECTED, LEFT -> cancelled.add(participant);
+                case REJECTED, LEFT, REPORTED -> cancelled.add(participant);
                 case RESEND -> resend.add(participant);
             }
         }
