@@ -19,6 +19,8 @@ public class DiscordServiceImpl implements DiscordService {
 
     private final RestTemplate restTemplate;
 
+    private static final int DISCORD_REPORT_COLOR = 15158332;
+
     @Override
     @Async
     public void sendReportNotification(Long reportId, String targetType, Long targetId, String reasonTitle) {
@@ -31,7 +33,7 @@ public class DiscordServiceImpl implements DiscordService {
         DiscordMessageDto.Embed embed = DiscordMessageDto.Embed.builder()
                 .title("🚨 새로운 신고가 접수되었습니다")
                 .description("관리자 페이지에서 상세 내용을 확인해주세요.")
-                .color(15158332)
+                .color(DISCORD_REPORT_COLOR)
                 .fields(fields)
                 .build();
 
