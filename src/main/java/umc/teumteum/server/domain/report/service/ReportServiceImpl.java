@@ -71,7 +71,6 @@ public class ReportServiceImpl implements ReportService {
         discordService.sendReportNotification(
                 savedReport.getId(),
                 savedReport.getTargetType().name(),
-                request.getTargetId(),
                 reason.getTitle()
         );
     }

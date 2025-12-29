@@ -23,7 +23,7 @@ public class DiscordServiceImpl implements DiscordService {
 
     @Override
     @Async
-    public void sendReportNotification(Long reportId, String targetType, Long targetId, String reasonTitle) {
+    public void sendReportNotification(Long reportId, String targetType, String reasonTitle) {
         List<DiscordMessageDto.Field> fields = List.of(
                 new DiscordMessageDto.Field("신고 번호", "#" + reportId, true),
                 new DiscordMessageDto.Field("대상 타입", targetType, true),
