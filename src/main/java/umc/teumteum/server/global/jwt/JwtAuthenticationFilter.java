@@ -9,21 +9,19 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.exception.InvalidTokenTypeException;
 import umc.teumteum.server.global.exception.TokenBlacklistException;
-
-import java.io.IOException;
 
 @Slf4j
 @Component
@@ -31,7 +29,6 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-    private final CustomUserDetailsService userDetailsService;
 
     @Resource(name = "atBlacklistRedisTemplate")
     private RedisTemplate<String, String> atBlacklistRedisTemplate;
@@ -46,11 +43,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (token != null) {
                 // 2. 액세스 토큰 유효성 검증
-                    jwtProvider.validateAccessToken(token);
+                jwtProvider.validateAccessToken(token);
 
                 // 3. 토큰에서 사용자ID & 세션ID 추출
                 String userId = jwtProvider.getUserIdFromToken(token);
                 String sessionId = jwtProvider.getSessionIdFromToken(token);
+                String userRole = jwtProvider.getUserRoleFromToken(token);
 
                 // 4. Redis 블랙리스트 확인 (있으면 -> 재로그인 필요)
                 String blacklistKey = String.format("AT_BLACKLIST:%s:%s", userId, sessionId);
@@ -59,14 +57,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     throw new TokenBlacklistException("블랙리스트된 토큰입니다.");
                 }
 
-                // 5. UserDetails 로드
-                UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
-
-                // 6. Authentication 객체 생성
+                // 5. Authentication 객체 생성
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                        new UsernamePasswordAuthenticationToken(userId, null, List.of(new SimpleGrantedAuthority(userRole)));
 
-                // 7. SecurityContext에 인증 정보 설정
+                // 6. SecurityContext에 인증 정보 설정
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
@@ -94,10 +89,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 유효하지 않은 AT 예외 (커스텀)
             case TokenBlacklistException blacklist -> ErrorStatus.ACCESS_TOKEN_BLACKLISTED;
-
-            // 사용자 인증 과정 예외
-            case DisabledException disabled -> ErrorStatus.INACTIVE_USER;
-            case UsernameNotFoundException notFound -> ErrorStatus.USER_NOT_FOUND;
 
             default -> ErrorStatus._UNAUTHORIZED;
         };

@@ -13,6 +13,7 @@ import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.exception.status.TeumErrorStatus;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 import umc.teumteum.server.global.exception.GeneralException;
 import umc.teumteum.server.global.util.TimeUtil;
 
@@ -33,7 +34,7 @@ public class TeumConverter {
 
     private final TimeUtil timeUtil;
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
-
+    private static final String WITHDRAWN_USER_NICKNAME = "탈퇴한 사용자";
     public TeumRequest toTeumRequest(TeumRequestDto.TeumRequest dto, User sender) {
         return TeumRequest.builder()
                 .title(dto.getTitle())
@@ -92,7 +93,7 @@ public class TeumConverter {
                 .receiverCount(request.getTeumResponses().size())
                 .senderUser(ParticipantDto.builder()
                         .userId(sender.getId())
-                        .nickname(sender.getNickname())
+                        .nickname(maskedNickName(sender))
                         .profileImageUrl(senderProfileImageUrl)
                         .build())
                 .date(request.getDate().toString())
@@ -271,7 +272,7 @@ public class TeumConverter {
                 .participants(relatedSchedules.stream()
                         .map(s -> {
                             var u = s.getUser();
-                            return new ParticipantDto(u.getId(), u.getNickname(), profileUrlByUserId.get(u.getId()));
+                            return new ParticipantDto(u.getId(), maskedNickName(u), profileUrlByUserId.get(u.getId()));
                         })
                         .collect(Collectors.toList()))
                 .build();
@@ -333,7 +334,7 @@ public class TeumConverter {
             switch (response.getStatus()) {
                 case PENDING -> pending.add(participant);
                 case ACCEPTED -> accepted.add(participant);
-                case REJECTED, LEFT -> cancelled.add(participant);
+                case REJECTED, LEFT, REPORTED -> cancelled.add(participant);
                 case RESEND -> resend.add(participant);
             }
         }
@@ -377,7 +378,7 @@ public class TeumConverter {
     private ParticipantDto toParticipantDto(User user, String profileImageUrl) {
         return ParticipantDto.builder()
                 .userId(user.getId())
-                .nickname(user.getNickname())
+                .nickname(maskedNickName(user))
                 .profileImageUrl(profileImageUrl)
                 .build();
     }
@@ -400,17 +401,24 @@ public class TeumConverter {
     }
 
     // 충돌 틈 요청 리스트 응답 DTO 반환
-    public TeumResponseDto.ConflictingRequestResponse toConflictingRequestResponse(List<TeumRequest> requests) {
+    public TeumResponseDto.ConflictingRequestResponse toConflictingRequestResponse(
+            List<TeumRequest> requests,
+            Map<Long, String> profileUrlMap // 각 유저 ID별 프로필 URL 맵 추가
+    ) {
         List<TeumResponseDto.ConflictingRequest> conflictDtos = requests.stream()
-                .map(req -> TeumResponseDto.ConflictingRequest.builder()
-                        .id(req.getId())
-                        .receiverNickname(req.getTeumResponses().get(0).getReceiverUser().getNickname())
-                        .title(req.getTitle())
-                        .description(req.getDescription())
-                        .startTime(req.getStartTime().format(TIME_FORMATTER))
-                        // [수정] 종료 시간 포맷팅 시 별도 메서드 사용
-                        .endTime(formatEndTime(req.getEndTime()))
-                        .build())
+                .map(req -> {
+                    User receiver = req.getTeumResponses().get(0).getReceiverUser(); // 수신자 추출
+
+                    return TeumResponseDto.ConflictingRequest.builder()
+                            .id(req.getId())
+                            .receiverNickname(maskedNickName(receiver)) // 닉네임 유지
+                            .receiverProfileImageUrl(profileUrlMap.get(receiver.getId())) // 프로필 이미지 추가
+                            .title(req.getTitle())
+                            .description(req.getDescription())
+                            .startTime(req.getStartTime().format(TIME_FORMATTER))
+                            .endTime(formatEndTime(req.getEndTime()))
+                            .build();
+                })
                 .toList();
 
         return TeumResponseDto.ConflictingRequestResponse.builder()
@@ -426,6 +434,17 @@ public class TeumConverter {
             return "24:00";
         }
         return time.format(TIME_FORMATTER);
+    }
+
+    // 회원 익명화 헬퍼 메서드
+    private String maskedNickName(User user){
+        if(user == null){
+            return WITHDRAWN_USER_NICKNAME;
+        }
+        if(user.getStatus() == UserStatus.INACTIVE){
+            return WITHDRAWN_USER_NICKNAME;
+        }
+        return user.getNickname();
     }
 
 }

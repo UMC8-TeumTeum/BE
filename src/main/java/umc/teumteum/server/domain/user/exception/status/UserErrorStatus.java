@@ -14,6 +14,7 @@ public enum UserErrorStatus implements BaseErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER4040", "존재하지 않는 사용자입니다."),
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "USER4041","사용자의 알림 설정 정보를 찾을 수 없습니다."),
     ROUTINE_NOT_FOUND(HttpStatus.NOT_FOUND,"USER4042","사용자의 반복일정 정보를 찾을 수 없습니다."),
+    USER_DELETED(HttpStatus.NOT_FOUND,"USER4043","탈퇴한 사용자입니다."),
 
 
     // 사용자 온보딩

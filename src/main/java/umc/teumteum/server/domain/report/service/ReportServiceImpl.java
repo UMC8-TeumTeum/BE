@@ -13,9 +13,13 @@ import umc.teumteum.server.domain.report.exception.status.ReportErrorStatus;
 import umc.teumteum.server.domain.report.repository.ReportReasonRepository;
 import umc.teumteum.server.domain.report.repository.ReportRepository;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
+import umc.teumteum.server.domain.teum.entity.TeumResponse;
+import umc.teumteum.server.domain.teum.entity.enums.ResponseStatus;
 import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
+import umc.teumteum.server.domain.teum.repository.TeumResponseRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.global.infra.discord.service.DiscordService;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +30,9 @@ public class ReportServiceImpl implements ReportService {
     private final ReportReasonRepository reportReasonRepository;
     private final UserRepository userRepository;
     private final TeumRequestRepository teumRequestRepository;
+    private final TeumResponseRepository teumResponseRepository;
+
+    private final DiscordService discordService;
 
     @Override
     public void createReport(User reporter, ReportRequestDto.CreateReport request) {
@@ -56,14 +63,41 @@ public class ReportServiceImpl implements ReportService {
         } else if (request.getTargetType() == TargetType.TEUM_REQUEST) {
             targetTeum = teumRequestRepository.findById(request.getTargetId())
                     .orElseThrow(() -> new ReportException(ReportErrorStatus.REPORT_TARGET_NOT_FOUND));
+
+            if (reporter.getId().equals(targetTeum.getUser().getId())) {
+                throw new ReportException(ReportErrorStatus.REPORT_SELF_NOT_ALLOWED);
+            }
+
+            // 신고자의 응답 상태를 REPORTED로 변경
+            handleTeumRequestReport(reporter, targetTeum);
         } else {
             throw new ReportException(ReportErrorStatus.REPORT_INVALID_TARGET_TYPE);
         }
 
-        // Report 생성
+        // Report 생성 및 저장
         Report newReport = ReportConverter.toReport(reporter, request, reason, targetUser, targetTeum);
+        Report savedReport = reportRepository.save(newReport);
 
-        // 저장
-        reportRepository.save(newReport);
+        // 디스코드 알림 발송
+        discordService.sendReportNotification(
+                savedReport.getId(),
+                savedReport.getTargetType().name(),
+                reason.getTitle()
+        );
+    }
+
+    /**
+     * 틈 요청 신고 시 신고자의 홈에서 숨기기 위한 처리
+     */
+    private void handleTeumRequestReport(User reporter, TeumRequest targetTeum) {
+        TeumResponse response = teumResponseRepository.findRequestAndReceiver(targetTeum.getId(), reporter.getId())
+                .orElseThrow(() -> new ReportException(ReportErrorStatus.REPORT_TARGET_NOT_FOUND));
+
+        if (response.getStatus() != ResponseStatus.PENDING) {
+            throw new ReportException(ReportErrorStatus.REPORT_INVALID_STATUS); // 혹은 적절한 에러 코드
+        }
+
+        // 상태를 REPORTED로 변경
+        response.changeStatus(ResponseStatus.REPORTED);
     }
 }

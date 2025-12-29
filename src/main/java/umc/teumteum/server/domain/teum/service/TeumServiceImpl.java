@@ -26,6 +26,7 @@ import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
 import umc.teumteum.server.domain.teum.repository.TeumResponseRepository;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
@@ -80,6 +81,9 @@ public class TeumServiceImpl implements TeumService {
         // 수신자 조회 (단일 사용자)
         User receiver = getUserOrThrow(dto.getReceiverUserId());
 
+        // 수신자가 ACTIVE 유저인지 검증
+        validActiveUser(receiver);
+
         // 차단 관계 검증 (요청자 <-> 수신자)
         validateBlockRelationship(user, receiver);
 
@@ -117,7 +121,10 @@ public class TeumServiceImpl implements TeumService {
     @Override
     @Transactional
     public Long createResendRequest(Long parentRequestId, TeumRequestDto.TeumResend dto, User user) {
-        // 원본 요청 확인 및 권한 검증
+      // 재요청자 ACTIVE 검증
+      validActiveUser(user);
+
+      // 원본 요청 확인 및 권한 검증
         TeumRequest parent = findActiveRequestOrThrow(parentRequestId);
         validateResendableRequest(parent);
         validateResender(parent, user.getId());
@@ -134,6 +141,7 @@ public class TeumServiceImpl implements TeumService {
         validateStartTimeNotPast(date, startTime);
 
         User originalSender = parent.getUser();  // 부모 요청의 작성자 → 이번 재요청의 수신자
+        validActiveUser(originalSender); // 기존 요청자가 ACTIVE인지 검증
 
         // 차단 관계 검증 (재요청자 <-> 기존 요청자)
         validateBlockRelationship(user, originalSender);
@@ -645,7 +653,17 @@ public class TeumServiceImpl implements TeumService {
                 LocalTime.MIDNIGHT
         );
 
-        return teumConverter.toConflictingRequestResponse(conflicts);
+        Map<Long, String> profileUrlMap = conflicts.stream()
+                .flatMap(req -> req.getTeumResponses().stream()) // 모든 응답 스트림으로 평탄화
+                .map(TeumResponse::getReceiverUser)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        User::getId,
+                        this::toProfileUrl,
+                        (existing, replacement) -> existing
+                ));
+
+        return teumConverter.toConflictingRequestResponse(conflicts, profileUrlMap);
     }
 
 
@@ -697,6 +715,15 @@ public class TeumServiceImpl implements TeumService {
     private void validateUserExists(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new GlobalHandler(UserErrorStatus.USER_NOT_FOUND);
+        }
+    }
+
+    /**
+     * 사용자가 INACTIVE인 경우 USER_NOT_FOUND 에러를 발생시킵니다.
+     */
+    private void validActiveUser(User user) {
+        if(user.getStatus() == UserStatus.INACTIVE){
+            throw new GlobalHandler(UserErrorStatus.USER_DELETED);
         }
     }
 

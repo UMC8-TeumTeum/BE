@@ -1,8 +1,25 @@
 package umc.teumteum.server.domain.user.service;
 
+import static umc.teumteum.server.domain.user.util.ImageConstants.ALLOWED_IMAGE_TYPES;
+import static umc.teumteum.server.domain.user.util.ImageConstants.DEFAULT_IMAGE;
+
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -27,25 +44,24 @@ import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.domain.user.exception.OnboardingException;
 import umc.teumteum.server.domain.user.exception.UserException;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
-import umc.teumteum.server.domain.user.repository.*;
+import umc.teumteum.server.domain.user.repository.NotificationSettingRepository;
+import umc.teumteum.server.domain.user.repository.RemindAlarmJdbcRepository;
+import umc.teumteum.server.domain.user.repository.RemindAlarmRepository;
+import umc.teumteum.server.domain.user.repository.RoutineRepository;
+import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.domain.user.util.UserDataCleaner;
+import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.dto.TimeRange;
 import umc.teumteum.server.global.jwt.JwtProvider;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.global.util.TimeUtil;
 
-import static umc.teumteum.server.domain.user.util.ImageConstants.ALLOWED_IMAGE_TYPES;
-import static umc.teumteum.server.domain.user.util.ImageConstants.DEFAULT_IMAGE;
-
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.*;
-import java.util.stream.Collectors;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -55,16 +71,16 @@ public class UserServiceImpl implements UserService {
     private final NotificationSettingRepository notificationSettingRepository;
     private final S3Util s3Util;
     private final JwtProvider jwtProvider;
-
-    @Resource(name = "profileImageRedisTemplate")
-    private RedisTemplate<String, String> profileImageRedisTemplate;
-
     private final RoutineRepository routineRepository;
     private final TimeUtil timeUtil;
     private final ScheduleRepository scheduleRepository;
     private final RemindAlarmRepository remindAlarmRepository;
     private final ScheduleReminderRepository scheduleReminderRepository;
     private final RemindAlarmJdbcRepository remindAlarmJdbcRepository;
+    private final UserDataCleaner userDataCleaner;
+
+    @Resource(name = "profileImageRedisTemplate")
+    private RedisTemplate<String, String> profileImageRedisTemplate;
 
     private static final Set<Integer> ALLOWED_REMIND_ALARM_VALUES = Set.of(1, 3, 5, 10, 30);
 
@@ -89,24 +105,29 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User findOrCreateUser(OAuthUserInfo userInfo) {
-
         SocialType socialType = userInfo.getSocialType();
         String socialId = userInfo.getSocialId();
         String email = userInfo.getEmail();
 
         return userRepository.findBySocialTypeAndSocialId(socialType, socialId)
+                // 이미 존재하는 경우
+                .map(user -> {
+                    if (user.getStatus() == UserStatus.INACTIVE) {
+                        throw new UserException(ErrorStatus.INACTIVE_USER);
+                    }
+                    return user;
+                })
+                // 존재하지 않는 경우
                 .orElseGet(() -> {
-                    // 1. User 생성
+                    // 1) User 생성
                     User newUser = User.builder()
                             .socialType(socialType)
                             .socialId(socialId)
                             .email(email)
-                            .build()
-                            ;
-
+                            .build();
                     User savedUser = userRepository.save(newUser);
 
-                    // 2. NotificationSetting 생성
+                    // 2) NotificationSetting 생성
                     NotificationSetting notificationSetting = NotificationSetting.builder()
                             .user(savedUser)
                             .teum(true)
@@ -524,5 +545,45 @@ public class UserServiceImpl implements UserService {
             List<RemindAlarm> alarmsToAdd = OnboardingConverter.toRemindAlarmList(new ArrayList<>(toAdd), user);
             remindAlarmJdbcRepository.batchInsertRemindAlarms(alarmsToAdd);
         }
+    }
+
+    // 회원탈퇴
+    @Transactional
+    @Override
+    public void deleteUser(User user) {
+        User u = userRepository.findById(user.getId())
+                .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
+
+        // 1. 유저 관련 데이터 삭제
+        userDataCleaner.clean(u.getId());
+
+        // 2. 프로필 이미지 삭제
+        deleteUserImage(u);
+
+        // 3. 유저 익명화
+        u.withdraw();
+    }
+
+    /**
+     * 유저 프로필 삭제 헬퍼 메서드
+     */
+    public void deleteUserImage(User user) {
+
+        String oldFileName = user.getProfileImageName();
+
+        // 1. default 이미지 -> 삭제하지 않고 통과
+        if(oldFileName == null || oldFileName.equals(DEFAULT_IMAGE)){
+            return;
+        }
+
+        // 2. 기존 객체 삭제
+        try{
+            s3Util.deleteObject("profile/" + oldFileName);
+        } catch(Exception e){
+            log.warn("S3 profile delete failed. userId={}, file={}", user.getId(), oldFileName, e);
+        }
+
+        // 3. DB 저장 키 교체 (S3 Key -> default)
+        user.updateProfileImageName(DEFAULT_IMAGE);
     }
 }

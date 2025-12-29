@@ -8,7 +8,7 @@ import umc.teumteum.server.domain.user.entity.User;
 public interface AuthService {
     AuthResponseDto.LoginResponse socialLogin(String socialType, AuthRequestDto.SocialLoginRequest request);
 
-    AuthResponseDto.DevTokenResponse generateDevAccessToken();
+    AuthResponseDto.DevTokenResponse generateDevTokens();
 
     AuthResponseDto.ReissueResponse reissueToken(AuthRequestDto.ReissueRequest request);
 

@@ -1,7 +1,23 @@
 package umc.teumteum.server.domain.user.entity;
 
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,11 +33,6 @@ import umc.teumteum.server.domain.user.entity.enums.UserRole;
 import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.global.common.BaseEntity;
-
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
@@ -144,14 +155,28 @@ public class User extends BaseEntity {
         this.profileImageName = profileImageName;
     }
 
-    public void clearSleepPattern() {
-        this.sleepTime = null;
-        this.wakeTime = null;
-    }
-
     public void updateProfile(String nickname, String jobField, Boolean timePublic) {
         this.nickname = nickname;
         this.job = jobField;
         this.timePublic = timePublic;
+    }
+
+    // 회원 탈퇴
+    public void withdraw(){
+        this.status = UserStatus.INACTIVE;
+        this.inactiveAt = LocalDateTime.now();
+
+        String token = UUID.randomUUID().toString();
+
+        this.socialId = "deleted-" + this.id + "-" + token;
+        this.email = "deleted-" + this.id + "-" + token + "@deleted.local";
+
+        this.nickname = "탈퇴회원-" + this.id + "-" + token.substring(0, 8);
+        this.sleepTime = null;
+        this.wakeTime = null;
+        this.job = null;
+        this.timePublic = false;
+
+        this.profileImageName = DEFAULT_PROFILE_IMAGE;
     }
 }

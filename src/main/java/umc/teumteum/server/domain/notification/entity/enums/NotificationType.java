@@ -10,6 +10,9 @@ public enum NotificationType {
   // 투두
   DAILY_TODO("오늘의 투두를 알려드려요", "오늘의 투두가 도착했어요!", RelatedEntityType.NONE),             // 9시에 보내는 투두 알림
 
+  // 리마인드 알림
+  REMIND_ALARM("곧 일정이 시작돼요!","곧 일정이 시작돼요!",RelatedEntityType.REMINDER), // 개별 투두 리마인드 알림
+
   // 친구
   TEUM_REQUEST("친구와의 요청에 새로운 소식이 있어요", "새롭게 온 요청이 있어요!", RelatedEntityType.TEUM_REQUEST),// 틈 요청이 새롭게 왔을 때
   TEUM_ACCEPTED("친구와의 요청에 새로운 소식이 있어요", "친구가 요청을 수락했어요!", RelatedEntityType.TEUM_RESPONSE),// 친구에게 보낸 틈 요청이 수락

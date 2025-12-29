@@ -6,7 +6,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
+import umc.teumteum.server.domain.home.entity.enums.DispatchStatus;
 import umc.teumteum.server.global.common.BaseEntity;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -32,10 +35,37 @@ public class ScheduleReminder extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private AlarmStatus alarmStatus = AlarmStatus.INACTIVE;
 
+    @Column(name = "send_at")
+    private LocalDateTime sendAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "dispatch_status", nullable = false)
+    @Builder.Default
+    private DispatchStatus dispatchStatus = DispatchStatus.PENDING;
+
+
+
     /**
      *  필드 변경 메소드
      */
-    public void updateStatus(AlarmStatus alarmStatus) {
+    public void updateStatus(AlarmStatus alarmStatus, LocalDateTime now) {
+
         this.alarmStatus = alarmStatus;
+
+        // 이미 전송되었거나 발송 중인 경우
+        if (this.dispatchStatus == DispatchStatus.SENT
+                || this.dispatchStatus == DispatchStatus.PROCESSING) {
+            return;
+        }
+
+        // INACTIVE인 경우
+        if(alarmStatus == AlarmStatus.INACTIVE){
+            this.dispatchStatus = DispatchStatus.SKIPPED;
+            return;
+        }
+
+        // ACTIVE인 경우
+        this.dispatchStatus = (this.sendAt != null && this.sendAt.isAfter(now))
+                ? DispatchStatus.PENDING : DispatchStatus.SKIPPED;
     }
 }

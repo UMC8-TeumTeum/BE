@@ -8,15 +8,13 @@ import umc.teumteum.server.domain.home.dto.response.HomeResponseDto;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.Wish;
-import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
-import umc.teumteum.server.domain.home.entity.enums.RoutineStatus;
-import umc.teumteum.server.domain.home.entity.enums.ScheduleStatus;
-import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
+import umc.teumteum.server.domain.home.entity.enums.*;
 import umc.teumteum.server.domain.user.entity.RemindAlarm;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
@@ -41,12 +39,16 @@ public class ScheduleConverter {
 
     //  DTO의 remindAlarm 리스트 -> ScheduleReminder
     public List<ScheduleReminder> toScheduleReminders(Schedule schedule, List<HomeRequestDto.ReminderAlarmDto> remindAlarm) {
+        if (remindAlarm == null || remindAlarm.isEmpty()) {
+            return List.of();
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
         return remindAlarm.stream()
-                .map(item -> ScheduleReminder.builder()
-                        .schedule(schedule)
-                        .reminderTime(item.getAlarm())
-                        .alarmStatus(item.getStatus())
-                        .build())
+                .map(item -> toScheduleReminder(
+                        schedule, item.getAlarm(), item.getStatus(), now
+                ))
                 .toList();
     }
 
@@ -55,12 +57,12 @@ public class ScheduleConverter {
         if(remindAlarm == null || remindAlarm.isEmpty()){
             return List.of();
         }
+        LocalDateTime now = LocalDateTime.now();
+
         return remindAlarm.stream()
-                .map(item -> ScheduleReminder.builder()
-                    .schedule(schedule)
-                    .reminderTime(item.getMinutesBefore())
-                    .alarmStatus(alarmStatus)
-                    .build())
+                .map(item -> toScheduleReminder(
+                        schedule, item.getMinutesBefore(), alarmStatus, now
+                ))
                 .toList();
     }
 
@@ -261,5 +263,26 @@ public class ScheduleConverter {
                 .build();
     }
 
+    /**
+     * helper 메소드 : shcedule reminder 변환
+     */
+    private static ScheduleReminder toScheduleReminder(
+            Schedule schedule, int minutesBefore, AlarmStatus alarmStatus, LocalDateTime now
+    ){
+        LocalDateTime sendAt = schedule.getStartTime().minusMinutes(minutesBefore);
+
+        DispatchStatus dispatchStatus =
+                (alarmStatus == AlarmStatus.ACTIVE && sendAt.isAfter(now))
+                        ? DispatchStatus.PENDING
+                        : DispatchStatus.SKIPPED;
+
+        return ScheduleReminder.builder()
+                .schedule(schedule)
+                .reminderTime(minutesBefore)
+                .alarmStatus(alarmStatus)
+                .sendAt(sendAt)
+                .dispatchStatus(dispatchStatus)
+                .build();
+    }
 
 }

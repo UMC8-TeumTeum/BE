@@ -354,4 +354,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     // 루틴Id로 스케줄 조회
     List<Schedule> findByRoutineId(Long routineId);
+
+    @Modifying(clearAutomatically = true,flushAutomatically = true)
+    @Query("DELETE FROM Schedule s WHERE s.user.id = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }
