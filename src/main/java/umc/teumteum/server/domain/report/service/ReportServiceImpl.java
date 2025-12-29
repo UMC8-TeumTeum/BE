@@ -16,6 +16,7 @@ import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.repository.UserRepository;
+import umc.teumteum.server.global.infra.discord.service.DiscordService;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +27,8 @@ public class ReportServiceImpl implements ReportService {
     private final ReportReasonRepository reportReasonRepository;
     private final UserRepository userRepository;
     private final TeumRequestRepository teumRequestRepository;
+
+    private final DiscordService discordService;
 
     @Override
     public void createReport(User reporter, ReportRequestDto.CreateReport request) {
@@ -60,10 +63,15 @@ public class ReportServiceImpl implements ReportService {
             throw new ReportException(ReportErrorStatus.REPORT_INVALID_TARGET_TYPE);
         }
 
-        // Report 생성
+        // Report 생성 및 저장
         Report newReport = ReportConverter.toReport(reporter, request, reason, targetUser, targetTeum);
+        Report savedReport = reportRepository.save(newReport);
 
-        // 저장
-        reportRepository.save(newReport);
+        // 디스코드 알림 발송
+        discordService.sendReportNotification(
+                savedReport.getId(),
+                savedReport.getTargetType().name(),
+                reason.getTitle()
+        );
     }
 }
