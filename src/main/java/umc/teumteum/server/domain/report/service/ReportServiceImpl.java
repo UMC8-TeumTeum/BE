@@ -64,6 +64,10 @@ public class ReportServiceImpl implements ReportService {
             targetTeum = teumRequestRepository.findById(request.getTargetId())
                     .orElseThrow(() -> new ReportException(ReportErrorStatus.REPORT_TARGET_NOT_FOUND));
 
+            if (reporter.getId().equals(targetTeum.getUser().getId())) {
+                throw new ReportException(ReportErrorStatus.REPORT_SELF_NOT_ALLOWED);
+            }
+
             // 신고자의 응답 상태를 REPORTED로 변경
             handleTeumRequestReport(reporter, targetTeum);
         } else {
@@ -88,6 +92,10 @@ public class ReportServiceImpl implements ReportService {
     private void handleTeumRequestReport(User reporter, TeumRequest targetTeum) {
         TeumResponse response = teumResponseRepository.findRequestAndReceiver(targetTeum.getId(), reporter.getId())
                 .orElseThrow(() -> new ReportException(ReportErrorStatus.REPORT_TARGET_NOT_FOUND));
+
+        if (response.getStatus() != ResponseStatus.PENDING) {
+            throw new ReportException(ReportErrorStatus.REPORT_INVALID_STATUS); // 혹은 적절한 에러 코드
+        }
 
         // 상태를 REPORTED로 변경
         response.changeStatus(ResponseStatus.REPORTED);
