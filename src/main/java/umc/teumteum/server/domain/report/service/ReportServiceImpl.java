@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.report.converter.ReportConverter;
 import umc.teumteum.server.domain.report.dto.ReportRequestDto;
+import umc.teumteum.server.domain.report.dto.ReportResponseDto;
 import umc.teumteum.server.domain.report.entity.Report;
 import umc.teumteum.server.domain.report.entity.ReportReason;
 import umc.teumteum.server.domain.report.entity.enums.TargetType;
@@ -84,6 +85,25 @@ public class ReportServiceImpl implements ReportService {
                 savedReport.getTargetType().name(),
                 reason.getTitle()
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReportResponseDto.ReportDetail getReportDetail(Long reportId) {
+        // 신고 내역 조회
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new ReportException(ReportErrorStatus.REPORT_TARGET_NOT_FOUND));
+
+        // 피신고자 특정
+        User reportedUser = (report.getTargetType() == TargetType.USER)
+                ? report.getTargetUser()
+                : report.getTeumRequest().getUser();
+
+        // 누적 신고 횟수 조회
+        long totalReportCount = reportRepository.countTotalReportsByUser(reportedUser);
+
+        // DTO 변환 및 반환
+        return ReportConverter.toReportDetail(report, totalReportCount);
     }
 
     /**
