@@ -43,8 +43,13 @@ public class DiscordServiceImpl implements DiscordService {
 
         try {
             restTemplate.postForEntity(webhookUrl, message, String.class);
+        } catch (org.springframework.web.client.RestClientException e) {
+            // 구체적인 예외 처리 및 컨텍스트 로그
+            log.error("Discord API 호출 중 네트워크 오류 발생: reportId={}, targetType={}, error={}",
+                    reportId, targetType, e.getMessage(), e);
         } catch (Exception e) {
-            log.error("Discord 웹훅 발송 실패: {}", e.getMessage());
+            // 예기치 못한 모든 예외에 대해 스택 트레이스 포함하여 로깅
+            log.error("Discord 웹훅 발송 중 예기치 않은 오류 발생: reportId={}", reportId, e);
         }
     }
 }
