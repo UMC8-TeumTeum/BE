@@ -1,6 +1,10 @@
 FROM amazoncorretto:21
 
-RUN groupadd -r app && useradd -r -g app app
+RUN yum makecache --refresh && \
+    yum -y install shadow-utils && \
+    groupadd -r app && \
+    useradd -r -g app app && \
+    yum clean all
 
 WORKDIR /home/app
 
