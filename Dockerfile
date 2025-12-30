@@ -1,6 +1,6 @@
 FROM amazoncorretto:21
 
-RUN yum makecache --refresh && \
+RUN yum -y makecache && \
     yum -y install shadow-utils && \
     groupadd -r app && \
     useradd -r -g app app && \
