@@ -564,6 +564,13 @@ public class UserServiceImpl implements UserService {
         u.withdraw();
     }
 
+    // 수면패턴 삭제
+    @Transactional
+    @Override
+    public void deleteSleepPattern(User user) {
+        user.updateSleepPattern(null, null);
+    }
+
     /**
      * 유저 프로필 삭제 헬퍼 메서드
      */
