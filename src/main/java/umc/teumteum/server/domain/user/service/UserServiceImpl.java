@@ -568,7 +568,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void deleteSleepPattern(User user) {
-        user.updateSleepPattern(null, null);
+        User u = userRepository.findById(user.getId())
+                .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
+
+        u.updateSleepPattern(null, null);
     }
 
     /**
