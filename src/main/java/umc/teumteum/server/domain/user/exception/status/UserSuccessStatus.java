@@ -24,6 +24,7 @@ public enum UserSuccessStatus implements BaseCode {
     _REMIND_ALARM_LOADED(HttpStatus.OK,"USER20012","리마인드 알림 설정 조회가 완료되었습니다."),
     _REMIND_ALARM_UPDATED(HttpStatus.OK,"USER20013","리마인드 알림 설정 수정이 완료되었습니다."),
     _USER_DELETED(HttpStatus.OK,"USER20014","회원 탈퇴가 완료되었습니다."),
+    _SLEEP_PATTERN_DELETED(HttpStatus.OK,"USER20015","수면 패턴 삭제가 완료되었습니다."),
 
 
 

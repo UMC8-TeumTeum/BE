@@ -189,6 +189,18 @@ public class UserController {
     }
 
     @Operation(
+            summary = "마이페이지 수면패턴 삭제",
+            description = "마이페이지에서 수면패턴을 삭제합니다."
+    )
+    @DeleteMapping(value = "/mypage/sleep-pattern", produces = "application/json")
+    public ApiResponse<Object> deleteSleepPattern(
+            @CurrentUser @Parameter(hidden = true) User user
+    ){
+        userService.deleteSleepPattern(user);
+        return ApiResponse.of(UserSuccessStatus._SLEEP_PATTERN_DELETED, null);
+    }
+
+    @Operation(
             summary = "마이페이지 리마인드 알림 조회",
             description = "마이페이지에서 리마인드 알림 상태를 조회합니다. 등록된 정보가 없을 경우 빈배열로 반환합니다."
     )
@@ -226,4 +238,6 @@ public class UserController {
         userService.deleteUser(user);
         return ApiResponse.of(UserSuccessStatus._USER_DELETED, null);
     }
+
+
 }

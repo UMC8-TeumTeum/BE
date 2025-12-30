@@ -49,4 +49,6 @@ public interface UserService {
     void updateReminders(OnboardingRequestDto.RemindAlarmList request, User user);
 
     void deleteUser(User user);
+
+    void deleteSleepPattern(User user);
 }
