@@ -8,6 +8,8 @@ import umc.teumteum.server.domain.report.entity.enums.TargetType;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.user.entity.User;
 
+import java.util.Optional;
+
 public class ReportConverter {
 
     public static Report toReport(User reporter, ReportRequestDto.CreateReport request, ReportReason reason, User targetUser, TeumRequest targetTeum) {
@@ -30,9 +32,10 @@ public class ReportConverter {
 
     public static ReportResponseDto.ReportDetail toReportDetail(Report report, long totalReportCount) {
         // 피신고자(대상 유저) 특정
-        User reportedUser = (report.getTargetType() == TargetType.USER)
-                ? report.getTargetUser()
-                : report.getTeumRequest().getUser();
+        User reportedUser = Optional.ofNullable(report.getTargetUser())
+                .orElseGet(() -> Optional.ofNullable(report.getTeumRequest())
+                        .map(TeumRequest::getUser)
+                        .orElse(null));
 
         ReportResponseDto.ReportDetail.ReportDetailBuilder builder = ReportResponseDto.ReportDetail.builder()
                 .reportId(report.getId())
@@ -46,12 +49,12 @@ public class ReportConverter {
                         .nickname(report.getReporter().getNickname())
                         .build())
                 .targetUser(ReportResponseDto.TargetUserInfo.builder()
-                        .userId(reportedUser.getId())
-                        .nickname(reportedUser.getNickname())
+                        .userId(reportedUser != null ? reportedUser.getId() : null)
+                        .nickname(reportedUser != null ? reportedUser.getNickname() : "알 수 없음")
                         .totalReportCount(totalReportCount)
                         .build());
 
-        // 틈 요청 신고인 경우 날짜까지만 포함
+        // 틈 요청 콘텐츠 매핑 (null 체크 포함)
         if (report.getTargetType() == TargetType.TEUM_REQUEST && report.getTeumRequest() != null) {
             var teum = report.getTeumRequest();
             builder.teumContent(ReportResponseDto.TeumContent.builder()

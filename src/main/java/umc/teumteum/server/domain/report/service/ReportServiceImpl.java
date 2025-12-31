@@ -94,6 +94,11 @@ public class ReportServiceImpl implements ReportService {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new ReportException(ReportErrorStatus.REPORT_TARGET_NOT_FOUND));
 
+        // TEUM_REQUEST 타입인데 데이터가 없는 경우를 사전에 차단
+        if (report.getTargetType() == TargetType.TEUM_REQUEST && report.getTeumRequest() == null) {
+            throw new ReportException(ReportErrorStatus.REPORT_TARGET_NOT_FOUND);
+        }
+
         // 피신고자 특정
         User reportedUser = (report.getTargetType() == TargetType.USER)
                 ? report.getTargetUser()
