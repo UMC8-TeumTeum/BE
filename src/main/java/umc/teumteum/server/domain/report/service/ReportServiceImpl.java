@@ -92,7 +92,7 @@ public class ReportServiceImpl implements ReportService {
     public ReportResponseDto.ReportDetail getReportDetail(Long reportId) {
         // 신고 내역 조회
         Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new ReportException(ReportErrorStatus.REPORT_TARGET_NOT_FOUND));
+                .orElseThrow(() -> new ReportException(ReportErrorStatus.REPORT_NOT_FOUND));
 
         // TEUM_REQUEST 타입인데 데이터가 없는 경우를 사전에 차단
         if (report.getTargetType() == TargetType.TEUM_REQUEST && report.getTeumRequest() == null) {
