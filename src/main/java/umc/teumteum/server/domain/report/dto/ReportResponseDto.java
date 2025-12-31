@@ -49,6 +49,8 @@ public class ReportResponseDto {
 
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Schema(description = "신고자 기본 정보")
     public static class UserInfo {
         @Schema(description = "사용자 ID", example = "10")
@@ -60,6 +62,8 @@ public class ReportResponseDto {
 
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Schema(description = "피신고자 정보 및 신고 통계")
     public static class TargetUserInfo {
         @Schema(description = "피신고자 ID", example = "25")
@@ -74,6 +78,8 @@ public class ReportResponseDto {
 
     @Getter
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Schema(description = "신고 대상인 틈 요청의 상세 내용")
     public static class TeumContent {
         @Schema(description = "틈 요청 고유 ID", example = "50")
