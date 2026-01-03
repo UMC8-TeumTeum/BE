@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.home.entity.enums.AlarmStatus;
 import umc.teumteum.server.domain.home.entity.enums.DispatchStatus;
@@ -22,6 +23,7 @@ public class RemindAlarmScheduler {
     private final ScheduleReminderRepository scheduleReminderRepository;
     private final NotificationUseCases notificationUseCases;
 
+    @Transactional
     @Scheduled(fixedRate = 60000, zone = "Asia/Seoul") // 1분마다 실행
     public void remindAlarm() {
         LocalDateTime now = LocalDateTime.now();
