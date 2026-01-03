@@ -1,5 +1,6 @@
 package umc.teumteum.server.global.scheduler;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +23,7 @@ public class RemindAlarmScheduler {
     private final ScheduleReminderRepository scheduleReminderRepository;
     private final NotificationUseCases notificationUseCases;
 
+    @Transactional
     @Scheduled(fixedRate = 60000, zone = "Asia/Seoul") // 1분마다 실행
     public void remindAlarm() {
         LocalDateTime now = LocalDateTime.now();
