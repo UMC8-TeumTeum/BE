@@ -17,6 +17,7 @@ import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.domain.user.service.UserServiceImpl;
 
 import java.util.Optional;
+import umc.teumteum.server.support.RedisTestContainerSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;

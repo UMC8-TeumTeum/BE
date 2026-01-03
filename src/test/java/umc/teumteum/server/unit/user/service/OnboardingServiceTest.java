@@ -33,6 +33,7 @@ import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.service.OnboardingServiceImpl;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 import umc.teumteum.server.global.util.TimeUtil;
+import umc.teumteum.server.support.RedisTestContainerSupport;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OnboardingService 관련 단위 테스트")

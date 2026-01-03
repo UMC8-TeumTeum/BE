@@ -33,6 +33,7 @@ import umc.teumteum.server.domain.home.repository.CategoryRepository;
 import umc.teumteum.server.domain.home.repository.WishRepository;
 import umc.teumteum.server.domain.home.service.ActivityServiceImpl;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.support.RedisTestContainerSupport;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ActivityServiceImpl - Activity(채움활동) 관련 단위 테스트")

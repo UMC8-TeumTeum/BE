@@ -58,3 +58,22 @@ jobs:
 
           docker push ${ECR_URI}:latest
           docker push ${ECR_URI}:develop-${GITHUB_SHA}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-ssm-deploy-role
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy via SSM Run Command
+        run: |
+          aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=tag:Service,Values=teumteum-app" \
+            --comment "Deploy teum-teum ${GITHUB_SHA}" \
+            --parameters 'commands=["/opt/teumteum/scripts/deploy.sh"]'

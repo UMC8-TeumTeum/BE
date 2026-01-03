@@ -42,6 +42,7 @@ import umc.teumteum.server.domain.teum.entity.*;
 import umc.teumteum.server.domain.teum.repository.*;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
+import umc.teumteum.server.support.RedisTestContainerSupport;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("NotificationServiceImpl - Notification 관련 서비스 메서드 단위 테스트")
