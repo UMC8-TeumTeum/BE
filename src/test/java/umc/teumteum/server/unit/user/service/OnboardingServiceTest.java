@@ -37,7 +37,7 @@ import umc.teumteum.server.support.RedisTestContainerSupport;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OnboardingService 관련 단위 테스트")
-class OnboardingServiceTest extends RedisTestContainerSupport {
+class OnboardingServiceTest {
 
     @InjectMocks
     private OnboardingServiceImpl onboardingService;

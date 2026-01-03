@@ -37,7 +37,7 @@ import umc.teumteum.server.support.RedisTestContainerSupport;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ActivityServiceImpl - Activity(채움활동) 관련 단위 테스트")
-class ActivityServiceTest extends RedisTestContainerSupport {
+class ActivityServiceTest {
 
   @Mock
   private WishRepository wishRepository;

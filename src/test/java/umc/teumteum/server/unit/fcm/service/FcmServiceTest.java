@@ -26,11 +26,10 @@ import umc.teumteum.server.domain.fcm.exception.status.FcmErrorStatus;
 import umc.teumteum.server.domain.fcm.repository.FcmTokenRepository;
 import umc.teumteum.server.domain.fcm.service.FcmServiceImpl;
 import umc.teumteum.server.domain.user.entity.User;
-import umc.teumteum.server.support.RedisTestContainerSupport;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FcmServiceImpl - Fcm Token 관련 서비스 메서드 단위 테스트")
-public class FcmServiceTest extends RedisTestContainerSupport {
+public class FcmServiceTest {
   @Mock
   private FcmTokenRepository fcmTokenRepository;
 

@@ -46,7 +46,7 @@ import umc.teumteum.server.support.RedisTestContainerSupport;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("NotificationServiceImpl - Notification 관련 서비스 메서드 단위 테스트")
-public class NotificationServiceTest extends RedisTestContainerSupport {
+public class NotificationServiceTest {
 
   @InjectMocks
   private NotificationServiceImpl notificationServiceImpl;

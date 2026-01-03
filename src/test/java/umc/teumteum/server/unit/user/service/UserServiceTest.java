@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserServiceImpl - User 관련 단위 테스트")
-public class UserServiceTest extends RedisTestContainerSupport {
+public class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;

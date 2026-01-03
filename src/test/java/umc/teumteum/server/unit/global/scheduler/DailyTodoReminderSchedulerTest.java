@@ -39,11 +39,10 @@ import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 import umc.teumteum.server.global.notification.dto.NotificationPayload;
 import umc.teumteum.server.global.notification.sender.FcmNotificationSender;
 import umc.teumteum.server.global.scheduler.DailyTodoReminerScheduler;
-import umc.teumteum.server.support.RedisTestContainerSupport;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("DailyTodoReminerScheduler - DailyTodoReminerScheduler 관련 단위 테스트")
-public class DailyTodoReminderSchedulerTest extends RedisTestContainerSupport {
+public class DailyTodoReminderSchedulerTest {
   @Mock
   private ScheduleRepository scheduleRepository;
   @Mock
