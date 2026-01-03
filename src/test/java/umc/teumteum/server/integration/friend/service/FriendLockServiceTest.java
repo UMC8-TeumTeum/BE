@@ -25,11 +25,12 @@ import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 import umc.teumteum.server.global.util.S3Util;
+import umc.teumteum.server.support.RedisTestContainerSupport;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @DisplayName("FriendLockService 관련 통합 테스트")
-public class FriendLockServiceTest {
+public class FriendLockServiceTest extends RedisTestContainerSupport {
 
     @Autowired
     private FriendLockService friendLockService;

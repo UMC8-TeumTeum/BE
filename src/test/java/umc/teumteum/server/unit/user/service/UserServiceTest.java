@@ -17,6 +17,7 @@ import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.domain.user.service.UserServiceImpl;
 
 import java.util.Optional;
+import umc.teumteum.server.support.RedisTestContainerSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserServiceImpl - User 관련 단위 테스트")
-public class UserServiceTest {
+public class UserServiceTest extends RedisTestContainerSupport {
 
     @Mock
     private UserRepository userRepository;

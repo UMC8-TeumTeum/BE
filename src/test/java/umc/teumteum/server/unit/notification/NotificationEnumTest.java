@@ -9,9 +9,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
 import umc.teumteum.server.domain.notification.entity.enums.RelatedEntityType;
+import umc.teumteum.server.support.RedisTestContainerSupport;
 
 @DisplayName("NotificationEnum - Notification enum 관련 단위 테스트")
-public class NotificationEnumTest {
+public class NotificationEnumTest extends RedisTestContainerSupport {
   @Test
   @DisplayName("[shouldBeStored / isPushOnly] - TC1 DAILY_TODO는 저장 안되고 푸시 전용이다")
   void dailyTodo_pushOnly() {
