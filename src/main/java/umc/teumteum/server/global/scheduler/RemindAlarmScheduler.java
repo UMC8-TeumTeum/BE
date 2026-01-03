@@ -30,16 +30,23 @@ public class RemindAlarmScheduler {
 
         // 1. 발송 대상 조회 (최대 100개)
         List<ScheduleReminder> targets = scheduleReminderRepository.findDueWithScheduleAndUser(
-                AlarmStatus.ACTIVE, DispatchStatus.PENDING, now, PageRequest.of(0, 100)
+            AlarmStatus.ACTIVE, DispatchStatus.PENDING, now, PageRequest.of(0, 100)
         );
 
-        if(targets.isEmpty()) return;
+        if (targets.isEmpty())
+            return;
 
         // 2. 선점하기  (발송 상태 변경하기 PENDING -> PROCESSING)
         List<Long> targetIds = targets.stream().map(ScheduleReminder::getId).toList();
 
-        int lockedCount = scheduleReminderRepository.updateDispatchStatus(targetIds,DispatchStatus.PENDING,DispatchStatus.PROCESSING);
-        if(lockedCount == 0) return;
+        int lockedCount = scheduleReminderRepository.updateDispatchStatus(targetIds,
+            DispatchStatus.PENDING, DispatchStatus.PROCESSING);
+        if (lockedCount == 0) return;
+
+        processNotifications(targetIds);
+
+    }
+    public void processNotifications(List<Long> targetIds) {
 
         // 3. 선점 성공한 것들 다시 조회
         List<ScheduleReminder> locked = scheduleReminderRepository.findByIdsWithScheduleAndUser(targetIds,DispatchStatus.PROCESSING);
