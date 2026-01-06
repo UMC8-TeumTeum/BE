@@ -46,4 +46,12 @@ public class UserConverter {
                 .endTime(routine.getEndTime())
                 .build();
     }
+
+    // user -> UserResponseDTO.AccountInfoDTO
+    public static UserResponseDTO.AccountInfoDTO toAccountInfoDTO(User user) {
+        return UserResponseDTO.AccountInfoDTO.builder()
+                .email(user.getEmail())
+                .socialType(user.getSocialType())
+                .build();
+    }
 }

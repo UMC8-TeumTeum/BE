@@ -574,6 +574,15 @@ public class UserServiceImpl implements UserService {
         u.updateSleepPattern(null, null);
     }
 
+    // 마이페이지 - 소셜 계정 정보 조회
+    @Override
+    public UserResponseDTO.AccountInfoDTO getAccountInfo(User user) {
+        User u = userRepository.findById(user.getId())
+                .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
+
+        return UserConverter.toAccountInfoDTO(u);
+    }
+
     /**
      * 유저 프로필 삭제 헬퍼 메서드
      */

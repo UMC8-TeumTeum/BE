@@ -51,4 +51,6 @@ public interface UserService {
     void deleteUser(User user);
 
     void deleteSleepPattern(User user);
+
+    UserResponseDTO.AccountInfoDTO getAccountInfo(User user);
 }
