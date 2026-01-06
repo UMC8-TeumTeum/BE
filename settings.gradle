@@ -1,5 +1,3 @@
-rootProject.name = 'server'
-
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -12,3 +10,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+
+rootProject.name = 'server'
