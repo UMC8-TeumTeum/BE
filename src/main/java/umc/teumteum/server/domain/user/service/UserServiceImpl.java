@@ -575,12 +575,10 @@ public class UserServiceImpl implements UserService {
     }
 
     // 마이페이지 - 소셜 계정 정보 조회
+    @Transactional(readOnly = true)
     @Override
     public UserResponseDTO.AccountInfoDTO getAccountInfo(User user) {
-        User u = userRepository.findById(user.getId())
-                .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
-
-        return UserConverter.toAccountInfoDTO(u);
+        return UserConverter.toAccountInfoDTO(user);
     }
 
     /**
