@@ -239,5 +239,16 @@ public class UserController {
         return ApiResponse.of(UserSuccessStatus._USER_DELETED, null);
     }
 
+    @Operation(
+            summary = "마이페이지 소셜 계정 정보 조회",
+            description = "마이페이지에서 소셜타입과 이메일 정보를 조회합니다."
+    )
+    @GetMapping(value = "/mypage/accounts", produces = "application/json")
+    public ApiResponse<UserResponseDTO.AccountInfoDTO> getAccount(
+            @CurrentUser @Parameter(hidden = true) User user){
+        UserResponseDTO.AccountInfoDTO result = userService.getAccountInfo(user);
+        return ApiResponse.of(UserSuccessStatus._SOCIAL_ACCOUNT_LOADED, result);
+    }
+
 
 }

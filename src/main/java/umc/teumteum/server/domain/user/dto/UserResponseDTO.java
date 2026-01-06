@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
 
 import java.time.LocalTime;
@@ -61,5 +62,17 @@ public class UserResponseDTO {
 
     @Schema(description = "리마인드 알림 설정 (1, 3, 5, 10, 30, 빈 배열)", example = "[1, 5, 30]")
     private List<Integer> remindAlarms;
+  }
+
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  public static class AccountInfoDTO {
+
+    @Schema(description = "이메일", example = "teum@naver.com")
+    private String email;
+
+    @Schema(description = "소셜타입", example = "kakao")
+    private SocialType socialType;
   }
 }
