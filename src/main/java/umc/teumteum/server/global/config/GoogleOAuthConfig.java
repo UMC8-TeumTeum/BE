@@ -12,13 +12,13 @@ import java.util.Collections;
 @Configuration
 public class GoogleOAuthConfig {
 
-  @Value("${oauth.google.client-id}")
-  private String clientId;
+    @Value("${auth.google.client-id}")
+    private String clientId;
 
-  @Bean
-  public GoogleIdTokenVerifier googleIdTokenVerifier() {
-    return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
-            .setAudience(Collections.singletonList(clientId))
-            .build();
-  }
+    @Bean
+    public GoogleIdTokenVerifier googleIdTokenVerifier() {
+        return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                .setAudience(Collections.singletonList(clientId))
+                .build();
+    }
 }

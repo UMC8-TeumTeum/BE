@@ -36,10 +36,10 @@ import umc.teumteum.server.global.jwt.JwtProvider;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    @Value("${jwt.access-expiration-ms}")
+    @Value("${auth.jwt.access-expiration-ms}")
     private long accessExpirationMs;
 
-    @Value("${jwt.refresh-expiration-ms}")
+    @Value("${auth.jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
 
     @Resource(name = "kakaoOAuthServiceImpl") private OAuthService kakaoOAuthService;
@@ -57,8 +57,6 @@ public class AuthServiceImpl implements AuthService {
     @Resource(name = "atBlacklistRedisTemplate") private RedisTemplate<String, String> atBlacklistRedisTemplate;
 
 
-
-
     // 인증 - 소셜로그인
     @Override
     @Transactional
@@ -67,7 +65,7 @@ public class AuthServiceImpl implements AuthService {
         SocialType type = SocialType.from(socialType);
 
         // 2. 소셜 로그인 - 사용자 정보 불러오기
-        OAuthUserInfo userInfo = getOAuthUserInfo(type, request.getToken());
+        OAuthUserInfo userInfo = getOAuthUserInfo(type, request.getToken(), request.getNonce());
 
         // 3. 사용자 조회 (없으면 생성)
         User user = userService.findOrCreateUser(userInfo);
@@ -153,9 +151,9 @@ public class AuthServiceImpl implements AuthService {
 
 
     // OAuth 사용자 정보 조회
-    private OAuthUserInfo getOAuthUserInfo(SocialType socialType, String token) {
+    private OAuthUserInfo getOAuthUserInfo(SocialType socialType, String token, String nonce) {
         return switch (socialType) {
-            case SocialType.KAKAO -> kakaoOAuthService.getUserInfoWithAccessToken(token);
+            case SocialType.KAKAO -> kakaoOAuthService.getUserInfoWithIdToken(token, nonce);
             case SocialType.NAVER -> naverOAuthService.getUserInfoWithAccessToken(token);
             case SocialType.GOOGLE -> googleOAuthService.getUserInfoWithIdToken(token);
         };
@@ -287,7 +285,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 요청받은 RT와 Redis에 저장된 RT 다름
         if (!refreshToken.equals(savedRefreshToken)) {
-            log.warn("[토큰 탈취 의심] : 요청 RT != Redis RT - userId: {}, sessionId: {}", userId, sessionId);
+            log.warn("[Refresh 토큰 탈취 의심] : 요청 RT != Redis RT - userId: {}, sessionId: {}", userId, sessionId);
 
             // 동일한 sessionID를 갖는 AT 블랙리스트 저장
             saveAccessTokenBlacklist(userId, sessionId, accessExpirationMs);
