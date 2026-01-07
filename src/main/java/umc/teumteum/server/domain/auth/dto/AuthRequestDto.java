@@ -20,7 +20,7 @@ public class AuthRequestDto {
         @Schema(description = "소셜 타입별 토큰. 네이버는 accessToken, 카카오/구글은 idToken을 전달", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
         private String token;
 
-        @Schema(description = "카카오 로그인에서 쓰이는 재생 공격 방지용 필드 (UUID 형식)", example = "550e8400-e29b-41d4-a716-446655440000")
+        @Schema(description = "카카오/구글 로그인에서 쓰이는 재생 공격 방지용 필드 (UUID 형식)", example = "550e8400-e29b-41d4-a716-446655440000")
         private String nonce;
     }
 

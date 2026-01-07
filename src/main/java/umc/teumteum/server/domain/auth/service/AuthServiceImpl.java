@@ -155,7 +155,7 @@ public class AuthServiceImpl implements AuthService {
         return switch (socialType) {
             case SocialType.KAKAO -> kakaoOAuthService.getUserInfoWithIdToken(token, nonce);
             case SocialType.NAVER -> naverOAuthService.getUserInfoWithAccessToken(token);
-            case SocialType.GOOGLE -> googleOAuthService.getUserInfoWithIdToken(token);
+            case SocialType.GOOGLE -> googleOAuthService.getUserInfoWithIdToken(token, nonce);
         };
     }
 

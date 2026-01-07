@@ -12,16 +12,15 @@ public enum AuthErrorStatus implements BaseErrorCode {
 
     // Auth 도메인 인증 관련
     INVALID_SOCIAL_TYPE(HttpStatus.BAD_REQUEST, "AUTH4001", "지원하지 않는 소셜 로그인 타입입니다."),
-    NAVER_USER_INFO_FAILED(HttpStatus.BAD_REQUEST, "AUTH4003", "네이버 사용자 정보 조회에 실패했습니다."),
-    INVALID_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "AUTH4004", "유효하지 않은 리프레시 토큰입니다."),
-    GOOGLE_USER_INFO_FAILED(HttpStatus.BAD_REQUEST, "AUTH4005", "구글 사용자 정보 조회에 실패했습니다."),
-    NONCE_REQUIRED(HttpStatus.BAD_REQUEST, "AUTH4006", "해당 소셜 로그인은 nonce가 필수입니다."),
+    NAVER_USER_INFO_FAILED(HttpStatus.BAD_REQUEST, "AUTH4002", "네이버 사용자 정보 조회에 실패했습니다."),
+    INVALID_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "AUTH4003", "유효하지 않은 리프레시 토큰입니다."),
+    NONCE_REQUIRED(HttpStatus.BAD_REQUEST, "AUTH4004", "해당 소셜 로그인은 nonce가 필수입니다."),
 
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH4011", "리프레시 토큰이 존재하지 않습니다."),
     REFRESH_TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "AUTH4012", "리프레시 토큰이 일치하지 않습니다."),
-    NONCE_ALREADY_USED(HttpStatus.UNAUTHORIZED, "AUTH4013", "이미 사용된 nonce입니다. 재생 공격이 의심됩니다."),
+    NONCE_ALREADY_USED(HttpStatus.UNAUTHORIZED, "AUTH4013", "이미 사용된 nonce입니다."),
     KAKAO_ID_TOKEN_VERIFICATION_FAILED(HttpStatus.UNAUTHORIZED, "AUTH4014", "카카오 ID Token 검증에 실패했습니다."),
-
+    GOOGLE_ID_TOKEN_VERIFICATION_FAILED(HttpStatus.UNAUTHORIZED, "AUTH4015", "구글 ID Token 검증에 실패했습니다."),
 
 
     ;
