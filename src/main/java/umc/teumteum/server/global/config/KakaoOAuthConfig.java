@@ -11,10 +11,12 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class KakaoOAuthConfig {
 
+    private static final String KAKAO_JWKS = "https://kauth.kakao.com/.well-known/jwks.json";
+
     @Bean
     public JwkProvider kakaoJwkProvider() throws Exception {
         // 카카오 JWKS 엔드포인트
-        return new JwkProviderBuilder(URI.create("https://kauth.kakao.com/.well-known/jwks.json").toURL())
+        return new JwkProviderBuilder(URI.create(KAKAO_JWKS).toURL())
                 .cached(10, 24, TimeUnit.HOURS)
                 .build();
     }
