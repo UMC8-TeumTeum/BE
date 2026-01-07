@@ -1,0 +1,23 @@
+package umc.teumteum.server.global.config;
+
+import com.auth0.jwk.JwkProvider;
+import com.auth0.jwk.JwkProviderBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
+
+@Configuration
+public class KakaoOAuthConfig {
+
+    private static final String KAKAO_JWKS = "https://kauth.kakao.com/.well-known/jwks.json";
+
+    @Bean
+    public JwkProvider kakaoJwkProvider() throws Exception {
+        // 카카오 JWKS 엔드포인트
+        return new JwkProviderBuilder(URI.create(KAKAO_JWKS).toURL())
+                .cached(10, 24, TimeUnit.HOURS)
+                .build();
+    }
+}

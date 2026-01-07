@@ -26,7 +26,7 @@ public class AuthController {
 
     @Operation(
             summary = "소셜 로그인",
-            description = "카카오, 네이버, 구글에 대한 소셜 플랫폼을 통한 로그인을 처리합니다."
+            description = "카카오, 네이버, 구글 소셜 플랫폼을 통한 로그인을 처리합니다."
     )
     @PostMapping(value = "/social-login/{socialType}", produces = "application/json")
     public ApiResponse<AuthResponseDto.LoginResponse> socialLogin(

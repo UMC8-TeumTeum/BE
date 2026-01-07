@@ -1,52 +1,113 @@
 package umc.teumteum.server.domain.auth.service;
 
+import com.auth0.jwk.Jwk;
+import com.auth0.jwk.JwkException;
+import com.auth0.jwk.JwkProvider;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import umc.teumteum.server.domain.auth.converter.AuthConverter;
 import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.auth.exception.AuthException;
 import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 
-import java.util.Map;
+import java.security.interfaces.RSAPublicKey;
+import java.time.Duration;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class KakaoOAuthServiceImpl implements OAuthService {
 
-    private final RestTemplate restTemplate;
+    private static final String KAKAO_ISSUER = "https://kauth.kakao.com";
+    private static final long NONCE_TTL_HOURS = 2;
 
-    // 사용자 정보 조회
+    @Value("${auth.kakao.platform-key}")
+    private String platformKey;
+
+    private final JwkProvider kakaoJwkProvider;
+
+    @Resource(name = "nonceRedisTemplate")
+    private RedisTemplate<String, String> nonceRedisTemplate;
+
+
     @Override
-    public OAuthUserInfo getUserInfoWithAccessToken(String accessToken) {
-        String userInfoUrl = "https://kapi.kakao.com/v2/user/me";
+    public OAuthUserInfo getUserInfoWithIdToken(String idToken, String nonce) {
+        // 1. Nonce 검증 및 저장
+        validateAndSaveNonce(nonce);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
+        // 2. ID Token 검증
+        DecodedJWT verifiedJwt = verifyIdToken(idToken, nonce);
 
-        HttpEntity<Void> request = new HttpEntity<>(headers);
+        // 3. 사용자 정보 추출
+        String socialId = verifiedJwt.getSubject();
+        String email = verifiedJwt.getClaim("email").asString();
 
-        try {
-            ResponseEntity<Map> response = restTemplate.exchange(userInfoUrl, HttpMethod.GET, request, Map.class);
-            Map<String, Object> body = response.getBody();
+        // 4. OAuthUserInfo 반환
+        return AuthConverter.toOAuthUserInfo(SocialType.KAKAO, socialId, email);
+    }
 
-            if (body == null || !body.containsKey("id")) {
-                throw new AuthException(AuthErrorStatus.KAKAO_USER_INFO_FAILED);
-            }
 
-            String socialId = String.valueOf(body.get("id"));
-            Map<String, Object> kakaoAccount = (Map<String, Object>) body.get("kakao_account");
-            String email = kakaoAccount != null ? (String) kakaoAccount.get("email") : null;
-
-            return AuthConverter.toOAuthUserInfo(SocialType.KAKAO, socialId, email);
-
-        } catch (Exception e) {
-            throw new AuthException(AuthErrorStatus.KAKAO_USER_INFO_FAILED);
+    private void validateAndSaveNonce(String nonce) {
+        // 1. nonce 확인
+        if (nonce == null || nonce.isBlank()) {
+            throw new AuthException(AuthErrorStatus.NONCE_REQUIRED);
         }
+
+        // 2. Redis 키 생성
+        String key = getNonceKey(nonce);
+
+        // 3. Redis에 저장 시도
+        Boolean wasUsed = nonceRedisTemplate.opsForValue()
+                .setIfAbsent(key, "used", Duration.ofHours(NONCE_TTL_HOURS));
+
+        // 4. 이미 사용된 값이면 wasUsed가 False이기 때문에 예외 처리
+        if (Boolean.FALSE.equals(wasUsed)) {
+            log.warn("[ID 토큰 탈취 의심] : 이미 사용한 ID Token & nonce로 로그인 시도");
+            throw new AuthException(AuthErrorStatus.NONCE_ALREADY_USED);
+        }
+    }
+
+    private String getNonceKey(String nonce) {
+        return String.format("USED_NONCE:%s", nonce);
+    }
+
+    private DecodedJWT verifyIdToken(String idToken, String nonce) {
+        try {
+            // 1. 파싱해서 kid 가져오기
+            DecodedJWT jwt = JWT.decode(idToken);
+            String kid = jwt.getKeyId();
+
+            // 2. 공개키로 RSA256 알고리즘 생성
+            Algorithm algorithm = getAlgorithm(kid);
+
+            // 3. ID Token 검증 및 반환
+            return JWT.require(algorithm)
+                    .withIssuer(KAKAO_ISSUER)
+                    .withAudience(platformKey)
+                    .withClaim("nonce", nonce)
+                    .acceptLeeway(10)
+                    .build()
+                    .verify(idToken);
+        } catch (JwkException | JWTVerificationException e) {
+            throw new AuthException(AuthErrorStatus.KAKAO_ID_TOKEN_VERIFICATION_FAILED);
+        }
+    }
+
+    private Algorithm getAlgorithm(String kid) throws JwkException {
+        // 1. kid로 공개키 찾기
+        Jwk jwk = kakaoJwkProvider.get(kid);
+        RSAPublicKey publicKey = (RSAPublicKey) jwk.getPublicKey();
+
+        // 2. 알고리즘 생성
+        return Algorithm.RSA256(publicKey, null);
     }
 }

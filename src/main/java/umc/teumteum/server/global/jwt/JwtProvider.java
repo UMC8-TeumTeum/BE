@@ -17,13 +17,13 @@ import umc.teumteum.server.global.exception.InvalidTokenTypeException;
 @Component
 public class JwtProvider {
 
-    @Value("${jwt.secret}")
+    @Value("${auth.jwt.secret}")
     private String secretKey;
 
-    @Value("${jwt.access-expiration-ms}")
+    @Value("${auth.jwt.access-expiration-ms}")
     private long accessExpirationMs;
 
-    @Value("${jwt.refresh-expiration-ms}")
+    @Value("${auth.jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
 
     private Key key;
