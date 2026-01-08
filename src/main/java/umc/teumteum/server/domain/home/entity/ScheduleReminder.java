@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
         indexes = {
                 @Index(
                         name = "idx_dispatch_alarm_send_at",
-                        columnList = "dispatch_status, alarm_status, send_at"
+                        columnList = "alarm_status, dispatch_status, send_at"
                 )
         })
 public class ScheduleReminder extends BaseEntity {
