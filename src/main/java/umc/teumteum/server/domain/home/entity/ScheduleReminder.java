@@ -16,7 +16,14 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "schedule_reminder")
+@Table(
+        name = "schedule_reminder",
+        indexes = {
+                @Index(
+                        name = "idx_dispatch_alarm_send_at",
+                        columnList = "dispatch_status, alarm_status, send_at"
+                )
+        })
 public class ScheduleReminder extends BaseEntity {
 
     @Id
