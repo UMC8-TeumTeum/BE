@@ -23,7 +23,7 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class GoogleOAuthServiceImpl implements OAuthService {
 
-    private static final long NONCE_TTL_HOURS = 2;
+    private static final long NONCE_TTL_HOURS = 1;
 
     private final GoogleIdTokenVerifier googleIdTokenVerifier;
 

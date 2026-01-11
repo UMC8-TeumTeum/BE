@@ -28,7 +28,7 @@ import java.time.Duration;
 public class KakaoOAuthServiceImpl implements OAuthService {
 
     private static final String KAKAO_ISSUER = "https://kauth.kakao.com";
-    private static final long NONCE_TTL_HOURS = 2;
+    private static final long NONCE_TTL_HOURS = 12;
 
     @Value("${auth.kakao.platform-key}")
     private String platformKey;
@@ -98,6 +98,7 @@ public class KakaoOAuthServiceImpl implements OAuthService {
                     .build()
                     .verify(idToken);
         } catch (JwkException | JWTVerificationException e) {
+            log.error("카카오 ID Token 검증 실패 - {}", e.getMessage());
             throw new AuthException(AuthErrorStatus.KAKAO_ID_TOKEN_VERIFICATION_FAILED);
         }
     }
