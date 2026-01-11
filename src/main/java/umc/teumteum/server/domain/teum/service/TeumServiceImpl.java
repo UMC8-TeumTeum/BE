@@ -562,6 +562,9 @@ public class TeumServiceImpl implements TeumService {
                     // 약속 취소 여부 판단
                     boolean isCancelled = isTeumCancelled(req);
 
+                    // 취소 가능 여부 계산 로직
+                    boolean isCancellable = checkIfCancellable(req, userId);
+
                     // 요청자 + 응답자 전원의 URL 맵 구성
                     Map<Long, String> urlMap = new HashMap<>();
                     User requester = req.getUser();
@@ -573,7 +576,7 @@ public class TeumServiceImpl implements TeumService {
                     });
 
                     // DTO로 변환
-                    return teumConverter.toTeumRequestResponseDto(req, isCancelled, isResend, urlMap);
+                    return teumConverter.toTeumRequestResponseDto(req, isCancelled, isResend, isCancellable, urlMap);
                 })
                 .toList();
     }
@@ -832,6 +835,24 @@ public class TeumServiceImpl implements TeumService {
                 blockRepository.existsByBlockerAndBlocked(user2, user1)) {
             throw new GeneralException(FriendErrorStatus.BLOCK_ACTION_FORBIDDEN);
         }
+    }
+
+    // 취소 가능 여부 판단 헬퍼 메서드
+    private boolean checkIfCancellable(TeumRequest request, Long userId) {
+        // 본인이 요청자인지 확인
+        if (!request.getUser().getId().equals(userId)) {
+            return false;
+        }
+
+        // 시작 시간이 현재 시각보다 미래인지 확인
+        LocalDateTime startDateTime = LocalDateTime.of(request.getDate(), request.getStartTime());
+        if (startDateTime.isBefore(LocalDateTime.now())) {
+            return false;
+        }
+
+        // 아무도 응답하지 않았는지 확인 (모든 응답이 PENDING 상태여야 함)
+        return request.getTeumResponses().stream()
+                .allMatch(response -> response.getStatus() == ResponseStatus.PENDING);
     }
 
 }
