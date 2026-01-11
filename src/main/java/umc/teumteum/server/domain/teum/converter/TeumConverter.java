@@ -308,6 +308,7 @@ public class TeumConverter {
             TeumRequest request,
             boolean isCancelled,
             boolean isResend,
+            boolean isCancellable,
             Map<Long, String> profileUrlByUserId
     ) {
         // 요청 시간 정보를 TimeSlot 객체로 변환
@@ -348,6 +349,7 @@ public class TeumConverter {
                 .requester(requester)
                 .isCancelled(isCancelled)
                 .isResend(isResend)
+                .isCancellable(isCancellable)
                 .pending(pending)
                 .accepted(accepted)
                 .cancelled(cancelled)

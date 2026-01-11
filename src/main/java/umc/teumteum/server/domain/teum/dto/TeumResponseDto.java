@@ -225,6 +225,10 @@ public class TeumResponseDto {
         @Schema(description = "취소 여부", example = "true")
         private boolean isCancelled;
 
+        @JsonProperty("isCancellable")
+        @Schema(description = "취소 가능 여부 (본인 요청 & 미응답 & 시작 전)", example = "true")
+        private boolean isCancellable;
+
         @Schema(description = "PENDING 상태인 응답자 목록")
         private List<ParticipantDto> pending;
 
