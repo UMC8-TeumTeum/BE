@@ -79,5 +79,18 @@ public interface ScheduleReminderRepository extends JpaRepository<ScheduleRemind
             @Param("next") DispatchStatus next
     );
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        update ScheduleReminder r
+        set r.dispatchStatus = :to
+        where r.id = :id
+        and r.dispatchStatus = :from
+    """)
+    int updateDispatchStatusById(
+            @Param("id") Long id,
+            @Param("from") DispatchStatus from,
+            @Param("to") DispatchStatus to
+    );
+
 
 }
