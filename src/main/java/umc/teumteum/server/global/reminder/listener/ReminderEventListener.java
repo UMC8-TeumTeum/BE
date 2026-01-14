@@ -46,7 +46,7 @@ public class ReminderEventListener {
                 markSent(r.getId());
             } catch (Exception e){
                 markFailed(r.getId());
-                log.warn(e.getMessage());
+                log.warn("Failed to send reminder [id={}]: {}", r.getId(), e.getMessage(), e);
             }
         }
     }
@@ -77,25 +77,25 @@ public class ReminderEventListener {
         );
     }
 
-    // 성곰 상태 업데이트
-    private void markSent(Long scheduleId){
+    // 성공 상태 업데이트
+    private void markSent(Long reminderId){
         int updated = scheduleReminderRepository.updateDispatchStatusById(
-                scheduleId, DispatchStatus.PROCESSING, DispatchStatus.SENT
+                reminderId, DispatchStatus.PROCESSING, DispatchStatus.SENT
         );
 
         if(updated == 0){
-            log.warn("Reminder already processed.");
+            log.warn("Reminder [id={}] already processed.", reminderId);
         }
     }
 
     // 실패 상태 업데이트
-    private void markFailed(Long scheduleId){
+    private void markFailed(Long reminderId){
         int updated = scheduleReminderRepository.updateDispatchStatusById(
-                scheduleId, DispatchStatus.PROCESSING, DispatchStatus.FAILED
+                reminderId, DispatchStatus.PROCESSING, DispatchStatus.FAILED
         );
 
         if(updated == 0){
-            log.warn("Reminder already processed.");
+            log.warn("Reminder [id={}] already processed.", reminderId);
         }
     }
 }
