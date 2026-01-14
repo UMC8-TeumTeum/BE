@@ -38,13 +38,22 @@ public class ReminderEventListener {
                 event.reminderIds(), DispatchStatus.PROCESSING);
 
         for (ScheduleReminder r : reminders) {
+            // 리마인드 알림 전송
             try{
                 send(r);
-                markSent(r.getId());
             } catch (Exception e){
                 markFailed(r.getId());
                 log.warn("Failed to send reminder [id={}]: {}", r.getId(), e.getMessage(), e);
+                continue;
             }
+
+            // 성공 상태 업데이트
+            try{
+                markSent(r.getId());
+            } catch (Exception e){
+                log.error("Push sent but failed to update status [id={}].", r.getId(), e);
+            }
+
         }
     }
 
