@@ -15,6 +15,7 @@ import umc.teumteum.server.global.reminder.event.ReminderEvent;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -47,7 +48,13 @@ public class RemindAlarmScheduler {
 
         if (locked == 0) return;
 
-        // 3. 이벤트 발생
-        eventPublisher.publishEvent(new ReminderEvent(targetIds));
+        // 3. 선점 성공한 것만 다시 조회 후 이벤트 발생
+        List<Long> lockedIds = scheduleReminderRepository.findByIdsWithScheduleAndUser(
+                targetIds, DispatchStatus.PROCESSING
+        ).stream().map(ScheduleReminder::getId).toList();
+
+        if(!lockedIds.isEmpty()){
+            eventPublisher.publishEvent(new ReminderEvent(lockedIds));
+        }
     }
 }
