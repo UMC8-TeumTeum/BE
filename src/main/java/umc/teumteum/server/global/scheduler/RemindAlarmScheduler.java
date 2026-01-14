@@ -15,7 +15,6 @@ import umc.teumteum.server.global.reminder.event.ReminderEvent;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component

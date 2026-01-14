@@ -34,7 +34,8 @@ public class ReminderEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleReminderEvent(ReminderEvent event) {
 
-        List<ScheduleReminder> reminders = scheduleReminderRepository.findByScheduleIdIn(event.reminderIds());
+        List<ScheduleReminder> reminders = scheduleReminderRepository.findByIdsWithScheduleAndUser(
+                event.reminderIds(), DispatchStatus.PROCESSING);
 
         for (ScheduleReminder r : reminders) {
             try{
