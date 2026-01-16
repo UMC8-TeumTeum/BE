@@ -6,11 +6,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Check;
+import umc.teumteum.server.domain.report.entity.enums.ReportProcessType;
 import umc.teumteum.server.domain.report.entity.enums.ReportStatus;
 import umc.teumteum.server.domain.report.entity.enums.TargetType;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.common.BaseEntity;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -60,5 +63,25 @@ public class Report extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private ReportStatus status = ReportStatus.OPEN;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "process_type")
+    private ReportProcessType processType; // SUSPEND(정지), DISMISS(반려)
+
+    @Column(name = "admin_memo", columnDefinition = "TEXT")
+    private String adminMemo; // 관리자 메모
+
+    @Column(name = "processed_at")
+    private LocalDateTime processedAt; // 처리 완료 시점
+
+    /*
+        비즈니스 로직: 어떤 처분이든 완료되면 RESOLVED로 변경
+    */
+    public void resolve(ReportProcessType processType, String adminMemo) {
+        this.processType = processType;
+        this.adminMemo = adminMemo;
+        this.processedAt = LocalDateTime.now();
+        this.status = ReportStatus.RESOLVED; //
+    }
 
 }

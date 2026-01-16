@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.report.entity.enums.ReportProcessType;
 import umc.teumteum.server.domain.report.entity.enums.TargetType;
 
 public class ReportRequestDto {
@@ -31,5 +32,19 @@ public class ReportRequestDto {
 
         @Schema(description = "기타 사유(reasonId가 7일 때)를 선택했을 경우 구체적인 내용을 입력합니다. 그 외에는 null을 보내주세요.", example = "상대방이 지속적으로 비속어를 사용합니다.")
         private String otherReason;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(title = "신고 처리: 관리자가 신고를 처리하는 DTO")
+    public static class ProcessReport {
+
+        @NotNull(message = "처리 방식은 필수입니다.")
+        @Schema(description = "처리 방식 (SUSPEND: 정지, DISMISS: 반려)", example = "SUSPEND")
+        private ReportProcessType processType;
+
+        @Schema(description = "관리자 처리 사유 및 메모", example = "부적절한 언어 사용 반복 확인으로 1개월 정지 처리함")
+        private String adminMemo;
     }
 }

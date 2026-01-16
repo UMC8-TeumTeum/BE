@@ -21,6 +21,7 @@ public enum ReportErrorStatus implements BaseErrorCode {
     REPORT_INVALID_TARGET_TYPE(HttpStatus.BAD_REQUEST, "REPORT4003", "지원하지 않는 신고 대상입니다."),
     REPORT_INVALID_STATUS(HttpStatus.BAD_REQUEST, "REPORT4004", "대기 중인 요청만 신고할 수 있습니다."),
     REPORT_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "REPORT4005", "이미 신고한 대상입니다."), // 중복 신고 방지용 추가
+    REPORT_ALREADY_RESOLVED(HttpStatus.BAD_REQUEST, "REPORT4006", "이미 처리가 완료된 신고 내역입니다.")
 
     ;
 
