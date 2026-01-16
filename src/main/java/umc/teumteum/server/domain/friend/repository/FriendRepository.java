@@ -12,9 +12,15 @@ import umc.teumteum.server.domain.user.entity.User;
 import java.util.Optional;
 
 public interface FriendRepository extends JpaRepository<Friend, Long> {
-    Slice<Friend> findByFollowerId(Long followerId, Pageable pageable);
+    @Query("SELECT f FROM Friend f " +
+            "WHERE f.follower.id = :followerId " +
+            "AND f.following.status = 'ACTIVE'")
+    Slice<Friend> findByFollowerId(@Param("followerId") Long followerId, Pageable pageable);
 
-    Slice<Friend> findByFollowingId(Long followingId, Pageable pageable);
+    @Query("SELECT f FROM Friend f " +
+            "WHERE f.following.id = :followingId " +
+            "AND f.follower.status = 'ACTIVE'")
+    Slice<Friend> findByFollowingId(@Param("followingId") Long followingId, Pageable pageable);
 
     Optional<Friend> findByFollowerIdAndFollowingId(Long followerId, Long followingId);
 
@@ -24,6 +30,7 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
 
     @Query("SELECT f1 FROM Friend f1 " +
             "WHERE f1.follower = :user " +
+            "AND f1.following.status = 'ACTIVE' " +
             "AND EXISTS (SELECT f2 FROM Friend f2 " +
             "WHERE f2.follower = f1.following " +
             "AND f2.following = :user) " +

@@ -35,6 +35,8 @@ public class TeumConverter {
     private final TimeUtil timeUtil;
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final String WITHDRAWN_USER_NICKNAME = "탈퇴한 사용자";
+    private static final String SUSPENDED_USER_NICKNAME = "정지된 사용자";
+
     public TeumRequest toTeumRequest(TeumRequestDto.TeumRequest dto, User sender) {
         return TeumRequest.builder()
                 .title(dto.getTitle())
@@ -91,11 +93,7 @@ public class TeumConverter {
                 .graphicId(request.getGraphicId())
                 .isRead(response.getReadAt() != null)
                 .receiverCount(request.getTeumResponses().size())
-                .senderUser(ParticipantDto.builder()
-                        .userId(sender.getId())
-                        .nickname(maskedNickName(sender))
-                        .profileImageUrl(senderProfileImageUrl)
-                        .build())
+                .senderUser(toParticipantDto(sender, senderProfileImageUrl))
                 .date(request.getDate().toString())
                 .timeSlot(currentSlot)
                 .isResend(parent != null)
@@ -270,10 +268,7 @@ public class TeumConverter {
                 .endTime(timeUtil.parseAndFormatEndTime(baseSchedule.getEndTime().toLocalTime()))
                 .status(baseSchedule.getStatus())
                 .participants(relatedSchedules.stream()
-                        .map(s -> {
-                            var u = s.getUser();
-                            return new ParticipantDto(u.getId(), maskedNickName(u), profileUrlByUserId.get(u.getId()));
-                        })
+                        .map(s -> toParticipantDto(s.getUser(), profileUrlByUserId.get(s.getUser().getId()))) // toParticipantDto 호출로 변경
                         .collect(Collectors.toList()))
                 .build();
     }
@@ -378,9 +373,19 @@ public class TeumConverter {
 
     // User 객체와 프로필 이미지 URL을 이용해 ParticipantDto를 생성
     private ParticipantDto toParticipantDto(User user, String profileImageUrl) {
+        // ACTIVE 상태가 아니면 정보를 마스킹하여 반환
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            return ParticipantDto.builder()
+                    .userId(null)
+                    .nickname(maskedNickName(user))
+                    .profileImageUrl(User.DEFAULT_PROFILE_IMAGE)
+                    .build();
+        }
+
+        // 정상 상태일 때만 실제 데이터 반환
         return ParticipantDto.builder()
                 .userId(user.getId())
-                .nickname(maskedNickName(user))
+                .nickname(user.getNickname())
                 .profileImageUrl(profileImageUrl)
                 .build();
     }
@@ -412,9 +417,11 @@ public class TeumConverter {
                     User receiver = req.getTeumResponses().get(0).getReceiverUser(); // 수신자 추출
 
                     return TeumResponseDto.ConflictingRequest.builder()
-                            .id(req.getId())
-                            .receiverNickname(maskedNickName(receiver)) // 닉네임 유지
-                            .receiverProfileImageUrl(profileUrlMap.get(receiver.getId())) // 프로필 이미지 추가
+                            .id(receiver.getStatus() == UserStatus.ACTIVE ? req.getId() : null) // ID 마스킹
+                            .receiverNickname(maskedNickName(receiver))
+                            .receiverProfileImageUrl(receiver.getStatus() == UserStatus.ACTIVE
+                                    ? profileUrlMap.get(receiver.getId())
+                                    : User.DEFAULT_PROFILE_IMAGE)
                             .title(req.getTitle())
                             .description(req.getDescription())
                             .startTime(req.getStartTime().format(TIME_FORMATTER))
@@ -443,9 +450,18 @@ public class TeumConverter {
         if(user == null){
             return WITHDRAWN_USER_NICKNAME;
         }
+
+        // 회원 탈퇴 상태 (INACTIVE)
         if(user.getStatus() == UserStatus.INACTIVE){
             return WITHDRAWN_USER_NICKNAME;
         }
+
+        // 임시 정지(SUSPENDED) 또는 영구 정지(BANNED) 상태
+        if(user.getStatus() == UserStatus.SUSPENDED || user.getStatus() == UserStatus.BANNED){
+            return SUSPENDED_USER_NICKNAME;
+        }
+
+        // 정상 상태 (ACTIVE)
         return user.getNickname();
     }
 

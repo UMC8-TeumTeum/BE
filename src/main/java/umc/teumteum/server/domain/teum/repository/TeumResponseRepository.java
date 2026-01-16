@@ -28,6 +28,7 @@ public interface TeumResponseRepository extends JpaRepository<TeumResponse, Long
         WHERE r.receiverUser.id = :userId
           AND r.status = :respStatus
           AND r.teumRequest.status = :reqStatus
+          AND r.teumRequest.user.status = 'ACTIVE'
           AND (r.teumRequest.date > :today OR (r.teumRequest.date = :today AND r.teumRequest.startTime > :now))
           AND NOT EXISTS (
               SELECT 1 FROM Block b 
