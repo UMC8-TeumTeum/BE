@@ -8,6 +8,8 @@ import umc.teumteum.server.domain.report.dto.ReportRequestDto;
 import umc.teumteum.server.domain.report.dto.ReportResponseDto;
 import umc.teumteum.server.domain.report.entity.Report;
 import umc.teumteum.server.domain.report.entity.ReportReason;
+import umc.teumteum.server.domain.report.entity.enums.ReportProcessType;
+import umc.teumteum.server.domain.report.entity.enums.ReportStatus;
 import umc.teumteum.server.domain.report.entity.enums.TargetType;
 import umc.teumteum.server.domain.report.exception.ReportException;
 import umc.teumteum.server.domain.report.exception.status.ReportErrorStatus;
@@ -109,6 +111,33 @@ public class ReportServiceImpl implements ReportService {
 
         // DTO 변환 및 반환
         return ReportConverter.toReportDetail(report, totalReportCount);
+    }
+
+    @Override
+    @Transactional
+    public void processReport(Long reportId, ReportRequestDto.ProcessReport request) {
+        // 1. 신고 내역 조회
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new ReportException(ReportErrorStatus.REPORT_NOT_FOUND));
+
+        // 2. 이미 완료된 신고인지 확인
+        if (report.getStatus() == ReportStatus.RESOLVED) {
+            throw new ReportException(ReportErrorStatus.REPORT_ALREADY_RESOLVED);
+        }
+
+        // 3. 제재 처리 (SUSPEND일 경우)
+        if (request.getProcessType() == ReportProcessType.SUSPEND) {
+            // 피신고자 특정
+            User reportedUser = (report.getTargetType() == TargetType.USER)
+                    ? report.getTargetUser()
+                    : report.getTeumRequest().getUser();
+
+            // User 엔티티의 suspend() 호출 (1개월 정지 or 3회 누적 시 영구 탈퇴)
+            reportedUser.suspend();
+        }
+
+        // 4. 신고 엔티티 상태 업데이트 (RESOLVED)
+        report.resolve(request.getProcessType(), request.getAdminMemo());
     }
 
     /**
