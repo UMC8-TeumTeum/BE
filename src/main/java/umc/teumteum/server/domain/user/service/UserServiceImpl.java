@@ -92,6 +92,7 @@ public class UserServiceImpl implements UserService {
         Comparator<Map.Entry<User, Integer>> byDistance = Comparator.comparingInt(Map.Entry::getValue);
 
         return userRepository.searchUserWithBlockCheck(keyword, userId).stream()
+                .filter(u -> u.getStatus() != UserStatus.INACTIVE)
                 .map(user -> Map.entry(user,
                         distanceCalculator.apply(keywordLower, user.getNickname().toLowerCase())))
                 .sorted(byDistance)
@@ -554,14 +555,14 @@ public class UserServiceImpl implements UserService {
         User u = userRepository.findById(user.getId())
                 .orElseThrow(()-> new UserException(UserErrorStatus.USER_NOT_FOUND));
 
-        // 1. 유저 관련 데이터 삭제
-        userDataCleaner.clean(u.getId());
-
-        // 2. 프로필 이미지 삭제
+        // 1. 프로필 이미지 객체 삭제
         deleteUserImage(u);
 
-        // 3. 유저 익명화
+        // 2. 유저 익명화
         u.withdraw();
+
+        // 3. 유저 관련 데이터 삭제
+        userDataCleaner.clean(u.getId());
     }
 
     // 수면패턴 삭제

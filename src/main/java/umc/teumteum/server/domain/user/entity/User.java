@@ -171,12 +171,10 @@ public class User extends BaseEntity {
         this.socialId = "deleted-" + this.id + "-" + token;
         this.email = "deleted-" + this.id + "-" + token + "@deleted.local";
 
-        this.nickname = "탈퇴회원-" + this.id + "-" + token.substring(0, 8);
+        this.nickname = null;
         this.sleepTime = null;
         this.wakeTime = null;
         this.job = null;
         this.timePublic = false;
-
-        this.profileImageName = DEFAULT_PROFILE_IMAGE;
     }
 }
