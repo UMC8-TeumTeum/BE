@@ -176,7 +176,5 @@ public class User extends BaseEntity {
         this.wakeTime = null;
         this.job = null;
         this.timePublic = false;
-
-        this.profileImageName = DEFAULT_PROFILE_IMAGE;
     }
 }
