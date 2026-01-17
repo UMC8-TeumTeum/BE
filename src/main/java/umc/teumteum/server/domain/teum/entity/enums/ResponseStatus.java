@@ -6,6 +6,6 @@ public enum ResponseStatus {
     REJECTED,   // 수신자가 요청을 거절
     RESEND,     // 수신자가 시간대 바꿔 재요청
     LEFT,       // 수신자가 요청을 수락했다가 취소함
-    CANCELED_BY_REQUESTER,  // 송신자가 요청을 취소하여 응답 무효
+    CANCELED,   // 송신자가 요청을 취소하여 응답 무효
     REPORTED    // 수신자가 해당 요청을 신고함
 }
