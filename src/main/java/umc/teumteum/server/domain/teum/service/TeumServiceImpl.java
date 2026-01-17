@@ -1,7 +1,6 @@
 package umc.teumteum.server.domain.teum.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.http.client.reactive.AbstractClientHttpConnectorProperties;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -602,7 +601,7 @@ public class TeumServiceImpl implements TeumService {
         // 연결된 응답을 모두 비활성화 처리 (응답 불가하도록)
         for (TeumResponse response : request.getTeumResponses()) {
             if (response.getStatus() == ResponseStatus.PENDING) {
-                response.changeStatus(ResponseStatus.CANCELED_BY_REQUESTER);
+                response.changeStatus(ResponseStatus.CANCELED);
             }
         }
 
@@ -693,7 +692,7 @@ public class TeumServiceImpl implements TeumService {
         // 응답자가 모두 거절 또는 취소한 경우
         boolean allResponsesCancelled = request.getTeumResponses().stream()
                 .allMatch(r -> r.getStatus() == ResponseStatus.REJECTED || r.getStatus() == ResponseStatus.LEFT ||
-                        r.getStatus() == ResponseStatus.CANCELED_BY_REQUESTER);
+                        r.getStatus() == ResponseStatus.CANCELED);
 
         // 최종 취소 판단 조건
         return hasNoPending && (allSchedulesCancelled || (hasNoSchedules && allResponsesCancelled));
