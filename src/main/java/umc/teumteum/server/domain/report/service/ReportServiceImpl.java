@@ -128,7 +128,7 @@ public class ReportServiceImpl implements ReportService {
         // 3. 제재 처리 (SUSPEND일 경우)
         if (request.getProcessType() == ReportProcessType.SUSPEND) {
             // TEUM_REQUEST 타입인데 데이터가 없는 경우
-            if (report.getTargetType() == TargetType.TEUM_REQUEST) {
+            if (report.getTargetType() == TargetType.TEUM_REQUEST && report.getTeumRequest() == null) {
                 throw new ReportException(ReportErrorStatus.REPORT_TARGET_NOT_FOUND);
             }
             // 피신고자 특정
