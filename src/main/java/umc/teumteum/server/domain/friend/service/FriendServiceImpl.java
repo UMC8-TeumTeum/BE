@@ -30,6 +30,7 @@ import umc.teumteum.server.domain.home.entity.enums.ScheduleType;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.notification.service.NotificationUseCases;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.util.S3Util;
@@ -120,7 +121,7 @@ public class FriendServiceImpl implements FriendService {
 
         // 4. 맞팔로우 관계 조회 (특정 사용자 제외)
         Slice<Friend> mutualFriendsSlice = friendRepository.findMutualFriendsExcluding(loginUser, excludeUser,
-                pageable);
+                UserStatus.ACTIVE, pageable);
 
         // 5. 맞팔로우한 상대방들에 대한 S3 프리사인드 URL 생성 및 Dto 변환
         List<FriendResponseDto.MutualFriend> mutualFriendList = mutualFriendsSlice.getContent()
@@ -171,7 +172,7 @@ public class FriendServiceImpl implements FriendService {
                 Sort.by(Sort.Order.desc("isFavorite"), Sort.Order.asc("following.nickname"))
         );
 
-        Slice<Friend> slice = friendRepository.findByFollowerId(userId, pageable);
+        Slice<Friend> slice = friendRepository.findByFollowerId(userId, UserStatus.ACTIVE, pageable);
 
         List<FriendResponseDto.FollowingFriend> dtoList = slice.getContent().stream()
                 .map(friend -> {
@@ -194,7 +195,7 @@ public class FriendServiceImpl implements FriendService {
                 Sort.by("follower.nickname").ascending()
         );
 
-        Slice<Friend> slice = friendRepository.findByFollowingId(userId, pageable);
+        Slice<Friend> slice = friendRepository.findByFollowingId(userId, UserStatus.ACTIVE, pageable);
 
         List<FriendResponseDto.FollowerFriend> dtoList = slice.getContent().stream()
                 .map(friend -> {

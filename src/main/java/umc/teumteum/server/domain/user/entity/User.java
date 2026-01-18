@@ -96,6 +96,13 @@ public class User extends BaseEntity {
     @Column(name = "time_public")
     private Boolean timePublic = true;
 
+    @Builder.Default
+    @Column(name = "suspension_count")
+    private Integer suspensionCount = 0; // 누적 정지 횟수
+
+    @Column(name = "suspended_until")
+    private LocalDateTime suspendedUntil; // 정지 종료 일시
+
 
     /*
         양방향 연관관계
@@ -176,5 +183,43 @@ public class User extends BaseEntity {
         this.wakeTime = null;
         this.job = null;
         this.timePublic = false;
+    }
+
+    // 계정 제재 로직
+    public void suspend() {
+        if (this.suspensionCount == null) {
+            this.suspensionCount = 0;
+        }
+
+        this.suspensionCount++;
+
+        if (this.suspensionCount >= 3) {
+            this.status = UserStatus.BANNED;
+            this.inactiveAt = LocalDateTime.now();
+
+            // withdraw()와 동일한 익명화 처리
+            String token = UUID.randomUUID().toString();
+            this.socialId = "banned-" + this.id + "-" + token;
+            this.email = "banned-" + this.id + "-" + token + "@banned.local";
+
+            this.nickname = null;
+            this.job = null;
+            this.sleepTime = null;
+            this.wakeTime = null;
+            this.timePublic = false;
+            this.suspendedUntil = null;
+            this.profileImageName = DEFAULT_PROFILE_IMAGE;
+        } else {
+            this.status = UserStatus.SUSPENDED;
+            this.suspendedUntil = LocalDateTime.now().plusMonths(1);
+        }
+    }
+
+    // 정지 해제 로직
+    public void activate() {
+        if (this.status == UserStatus.SUSPENDED) {
+            this.status = UserStatus.ACTIVE;
+            this.suspendedUntil = null;
+        }
     }
 }

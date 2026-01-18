@@ -7,6 +7,7 @@ import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,4 +30,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("keyword") String keyword,
             @Param("loginUserId") Long loginUserId
     );
+
+    List<User> findAllByStatusAndSuspendedUntilBefore(UserStatus status, LocalDateTime dateTime);
 }

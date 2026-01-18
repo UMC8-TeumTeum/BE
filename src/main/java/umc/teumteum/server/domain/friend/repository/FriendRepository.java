@@ -8,13 +8,20 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.entity.enums.UserStatus;
 
 import java.util.Optional;
 
 public interface FriendRepository extends JpaRepository<Friend, Long> {
-    Slice<Friend> findByFollowerId(Long followerId, Pageable pageable);
+    @Query("SELECT f FROM Friend f " +
+            "WHERE f.follower.id = :followerId " +
+            "AND f.following.status = :status ")
+    Slice<Friend> findByFollowerId(@Param("followerId") Long followerId, @Param("status") UserStatus status, Pageable pageable);
 
-    Slice<Friend> findByFollowingId(Long followingId, Pageable pageable);
+    @Query("SELECT f FROM Friend f " +
+            "WHERE f.following.id = :followingId " +
+            "AND f.follower.status = :status ")
+    Slice<Friend> findByFollowingId(@Param("followingId") Long followingId, @Param("status") UserStatus status, Pageable pageable);
 
     Optional<Friend> findByFollowerIdAndFollowingId(Long followerId, Long followingId);
 
@@ -24,11 +31,12 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
 
     @Query("SELECT f1 FROM Friend f1 " +
             "WHERE f1.follower = :user " +
+            "AND f1.following.status = :status " +
             "AND EXISTS (SELECT f2 FROM Friend f2 " +
             "WHERE f2.follower = f1.following " +
             "AND f2.following = :user) " +
             "AND f1.following != :excludeUser")
-    Slice<Friend> findMutualFriendsExcluding(User user, User excludeUser, Pageable pageable);
+    Slice<Friend> findMutualFriendsExcluding(User user, User excludeUser, @Param("status") UserStatus status, Pageable pageable);
 
     // 차단 시 두 유저 간의 모든 팔로우 관계(A->B, B->A)를 삭제
     @Modifying(clearAutomatically = true)

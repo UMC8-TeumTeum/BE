@@ -11,7 +11,8 @@ import umc.teumteum.server.global.apiPayload.code.ReasonDto;
 public enum ReportSuccessStatus implements BaseCode {
 
     REPORT_CREATED(HttpStatus.OK, "REPORT2001", "신고가 성공적으로 접수되었습니다."),
-    REPORT_DETAIL_FETCHED(HttpStatus.OK, "REPORT2002", "신고 상세 정보를 성공적으로 조회했습니다.");
+    REPORT_DETAIL_FETCHED(HttpStatus.OK, "REPORT2002", "신고 상세 정보를 성공적으로 조회했습니다."),
+    REPORT_PROCESSED(HttpStatus.OK, "REPORT2003", "신고 처리가 성공적으로 완료되었습니다.")
     ;
 
     private final HttpStatus httpStatus;
