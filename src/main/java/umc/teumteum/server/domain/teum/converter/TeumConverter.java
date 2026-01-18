@@ -373,6 +373,14 @@ public class TeumConverter {
 
     // User 객체와 프로필 이미지 URL을 이용해 ParticipantDto를 생성
     private ParticipantDto toParticipantDto(User user, String profileImageUrl) {
+        if (user == null) {
+            return ParticipantDto.builder()
+                    .userId(null)
+                    .nickname(WITHDRAWN_USER_NICKNAME)
+                    .profileImageUrl(User.DEFAULT_PROFILE_IMAGE)
+                    .build();
+        }
+
         // ACTIVE 상태가 아니면 정보를 마스킹하여 반환
         if (user.getStatus() != UserStatus.ACTIVE) {
             return ParticipantDto.builder()
