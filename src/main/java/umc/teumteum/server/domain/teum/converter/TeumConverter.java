@@ -268,7 +268,11 @@ public class TeumConverter {
                 .endTime(timeUtil.parseAndFormatEndTime(baseSchedule.getEndTime().toLocalTime()))
                 .status(baseSchedule.getStatus())
                 .participants(relatedSchedules.stream()
-                        .map(s -> toParticipantDto(s.getUser(), profileUrlByUserId.get(s.getUser().getId()))) // toParticipantDto 호출로 변경
+                        .map(s -> {
+                            User user = s.getUser();
+                            String profileUrl = (user != null) ? profileUrlByUserId.get(user.getId()) : null;
+                            return toParticipantDto(user, profileUrl);
+                        })
                         .collect(Collectors.toList()))
                 .build();
     }
