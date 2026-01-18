@@ -187,7 +187,12 @@ public class User extends BaseEntity {
 
     // 계정 제재 로직
     public void suspend() {
+        if (this.suspensionCount == null) {
+            this.suspensionCount = 0;
+        }
+
         this.suspensionCount++;
+
         if (this.suspensionCount >= 3) {
             this.status = UserStatus.BANNED;
             this.inactiveAt = LocalDateTime.now();
@@ -202,6 +207,7 @@ public class User extends BaseEntity {
             this.sleepTime = null;
             this.wakeTime = null;
             this.timePublic = false;
+            this.suspendedUntil = null;
             this.profileImageName = DEFAULT_PROFILE_IMAGE;
         } else {
             this.status = UserStatus.SUSPENDED;
