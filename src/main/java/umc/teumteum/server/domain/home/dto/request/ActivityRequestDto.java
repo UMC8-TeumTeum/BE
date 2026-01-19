@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.teumteum.server.domain.home.entity.enums.EstimatedDuration;
+import umc.teumteum.server.global.annotation.NoPii;
 
 public class ActivityRequestDto {
   @Getter
@@ -25,6 +26,8 @@ public class ActivityRequestDto {
     private Long categoryId;
 
     @Schema(description = "사용자가 직접 입력한 카테고리", example = "명상")
+    //max = 10, message = "카테고리는 10자 이내로 입력해주세요.")
+    @NoPii
     private String customCategory;
 
   }
@@ -42,12 +45,16 @@ public class ActivityRequestDto {
     private Long locationId;
 
     @Schema(description = "사용자가 직접 입력한 위치", example = "회사")
+    //@Size(max = 10, message = "위치는 10자 이내로 입력해주세요.")
+    @NoPii
     private String customLocation;
 
     @Schema(description = "활동 카테고리", example = "1")
     private Long categoryId;
 
     @Schema(description = "사용자가 직접 입력한 카테고리", example = "명상")
+    //max = 10, message = "카테고리는 10자 이내로 입력해주세요.")
+    @NoPii
     private String customCategory;
 
   }
