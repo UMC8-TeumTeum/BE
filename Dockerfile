@@ -25,7 +25,5 @@ RUN chown -R 1000:1000 /home/app
 ENV HOME=/home/app
 
 USER 1000
-ENTRYPOINT ["java",
-  "-Dspring.profiles.active=prod",
-  "-Dspring.config.additional-location=/home/app/config/",
-  "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-Dspring.config.additional-location=/home/app/config/", "-jar", "app.jar"]
+
