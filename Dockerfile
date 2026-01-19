@@ -8,19 +8,24 @@ RUN chmod +x gradlew
 RUN ./gradlew dependencies --no-daemon || true
 
 COPY src src
+COPY config/application-prod.properties config/
 RUN ./gradlew bootJar --no-daemon
-
 
 
 FROM amazoncorretto:21
 WORKDIR /home/app
 
 RUN mkdir -p /home/app/config
+
 COPY --from=build /app/build/libs/*.jar app.jar
+COPY --from=build /app/config/application-prod.properties /home/app/config/
 
 RUN chown -R 1000:1000 /home/app
 
 ENV HOME=/home/app
 
 USER 1000
-ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
+ENTRYPOINT ["java",
+  "-Dspring.profiles.active=prod",
+  "-Dspring.config.additional-location=/home/app/config/",
+  "-jar", "app.jar"]
