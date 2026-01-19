@@ -12,6 +12,8 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    env:
+      ECR_URI: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}
 
     steps:
       - name: Checkout With Submodules
@@ -20,18 +22,6 @@ jobs:
           token: ${{ secrets.ACCESS_TOKEN }}
           submodules: recursive
           fetch-depth: 0
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-
-      - name: Grant execute permission for Gradlew
-        run: chmod +x ./gradlew
-
-      - name: Build Jar
-        run: ./gradlew clean bootJar -Dspring.profiles.active=prod
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -42,22 +32,24 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Docker pull cache image
+        run: |
+          docker pull ${ECR_URI}:latest || true
 
       - name: Docker build and push (latest & sha)
-        env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          ECR_REPO_NAME: ${{ secrets.ECR_REPO_NAME }}
         run: |
-          ECR_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}
-
-          docker build \
+          SHORT_SHA=$(echo ${GITHUB_SHA} | cut -c1-10)
+          
+          DOCKER_BUILDKIT=1 BUILDKIT_INLINE_CACHE=1 docker build \
+            --progress=plain \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --cache-from ${ECR_URI}:latest \
             -t ${ECR_URI}:latest \
-            -t ${ECR_URI}:develop-${GITHUB_SHA} \
+            -t ${ECR_URI}:develop-${SHORT_SHA} \
             .
 
           docker push ${ECR_URI}:latest
-          docker push ${ECR_URI}:develop-${GITHUB_SHA}
+          docker push ${ECR_URI}:develop-${SHORT_SHA}
 
   deploy:
     needs: build-and-push
@@ -72,8 +64,9 @@ jobs:
 
       - name: Deploy via SSM Run Command
         run: |
+          SHORT_SHA=$(echo ${GITHUB_SHA} | cut -c1-10)
           aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=tag:Service,Values=teumteum-app" \
-            --comment "Deploy teum-teum ${GITHUB_SHA}" \
+            --comment "Deploy teum-teum ${SHORT_SHA}" \
             --parameters 'commands=["/opt/teumteum/scripts/deploy.sh"]'
