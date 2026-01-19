@@ -38,14 +38,16 @@ jobs:
 
       - name: Docker build and push (latest & sha)
         run: |
+          SHORT_SHA=$(echo ${GITHUB_SHA} | cut -c1-10)
+          
           docker build \
             --cache-from ${ECR_URI}:latest \
             -t ${ECR_URI}:latest \
-            -t ${ECR_URI}:develop-${GITHUB_SHA} \
+            -t ${ECR_URI}:develop-${SHORT_SHA} \
             .
 
           docker push ${ECR_URI}:latest
-          docker push ${ECR_URI}:develop-${GITHUB_SHA}
+          docker push ${ECR_URI}:develop-${SHORT_SHA}
 
   deploy:
     needs: build-and-push
@@ -63,5 +65,5 @@ jobs:
           aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=tag:Service,Values=teumteum-app" \
-            --comment "Deploy teum-teum ${GITHUB_SHA}" \
+            --comment "Deploy teum-teum ${GITHUB_SHA:0:10}" \
             --parameters 'commands=["/opt/teumteum/scripts/deploy.sh"]'
