@@ -41,6 +41,8 @@ jobs:
           SHORT_SHA=$(echo ${GITHUB_SHA} | cut -c1-10)
           
           DOCKER_BUILDKIT=1 BUILDKIT_INLINE_CACHE=1 docker build \
+            --progress=plain \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
             --cache-from ${ECR_URI}:latest \
             -t ${ECR_URI}:latest \
             -t ${ECR_URI}:develop-${SHORT_SHA} \
