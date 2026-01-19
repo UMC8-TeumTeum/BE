@@ -40,7 +40,7 @@ jobs:
         run: |
           SHORT_SHA=$(echo ${GITHUB_SHA} | cut -c1-10)
           
-          docker build \
+          DOCKER_BUILDKIT=1 BUILDKIT_INLINE_CACHE=1 docker build \
             --cache-from ${ECR_URI}:latest \
             -t ${ECR_URI}:latest \
             -t ${ECR_URI}:develop-${SHORT_SHA} \
@@ -62,8 +62,9 @@ jobs:
 
       - name: Deploy via SSM Run Command
         run: |
+          SHORT_SHA=$(echo ${GITHUB_SHA} | cut -c1-10)
           aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=tag:Service,Values=teumteum-app" \
-            --comment "Deploy teum-teum ${GITHUB_SHA:0:10}" \
+            --comment "Deploy teum-teum ${SHORT_SHA}" \
             --parameters 'commands=["/opt/teumteum/scripts/deploy.sh"]'
