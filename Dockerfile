@@ -19,5 +19,8 @@ RUN mkdir -p /home/app/config
 COPY --from=build /app/build/libs/*.jar app.jar
 
 RUN chown -R 1000:1000 /home/app
+
+ENV HOME=/home/app
+
 USER 1000
 ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
