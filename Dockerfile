@@ -1,15 +1,21 @@
 FROM amazoncorretto:21 AS build
 WORKDIR /app
 
+ENV GRADLE_USER_HOME=/home/gradle/.gradle
+
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle settings.gradle ./
 RUN chmod +x gradlew
-RUN ./gradlew dependencies --no-daemon || true
+
+RUN --mount=type=cache,target=/home/gradle/.gradle \
+    ./gradlew dependencies --no-daemon || true
 
 COPY src src
 COPY config/application-prod.properties config/
-RUN ./gradlew bootJar --no-daemon
+
+RUN --mount=type=cache,target=/home/gradle/.gradle \
+    ./gradlew bootJar --no-daemon
 
 
 FROM amazoncorretto:21
