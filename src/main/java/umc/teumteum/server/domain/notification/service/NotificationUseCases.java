@@ -12,6 +12,7 @@ import umc.teumteum.server.domain.home.entity.ScheduleReminder;
 import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
 import umc.teumteum.server.domain.teum.dto.TeumRequestDto;
 import umc.teumteum.server.domain.teum.entity.TeumRequest;
+import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.user.entity.User;
 
 @Slf4j
@@ -64,21 +65,27 @@ public class NotificationUseCases {
   }
 
   // 틈 응답 알림
-  public void notifyTeumResponse(User sender, User receiver, Long teumResponseId, boolean accepted) {
+  public void notifyTeumResponse(User sender, User receiver, TeumResponse teumResponse, boolean accepted) {
     NotificationType type = accepted ? NotificationType.TEUM_ACCEPTED : NotificationType.TEUM_DECLINED;
     String content = type.getContent();
+
+    TeumRequest request = teumResponse.getTeumRequest();
 
     Map<String, String> data = new HashMap<>();
     data.put ("senderId", String.valueOf(sender.getId())) ;
     data.put ("senderName", sender.getNickname());
     data.put ("accepted", String.valueOf(accepted) ) ;
 
+    // date 정보 추가
+    data.put ("date", request.getDate().toString());
+    data.put("startTime", request.getStartTime().toString());
+    data.put("endTime", request.getEndTime().toString());
 
     orchestrator.saveAndPush(
         receiver,
         type,
         content,
-        teumResponseId,
+        teumResponse.getId(),
         data
     );
 

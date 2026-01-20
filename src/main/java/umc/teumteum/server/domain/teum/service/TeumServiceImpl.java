@@ -281,7 +281,7 @@ public class TeumServiceImpl implements TeumService {
         notificationUseCases.notifyTeumResponse(
                 receiver,
                 requester,
-                response.getId(),
+                response,
                 isAccepted
         );
 

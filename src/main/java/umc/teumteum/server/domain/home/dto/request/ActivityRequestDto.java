@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,7 +47,7 @@ public class ActivityRequestDto {
     private Long locationId;
 
     @Schema(description = "사용자가 직접 입력한 위치", example = "회사")
-    //@Size(max = 10, message = "위치는 10자 이내로 입력해주세요.")
+    @Size(max = 10, message = "위치는 10자 이내로 입력해주세요.")
     @NoPii
     private String customLocation;
 
@@ -53,7 +55,7 @@ public class ActivityRequestDto {
     private Long categoryId;
 
     @Schema(description = "사용자가 직접 입력한 카테고리", example = "명상")
-    //max = 10, message = "카테고리는 10자 이내로 입력해주세요.")
+    @Size(max = 10, message = "카테고리는 10자 이내로 입력해주세요.")
     @NoPii
     private String customCategory;
 
