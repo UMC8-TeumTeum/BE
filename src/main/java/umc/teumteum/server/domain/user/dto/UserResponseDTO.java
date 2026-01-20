@@ -87,7 +87,7 @@ public class UserResponseDTO {
     private String title;
 
     @Schema(description = "시작 시간", example = "10:00")
-    @JsonFormat(pattern = "HH:mm")
+    @JsonSerialize(using = TimeSerializer.class)
     private LocalTime startTime;
 
     @Schema(description = "종료 시간", example = "11:00")
