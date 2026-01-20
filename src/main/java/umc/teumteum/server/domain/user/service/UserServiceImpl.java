@@ -582,6 +582,8 @@ public class UserServiceImpl implements UserService {
         return UserConverter.toAccountInfoDTO(user);
     }
 
+    // 마이페이지 - 공개 투두 조회
+    @Transactional(readOnly = true)
     @Override
     public List<UserResponseDTO.TodoDTO> getPublicTodo(User user) {
 
@@ -596,10 +598,6 @@ public class UserServiceImpl implements UserService {
                 .map(UserConverter::toTodoDTO)
                 .toList();
     }
-
-    // 마이페이지 - 공개 투두 조회
-    @Transactional(readOnly = true)
-
 
 
     /**
