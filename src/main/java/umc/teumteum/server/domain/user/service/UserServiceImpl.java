@@ -582,6 +582,26 @@ public class UserServiceImpl implements UserService {
         return UserConverter.toAccountInfoDTO(user);
     }
 
+    @Override
+    public List<UserResponseDTO.TodoDTO> getPublicTodo(User user) {
+
+        // 1. 스케줄 조회
+        LocalDate now = LocalDate.now();
+        List<Schedule> schedulesList = scheduleRepository.findByUserAndDateAndIsPublicAndRoutineStatus(user.getId(), now);
+
+        // 2. 시작시간 기준으로 정렬 후 상위 2개 반환
+        return schedulesList.stream()
+                .sorted(Comparator.comparing(Schedule::getStartTime))
+                .limit(2)
+                .map(UserConverter::toTodoDTO)
+                .toList();
+    }
+
+    // 마이페이지 - 공개 투두 조회
+    @Transactional(readOnly = true)
+
+
+
     /**
      * 유저 프로필 삭제 헬퍼 메서드
      */

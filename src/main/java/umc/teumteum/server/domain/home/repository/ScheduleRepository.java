@@ -358,4 +358,20 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Modifying(clearAutomatically = true,flushAutomatically = true)
     @Query("DELETE FROM Schedule s WHERE s.user.id = :userId")
     void deleteAllByUserId(@Param("userId") Long userId);
+
+
+    /**
+     *  공개 투두 조회
+     *  userId
+     */
+    @Query("""
+    SELECT s FROM Schedule s
+    WHERE s.user.id = :userId
+      AND s.routineStatus <> umc.teumteum.server.domain.home.entity.enums.RoutineStatus.DELETED
+      AND s.date = :date
+      AND s.isPublic = true
+    """)
+    List<Schedule> findByUserAndDateAndIsPublicAndRoutineStatus(
+            @Param("userId") Long userId,
+            @Param("date") LocalDate date);
 }
