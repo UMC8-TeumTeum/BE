@@ -159,21 +159,21 @@ public class ActivityServiceImpl implements ActivityService{
       throw new HomeException(HomeErrorStatus._INVALID_TIME_RANGE);
     }
 
-    // 1. 중복 스케줄 체크
-    LocalDate date = request.getStartTime().toLocalDate();
-    LocalDateTime startTime = request.getStartTime();
-    LocalDateTime endTime = request.getEndTime();
-
-    // 1-1. 틈 & 수면패턴 중복 검사 -> 등록 불가
-    conflictValidator.validateTodo(user, startTime, endTime);
-    // 1-2. 스케줄 중복 검사 -> 등록 가능
-    boolean hasConflict = scheduleRepository.existsConflictSchedule(
-        user.getId(), date, startTime, endTime
-    );
-    if (hasConflict) {
-      // 일정이 겹치면 예외
-      throw new HomeException(HomeErrorStatus._SCHEDULE_CONFLICT);
-    }
+//    // 1. 중복 스케줄 체크
+//    LocalDate date = request.getStartTime().toLocalDate();
+//    LocalDateTime startTime = request.getStartTime();
+//    LocalDateTime endTime = request.getEndTime();
+//
+//    // 1-1. 틈 & 수면패턴 중복 검사 -> 등록 불가
+//    conflictValidator.validateTodo(user, startTime, endTime);
+//    // 1-2. 스케줄 중복 검사 -> 등록 가능
+//    boolean hasConflict = scheduleRepository.existsConflictSchedule(
+//        user.getId(), date, startTime, endTime
+//    );
+//    if (hasConflict) {
+//      // 일정이 겹치면 예외
+//      throw new HomeException(HomeErrorStatus._SCHEDULE_CONFLICT);
+//    }
 
     // 2. 키를 가지고 Wish 관련 데이터들 조회 없으면 예외
     String title = aiContentsRedisTemplate.opsForValue().get(WISH_TITLE_PREFIX + wishUUID);
