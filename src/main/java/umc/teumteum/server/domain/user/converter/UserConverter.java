@@ -2,6 +2,7 @@ package umc.teumteum.server.domain.user.converter;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
 import umc.teumteum.server.domain.user.entity.Routine;
@@ -52,6 +53,15 @@ public class UserConverter {
         return UserResponseDTO.AccountInfoDTO.builder()
                 .email(user.getEmail())
                 .socialType(user.getSocialType())
+                .build();
+    }
+
+    // schedule -> UserResponseDTO.TodoDTO
+    public static UserResponseDTO.TodoDTO toTodoDTO(Schedule schedule) {
+        return UserResponseDTO.TodoDTO.builder()
+                .title(schedule.getTitle())
+                .startTime(schedule.getStartTime().toLocalTime())
+                .endTime(schedule.getEndTime().toLocalTime())
                 .build();
     }
 }

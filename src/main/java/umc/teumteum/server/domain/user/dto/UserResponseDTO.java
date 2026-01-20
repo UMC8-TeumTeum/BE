@@ -1,12 +1,14 @@
 package umc.teumteum.server.domain.user.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
+import umc.teumteum.server.global.util.TimeSerializer;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -75,4 +77,22 @@ public class UserResponseDTO {
     @Schema(description = "소셜타입", example = "kakao")
     private SocialType socialType;
   }
+
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  public static class TodoDTO {
+
+    @Schema(description = "투두 제목", example = "수영장 가기")
+    private String title;
+
+    @Schema(description = "시작 시간", example = "10:00")
+    @JsonSerialize(using = TimeSerializer.class)
+    private LocalTime startTime;
+
+    @Schema(description = "종료 시간", example = "11:00")
+    @JsonSerialize(using = TimeSerializer.class)
+    private LocalTime endTime;
+  }
+
 }

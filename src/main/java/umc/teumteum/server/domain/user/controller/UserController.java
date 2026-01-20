@@ -46,12 +46,12 @@ public class UserController {
     }
 
     @Operation(
-        summary = "마이페이지 정보 조회",
-        description = "사용자의 프로필, 이름, 직업 분야, 아이디 등 마이페이지에 필요한 정보를 조회합니다."
+            summary = "마이페이지 정보 조회",
+            description = "사용자의 프로필, 이름, 직업 분야, 아이디 등 마이페이지에 필요한 정보를 조회합니다."
     )
     @GetMapping(value = "/mypage", produces = "application/json")
     public ApiResponse<UserResponseDTO.MyPageDTO> getMypageInfo(
-        @Parameter(hidden = true) @CurrentUser User user
+            @Parameter(hidden = true) @CurrentUser User user
     ) {
         UserResponseDTO.MyPageDTO response = userService.getMyPage(user);
         return ApiResponse.of(UserSuccessStatus._USER_FOUND, response);
@@ -65,20 +65,21 @@ public class UserController {
     public ApiResponse<Void> updateProfile(
             @Valid @RequestBody UserRequestDto.ProfileRequest request,
             @Parameter(hidden = true) @CurrentUser User user
-    ){
+    ) {
         userService.updateProfile(request, user);
-        return ApiResponse.of(UserSuccessStatus._PROFILE_UPDATED,null);
+        return ApiResponse.of(UserSuccessStatus._PROFILE_UPDATED, null);
     }
+
     @Operation(
             summary = "마이페이지 프로필 수정용 Presigned URL 발급",
             description = "프로필 수정 과정에서 프로필 이미지를 S3에 직접 업로드할 수 있는 Presigned URL을 발급합니다."
     )
     @PostMapping(value = "/mypage/profile-image/presigned-url", produces = "application/json")
     public ApiResponse<OnboardingResponseDto.ProfileImagePresignedUrlResponse> getPresignedImagePresignedUrl(
-        HttpServletRequest httpServletRequest,
-        @RequestBody @Valid OnboardingRequestDto.ProfileImagePresignedUrlRequest request,
-        @CurrentUser @Parameter(hidden = true) User user
-    ){
+            HttpServletRequest httpServletRequest,
+            @RequestBody @Valid OnboardingRequestDto.ProfileImagePresignedUrlRequest request,
+            @CurrentUser @Parameter(hidden = true) User user
+    ) {
         OnboardingResponseDto.ProfileImagePresignedUrlResponse response =
                 userService.generateProfileImagePresignedUrl(httpServletRequest, request, user);
         return ApiResponse.of(UserSuccessStatus._USER_PRESIGNED_URL_ISSUED, response);
@@ -90,12 +91,12 @@ public class UserController {
     )
     @PostMapping(value = "/mypage/profile-image", produces = "application/json")
     public ApiResponse<Object> saveProfileImageKey(
-                HttpServletRequest httpServletRequest,
-                @RequestBody @Valid OnboardingRequestDto.ProfileImageRequest request,
-                @CurrentUser @Parameter(hidden = true) User user
+            HttpServletRequest httpServletRequest,
+            @RequestBody @Valid OnboardingRequestDto.ProfileImageRequest request,
+            @CurrentUser @Parameter(hidden = true) User user
     ) {
-            userService.saveProfileImage(httpServletRequest, request, user);
-            return ApiResponse.of(UserSuccessStatus._PROFILE_IMAGE_UPDATED, null);
+        userService.saveProfileImage(httpServletRequest, request, user);
+        return ApiResponse.of(UserSuccessStatus._PROFILE_IMAGE_UPDATED, null);
     }
 
     @Operation(
@@ -129,11 +130,11 @@ public class UserController {
     )
     @GetMapping(value = "/mypage/routines", produces = "application/json")
     public ApiResponse<List<UserResponseDTO.RoutineDTO>> getRoutines(
-            @Parameter(name = "weekday",description = "조회할 요일", example = "MONDAY") @RequestParam("weekday") Weekday weekday,
+            @Parameter(name = "weekday", description = "조회할 요일", example = "MONDAY") @RequestParam("weekday") Weekday weekday,
             @CurrentUser @Parameter(hidden = true) User user
-    ){
+    ) {
         List<UserResponseDTO.RoutineDTO> response = userService.getRoutines(weekday, user);
-        return ApiResponse.of(UserSuccessStatus._ROUTINE_LOADED,response);
+        return ApiResponse.of(UserSuccessStatus._ROUTINE_LOADED, response);
     }
 
     @Operation(
@@ -142,8 +143,8 @@ public class UserController {
     )
     @DeleteMapping(value = "/mypage/routines/{routineId}", produces = "application/json")
     public ApiResponse<Object> deleteRoutine(
-            @Parameter(name= "routineId", description = "삭제할 Routine Id", example = "123") @PathVariable("routineId") Long routineId
-    ){
+            @Parameter(name = "routineId", description = "삭제할 Routine Id", example = "123") @PathVariable("routineId") Long routineId
+    ) {
         userService.deleteRoutine(routineId);
         return ApiResponse.of(UserSuccessStatus._ROUTINE_DELETED, null);
     }
@@ -156,9 +157,9 @@ public class UserController {
     public ApiResponse<Object> saveRoutine(
             @RequestBody @Valid OnboardingRequestDto.RoutineDTO request,
             @CurrentUser @Parameter(hidden = true) User user
-    ){
+    ) {
         userService.saveRoutine(request, user);
-        return ApiResponse.of(UserSuccessStatus._ROUTINE_ADDED,null);
+        return ApiResponse.of(UserSuccessStatus._ROUTINE_ADDED, null);
     }
 
     @Operation(
@@ -167,10 +168,10 @@ public class UserController {
     )
     @PatchMapping(value = "/mypage/routines/{routineId}", produces = "application/json")
     public ApiResponse<Object> updateRoutine(
-            @Parameter(name= "routineId", description = "수정할 Routine Id", example = "123") @PathVariable("routineId") Long routineId,
+            @Parameter(name = "routineId", description = "수정할 Routine Id", example = "123") @PathVariable("routineId") Long routineId,
             @RequestBody @Valid OnboardingRequestDto.RoutineDTO request,
             @CurrentUser @Parameter(hidden = true) User user
-    ){
+    ) {
         userService.updateRoutine(routineId, request, user);
         return ApiResponse.of(UserSuccessStatus._ROUTINE_UPDATED, null);
     }
@@ -183,7 +184,7 @@ public class UserController {
     public ApiResponse<Object> updateSleepPattern(
             @RequestBody @Valid OnboardingRequestDto.SleepPatternRequest request,
             @CurrentUser @Parameter(hidden = true) User user
-    ){
+    ) {
         userService.updateSleepPattern(request, user);
         return ApiResponse.of(UserSuccessStatus._SLEEP_PATTERN_UPDATED, null);
     }
@@ -195,7 +196,7 @@ public class UserController {
     @DeleteMapping(value = "/mypage/sleep-pattern", produces = "application/json")
     public ApiResponse<Object> deleteSleepPattern(
             @CurrentUser @Parameter(hidden = true) User user
-    ){
+    ) {
         userService.deleteSleepPattern(user);
         return ApiResponse.of(UserSuccessStatus._SLEEP_PATTERN_DELETED, null);
     }
@@ -207,7 +208,7 @@ public class UserController {
     @GetMapping(value = "/mypage/reminders", produces = "application/json")
     public ApiResponse<UserResponseDTO.RemindAlarmList> getReminders(
             @CurrentUser @Parameter(hidden = true) User user
-    ){
+    ) {
         UserResponseDTO.RemindAlarmList response = userService.getReminders(user);
         return ApiResponse.of(UserSuccessStatus._REMIND_ALARM_LOADED, response);
     }
@@ -220,7 +221,7 @@ public class UserController {
     public ApiResponse<Object> updateReminders(
             @RequestBody @Valid OnboardingRequestDto.RemindAlarmList request,
             @CurrentUser @Parameter(hidden = true) User user
-    ){
+    ) {
         userService.updateReminders(request, user);
         return ApiResponse.of(UserSuccessStatus._REMIND_ALARM_UPDATED, null);
     }
@@ -233,7 +234,7 @@ public class UserController {
     public ApiResponse<Object> deleteUser(
             HttpServletRequest httpServletRequest,
             @CurrentUser @Parameter(hidden = true) User user
-    ){
+    ) {
         authService.logout(httpServletRequest, user);
         userService.deleteUser(user);
         return ApiResponse.of(UserSuccessStatus._USER_DELETED, null);
@@ -245,10 +246,18 @@ public class UserController {
     )
     @GetMapping(value = "/mypage/accounts", produces = "application/json")
     public ApiResponse<UserResponseDTO.AccountInfoDTO> getAccount(
-            @CurrentUser @Parameter(hidden = true) User user){
+            @CurrentUser @Parameter(hidden = true) User user) {
         UserResponseDTO.AccountInfoDTO result = userService.getAccountInfo(user);
         return ApiResponse.of(UserSuccessStatus._SOCIAL_ACCOUNT_LOADED, result);
     }
 
-
+    @Operation(
+            summary = "마이페이지 공개 투두 조회",
+            description = "마이페이지에서 해당 날짜의 투두 중 공개된 2개의 투두를 조회합니다.")
+    @GetMapping(value = "/mypage/public-todo", produces = "application/json")
+    public ApiResponse<List<UserResponseDTO.TodoDTO>> getPublicTodo(
+            @CurrentUser @Parameter(hidden = true) User user) {
+        List<UserResponseDTO.TodoDTO> result = userService.getPublicTodo(user);
+        return ApiResponse.of(UserSuccessStatus._PUBLIC_TODO_LOADED, result);
+    }
 }
