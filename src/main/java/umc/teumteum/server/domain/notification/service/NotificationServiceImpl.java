@@ -1,6 +1,7 @@
 package umc.teumteum.server.domain.notification.service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,10 @@ import umc.teumteum.server.domain.notification.converter.NotificationConverter;
 import umc.teumteum.server.domain.notification.dto.NotificationResponseDto;
 import umc.teumteum.server.domain.notification.entity.Notification;
 import umc.teumteum.server.domain.notification.entity.enums.RelatedEntityType;
+import umc.teumteum.server.domain.notification.exception.NotificationException;
+import umc.teumteum.server.domain.notification.exception.status.NotificationErrorStatus;
 import umc.teumteum.server.domain.notification.repository.NotificationRepository;
+import umc.teumteum.server.domain.teum.entity.TeumResponse;
 import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
 import umc.teumteum.server.domain.teum.repository.TeumResponseRepository;
 import umc.teumteum.server.domain.user.entity.User;
@@ -46,13 +50,16 @@ public class NotificationServiceImpl implements NotificationService {
 
     Slice<Notification> notifications = notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable); //User에 상대방 정보 담겨 있으니까.. 일단 상대방 정보를 기준으로 알림 조회
     Map<Long, User> relatedUserMap = resolveRelatedUsers(notifications.getContent());
+    Map<Long, LocalDateTime> eventDateMap = resolveEventDates(notifications.getContent());
 
     List<NotificationResponseDto.NotificationDto> notificationList = notifications.stream()
         .filter(n->isValidNotification(n, relatedUserMap))
         .map(n-> {
           User friend = relatedUserMap.get(n.getId());
+          LocalDateTime eventDate = eventDateMap.get(n.getId());
+
           String profileImageUrl = s3Util.toPresignedUrl("profile/" + friend.getProfileImageName(), Duration.ofMinutes(30));
-          return NotificationConverter.toNotificationDto(n, friend, profileImageUrl);
+          return NotificationConverter.toNotificationDto(n, friend, profileImageUrl,eventDate);
         })
         .toList();
 
@@ -61,32 +68,74 @@ public class NotificationServiceImpl implements NotificationService {
   }
 
   private Map<Long, User> resolveRelatedUsers(List<Notification> notifications) {
-    Map<Long,User> result = new HashMap<>();
+    Map<Long, User> result = new HashMap<>();
+
     for (Notification notification : notifications) {
       RelatedEntityType type = notification.getType().getRelatedEntityType();
       Long relatedId = notification.getRelatedId();
 
-      switch (type){
-        case TEUM_RESPONSE, SCHEDULE -> {
-          teumResponseRepository.findById(relatedId)
-              .ifPresent(r -> result.put(notification.getId(), r.getReceiverUser()));
-        }
+      switch (type) {
         case TEUM_REQUEST -> {
           teumRequestRepository.findById(relatedId)
-              .ifPresent(r -> result.put(notification.getId(), r.getUser()));
+                  .ifPresent(r -> result.put(notification.getId(), r.getUser()));
+        }
+        case TEUM_RESPONSE -> {
+          teumResponseRepository.findById(relatedId)
+                  .ifPresent(r -> result.put(notification.getId(), r.getReceiverUser()));
         }
         case FRIEND -> {
           friendRepository.findById(relatedId)
-              .ifPresent(f -> result.put(notification.getId(), f.getFollower()));
+                  .ifPresent(f -> result.put(notification.getId(), f.getFollower()));
+        }
+        case SCHEDULE -> {
+          teumResponseRepository.findById(relatedId)
+                  .ifPresent(r -> result.put(notification.getId(), r.getReceiverUser()));
         }
         default -> {
-          log.warn("다룰 수 없는 RelatedEntityType 의 알람입니다. 알림 id={}, 타입={}", notification.getId(), type);
+          log.warn("상대 유저를 해석할 수 없는 알림. id={}, type={}",
+                  notification.getId(), type);
         }
       }
-
     }
     return result;
   }
+
+  private Map<Long, LocalDateTime> resolveEventDates(List<Notification> notifications) {
+    Map<Long, LocalDateTime> result = new HashMap<>();
+
+    for (Notification notification : notifications) {
+      RelatedEntityType type = notification.getType().getRelatedEntityType();
+      Long relatedId = notification.getRelatedId();
+
+      switch (type) {
+        case TEUM_REQUEST -> {
+          teumRequestRepository.findById(relatedId)
+                  .ifPresent(r ->
+                          result.put(
+                                  notification.getId(),
+                                  LocalDateTime.of(r.getDate(), r.getStartTime())
+                          )
+                  );
+        }
+        case TEUM_RESPONSE -> {
+          teumResponseRepository.findById(relatedId)
+                  .map(TeumResponse::getTeumRequest)
+                  .ifPresent(req ->
+                          result.put(
+                                  notification.getId(),
+                                  LocalDateTime.of(req.getDate(), req.getStartTime())
+                          )
+                  );
+        }
+
+        // SCHEDULE/FRIEND는 date 없음
+        default -> {}
+      }
+    }
+    return result;
+  }
+
+
 
   private boolean isValidNotification(Notification notificaion, Map<Long, User> relatedUserMap) {
     boolean exists = relatedUserMap.containsKey(notificaion.getId());
@@ -117,4 +166,24 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
   }
+
+  @Transactional
+  @Override
+  public NotificationResponseDto.ReadResponseDto readNotification(User user, Long notificationId) {
+
+    Notification notification = notificationRepository.findById(notificationId)
+            .orElseThrow(() -> new NotificationException(NotificationErrorStatus.NOTIFICATION_NOT_FOUND));
+
+    if (!notification.getUser().getId().equals(user.getId())) {
+      throw new NotificationException(NotificationErrorStatus.FORBIDDEN_NOTIFICATION);
+    }
+
+    if (!Boolean.TRUE.equals(notification.getIsRead())) {
+      notification.markAsRead();
+    }
+
+    return NotificationConverter.toReadResponseDto(notification);
+  }
+
+
 }

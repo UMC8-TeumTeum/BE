@@ -12,7 +12,9 @@ import umc.teumteum.server.domain.fcm.repository.FcmTokenRepository;
 import umc.teumteum.server.domain.notification.entity.Notification;
 import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
 import umc.teumteum.server.domain.notification.repository.NotificationRepository;
+import umc.teumteum.server.domain.user.entity.NotificationSetting;
 import umc.teumteum.server.domain.user.entity.User;
+import umc.teumteum.server.domain.user.repository.NotificationSettingRepository;
 import umc.teumteum.server.global.notification.dto.NotificationPayload;
 import umc.teumteum.server.global.notification.sender.FcmNotificationSender;
 
@@ -22,6 +24,8 @@ import umc.teumteum.server.global.notification.sender.FcmNotificationSender;
 public class NotificationOrchestrator {
   private final NotificationRepository notificationRepository;
   private final FcmTokenRepository fcmTokenRepository;
+  private final NotificationSettingRepository notificationSettingRepository;
+
   private final FcmNotificationSender sender;
 
   // NotificationOrchestrator : Notification 저장, FCM 전송 로직 담당
@@ -29,6 +33,17 @@ public class NotificationOrchestrator {
   @Transactional
   public Long saveAndPush(User receiver, NotificationType type, String content, Long relatedId,
       Map<String,String> data) {
+
+    // 0. 알람 확인 단계
+    NotificationSetting setting =
+            notificationSettingRepository.findByUser(receiver).orElse(null);
+
+    // 설정이 있고, 해당 알림이 꺼져 있으면 → 저장/전송 스킵
+    if (setting != null && !setting.isAllowed(type.getSettingType())) {
+      log.info("Notification skipped by setting. userId={}, type={}",
+              receiver.getId(), type);
+      return null; // 또는 Optional.empty()
+    }
 
     // 1. Notification 생성 및 저장
     Notification notification = Notification.builder()
@@ -74,53 +89,54 @@ public class NotificationOrchestrator {
     return notification.getId();
   }
 
-  @Transactional
-  public List<Long> saveAndPushToMany(List<User> receivers,
-      NotificationType type,
-      String content,
-      Long relatedId,
-      Map<String, String> data) {
-
-    // 1. Notification 생성 및 저장
-    List<Notification> notifs = receivers.stream()
-        .map(receiver -> Notification.builder()
-            .user(receiver)
-            .type(type)
-            .content(content)
-            .relatedId(relatedId)
-            .build())
-        .toList();
-
-    notificationRepository.saveAll(notifs);
-
-    // 2. 활성화된 토큰 조회
-    List<FcmToken> tokens = fcmTokenRepository.findActiveTokensByUsers(receivers);
-
-    // 3. json 데이터 생성
-    Map<String, String> payloadData = new HashMap<>();
-    if (data != null) payloadData.putAll(data);
-    payloadData.putIfAbsent("type", type.name());
-    payloadData.putIfAbsent("relatedId", String.valueOf(relatedId));
-
-    // 4. NotificationPayload 생성
-    NotificationPayload payload = NotificationPayload.builder()
-        .title(type.getTitle())
-        .content(content)
-        .type(type)
-        .data(payloadData)
-        .build();
-
-    // 5. 알람 전송 (실패 무시하고 로그만)
-    tokens.forEach(t -> {
-      try {
-        sender.send(t.getToken(), payload);
-      } catch (Exception e) {
-        log.warn("FCM send failed (batch). token={}, type={}, relatedId={}, reason={}",
-            t.getToken(), type, relatedId, e.toString());
-        // System.err.println("FCM send failed token=" + t.getToken() + " : " + e.getMessage());
-      }
-    });
-
-    return notifs.stream().map(Notification::getId).toList();
-  }
+//
+//  @Transactional
+//  public List<Long> saveAndPushToMany(List<User> receivers,
+//      NotificationType type,
+//      String content,
+//      Long relatedId,
+//      Map<String, String> data) {
+//
+//    // 1. Notification 생성 및 저장
+//    List<Notification> notifs = receivers.stream()
+//        .map(receiver -> Notification.builder()
+//            .user(receiver)
+//            .type(type)
+//            .content(content)
+//            .relatedId(relatedId)
+//            .build())
+//        .toList();
+//
+//    notificationRepository.saveAll(notifs);
+//
+//    // 2. 활성화된 토큰 조회
+//    List<FcmToken> tokens = fcmTokenRepository.findActiveTokensByUsers(receivers);
+//
+//    // 3. json 데이터 생성
+//    Map<String, String> payloadData = new HashMap<>();
+//    if (data != null) payloadData.putAll(data);
+//    payloadData.putIfAbsent("type", type.name());
+//    payloadData.putIfAbsent("relatedId", String.valueOf(relatedId));
+//
+//    // 4. NotificationPayload 생성
+//    NotificationPayload payload = NotificationPayload.builder()
+//        .title(type.getTitle())
+//        .content(content)
+//        .type(type)
+//        .data(payloadData)
+//        .build();
+//
+//    // 5. 알람 전송 (실패 무시하고 로그만)
+//    tokens.forEach(t -> {
+//      try {
+//        sender.send(t.getToken(), payload);
+//      } catch (Exception e) {
+//        log.warn("FCM send failed (batch). token={}, type={}, relatedId={}, reason={}",
+//            t.getToken(), type, relatedId, e.toString());
+//        // System.err.println("FCM send failed token=" + t.getToken() + " : " + e.getMessage());
+//      }
+//    });
+//
+//    return notifs.stream().map(Notification::getId).toList();
+//  }
 }
