@@ -49,6 +49,21 @@ public class NotificationResponseDto {
     @Schema(description = "친구 프로필 이미지 Presigned URL", example = "https://teumteum~~", nullable = true)
     private String firendProfileImage;
 
+    // 약속 날짜
+    @Schema(description = "알림이 가리키는 약속/일정 날짜", example = "2025-07-25T18:00:00", nullable = true)
+    private LocalDateTime eventDate;
+
   }
 
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  public static class ReadResponseDto {
+
+    @Schema(description = "읽음 처리된 알림 ID", example = "42")
+    private Long notificationId;
+
+    @Schema(description = "알림 읽음 여부", example = "true")
+    private Boolean isRead;
+  }
 }

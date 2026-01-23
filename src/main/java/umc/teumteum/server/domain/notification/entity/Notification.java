@@ -49,4 +49,7 @@ public class Notification extends BaseEntity {
   @Column(nullable = false)
   private Long relatedId; // 알림과 연관된 도메인의 식별자입니다. NotificationType에 따라 의미가 달라집니다.
 
+  public void markAsRead() {
+    this.isRead = true;
+  }
 }

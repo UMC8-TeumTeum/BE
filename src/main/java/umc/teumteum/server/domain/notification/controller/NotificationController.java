@@ -4,13 +4,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import umc.teumteum.server.domain.notification.dto.NotificationResponseDto;
+import umc.teumteum.server.domain.notification.exception.status.NotificationSuccessStatus;
 import umc.teumteum.server.domain.notification.service.NotificationService;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.annotation.CurrentUser;
@@ -41,7 +40,22 @@ public class NotificationController {
       int size
   ){
     NotificationResponseDto.SliceResponseDto notifications = notificationServiceImpl.getNotifications(user, page, size);
-    return ApiResponse.of(SuccessStatus._OK, notifications);
+    return ApiResponse.of(NotificationSuccessStatus.NOTIFICATION_LIST_FETCH_SUCCESS, notifications);
+  }
+
+  @PatchMapping(value = "/{notificationId}/read", produces = "application/json")
+  @Operation(
+            summary = "알림 읽음 처리",
+            description = "로그인한 사용자의 특정 알림을 읽음(isRead=true) 처리합니다."
+  )
+  public ApiResponse<NotificationResponseDto.ReadResponseDto> readNotification(
+            @CurrentUser @Parameter(hidden = true) User user,
+            @PathVariable @Positive(message = "notificationId는 양수여야 합니다.")
+            @Parameter(name = "notificationId", description = "읽음 처리할 알림 ID", example = "1")
+            Long notificationId
+  ) {
+      NotificationResponseDto.ReadResponseDto result = notificationServiceImpl.readNotification(user, notificationId);
+      return ApiResponse.of(NotificationSuccessStatus.NOTIFICATION_READ_SUCCESS, result);
   }
 
 }
