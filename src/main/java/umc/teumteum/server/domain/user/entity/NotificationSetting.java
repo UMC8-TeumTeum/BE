@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.teumteum.server.domain.notification.entity.enums.NotificationSettingType;
 import umc.teumteum.server.global.common.BaseEntity;
 
 @Entity
@@ -44,5 +45,13 @@ public class NotificationSetting extends BaseEntity {
         this.remindAlarm = remindAlarm;
         this.follow = follow;
         this.teum = teum;
+    }
+    public boolean isAllowed(NotificationSettingType type) {
+        return switch (type) {
+            case DAILY_TODO -> Boolean.TRUE.equals(todayTodo);
+            case REMIND_ALARM -> Boolean.TRUE.equals(remindAlarm);
+            case TEUM -> Boolean.TRUE.equals(teum);
+            case FOLLOW -> Boolean.TRUE.equals(follow);
+        };
     }
 }
