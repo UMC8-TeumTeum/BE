@@ -305,8 +305,9 @@ public class UserServiceImpl implements UserService {
         setting.update(
                 request.getTodayTodo(),
                 request.getRemindAlarm(),
-                request.getTeum(), request.getFollow()
-        );
+                request.getFollow(),
+                request.getTeum()
+                );
     }
 
     // 마이페이지 - 반복일정 조회
