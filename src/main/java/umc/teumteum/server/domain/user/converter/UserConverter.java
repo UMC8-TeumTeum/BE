@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.user.dto.UserResponseDTO;
 import umc.teumteum.server.domain.user.dto.UserSearchResponseDto;
+import umc.teumteum.server.domain.user.entity.NotificationSetting;
 import umc.teumteum.server.domain.user.entity.Routine;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
@@ -62,6 +63,15 @@ public class UserConverter {
                 .title(schedule.getTitle())
                 .startTime(schedule.getStartTime().toLocalTime())
                 .endTime(schedule.getEndTime().toLocalTime())
+                .build();
+    }
+
+    public UserResponseDTO.NotificationSettingDTO toNotificationSettingDTO(NotificationSetting setting) {
+        return UserResponseDTO.NotificationSettingDTO.builder()
+                .todayTodo(setting.getTodayTodo())
+                .remindAlarm(setting.getRemindAlarm())
+                .follow(setting.getFollow())
+                .teum(setting.getTeum())
                 .build();
     }
 }

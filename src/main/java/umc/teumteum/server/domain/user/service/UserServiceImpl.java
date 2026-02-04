@@ -305,8 +305,9 @@ public class UserServiceImpl implements UserService {
         setting.update(
                 request.getTodayTodo(),
                 request.getRemindAlarm(),
-                request.getTeum(), request.getFollow()
-        );
+                request.getFollow(),
+                request.getTeum()
+                );
     }
 
     // 마이페이지 - 반복일정 조회
@@ -597,6 +598,16 @@ public class UserServiceImpl implements UserService {
                 .limit(2)
                 .map(UserConverter::toTodoDTO)
                 .toList();
+    }
+
+    // 마이페이지 - 알람 여부 조회
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponseDTO.NotificationSettingDTO getAlarmSetting(User user) {
+        NotificationSetting setting = notificationSettingRepository.findByUser(user)
+                .orElseThrow(() -> new UserException(UserErrorStatus.NOTIFICATION_NOT_FOUND));
+
+        return userConverter.toNotificationSettingDTO(setting);
     }
 
 

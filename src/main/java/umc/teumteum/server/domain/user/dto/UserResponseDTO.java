@@ -3,6 +3,7 @@ package umc.teumteum.server.domain.user.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -95,4 +96,21 @@ public class UserResponseDTO {
     private LocalTime endTime;
   }
 
+  @Getter
+  @Builder
+  @AllArgsConstructor
+  public static class NotificationSettingDTO {
+    @Schema(description = "오늘의 일정 - 오전 9시 투두 일림 여부", example = "true")
+    private Boolean todayTodo;
+
+    @Schema(description = "리마인드 알림 - 투두에 등록한 리마인드 알림 여부", example = "true")
+    private Boolean remindAlarm;
+
+    @Schema(description = "새로운 팔로워 - 나를 팔로우한 새로운 친구가 있을 때", example = "true")
+    private Boolean follow;
+
+    @Schema(description = "틈 요청 - 맞팔로우한 사용자의 틈 요청 알림", example = "true")
+    private Boolean teum;
+
+  }
 }

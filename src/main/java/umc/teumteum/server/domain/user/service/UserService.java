@@ -55,4 +55,6 @@ public interface UserService {
     UserResponseDTO.AccountInfoDTO getAccountInfo(User user);
 
     List<UserResponseDTO.TodoDTO> getPublicTodo(User user);
+
+    UserResponseDTO.NotificationSettingDTO getAlarmSetting(User user);
 }

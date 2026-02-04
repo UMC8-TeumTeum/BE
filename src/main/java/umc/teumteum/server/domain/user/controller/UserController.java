@@ -260,4 +260,15 @@ public class UserController {
         List<UserResponseDTO.TodoDTO> result = userService.getPublicTodo(user);
         return ApiResponse.of(UserSuccessStatus._PUBLIC_TODO_LOADED, result);
     }
+
+    @Operation(
+            summary = "마이페이지 알림 설정 조회",
+            description = "마이페이지에서 사용자의 알림 설정 상태를 조회합니다.")
+    @GetMapping(value = "/mypage/alarm", produces = "application/json")
+    public ApiResponse<UserResponseDTO.NotificationSettingDTO> getAlarmSetting(
+            @CurrentUser @Parameter(hidden = true) User user) {
+        UserResponseDTO.NotificationSettingDTO response = userService.getAlarmSetting(user);
+        return ApiResponse.of(UserSuccessStatus._ALARM_STATE_LOADED, response);
+    }
+
 }
