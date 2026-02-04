@@ -600,6 +600,16 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
+    // 마이페이지 - 알람 여부 조회
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponseDTO.NotificationSettingDTO getAlarmSetting(User user) {
+        NotificationSetting setting = notificationSettingRepository.findByUser(user)
+                .orElseThrow(() -> new UserException(UserErrorStatus.NOTIFICATION_NOT_FOUND));
+
+        return userConverter.toNotificationSettingDTO(setting);
+    }
+
 
     /**
      * 유저 프로필 삭제 헬퍼 메서드

@@ -27,6 +27,8 @@ public enum UserSuccessStatus implements BaseCode {
     _SLEEP_PATTERN_DELETED(HttpStatus.OK,"USER20015","수면 패턴 삭제가 완료되었습니다."),
     _SOCIAL_ACCOUNT_LOADED(HttpStatus.OK,"USER20016","소셜 계정 정보 조회가 완료되었습니다."),
     _PUBLIC_TODO_LOADED(HttpStatus.OK,"USER20017","공개된 투두 조회가 완료되었습니다."),
+    _ALARM_STATE_LOADED(HttpStatus.OK, "USER20018", "알림 설정 조회 성공"),
+
 
 
 
