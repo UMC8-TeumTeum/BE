@@ -130,13 +130,13 @@ public class UserServiceImpl implements UserService {
 
                     // 2) NotificationSetting 생성
                     NotificationSetting notificationSetting = NotificationSetting.builder()
-                            .user(savedUser)
                             .teum(true)
                             .follow(true)
                             .todayTodo(true)
                             .remindAlarm(true)
                             .build();
-                    notificationSettingRepository.save(notificationSetting);
+
+                    savedUser.setNotificationSetting(notificationSetting);
 
                     return savedUser;
                 });

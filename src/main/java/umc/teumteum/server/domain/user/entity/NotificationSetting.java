@@ -54,4 +54,8 @@ public class NotificationSetting extends BaseEntity {
             case FOLLOW -> Boolean.TRUE.equals(follow);
         };
     }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 }
