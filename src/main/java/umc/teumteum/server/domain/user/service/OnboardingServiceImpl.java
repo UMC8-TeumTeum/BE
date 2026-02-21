@@ -338,9 +338,10 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     // 오늘 요일에 해당하는 반복일정을 스케줄에 추가
     private void createTodaySchedulesFromRoutines(User user) {
-        Weekday todayWeekday = Weekday.from(LocalDate.now().getDayOfWeek());
+        LocalDate today = LocalDate.now();
+        Weekday todayWeekday = Weekday.from(today.getDayOfWeek());
         List<Routine> todayRoutines = routineRepository.findByUserAndWeekday(user, todayWeekday);
-        List<Schedule> routineSchedules = OnboardingConverter.toScheduleList(todayRoutines, user, LocalDate.now());
+        List<Schedule> routineSchedules = OnboardingConverter.toScheduleList(todayRoutines, user, today);
         scheduleJdbcRepository.batchInsertSchedules(routineSchedules);
     }
 
