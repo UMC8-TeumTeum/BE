@@ -2,7 +2,6 @@ package umc.teumteum.server.domain.user.service;
 
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -58,6 +57,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     private RedisTemplate<String, String> profileImageRedisTemplate;
 
     private static final Set<Integer> ALLOWED_REMIND_ALARM_VALUES = Set.of(1, 3, 5, 10, 30);
+    private static final Duration PROFILE_IMAGE_UPLOAD_TTL = Duration.ofMinutes(30);
 
 
     // 온보딩 - 약관 동의
@@ -68,20 +68,13 @@ public class OnboardingServiceImpl implements OnboardingService {
         validateOnboardingStep(user, UserStep.AGREEMENT);
 
         // 2. 필수 항목 동의 여부 확인
-        if (!request.getTosConsent()) {
-            throw new OnboardingException(UserErrorStatus.TOS_CONSENT_NOT_AGREED);
-        }
-        if (!request.getPrivacyConsent()) {
-            throw new OnboardingException(UserErrorStatus.PRIVACY_CONSENT_NOT_AGREED);
-        }
+        validateRequiredConsents(request);
 
-        // 3. Entity 변환
+        // 3. Entity 변환 & 저장
         Agreement agreement = OnboardingConverter.toAgreement(request, user);
-
-        // 4. 저장
         agreementRepository.save(agreement);
 
-        // 5. 사용자 step 변경
+        // 4. 사용자 step 변경
         user.updateStep(UserStep.ONBOARDING);
     }
 
@@ -94,18 +87,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         validateOnboardingStep(user, UserStep.ONBOARDING);
 
         // 2. 닉네임 중복 여부 확인
-        // 기존 닉네임이 null이면(=처음 닉네임 등록) 단순 중복 체크
-        if (user.getNickname() == null) {
-            if (userRepository.existsByNickname(request.getNickname())) {
-                throw new OnboardingException(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
-            }
-        }
-        // 기존 닉네임이 있으면(=온보딩 중단으로 인한 닉네임 재등록) 본인 닉네임 이외와 중복 체크
-        else {
-            if (!request.getNickname().equals(user.getNickname()) && userRepository.existsByNickname(request.getNickname())) {
-                throw new OnboardingException(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
-            }
-        }
+        validateNicknameDuplicate(user, request.getNickname());
 
         // 3. 닉네임과 분야/직종 수정
         user.updateNicknameAndJob(request.getNickname(), request.getJobField());
@@ -123,33 +105,21 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         // 2. Content-Type 검증
         String contentType = request.getContentType().toLowerCase();
-        if (!ALLOWED_IMAGE_TYPES.contains(contentType)) {
-            throw new OnboardingException(UserErrorStatus.UNSUPPORTED_IMAGE_FORMAT);
-        }
+        validateImageContentType(contentType);
 
-        // 3. 확장자 추출
-        String extension = contentType.substring(contentType.lastIndexOf("/") + 1);
-        // svg+xml의 경우 svg로 변환
-        if ("svg+xml".equals(extension)) {
-            extension = "svg";
-        }
-
-        // 4. 파일명(UUID) 생성
+        // 3. 파일명(UUID) 생성
+        String extension = extractImageExtension(contentType);
         String fileName = UUID.randomUUID() + "." + extension;
 
-        // 5. S3 Key 구성 (profile/{fileName})
+        // 4. Presigned URL 생성
         String key = "profile/" + fileName;
+        String presignedUrl = s3Util.toUploadPresignedUrl(key, contentType, PROFILE_IMAGE_UPLOAD_TTL);
 
-        // 6. Presigned URL 생성
-        String presignedUrl = s3Util.toUploadPresignedUrl(key, contentType, Duration.ofMinutes(30));
+        // 5. S3 업로드 예정인 파일이름 REDIS에 저장
+        String sessionId = extractSessionId(httpServletRequest);
+        storeProfileImageInRedis(user.getId().toString(), sessionId, fileName);
 
-        // 7. S3 업로드 예정인 파일이름 REDIS에 저장
-        String userId = user.getId().toString();
-        String sessionId = jwtProvider.getSessionIdFromToken(jwtProvider.resolveToken(httpServletRequest));
-        String imageFileKey = getProfileImageKey(userId, sessionId);
-        profileImageRedisTemplate.opsForValue().set(imageFileKey, fileName, Duration.ofMinutes(30));
-
-        // 8. 응답 DTO 반환
+        // 6. 응답 DTO 반환
         return OnboardingConverter.toProfileImagePresignedUrlResponse(presignedUrl, fileName);
     }
 
@@ -161,27 +131,12 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 1. 사용자 step 확인
         validateOnboardingStep(user, UserStep.ONBOARDING);
 
-        // 2. REDIS 조회하여 비교
-        String userId = user.getId().toString();
-        String sessionId = jwtProvider.getSessionIdFromToken(jwtProvider.resolveToken(httpServletRequest));
-        String imageFileKey = getProfileImageKey(userId, sessionId);
+        // 2. Redis 파일명 검증
+        String sessionId = extractSessionId(httpServletRequest);
+        verifyProfileImageFromRedis(user.getId().toString(), sessionId, request.getFileName());
 
-        try {
-            String storedImageFileName = profileImageRedisTemplate.opsForValue().get(imageFileKey);
-            // TTL 만료
-            if (storedImageFileName == null) {
-                throw new OnboardingException(UserErrorStatus.EXPIRED_UPLOAD_SESSION);
-            }
-            // 요청 파일명 != Redis 파일명 (URL 발급부터 재진행 필요)
-            if (!Objects.equals(storedImageFileName, request.getFileName())) {
-                throw new OnboardingException(UserErrorStatus.INVALID_IMAGE_NAME);
-            }
-
-            // 3. 사용자 프로필 이미지 이름 업데이트
-            user.updateProfileImageName(request.getFileName());
-        } finally {
-            profileImageRedisTemplate.delete(imageFileKey);
-        }
+        // 3. 사용자 프로필 이미지 이름 업데이트
+        user.updateProfileImageName(request.getFileName());
     }
 
 
@@ -211,29 +166,16 @@ public class OnboardingServiceImpl implements OnboardingService {
         List<OnboardingRequestDto.RoutineDTO> routines = request.getRoutine();
         routines.forEach(this::validateSingleRoutineTimeRange);
 
-        // 3. 요일별로 그룹핑 (EnumMap 사용)
-        Map<Weekday, List<OnboardingRequestDto.RoutineDTO>> routinesByDay =
-                routines.stream()
-                        .collect(Collectors.groupingBy(
-                                OnboardingRequestDto.RoutineDTO::getWeekday,
-                                () -> new EnumMap<>(Weekday.class),
-                                Collectors.toList()
-                        ));
-
-        // 4. 반복 일정끼리의 충돌 확인
+        // 3. 요일별 반복 일정 충돌 검증
+        Map<Weekday, List<OnboardingRequestDto.RoutineDTO>> routinesByDay = groupRoutinesByDay(routines);
         validateRoutineConflictsByDay(routinesByDay);
 
-        // 5. 반복 일정 저장
-        List<Routine> newRoutines = OnboardingConverter.toRoutineList(request.getRoutine(), user);
+        // 4. 반복 일정 저장
+        List<Routine> newRoutines = OnboardingConverter.toRoutineList(routines, user);
         routineJdbcRepository.batchInsertRoutines(newRoutines);
 
-        // 6. 오늘 요일에 해당하는 저장된 Routine만 조회 (기본키값 필요)
-        Weekday todayWeekday = Weekday.from(LocalDate.now().getDayOfWeek());
-        List<Routine> todayRoutines = routineRepository.findByUserAndWeekday(user, todayWeekday);
-
-        // 7. 오늘에 해당하는 반복일정은 스케줄에 추가
-        List<Schedule> routineSchedules = OnboardingConverter.toScheduleList(todayRoutines, user, LocalDate.now());
-        scheduleJdbcRepository.batchInsertSchedules(routineSchedules);
+        // 5. 오늘 요일에 해당하는 반복일정을 스케줄에 추가
+        createTodaySchedulesFromRoutines(user);
     }
 
 
@@ -249,26 +191,17 @@ public class OnboardingServiceImpl implements OnboardingService {
         if (!request.getRemindAlarms().isEmpty()) {
 
             // 3. 알림 설정 범위 확인 (1, 3, 5, 10, 30)
-            if (!ALLOWED_REMIND_ALARM_VALUES.containsAll(request.getRemindAlarms())) {
-                throw new OnboardingException(UserErrorStatus.INVALID_REMIND_ALARM_VALUE);
-            }
+            validateRemindAlarmValues(request.getRemindAlarms());
 
             // 4. RemindAlarm 저장
             List<RemindAlarm> remindAlarms = OnboardingConverter.toRemindAlarmList(request.getRemindAlarms(), user);
             remindAlarmJdbcRepository.batchInsertRemindAlarms(remindAlarms);
 
-            // 5. 저장된 Schedule이 있으면 (반복일정 등록은 선택 입력)
-            List<Schedule> existingSchedules = scheduleRepository.findByUser(user);
-            if (!existingSchedules.isEmpty()) {
-
-                // 6. 각 Schedule마다 ScheduleReminder 저장
-                List<ScheduleReminder> scheduleReminders = OnboardingConverter.toScheduleReminderList(
-                        request.getRemindAlarms(), existingSchedules);
-                scheduleReminderJdbcRepository.batchInsertScheduleReminders(scheduleReminders);
-            }
+            // 5. 기존 스케줄에 ScheduleReminder 저장 (반복일정 등록은 선택 입력)
+            saveScheduleRemindersIfExist(user, request.getRemindAlarms());
         }
 
-        // 7. 최종 온보딩 완료로 사용자 step 변경
+        // 6. 최종 온보딩 완료로 사용자 step 변경
         user.updateStep(UserStep.MAIN);
     }
 
@@ -283,17 +216,91 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
 
+    // 필수 약관 동의 여부 확인
+    private void validateRequiredConsents(OnboardingRequestDto.AgreeRequest request) {
+        if (!request.getTosConsent()) {
+            throw new OnboardingException(UserErrorStatus.TOS_CONSENT_NOT_AGREED);
+        }
+        if (!request.getPrivacyConsent()) {
+            throw new OnboardingException(UserErrorStatus.PRIVACY_CONSENT_NOT_AGREED);
+        }
+    }
+
+
+    // 닉네임 중복 검증
+    private void validateNicknameDuplicate(User user, String requestNickname) {
+        // 기존 닉네임이 null이면(=처음 닉네임 등록) 단순 중복 체크
+        // 기존 닉네임이 있으면(=온보딩 중단으로 인한 닉네임 재등록) 본인 닉네임 이외와 중복 체크
+        boolean isDuplicate = user.getNickname() == null
+                ? userRepository.existsByNickname(requestNickname)
+                : !requestNickname.equals(user.getNickname()) && userRepository.existsByNickname(requestNickname);
+
+        if (isDuplicate) {
+            throw new OnboardingException(UserErrorStatus.NICKNAME_ALREADY_EXISTS);
+        }
+    }
+
+
+    // 이미지 Content-Type 검증
+    private void validateImageContentType(String contentType) {
+        if (!ALLOWED_IMAGE_TYPES.contains(contentType)) {
+            throw new OnboardingException(UserErrorStatus.UNSUPPORTED_IMAGE_FORMAT);
+        }
+    }
+
+
+    // 이미지 확장자 추출
+    private String extractImageExtension(String contentType) {
+        String extension = contentType.substring(contentType.lastIndexOf("/") + 1);
+        // svg+xml의 경우 svg로 변환
+        return "svg+xml".equals(extension) ? "svg" : extension;
+    }
+
+
+    // 요청에서 sessionId 추출
+    private String extractSessionId(HttpServletRequest httpServletRequest) {
+        return jwtProvider.getSessionIdFromToken(jwtProvider.resolveToken(httpServletRequest));
+    }
+
+
+    // 업로드 예정 파일명 Redis 저장
+    private void storeProfileImageInRedis(String userId, String sessionId, String fileName) {
+        String imageFileKey = getProfileImageKey(userId, sessionId);
+        profileImageRedisTemplate.opsForValue().set(imageFileKey, fileName, PROFILE_IMAGE_UPLOAD_TTL);
+    }
+
+
+    // Redis 파일명 조회 및 검증
+    private void verifyProfileImageFromRedis(String userId, String sessionId, String requestFileName) {
+        String imageFileKey = getProfileImageKey(userId, sessionId);
+        try {
+            String storedImageFileName = profileImageRedisTemplate.opsForValue().get(imageFileKey);
+
+            // TTL 만료
+            if (storedImageFileName == null) {
+                throw new OnboardingException(UserErrorStatus.EXPIRED_UPLOAD_SESSION);
+            }
+            // 요청 파일명 != Redis 파일명 (URL 발급부터 재진행 필요)
+            if (!Objects.equals(storedImageFileName, requestFileName)) {
+                throw new OnboardingException(UserErrorStatus.INVALID_IMAGE_NAME);
+            }
+        } finally {
+            profileImageRedisTemplate.delete(imageFileKey);
+        }
+    }
+
+
     // 단일 일정의 시작시간과 종료시간이 올바른 범위인지 검증
     private void validateSingleRoutineTimeRange(OnboardingRequestDto.RoutineDTO routine) {
         LocalTime startTime = routine.getStartTime();
         LocalTime endTime = routine.getEndTime();
 
-        // 1. 종료시간 00:00의 경우 무조건 허용 (=다음날 자정에 종료를 의미)
+        // 종료시간 00:00의 경우 무조건 허용 (=다음날 자정에 종료를 의미)
         if (endTime.equals(LocalTime.MIDNIGHT)) {
             return;
         }
 
-        // 2. 기본 유효성 검증 (시작시간 < 종료시간)
+        // 기본 유효성 검증 (시작시간 < 종료시간)
         if (!startTime.isBefore(endTime)) {
             // ex) 13:00~03:00, 10:00~10:00 등이 해당
             throw new OnboardingException(UserErrorStatus.INVALID_TIME_RANGE);
@@ -301,14 +308,25 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
 
+    // 반복일정 요일별 그룹핑
+    private Map<Weekday, List<OnboardingRequestDto.RoutineDTO>> groupRoutinesByDay(List<OnboardingRequestDto.RoutineDTO> routines) {
+        return routines.stream()
+                .collect(Collectors.groupingBy(
+                        OnboardingRequestDto.RoutineDTO::getWeekday,
+                        () -> new EnumMap<>(Weekday.class),
+                        Collectors.toList()
+                ));
+    }
+
+
     // 반복일정끼리의 충돌 확인
     private void validateRoutineConflictsByDay(Map<Weekday, List<OnboardingRequestDto.RoutineDTO>> routinesByDay) {
         routinesByDay.values().stream()
-                // 1. 반복일정 2개 이상일 때만 충돌 검증
+                // 반복일정 2개 이상일 때만 충돌 검증
                 .filter(dayRoutines -> dayRoutines.size() > 1)
                 .forEach(dayRoutines -> {
 
-                    // 2. 반복일정을 TimeRange로 변환
+                    // 반복일정을 TimeRange로 변환
                     List<TimeRange> timeRanges = dayRoutines.stream()
                             .map(TimeRange::from)
                             .collect(Collectors.toList());
@@ -318,12 +336,41 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
 
+    // 오늘 요일에 해당하는 반복일정을 스케줄에 추가
+    private void createTodaySchedulesFromRoutines(User user) {
+        LocalDate today = LocalDate.now();
+        Weekday todayWeekday = Weekday.from(today.getDayOfWeek());
+        List<Routine> todayRoutines = routineRepository.findByUserAndWeekday(user, todayWeekday);
+        List<Schedule> routineSchedules = OnboardingConverter.toScheduleList(todayRoutines, user, today);
+        scheduleJdbcRepository.batchInsertSchedules(routineSchedules);
+    }
+
+
+    // 리마인드 알림 값 범위 검증 (1, 3, 5, 10, 30)
+    private void validateRemindAlarmValues(List<Integer> remindAlarms) {
+        if (!ALLOWED_REMIND_ALARM_VALUES.containsAll(remindAlarms)) {
+            throw new OnboardingException(UserErrorStatus.INVALID_REMIND_ALARM_VALUE);
+        }
+    }
+
+
+    // 기존 스케줄에 ScheduleReminder 저장
+    private void saveScheduleRemindersIfExist(User user, List<Integer> remindAlarms) {
+        List<Schedule> existingSchedules = scheduleRepository.findByUser(user);
+        if (!existingSchedules.isEmpty()) {
+            List<ScheduleReminder> scheduleReminders = OnboardingConverter.toScheduleReminderList(remindAlarms, existingSchedules);
+            scheduleReminderJdbcRepository.batchInsertScheduleReminders(scheduleReminders);
+        }
+    }
+
+
     // 프로필 이미지 키 get
     private String getProfileImageKey(String userId, String sessionId) {
         return String.format("PROFILE_IMAGE_FILE_NAME:%s:%s", userId, sessionId);
     }
 
 
+    // 수면패턴 검증 (최대 23시간)
     public static void validateSleepPattern(LocalTime sleepTime, LocalTime wakeTime) {
         // sleepTime과 wakeTime 사이의 시간 차이를 분 단위로 계산 (같은 날 기준 계산)
         long minutesDifference = Duration.between(sleepTime, wakeTime).toMinutes();
