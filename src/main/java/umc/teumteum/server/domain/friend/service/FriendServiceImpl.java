@@ -1,15 +1,5 @@
 package umc.teumteum.server.domain.friend.service;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.friend.converter.FriendConverter;
 import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
+import umc.teumteum.server.domain.friend.dto.MutualFriendProjection;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.friend.exception.FriendException;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
@@ -31,9 +22,22 @@ import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.notification.service.NotificationUseCases;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.UserStatus;
+import umc.teumteum.server.domain.user.exception.UserException;
+import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.util.S3Util;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -112,27 +116,25 @@ public class FriendServiceImpl implements FriendService {
         // 1. 자기 자신을 제외하는지 확인
         validateNotSelf(loginUser.getId(), excludeUserId);
 
-        // 2. 제외하려는 대상 조회
-        User excludeUser = getUserOrThrow(excludeUserId);
+        // 2. 제외하려는 대상 존재 여부 확인
+        if (!userRepository.existsById(excludeUserId)) {
+            throw new UserException(UserErrorStatus.USER_NOT_FOUND);
+        }
 
-        // 3. Pageable 생성 (닉네임순 정렬)
-        Pageable pageable = PageRequest.of(page - 1, size,
-                Sort.by(Sort.Order.asc("following.nickname")));
+        // 3. Pageable 생성 (정렬은 쿼리 내 ORDER BY로 처리
+        Pageable pageable = PageRequest.of(page - 1, size);
 
-        // 4. 맞팔로우 관계 조회 (특정 사용자 제외)
-        Slice<Friend> mutualFriendsSlice = friendRepository.findMutualFriendsExcluding(loginUser, excludeUser,
-                UserStatus.ACTIVE, pageable);
+        // 4. 맞팔로우 관계 조회 (DTO Projection)
+        Slice<MutualFriendProjection> mutualFriendsSlice = friendRepository.findMutualFriendsExcluding(
+                loginUser, excludeUserId, UserStatus.ACTIVE, pageable);
 
-        // 5. 맞팔로우한 상대방들에 대한 S3 프리사인드 URL 생성 및 Dto 변환
-        List<FriendResponseDto.MutualFriend> mutualFriendList = mutualFriendsSlice.getContent()
-                .stream()
-                .map(friend -> {
-                    User targetUser = friend.getFollowing();
-                    String profileImageUrl = s3Util.toPresignedUrl("profile/" + targetUser.getProfileImageName(),
-                            Duration.ofMinutes(30));
-                    return FriendConverter.toMutualFriendDto(targetUser, profileImageUrl);
-                })
-                .collect(Collectors.toList());
+        // 5. 프로필 이미지 URL 변환 및 Dto 변환
+        List<MutualFriendProjection> projections = mutualFriendsSlice.getContent();
+        List<FriendResponseDto.MutualFriend> mutualFriendList = projections.stream()
+                .map(projection -> FriendConverter.toMutualFriendDto(
+                        projection,
+                        s3Util.toPresignedUrl("profile/" + projection.getProfileImageName(), Duration.ofMinutes(30))))
+                .toList();
 
         // 6. PagingResponseDto 생성
         return new PagingResponseDto<>(mutualFriendList, mutualFriendsSlice.hasNext());
