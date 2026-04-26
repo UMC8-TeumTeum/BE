@@ -21,7 +21,7 @@ public class TeumStatusScheduler {
     private final ScheduleRepository scheduleRepository;
 
     @Transactional
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(cron = "0 0/10 * * * *")
     public void completeExpiredTeumSchedules() {
         LocalDateTime now = LocalDateTime.now();
         List<Schedule> targets = scheduleRepository.findAllExpiredActiveTeums(

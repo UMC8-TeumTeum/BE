@@ -20,7 +20,7 @@ public class TeumRequestStatusScheduler {
     private final TeumRequestRepository teumRequestRepository;
 
     @Transactional
-    @Scheduled(fixedRate = 300000) // 5분마다 실행
+    @Scheduled(cron = "0 0/10 * * * *")
     public void updateClosedTeums() {
         LocalDate today = LocalDate.now();
         LocalTime nowTime = LocalTime.now();
