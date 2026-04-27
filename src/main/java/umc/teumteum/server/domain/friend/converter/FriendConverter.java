@@ -3,6 +3,7 @@ package umc.teumteum.server.domain.friend.converter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
+import umc.teumteum.server.domain.friend.dto.MutualFriendProjection;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.home.entity.Schedule;
 import umc.teumteum.server.domain.user.entity.User;
@@ -93,13 +94,12 @@ public class FriendConverter {
     }
 
     // 친구 - 맞팔로우 목록 조회 응답
-    public static FriendResponseDto.MutualFriend toMutualFriendDto(User user, String profileImageUrl) {
+    public static FriendResponseDto.MutualFriend toMutualFriendDto(MutualFriendProjection projection, String profileImageUrl) {
         return FriendResponseDto.MutualFriend.builder()
-                .userId(user.getId())
-                .nickname(user.getNickname())
+                .userId(projection.getUserId())
+                .nickname(projection.getNickname())
                 .profileImageUrl(profileImageUrl)
-                .build()
-                ;
+                .build();
     }
 
     // 친구 - 즐겨찾기 설정/해제 응답

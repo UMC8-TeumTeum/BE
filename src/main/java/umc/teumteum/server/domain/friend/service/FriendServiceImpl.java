@@ -1,24 +1,21 @@
 package umc.teumteum.server.domain.friend.service;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.connection.RedisStringCommands;
+import org.springframework.data.redis.connection.StringRedisConnection;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.teumteum.server.domain.friend.converter.FriendConverter;
 import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
+import umc.teumteum.server.domain.friend.dto.MutualFriendProjection;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.friend.exception.FriendException;
 import umc.teumteum.server.domain.friend.exception.status.FriendErrorStatus;
@@ -31,9 +28,19 @@ import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.notification.service.NotificationUseCases;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.UserStatus;
+import umc.teumteum.server.domain.user.exception.UserException;
+import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
 import umc.teumteum.server.domain.user.repository.UserRepository;
 import umc.teumteum.server.global.dto.PagingResponseDto;
 import umc.teumteum.server.global.util.S3Util;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +55,13 @@ public class FriendServiceImpl implements FriendService {
     private final NotificationUseCases notificationUseCases;
 
     private final S3Util s3Util;
+
+    @Resource(name = "profileImageRedisTemplate")
+    private RedisTemplate<String, String> profileImageRedisTemplate;
+
+    private static final String PROFILE_URL_CACHE_KEY_PREFIX = "profile:url:";
+    private static final Duration PROFILE_URL_CACHE_TTL = Duration.ofMinutes(20);
+
 
     private static final Set<ScheduleType> GENERAL_SCHEDULE_TYPES =
             EnumSet.of(ScheduleType.TODO, ScheduleType.WISH, ScheduleType.AI);
@@ -112,27 +126,25 @@ public class FriendServiceImpl implements FriendService {
         // 1. 자기 자신을 제외하는지 확인
         validateNotSelf(loginUser.getId(), excludeUserId);
 
-        // 2. 제외하려는 대상 조회
-        User excludeUser = getUserOrThrow(excludeUserId);
+        // 2. 제외하려는 대상 존재 여부 확인
+        validateUserExists(excludeUserId);
 
-        // 3. Pageable 생성 (닉네임순 정렬)
-        Pageable pageable = PageRequest.of(page - 1, size,
-                Sort.by(Sort.Order.asc("following.nickname")));
+        // 3. Pageable 생성 (정렬은 쿼리 내 ORDER BY로 처리)
+        Pageable pageable = PageRequest.of(Math.max(page - 1, 0), size);
 
-        // 4. 맞팔로우 관계 조회 (특정 사용자 제외)
-        Slice<Friend> mutualFriendsSlice = friendRepository.findMutualFriendsExcluding(loginUser, excludeUser,
-                UserStatus.ACTIVE, pageable);
+        // 4. 맞팔로우 관계 조회 (DTO Projection)
+        Slice<MutualFriendProjection> mutualFriendsSlice = friendRepository.findMutualFriendsExcluding(
+                loginUser, excludeUserId, UserStatus.ACTIVE, pageable);
 
-        // 5. 맞팔로우한 상대방들에 대한 S3 프리사인드 URL 생성 및 Dto 변환
-        List<FriendResponseDto.MutualFriend> mutualFriendList = mutualFriendsSlice.getContent()
-                .stream()
-                .map(friend -> {
-                    User targetUser = friend.getFollowing();
-                    String profileImageUrl = s3Util.toPresignedUrl("profile/" + targetUser.getProfileImageName(),
-                            Duration.ofMinutes(30));
-                    return FriendConverter.toMutualFriendDto(targetUser, profileImageUrl);
-                })
-                .collect(Collectors.toList());
+        // 5. 프로필 이미지 URL 변환 및 Dto 변환
+        List<MutualFriendProjection> projections = mutualFriendsSlice.getContent();
+        Map<String, String> profileUrlMap = getOrLoadProfileImageUrls(projections);
+
+        List<FriendResponseDto.MutualFriend> mutualFriendList = projections.stream()
+                .map(projection -> FriendConverter.toMutualFriendDto(
+                        projection,
+                        profileUrlMap.get(projection.getProfileImageName())))
+                .toList();
 
         // 6. PagingResponseDto 생성
         return new PagingResponseDto<>(mutualFriendList, mutualFriendsSlice.hasNext());
@@ -379,5 +391,77 @@ public class FriendServiceImpl implements FriendService {
                 blockRepository.existsByBlockerAndBlocked(user2, user1)) {
             throw new FriendException(FriendErrorStatus.BLOCK_ACTION_FORBIDDEN);
         }
+    }
+
+    private Map<String, String> getOrLoadProfileImageUrls(List<MutualFriendProjection> projections) {
+        // 입력 자체가 없으면 바로 종료
+        if (projections.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // 1. projection에서 profileImageName만 추출
+        List<String> profileImageNames = projections.stream()
+                .map(MutualFriendProjection::getProfileImageName)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        // null 제거 후 아무것도 없으면 종료
+        if (profileImageNames.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // 2. Redis 조회를 위한 cache key 생성
+        List<String> cacheKeys = profileImageNames.stream()
+                .map(this::buildCacheKey)
+                .toList();
+
+        // 3. Redis multiGet으로 한번에 조회
+        List<String> cachedUrls = profileImageRedisTemplate.opsForValue().multiGet(cacheKeys);
+
+        // 최종 결과를 담을 Map (profileImageName -> URL)
+        Map<String, String> profileImageUrlMap = new HashMap<>();
+        // 캐시 miss 결과를 Redis에 한 번에 저장하기 위한 Map
+        Map<String, String> missedCacheMap = new HashMap<>();
+
+        // 4. 조회 결과를 순회하면서 캐시 hit/miss 처리
+        for (int i = 0; i < profileImageNames.size(); i++) {
+
+            String profileImageName = profileImageNames.get(i);
+            String cachedUrl = cachedUrls.get(i);
+
+            // 4-1. cache hit
+            if (cachedUrl != null) {
+                profileImageUrlMap.put(profileImageName, cachedUrl);
+            }
+            // 4-2. cache miss
+            else {
+                // Presigned URL 생성
+                String newUrl = s3Util.toPresignedUrl("profile/" + profileImageName, Duration.ofMinutes(30));
+
+                profileImageUrlMap.put(profileImageName, newUrl);
+                missedCacheMap.put(buildCacheKey(profileImageName), newUrl);
+            }
+        }
+
+        // 5. cache miss 데이터 Redis에 일괄 저장 (pipeline)
+        if (!missedCacheMap.isEmpty()) {
+            profileImageRedisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+
+                StringRedisConnection src = (StringRedisConnection) connection;
+
+                missedCacheMap.forEach((k, v) ->
+                        src.set(k, v, Expiration.from(PROFILE_URL_CACHE_TTL), RedisStringCommands.SetOption.UPSERT));
+                return null;
+            });
+        }
+
+        // 6. profileImageName -> URL 매핑 결과 반환
+        return profileImageUrlMap;
+    }
+
+    // cache key 생성
+    private String buildCacheKey(String profileImageName) {
+        return PROFILE_URL_CACHE_KEY_PREFIX + profileImageName;
     }
 }

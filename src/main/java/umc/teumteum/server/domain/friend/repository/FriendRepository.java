@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import umc.teumteum.server.domain.friend.dto.MutualFriendProjection;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.UserStatus;
@@ -29,14 +30,26 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
 
     Optional<Friend> findByFollowerAndFollowing(User loginUser, User targetUser);
 
-    @Query("SELECT f1 FROM Friend f1 " +
-            "WHERE f1.follower = :user " +
-            "AND f1.following.status = :status " +
-            "AND EXISTS (SELECT f2 FROM Friend f2 " +
-            "WHERE f2.follower = f1.following " +
-            "AND f2.following = :user) " +
-            "AND f1.following != :excludeUser")
-    Slice<Friend> findMutualFriendsExcluding(User user, User excludeUser, @Param("status") UserStatus status, Pageable pageable);
+    @Query("""
+        SELECT new umc.teumteum.server.domain.friend.dto.MutualFriendProjection(
+            u.id,
+            u.nickname,
+            u.profileImageName
+        )
+        FROM Friend f1
+        JOIN f1.following u
+        JOIN Friend f2 ON f2.follower = u AND f2.following = :user
+        WHERE f1.follower = :user
+          AND u.status = :status
+          AND u.id <> :excludeUserId
+        ORDER BY u.nickname ASC
+        """)
+    Slice<MutualFriendProjection> findMutualFriendsExcluding(
+            @Param("user") User user,
+            @Param("excludeUserId") Long excludeUserId,
+            @Param("status") UserStatus status,
+            Pageable pageable
+    );
 
     // 차단 시 두 유저 간의 모든 팔로우 관계(A->B, B->A)를 삭제
     @Modifying(clearAutomatically = true)
