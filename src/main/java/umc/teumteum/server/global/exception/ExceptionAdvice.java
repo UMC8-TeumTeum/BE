@@ -176,7 +176,12 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<Object> handleRateLimitExceeded(RateLimitExceededException e) {
         ErrorReasonDto reason = e.getErrorReasonHttpStatus();
-        long retryAfterSeconds = e.getPolicy().getWindowMs() / 1000;
+
+        // 현재 윈도우 종료까지 남은 시간 계산
+        long windowMs = e.getPolicy().getWindowMs();
+        long now = System.currentTimeMillis();
+        long windowStart = (now / windowMs) * windowMs;
+        long retryAfterSeconds = (windowStart + windowMs - now) / 1000;
 
         ApiResponse<Object> body = ApiResponse.onFailure(
                 reason.getCode(),

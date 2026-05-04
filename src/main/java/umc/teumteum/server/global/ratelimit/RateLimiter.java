@@ -1,12 +1,14 @@
 package umc.teumteum.server.global.ratelimit;
 
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Slf4j
 @Component
 public class RateLimiter {
 
@@ -48,14 +50,19 @@ public class RateLimiter {
         String previousKey = key + ":" + (currentWindow - 1);
 
         // 2. Lua Script 실행
-        Long result = rateLimitRedisTemplate.execute(
-                new DefaultRedisScript<>(SLIDING_WINDOW_COUNTER_SCRIPT, Long.class),
-                List.of(currentKey, previousKey),
-                String.valueOf(now),
-                String.valueOf(windowMs),
-                String.valueOf(policy.getLimit())
-        );
-
-        return result != null && result != -1L;
+        try {
+            Long result = rateLimitRedisTemplate.execute(
+                    new DefaultRedisScript<>(SLIDING_WINDOW_COUNTER_SCRIPT, Long.class),
+                    List.of(currentKey, previousKey),
+                    String.valueOf(now),
+                    String.valueOf(windowMs),
+                    String.valueOf(policy.getLimit())
+            );
+            return result != null && result != -1L;
+        } catch (Exception ex) {
+            // Redis 장애 시 fail-open (가용성 우선)
+            log.error("[Rate Limit Check Failed]", ex);
+            return true;
+        }
     }
 }
