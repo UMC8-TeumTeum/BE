@@ -2,21 +2,21 @@ package umc.teumteum.server.global.ratelimit;
 
 public enum RateLimitPolicy {
 
-    // social-login: socialId 핵심 키 (IP 로테이션, UA 위변조 공격 대응)
+    // social-login: socialId 핵심 키
     SOCIAL_LOGIN_SOCIAL_ID(
             "RATE_LIMIT:SOCIAL_LOGIN:SOCIAL_ID:%s",
             10 * 60 * 1000L,
             10
     ),
 
-    // social-login: IP 보조 키 (idToken 없이 무차별 시도하는 공격 대응)
+    // social-login: IP 핵심 키
     SOCIAL_LOGIN_IP(
             "RATE_LIMIT:SOCIAL_LOGIN:IP:%s",
             10 * 60 * 1000L,
             50
     ),
 
-    // reissue: userId 핵심 키 (IP 로테이션 공격 대응)
+    // reissue: userId 핵심 키
     REISSUE_USER(
             "RATE_LIMIT:REISSUE:USER:%s",
             10 * 60 * 1000L,
