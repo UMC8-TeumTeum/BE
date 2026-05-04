@@ -83,6 +83,12 @@ public class RedisConfig {
         return createRedisTemplate(createConnectionFactory(5));
     }
 
+    // Rate Limit용 Redis (index 6)
+    @Bean
+    public RedisTemplate<String, String> rateLimitRedisTemplate() {
+        return createRedisTemplate(createConnectionFactory(6));
+    }
+
     @Bean
     public RedissonClient redissonClient() {
         Config config = new Config();
