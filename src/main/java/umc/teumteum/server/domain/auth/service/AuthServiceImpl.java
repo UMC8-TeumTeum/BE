@@ -30,6 +30,7 @@ import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.apiPayload.code.status.ErrorStatus;
 import umc.teumteum.server.global.exception.InvalidTokenTypeException;
 import umc.teumteum.server.global.jwt.JwtProvider;
+import umc.teumteum.server.global.util.LogHashUtil;
 
 @Slf4j
 @Service
@@ -49,6 +50,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final JwtProvider jwtProvider;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final LogHashUtil logHashUtil;
 
     private final RoutineRepository routineRepository;
     private final ScheduleRepository scheduleRepository;
@@ -285,7 +287,9 @@ public class AuthServiceImpl implements AuthService {
 
         // 요청받은 RT와 Redis에 저장된 RT 다름
         if (!refreshToken.equals(savedRefreshToken)) {
-            log.warn("[Refresh 토큰 탈취 의심] : 요청 RT != Redis RT - userId: {}, sessionId: {}", userId, sessionId);
+            log.warn("[Refresh Token Mismatch] user={}, session={}",
+                    logHashUtil.hashIdentifier(userId),
+                    logHashUtil.hashIdentifier(sessionId));
 
             // 동일한 sessionID를 갖는 AT 블랙리스트 저장
             saveAccessTokenBlacklist(userId, sessionId, accessExpirationMs);
