@@ -163,9 +163,6 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
 
 
 
-
-
-
   //2. 비즈니스 로직에서 발생하는 커스텀 예외 처리
   @ExceptionHandler(value = GeneralException.class)
   public ResponseEntity onThrowException(
@@ -175,6 +172,28 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
   }
 
 
+    // RateLimitExceededException 전용 핸들러
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<Object> handleRateLimitExceeded(RateLimitExceededException e) {
+        ErrorReasonDto reason = e.getErrorReasonHttpStatus();
+
+        // 현재 윈도우 종료까지 남은 시간 계산
+        long windowMs = e.getPolicy().getWindowMs();
+        long now = System.currentTimeMillis();
+        long windowStart = (now / windowMs) * windowMs;
+        long retryAfterSeconds = (windowStart + windowMs - now) / 1000;
+
+        ApiResponse<Object> body = ApiResponse.onFailure(
+                reason.getCode(),
+                reason.getMessage(),
+                null
+        );
+
+        return ResponseEntity
+                .status(reason.getHttpStatus())
+                .header("Retry-After", String.valueOf(retryAfterSeconds))
+                .body(body);
+    }
 
 
 
@@ -225,5 +244,4 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
     return super.handleExceptionInternal(
         e, body, headers, errorCommonStatus.getHttpStatus(), request);
   }
-
 }

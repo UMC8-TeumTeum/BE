@@ -18,6 +18,7 @@ import umc.teumteum.server.domain.auth.dto.OAuthUserInfo;
 import umc.teumteum.server.domain.auth.exception.AuthException;
 import umc.teumteum.server.domain.auth.exception.status.AuthErrorStatus;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
+import umc.teumteum.server.global.util.LogHashUtil;
 
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
@@ -34,6 +35,7 @@ public class KakaoOAuthServiceImpl implements OAuthService {
     private String platformKey;
 
     private final JwkProvider kakaoJwkProvider;
+    private final LogHashUtil logHashUtil;
 
     @Resource(name = "nonceRedisTemplate")
     private RedisTemplate<String, String> nonceRedisTemplate;
@@ -41,8 +43,8 @@ public class KakaoOAuthServiceImpl implements OAuthService {
 
     @Override
     public OAuthUserInfo getUserInfoWithIdToken(String idToken, String nonce) {
-        // 1. Nonce 검증 및 저장
-        validateAndSaveNonce(nonce);
+        // 1. nonce 필수값 검증
+        validateNonceNotBlank(nonce);
 
         // 2. ID Token 검증
         DecodedJWT verifiedJwt = verifyIdToken(idToken, nonce);
@@ -51,27 +53,31 @@ public class KakaoOAuthServiceImpl implements OAuthService {
         String socialId = verifiedJwt.getSubject();
         String email = verifiedJwt.getClaim("email").asString();
 
-        // 4. OAuthUserInfo 반환
+        // 4. nonce 재사용 검증 및 저장
+        validateAndSaveNonce(nonce, socialId);
+
+        // 5. OAuthUserInfo 반환
         return AuthConverter.toOAuthUserInfo(SocialType.KAKAO, socialId, email);
     }
 
-
-    private void validateAndSaveNonce(String nonce) {
-        // 1. nonce 확인
+    private void validateNonceNotBlank(String nonce) {
         if (nonce == null || nonce.isBlank()) {
             throw new AuthException(AuthErrorStatus.NONCE_REQUIRED);
         }
+    }
 
-        // 2. Redis 키 생성
+    private void validateAndSaveNonce(String nonce, String socialId) {
+        // 1. Redis 키 생성
         String key = getNonceKey(nonce);
 
-        // 3. Redis에 저장 시도
+        // 2. Redis에 저장 시도
         Boolean wasUsed = nonceRedisTemplate.opsForValue()
                 .setIfAbsent(key, "used", Duration.ofHours(NONCE_TTL_HOURS));
 
-        // 4. 이미 사용된 값이면 wasUsed가 False이기 때문에 예외 처리
+        // 3. 이미 사용된 값이면 wasUsed가 False이기 때문에 예외 처리
         if (Boolean.FALSE.equals(wasUsed)) {
-            log.warn("[ID 토큰 탈취 의심] : 이미 사용한 ID Token & nonce로 로그인 시도");
+            log.warn("[ID Token Replay Suspected] provider=KAKAO, id={}",
+                    logHashUtil.hashIdentifier(socialId));
             throw new AuthException(AuthErrorStatus.NONCE_ALREADY_USED);
         }
     }

@@ -14,7 +14,9 @@ import umc.teumteum.server.domain.auth.exception.status.AuthSuccessStatus;
 import umc.teumteum.server.domain.auth.service.AuthService;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.annotation.CurrentUser;
+import umc.teumteum.server.global.annotation.RateLimit;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
+import umc.teumteum.server.global.ratelimit.RateLimitPolicy;
 
 @Tag(name = "Auth", description = "인증 관련 API")
 @RestController
@@ -29,6 +31,7 @@ public class AuthController {
             description = "카카오, 네이버, 구글 소셜 플랫폼을 통한 로그인을 처리합니다."
     )
     @PostMapping(value = "/social-login/{socialType}", produces = "application/json")
+    @RateLimit(policies = {RateLimitPolicy.SOCIAL_LOGIN_SOCIAL_ID, RateLimitPolicy.SOCIAL_LOGIN_IP})
     public ApiResponse<AuthResponseDto.LoginResponse> socialLogin(
             @Parameter(
                     description = "소셜 로그인 타입 (kakao 또는 naver 또는 google)",
@@ -49,6 +52,7 @@ public class AuthController {
             description = "리프레시 토큰을 사용하여 새로운 액세스 토큰&리프레시 토큰을 발급받습니다."
     )
     @PostMapping(value = "/reissue", produces = "application/json")
+    @RateLimit(policies = {RateLimitPolicy.REISSUE_USER})
     public ApiResponse<AuthResponseDto.ReissueResponse> reissueToken(
             @Valid @RequestBody AuthRequestDto.ReissueRequest request
     ) {
