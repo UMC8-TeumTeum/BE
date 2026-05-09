@@ -25,6 +25,8 @@ import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,9 +96,16 @@ public class NotificationServiceTest {
     User testFriend4 = mock(User.class); when(testFriend4.getProfileImageName()).thenReturn("tf4.png");
 
       // 관련 엔티티 mock, repodisoty stubbing
+    TeumRequest acceptedRequest = mock(TeumRequest.class);
+    when(acceptedRequest.getDate()).thenReturn(LocalDate.now());
+    when(acceptedRequest.getStartTime()).thenReturn(LocalTime.of(10, 0));
+
     TeumResponse teumResponse_related_accepted = mock(TeumResponse.class);
     when(teumResponse_related_accepted.getReceiverUser()).thenReturn(testFriend1);
+    when(teumResponse_related_accepted.getTeumRequest()).thenReturn(acceptedRequest);
     when(teumResponseRepository.findById(101L)).thenReturn(Optional.of(teumResponse_related_accepted));
+
+    TeumRequest canceledRequest = mock(TeumRequest.class);
 
     TeumResponse tuemResponse_related_canceled = mock(TeumResponse.class);
     when(tuemResponse_related_canceled.getReceiverUser()).thenReturn(testFriend2);
@@ -104,6 +113,8 @@ public class NotificationServiceTest {
 
     TeumRequest teumRequest = mock(TeumRequest.class);
     when(teumRequest.getUser()).thenReturn(testFriend3);
+    when(teumRequest.getDate()).thenReturn(LocalDate.now());
+    when(teumRequest.getStartTime()).thenReturn(LocalTime.of(12, 0));
     when(teumRequestRepository.findById(103L)).thenReturn(Optional.of(teumRequest));
 
     Friend friend = mock(Friend.class);
@@ -155,6 +166,8 @@ public class NotificationServiceTest {
     when(testFriend.getProfileImageName()).thenReturn("tf1.png");
     TeumRequest tq = mock(TeumRequest.class);
     when(tq.getUser()).thenReturn(testFriend);
+    when(tq.getDate()).thenReturn(LocalDate.now());
+    when(tq.getStartTime()).thenReturn(LocalTime.of(10, 0));
 
     when(teumRequestRepository.findById(201L)).thenReturn(Optional.of(tq));
     when(friendRepository.findById(202L)).thenReturn(Optional.empty());
@@ -229,7 +242,10 @@ public class NotificationServiceTest {
 
     User testFriend = mock(User.class);
     when(testFriend.getProfileImageName()).thenReturn("tf1.png");
-    TeumRequest tq = mock(TeumRequest.class); when(tq.getUser()).thenReturn(testFriend);
+    TeumRequest tq = mock(TeumRequest.class);
+    when(tq.getUser()).thenReturn(testFriend);
+    when(tq.getDate()).thenReturn(LocalDate.now());
+    when(tq.getStartTime()).thenReturn(LocalTime.of(10, 0));
     when(teumRequestRepository.findById(401L)).thenReturn(Optional.of(tq));
 
 
