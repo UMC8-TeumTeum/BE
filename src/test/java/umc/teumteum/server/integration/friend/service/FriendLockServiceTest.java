@@ -1,12 +1,5 @@
 package umc.teumteum.server.integration.friend.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
-import umc.teumteum.server.domain.friend.exception.FriendException;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
 import umc.teumteum.server.domain.friend.service.FriendLockService;
 import umc.teumteum.server.domain.notification.service.NotificationUseCases;
@@ -23,9 +15,16 @@ import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
 import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.domain.user.repository.UserRepository;
-import umc.teumteum.server.global.exception.handler.GlobalHandler;
 import umc.teumteum.server.global.util.S3Util;
 import umc.teumteum.server.support.RedisTestContainerSupport;
+
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -83,7 +82,10 @@ public class FriendLockServiceTest extends RedisTestContainerSupport {
         // given
         int threadCount = 10;
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        CountDownLatch readyLatch = new CountDownLatch(threadCount);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(threadCount);
 
         AtomicInteger successCount = new AtomicInteger();
         AtomicInteger failCount = new AtomicInteger();
@@ -92,17 +94,23 @@ public class FriendLockServiceTest extends RedisTestContainerSupport {
         for (int i = 0; i < threadCount; i++) {
             executorService.submit(() -> {
                 try {
+                    readyLatch.countDown();
+                    startLatch.await();
+
                     friendLockService.followWithLock(loginUser, targetUser.getId());
                     successCount.incrementAndGet();
-                } catch (FriendException | GlobalHandler e) {
+                } catch (Exception e) {
                     failCount.incrementAndGet();
                 } finally {
-                    latch.countDown();
+                    doneLatch.countDown();
                 }
             });
         }
 
-        latch.await();
+        readyLatch.await();
+        startLatch.countDown();
+        doneLatch.await();
+
         executorService.shutdown();
 
         long totalSaved = friendRepository.count();
