@@ -1,35 +1,14 @@
 package umc.teumteum.server.unit.notification.service;
 
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import umc.teumteum.server.domain.friend.entity.Friend;
 import umc.teumteum.server.domain.friend.repository.FriendRepository;
 import umc.teumteum.server.domain.notification.converter.NotificationConverter;
@@ -38,11 +17,24 @@ import umc.teumteum.server.domain.notification.entity.Notification;
 import umc.teumteum.server.domain.notification.entity.enums.NotificationType;
 import umc.teumteum.server.domain.notification.repository.NotificationRepository;
 import umc.teumteum.server.domain.notification.service.NotificationServiceImpl;
-import umc.teumteum.server.domain.teum.entity.*;
-import umc.teumteum.server.domain.teum.repository.*;
+import umc.teumteum.server.domain.teum.entity.TeumRequest;
+import umc.teumteum.server.domain.teum.entity.TeumResponse;
+import umc.teumteum.server.domain.teum.repository.TeumRequestRepository;
+import umc.teumteum.server.domain.teum.repository.TeumResponseRepository;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.util.S3Util;
-import umc.teumteum.server.support.RedisTestContainerSupport;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("NotificationServiceImpl - Notification 관련 서비스 메서드 단위 테스트")
@@ -86,6 +78,7 @@ public class NotificationServiceTest {
     // given
     int page = 1;
     int size = 10;
+    LocalDate today = LocalDate.now();
 
       // 알림 종류들 : RESPONSE, SCHEDULE(둘 다 TeumResponse), REQUEST(TeumRequest), FRIEND(Friend)
     Notification n1 = mockNoti(1L, NotificationType.TEUM_ACCEPTED, 101L); // TEUM_RESPONSE
@@ -105,8 +98,13 @@ public class NotificationServiceTest {
     User testFriend4 = mock(User.class); when(testFriend4.getProfileImageName()).thenReturn("tf4.png");
 
       // 관련 엔티티 mock, repodisoty stubbing
+    TeumRequest acceptedRequest = mock(TeumRequest.class);
+    when(acceptedRequest.getDate()).thenReturn(today);
+    when(acceptedRequest.getStartTime()).thenReturn(LocalTime.of(10, 0));
+
     TeumResponse teumResponse_related_accepted = mock(TeumResponse.class);
     when(teumResponse_related_accepted.getReceiverUser()).thenReturn(testFriend1);
+    when(teumResponse_related_accepted.getTeumRequest()).thenReturn(acceptedRequest);
     when(teumResponseRepository.findById(101L)).thenReturn(Optional.of(teumResponse_related_accepted));
 
     TeumResponse tuemResponse_related_canceled = mock(TeumResponse.class);
@@ -115,6 +113,8 @@ public class NotificationServiceTest {
 
     TeumRequest teumRequest = mock(TeumRequest.class);
     when(teumRequest.getUser()).thenReturn(testFriend3);
+    when(teumRequest.getDate()).thenReturn(today);
+    when(teumRequest.getStartTime()).thenReturn(LocalTime.of(12, 0));
     when(teumRequestRepository.findById(103L)).thenReturn(Optional.of(teumRequest));
 
     Friend friend = mock(Friend.class);
@@ -126,7 +126,7 @@ public class NotificationServiceTest {
 
       // NotificationResponseDto.NotificationDto mocking
     NotificationResponseDto.NotificationDto dto = mock(NotificationResponseDto.NotificationDto.class);
-    converterMock.when(() -> NotificationConverter.toNotificationDto(any(), any(), any()))
+    converterMock.when(() -> NotificationConverter.toNotificationDto(any(), any(), any(), any()))
         .thenReturn(dto);
 
       // NotificatoinResponseDto.SliceResposneDto mocking
@@ -139,10 +139,10 @@ public class NotificationServiceTest {
 
     // then
       // 1. 통과 기준 : 타입별로 변환이 잘 되었는지 확인
-    converterMock.verify(() -> NotificationConverter.toNotificationDto(eq(n1), eq(testFriend1), anyString()));
-    converterMock.verify(() -> NotificationConverter.toNotificationDto(eq(n2), eq(testFriend2), anyString()));
-    converterMock.verify(() -> NotificationConverter.toNotificationDto(eq(n3), eq(testFriend3), anyString()));
-    converterMock.verify(() -> NotificationConverter.toNotificationDto(eq(n4), eq(testFriend4), anyString()));
+    converterMock.verify(() -> NotificationConverter.toNotificationDto(eq(n1), eq(testFriend1), anyString(), eq(LocalDateTime.of(today, LocalTime.of(10, 0)))));
+    converterMock.verify(() -> NotificationConverter.toNotificationDto(eq(n2), eq(testFriend2), anyString(), isNull()));
+    converterMock.verify(() -> NotificationConverter.toNotificationDto(eq(n3), eq(testFriend3), anyString(), eq(LocalDateTime.of(today, LocalTime.of(12, 0)))));
+    converterMock.verify(() -> NotificationConverter.toNotificationDto(eq(n4), eq(testFriend4), anyString(), isNull()));
 
       // 2. 통과 기준 : S3 presigned URL 호출 확인
     verify(s3Util, atLeast(4)).toPresignedUrl(startsWith("profile/"), eq(Duration.ofMinutes(30)));
@@ -153,6 +153,7 @@ public class NotificationServiceTest {
   @DisplayName("[getNotifications] - TC2 관련 엔티티가 없으면 해당 알림은 필터링 된다.")
   void filter_when_related_not_found() {
     int page = 1, size = 10;
+    LocalDate today = LocalDate.now();
 
     Notification exist = mockNoti(1L, NotificationType.TEUM_REQUEST, 201L);
     Notification none  = mockNoti(2L, NotificationType.FOLLOW,       202L);
@@ -166,6 +167,8 @@ public class NotificationServiceTest {
     when(testFriend.getProfileImageName()).thenReturn("tf1.png");
     TeumRequest tq = mock(TeumRequest.class);
     when(tq.getUser()).thenReturn(testFriend);
+    when(tq.getDate()).thenReturn(today);
+    when(tq.getStartTime()).thenReturn(LocalTime.of(10, 0));
 
     when(teumRequestRepository.findById(201L)).thenReturn(Optional.of(tq));
     when(friendRepository.findById(202L)).thenReturn(Optional.empty());
@@ -173,7 +176,7 @@ public class NotificationServiceTest {
         .thenReturn("https://presigned/mock/test");
 
     NotificationResponseDto.NotificationDto dto = mock(NotificationResponseDto.NotificationDto.class);
-    converterMock.when(() -> NotificationConverter.toNotificationDto(any(), any(), any()))
+    converterMock.when(() -> NotificationConverter.toNotificationDto(any(), any(), any(), any()))
         .thenReturn(dto);
 
     NotificationResponseDto.SliceResponseDto expected = mock(NotificationResponseDto.SliceResponseDto.class);
@@ -188,9 +191,9 @@ public class NotificationServiceTest {
     // then
     assertSame(expected, actual);
       // 1. 통과 기준 : 필터링 되야 되는 none은 절대로 호출 안됨
-    converterMock.verify(() -> NotificationConverter.toNotificationDto(eq(none), any(), any()), never());
+    converterMock.verify(() -> NotificationConverter.toNotificationDto(eq(none), any(), any(), any()), never());
       // 2. 통과 기준 : 필터링 되면 안되는 exist는 호출됨
-    converterMock.verify(() -> NotificationConverter.toNotificationDto(eq(exist), eq(testFriend), anyString()));
+    converterMock.verify(() -> NotificationConverter.toNotificationDto(eq(exist), eq(testFriend), anyString(), eq(LocalDateTime.of(today, LocalTime.of(10, 0)))));
 
   }
 
@@ -211,7 +214,7 @@ public class NotificationServiceTest {
         .thenReturn("https://presigned/mock/test");
 
     NotificationResponseDto.NotificationDto dto = mock(NotificationResponseDto.NotificationDto.class);
-    converterMock.when(() -> NotificationConverter.toNotificationDto(any(), any(), any())).thenReturn(dto);
+    converterMock.when(() -> NotificationConverter.toNotificationDto(any(), any(), any(), any())).thenReturn(dto);
 
     NotificationResponseDto.SliceResponseDto expected = mock(NotificationResponseDto.SliceResponseDto.class);
     converterMock.when(() -> NotificationConverter.toSliceResponseDto(anyList(), eq(true), eq(page), eq(size)))
@@ -231,6 +234,7 @@ public class NotificationServiceTest {
   void verify_presigned_url() {
     // given
     int page = 3, size = 5;
+    LocalDate today = LocalDate.now();
 
     Notification n = mockNoti(1L, NotificationType.TEUM_REQUEST, 401L);
 
@@ -240,12 +244,15 @@ public class NotificationServiceTest {
 
     User testFriend = mock(User.class);
     when(testFriend.getProfileImageName()).thenReturn("tf1.png");
-    TeumRequest tq = mock(TeumRequest.class); when(tq.getUser()).thenReturn(testFriend);
+    TeumRequest tq = mock(TeumRequest.class);
+    when(tq.getUser()).thenReturn(testFriend);
+    when(tq.getDate()).thenReturn(today);
+    when(tq.getStartTime()).thenReturn(LocalTime.of(10, 0));
     when(teumRequestRepository.findById(401L)).thenReturn(Optional.of(tq));
 
 
     when(s3Util.toPresignedUrl(anyString(), any())).thenReturn("url");
-    converterMock.when(() -> NotificationConverter.toNotificationDto(any(), any(), any()))
+    converterMock.when(() -> NotificationConverter.toNotificationDto(any(), any(), any(), any()))
         .thenReturn(mock(NotificationResponseDto.NotificationDto.class));
     converterMock.when(() -> NotificationConverter.toSliceResponseDto(anyList(), anyBoolean(), anyInt(), anyInt()))
         .thenReturn(mock(NotificationResponseDto.SliceResponseDto.class));
@@ -261,6 +268,12 @@ public class NotificationServiceTest {
     assertEquals("profile/tf1.png", keyCap.getValue());
     assertEquals(Duration.ofMinutes(30), durCap.getValue());
 
+    converterMock.verify(() -> NotificationConverter.toNotificationDto(
+            eq(n),
+            eq(testFriend),
+            anyString(),
+            eq(LocalDateTime.of(today, LocalTime.of(10, 0)))
+    ));
   }
 
 
@@ -284,7 +297,7 @@ public class NotificationServiceTest {
     notificationServiceImpl.getNotifications(testUser, 1, 10);
 
     // then
-    converterMock.verify(() -> NotificationConverter.toNotificationDto(any(), any(), any()), never());
+    converterMock.verify(() -> NotificationConverter.toNotificationDto(any(), any(), any(), any()), never());
     verifyNoInteractions(teumRequestRepository, teumResponseRepository, friendRepository);
 
   }

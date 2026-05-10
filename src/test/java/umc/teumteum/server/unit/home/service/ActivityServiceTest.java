@@ -1,17 +1,5 @@
 package umc.teumteum.server.unit.home.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +21,17 @@ import umc.teumteum.server.domain.home.repository.CategoryRepository;
 import umc.teumteum.server.domain.home.repository.WishRepository;
 import umc.teumteum.server.domain.home.service.ActivityServiceImpl;
 import umc.teumteum.server.domain.user.entity.User;
-import umc.teumteum.server.support.RedisTestContainerSupport;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ActivityServiceImpl - Activity(채움활동) 관련 단위 테스트")
