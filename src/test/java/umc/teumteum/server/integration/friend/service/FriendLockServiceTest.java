@@ -22,6 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -107,11 +108,19 @@ public class FriendLockServiceTest extends RedisTestContainerSupport {
             });
         }
 
-        readyLatch.await();
-        startLatch.countDown();
-        doneLatch.await();
+        try {
+            assertThat(readyLatch.await(5, TimeUnit.SECONDS))
+                    .as("모든 테스트 스레드가 준비 상태에 도달해야 합니다.")
+                    .isTrue();
 
-        executorService.shutdown();
+            startLatch.countDown();
+
+            assertThat(doneLatch.await(10, TimeUnit.SECONDS))
+                    .as("모든 테스트 스레드가 제한 시간 내 종료되어야 합니다.")
+                    .isTrue();
+        } finally {
+            executorService.shutdownNow();
+        }
 
         long totalSaved = friendRepository.count();
 
