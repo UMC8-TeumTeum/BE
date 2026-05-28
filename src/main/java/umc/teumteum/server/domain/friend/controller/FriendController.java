@@ -3,6 +3,7 @@ package umc.teumteum.server.domain.friend.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -94,7 +95,7 @@ public class FriendController {
             @Parameter(hidden = true) @CurrentUser User loginUser,
             @Parameter(name = "userId", description = "즐겨찾기를 설정/해제할 대상 유저의 ID", example = "1")
             @PathVariable("userId") Long targetUserId,
-            @RequestBody FriendRequestDto.FriendFavorite requestDto
+            @RequestBody @Valid FriendRequestDto.FriendFavorite requestDto
     ) {
         FriendResponseDto.FriendFavorite response = friendService.updateFavorite(loginUser, targetUserId, requestDto.getIsFavorite());
         return ApiResponse.of(FriendSuccessStatus._FAVORITE_UPDATE_SUCCESS, response);

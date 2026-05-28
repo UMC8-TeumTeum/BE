@@ -174,9 +174,6 @@ public class FriendServiceImpl implements FriendService {
                 .orElseThrow(() -> new FriendException(FriendErrorStatus.NOT_FOLLOWING));
 
         // 4. 즐겨찾기 상태 수정
-        if (friend.getIsFavorite().equals(isFavorite)) {
-            throw new FriendException(FriendErrorStatus.FAVORITE_ALREADY_SET);
-        }
         friend.updateIsFavorite(isFavorite);
 
         // 5. 결과 반환
