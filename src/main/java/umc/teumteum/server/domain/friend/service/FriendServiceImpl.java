@@ -2,6 +2,8 @@ package umc.teumteum.server.domain.friend.service;
 
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -59,6 +61,7 @@ public class FriendServiceImpl implements FriendService {
     @Resource(name = "profileImageRedisTemplate")
     private RedisTemplate<String, String> profileImageRedisTemplate;
 
+    private static final String FRIEND_UNIQUE_CONSTRAINT_NAME = "uk_friend_follower_following";
     private static final String PROFILE_URL_CACHE_KEY_PREFIX = "profile:url:";
     private static final Duration PROFILE_URL_CACHE_TTL = Duration.ofMinutes(20);
 
@@ -95,7 +98,14 @@ public class FriendServiceImpl implements FriendService {
 
         // 5. Friend 생성 및 저장
         Friend friend = FriendConverter.toFriend(loginUser, targetUser);
-        friendRepository.save(friend);
+        try {
+            friendRepository.saveAndFlush(friend);
+        } catch (DataIntegrityViolationException e) {
+            if (isConstraintViolation(e, FRIEND_UNIQUE_CONSTRAINT_NAME)) {
+                throw new FriendException(FriendErrorStatus.ALREADY_FOLLOWING);
+            }
+            throw e;
+        }
 
         // 5. 알림 전송
         notificationUseCases.notifyFollow(loginUser, targetUser, friend.getId());
@@ -463,5 +473,17 @@ public class FriendServiceImpl implements FriendService {
     // cache key 생성
     private String buildCacheKey(String profileImageName) {
         return PROFILE_URL_CACHE_KEY_PREFIX + profileImageName;
+    }
+
+    // DB 제약조건 위반 예외가 특정 constraint에서 발생했는지 확인
+    private boolean isConstraintViolation(DataIntegrityViolationException e, String constraintName) {
+        Throwable cause = e;
+        while (cause != null) {
+            if (cause instanceof ConstraintViolationException constraintViolationException) {
+                return constraintName.equals(constraintViolationException.getConstraintName());
+            }
+            cause = cause.getCause();
+        }
+        return false;
     }
 }

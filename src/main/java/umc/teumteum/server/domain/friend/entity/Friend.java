@@ -13,10 +13,19 @@ import umc.teumteum.server.global.common.BaseEntity;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "friend", indexes = {
-        @Index(name = "idx_friend_follower_following",
-                columnList = "follower_user_id, following_user_id")
-})
+@Table(
+        name = "friend",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_friend_follower_following",
+                        columnNames = {"follower_user_id", "following_user_id"}
+                )
+        },
+        indexes = {
+                @Index(name = "idx_friend_follower_following",
+                        columnList = "follower_user_id, following_user_id")
+        }
+)
 public class Friend extends BaseEntity {
 
     @Id
