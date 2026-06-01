@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import umc.teumteum.server.domain.home.repository.ScheduleJdbcRepository;
+import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.entity.enums.SocialType;
@@ -31,6 +32,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,6 +50,9 @@ class OnboardingServiceTest {
 
     @Mock
     private ScheduleJdbcRepository scheduleJdbcRepository;
+
+    @Mock
+    private ScheduleRepository scheduleRepository;
 
     @Spy
     private TimeUtil timeUtil = new TimeUtil();
@@ -144,6 +149,23 @@ class OnboardingServiceTest {
         );
         assertEquals(UserErrorStatus.ROUTINE_TIME_CONFLICT.getCode(), exception.getErrorReason().getCode());
         assertEquals(UserErrorStatus.ROUTINE_TIME_CONFLICT.getMessage(), exception.getErrorReason().getMessage());
+    }
+
+    @Test
+    @DisplayName("반복일정 이미 저장됨 - 예외")
+    void savedRoutine_fail() {
+        // given
+        when(routineRepository.existsByUser(testUser)).thenReturn(true);
+        OnboardingRequestDto.RoutineListRequest request = createRoutines(
+                createRoutineDTO(Weekday.MONDAY, LocalTime.of(9, 0), LocalTime.of(18, 0), "틈틈 개발")
+        );
+
+        // when & then
+        OnboardingException exception = assertThrows(OnboardingException.class,
+                () -> onboardingService.saveRoutines(request, testUser)
+        );
+        assertEquals(UserErrorStatus.INVALID_STEP.getCode(), exception.getErrorReason().getCode());
+        assertEquals(UserErrorStatus.INVALID_STEP.getMessage(), exception.getErrorReason().getMessage());
     }
 
     // ==================== 헬퍼 메서드 ====================
