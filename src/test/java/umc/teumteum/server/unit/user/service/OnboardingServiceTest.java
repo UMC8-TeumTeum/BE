@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import umc.teumteum.server.domain.home.repository.ScheduleJdbcRepository;
+import umc.teumteum.server.domain.home.repository.ScheduleReminderJdbcRepository;
 import umc.teumteum.server.domain.home.repository.ScheduleRepository;
 import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.entity.User;
@@ -19,11 +20,13 @@ import umc.teumteum.server.domain.user.entity.enums.UserStep;
 import umc.teumteum.server.domain.user.entity.enums.Weekday;
 import umc.teumteum.server.domain.user.exception.OnboardingException;
 import umc.teumteum.server.domain.user.exception.status.UserErrorStatus;
+import umc.teumteum.server.domain.user.repository.RemindAlarmJdbcRepository;
 import umc.teumteum.server.domain.user.repository.RoutineJdbcRepository;
 import umc.teumteum.server.domain.user.repository.RoutineRepository;
 import umc.teumteum.server.domain.user.service.OnboardingServiceImpl;
 import umc.teumteum.server.global.exception.handler.GlobalHandler;
 import umc.teumteum.server.global.util.TimeUtil;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -32,6 +35,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
@@ -52,7 +56,13 @@ class OnboardingServiceTest {
     private ScheduleJdbcRepository scheduleJdbcRepository;
 
     @Mock
+    private ScheduleReminderJdbcRepository scheduleReminderJdbcRepository;
+
+    @Mock
     private ScheduleRepository scheduleRepository;
+
+    @Mock
+    private RemindAlarmJdbcRepository remindAlarmJdbcRepository;
 
     @Spy
     private TimeUtil timeUtil = new TimeUtil();
@@ -168,6 +178,24 @@ class OnboardingServiceTest {
         assertEquals(UserErrorStatus.INVALID_STEP.getMessage(), exception.getErrorReason().getMessage());
     }
 
+    // ==================== 리마인드 알림 테스트 ====================
+    @Test
+    @DisplayName("리마인드 알림 이미 저장됨 - 예외")
+    void savedRemindAlarm_fail() {
+        // given
+        OnboardingRequestDto.RemindAlarmList request = createRemindAlarms(1, 5, 30);
+        doThrow(new DataIntegrityViolationException("uk_remind_alarm_user_minutes"))
+                .when(remindAlarmJdbcRepository)
+                .batchInsertRemindAlarms(anyList());
+
+        // when & then
+        OnboardingException exception = assertThrows(OnboardingException.class,
+                () -> onboardingService.saveRemindAlarms(request, testUser)
+        );
+        assertEquals(UserErrorStatus.INVALID_STEP.getCode(), exception.getErrorReason().getCode());
+        assertEquals(UserErrorStatus.INVALID_STEP.getMessage(), exception.getErrorReason().getMessage());
+    }
+
     // ==================== 헬퍼 메서드 ====================
     // 수면패턴 생성 메서드
     private OnboardingRequestDto.SleepPatternRequest createSleepPattern(LocalTime sleepTime, LocalTime wakeTime) {
@@ -212,6 +240,12 @@ class OnboardingServiceTest {
                 .startTime(startTime)
                 .endTime(endTime)
                 .title(title)
+                .build();
+    }
+
+    private static OnboardingRequestDto.RemindAlarmList createRemindAlarms(Integer... remindAlarms) {
+        return OnboardingRequestDto.RemindAlarmList.builder()
+                .remindAlarms(List.of(remindAlarms))
                 .build();
     }
 }

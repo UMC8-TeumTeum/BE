@@ -18,6 +18,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Table(
         name = "schedule_reminder",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_schedule_reminder_schedule_time",
+                        columnNames = {"schedule_id", "reminder_time"}
+                )
+        },
         indexes = {
                 @Index(
                         name = "idx_dispatch_alarm_send_at",

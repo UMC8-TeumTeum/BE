@@ -3,6 +3,8 @@ package umc.teumteum.server.domain.user.service;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,6 +60,8 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     private static final Set<Integer> ALLOWED_REMIND_ALARM_VALUES = Set.of(1, 3, 5, 10, 30);
     private static final Duration PROFILE_IMAGE_UPLOAD_TTL = Duration.ofMinutes(30);
+    private static final String REMIND_ALARM_UNIQUE_CONSTRAINT_NAME = "uk_remind_alarm_user_minutes";
+    private static final String SCHEDULE_REMINDER_UNIQUE_CONSTRAINT_NAME = "uk_schedule_reminder_schedule_time";
 
 
     // 온보딩 - 약관 동의
@@ -196,12 +200,23 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 3. 알림 설정 범위 확인 (1, 3, 5, 10, 30)
             validateRemindAlarmValues(request.getRemindAlarms());
 
-            // 4. RemindAlarm 저장
-            List<RemindAlarm> remindAlarms = OnboardingConverter.toRemindAlarmList(request.getRemindAlarms(), user);
-            remindAlarmJdbcRepository.batchInsertRemindAlarms(remindAlarms);
+            try {
+                // 4. RemindAlarm 저장
+                List<RemindAlarm> remindAlarms = OnboardingConverter.toRemindAlarmList(request.getRemindAlarms(), user);
+                remindAlarmJdbcRepository.batchInsertRemindAlarms(remindAlarms);
 
-            // 5. 기존 스케줄에 ScheduleReminder 저장 (반복일정 등록은 선택 입력)
-            saveScheduleRemindersIfExist(user, request.getRemindAlarms());
+                // 5. 기존 스케줄에 ScheduleReminder 저장 (반복일정 등록은 선택 입력)
+                saveScheduleRemindersIfExist(user, request.getRemindAlarms());
+            } catch (DataIntegrityViolationException e) {
+                if (isConstraintViolation(
+                        e,
+                        REMIND_ALARM_UNIQUE_CONSTRAINT_NAME,
+                        SCHEDULE_REMINDER_UNIQUE_CONSTRAINT_NAME
+                )) {
+                    throw new OnboardingException(UserErrorStatus.INVALID_STEP);
+                }
+                throw e;
+            }
         }
 
         // 6. 최종 온보딩 완료로 사용자 step 변경
@@ -378,6 +393,34 @@ public class OnboardingServiceImpl implements OnboardingService {
     // 프로필 이미지 키 get
     private String getProfileImageKey(String userId, String sessionId) {
         return String.format("PROFILE_IMAGE_FILE_NAME:%s:%s", userId, sessionId);
+    }
+
+
+    // DB 제약조건 위반 예외가 특정 constraint에서 발생했는지 확인
+    private boolean isConstraintViolation(DataIntegrityViolationException e, String... constraintNames) {
+        Set<String> targetConstraintNames = Arrays.stream(constraintNames)
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
+
+        Throwable cause = e;
+        while (cause != null) {
+            if (cause instanceof ConstraintViolationException constraintViolationException) {
+                String constraintName = constraintViolationException.getConstraintName();
+                return constraintName != null && targetConstraintNames.contains(constraintName.toLowerCase());
+            }
+
+            String message = cause.getMessage();
+            if (message != null) {
+                String lowerCaseMessage = message.toLowerCase();
+                boolean containsConstraintName = targetConstraintNames.stream().anyMatch(lowerCaseMessage::contains);
+                if (containsConstraintName) {
+                    return true;
+                }
+            }
+
+            cause = cause.getCause();
+        }
+        return false;
     }
 
 

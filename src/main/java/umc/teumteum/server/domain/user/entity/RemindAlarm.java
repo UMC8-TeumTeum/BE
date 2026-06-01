@@ -12,7 +12,15 @@ import umc.teumteum.server.global.common.BaseEntity;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "remind_alarm")
+@Table(
+        name = "remind_alarm",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_remind_alarm_user_minutes",
+                        columnNames = {"user_id", "minutes_before"}
+                )
+        }
+)
 public class RemindAlarm extends BaseEntity {
 
     @Id
@@ -26,4 +34,3 @@ public class RemindAlarm extends BaseEntity {
     @Column(name = "minutes_before", nullable = false)
     private Integer minutesBefore;
 }
-
