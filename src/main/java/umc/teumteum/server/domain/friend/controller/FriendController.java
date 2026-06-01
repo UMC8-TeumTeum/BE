@@ -20,8 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import umc.teumteum.server.domain.friend.dto.FriendRequestDto;
 import umc.teumteum.server.domain.friend.dto.FriendResponseDto;
 import umc.teumteum.server.domain.friend.exception.status.FriendSuccessStatus;
-import umc.teumteum.server.domain.friend.service.FriendLockService;
-import umc.teumteum.server.domain.friend.service.FriendLockServiceImpl;
 import umc.teumteum.server.domain.friend.service.FriendService;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.global.annotation.CurrentUser;
@@ -36,7 +34,6 @@ import umc.teumteum.server.global.dto.PagingResponseDto;
 public class FriendController {
 
     private final FriendService friendService;
-    private final FriendLockService friendLockService;
 
     @Operation(
             summary = "유저 팔로우",
@@ -48,7 +45,7 @@ public class FriendController {
             @Parameter(name = "userId", description = "팔로우할 대상 유저의 ID", example = "1")
             @PathVariable("userId") Long targetUserId
     ) {
-        friendLockService.followWithLock(loginUser, targetUserId);
+        friendService.follow(loginUser, targetUserId);
         return ApiResponse.of(FriendSuccessStatus._FOLLOW_SUCCESS, null);
     }
 
