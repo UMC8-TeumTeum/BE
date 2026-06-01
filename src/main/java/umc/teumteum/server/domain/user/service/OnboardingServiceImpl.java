@@ -213,7 +213,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                         REMIND_ALARM_UNIQUE_CONSTRAINT_NAME,
                         SCHEDULE_REMINDER_UNIQUE_CONSTRAINT_NAME
                 )) {
-                    throw new OnboardingException(UserErrorStatus.INVALID_STEP);
+                    throw new OnboardingException(UserErrorStatus.REMIND_ALARM_ALREADY_REGISTERED);
                 }
                 throw e;
             }
@@ -367,7 +367,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     // 반복일정 중복 등록 확인
     private void validateRoutineNotSaved(User user) {
         if (routineRepository.existsByUser(user)) {
-            throw new OnboardingException(UserErrorStatus.INVALID_STEP);
+            throw new OnboardingException(UserErrorStatus.ROUTINE_ALREADY_REGISTERED);
         }
     }
 

@@ -174,8 +174,8 @@ class OnboardingServiceTest {
         OnboardingException exception = assertThrows(OnboardingException.class,
                 () -> onboardingService.saveRoutines(request, testUser)
         );
-        assertEquals(UserErrorStatus.INVALID_STEP.getCode(), exception.getErrorReason().getCode());
-        assertEquals(UserErrorStatus.INVALID_STEP.getMessage(), exception.getErrorReason().getMessage());
+        assertEquals(UserErrorStatus.ROUTINE_ALREADY_REGISTERED.getCode(), exception.getErrorReason().getCode());
+        assertEquals(UserErrorStatus.ROUTINE_ALREADY_REGISTERED.getMessage(), exception.getErrorReason().getMessage());
     }
 
     // ==================== 리마인드 알림 테스트 ====================
@@ -192,8 +192,8 @@ class OnboardingServiceTest {
         OnboardingException exception = assertThrows(OnboardingException.class,
                 () -> onboardingService.saveRemindAlarms(request, testUser)
         );
-        assertEquals(UserErrorStatus.INVALID_STEP.getCode(), exception.getErrorReason().getCode());
-        assertEquals(UserErrorStatus.INVALID_STEP.getMessage(), exception.getErrorReason().getMessage());
+        assertEquals(UserErrorStatus.REMIND_ALARM_ALREADY_REGISTERED.getCode(), exception.getErrorReason().getCode());
+        assertEquals(UserErrorStatus.REMIND_ALARM_ALREADY_REGISTERED.getMessage(), exception.getErrorReason().getMessage());
     }
 
     // ==================== 헬퍼 메서드 ====================
