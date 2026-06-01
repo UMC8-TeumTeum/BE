@@ -29,6 +29,8 @@ public enum UserErrorStatus implements BaseErrorCode {
     EXPIRED_UPLOAD_SESSION(HttpStatus.BAD_REQUEST, "ONBOARDING4010", "프로필 이미지 업로드 세션이 만료되었습니다."),
     INVALID_SLEEP_DURATION(HttpStatus.BAD_REQUEST, "ONBOARDING4011", "수면 패턴은 최대 23시간까지 설정 가능합니다."),
     NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "ONBOARDING4091", "이미 사용 중인 닉네임입니다."),
+    ROUTINE_ALREADY_REGISTERED(HttpStatus.CONFLICT, "ONBOARDING4092", "이미 반복일정이 등록된 사용자입니다."),
+    REMIND_ALARM_ALREADY_REGISTERED(HttpStatus.CONFLICT, "ONBOARDING4093", "이미 리마인드 알림이 등록된 사용자입니다."),
     ;
 
     private final HttpStatus httpStatus;

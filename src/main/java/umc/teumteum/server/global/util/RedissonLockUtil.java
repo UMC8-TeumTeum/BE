@@ -14,12 +14,11 @@ public class RedissonLockUtil {
 
     private final RedissonClient redissonClient;
 
-    private static final long DEFAULT_WAIT_TIME = 3;  // 락 대기 시간
-    private static final TimeUnit DEFAULT_TIME_UNIT = TimeUnit.SECONDS;  // 시간 단위 (초)
+    private static final TimeUnit DEFAULT_TIME_UNIT = TimeUnit.SECONDS;
 
-    // 락 획득&해제 및 action 실행
-    public void executeWithLock(String key, Runnable action) {
-        RLock lock = acquireLock(key);
+    // 락 획득 실패 시 대기하지 않고 즉시 예외 처리
+    public void executeWithLockNoWait(String key, Runnable action) {
+        RLock lock = acquireLockNoWait(key);
         try {
             action.run();
         } finally {
@@ -27,11 +26,11 @@ public class RedissonLockUtil {
         }
     }
 
-    // key로 락을 획득
-    public RLock acquireLock(String key) {
+    // key로 락을 즉시 획득
+    public RLock acquireLockNoWait(String key) {
         RLock lock = redissonClient.getLock(key);
         try {
-            boolean isLocked = lock.tryLock(DEFAULT_WAIT_TIME, DEFAULT_TIME_UNIT);
+            boolean isLocked = lock.tryLock(0, DEFAULT_TIME_UNIT);
             if (!isLocked) {
                 throw new GlobalHandler(ErrorStatus.LOCK_ACQUISITION_FAILED);
             }

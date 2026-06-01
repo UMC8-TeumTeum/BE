@@ -13,6 +13,8 @@ import java.util.List;
 public interface RoutineRepository extends JpaRepository<Routine, Long> {
     List<Routine> findByUserAndWeekday(User user, Weekday weekday);
 
+    boolean existsByUser(User user);
+
     @Modifying
     @Query("delete from Routine r where r.user = :user")
     void deleteByUser(@Param("user") User user);
