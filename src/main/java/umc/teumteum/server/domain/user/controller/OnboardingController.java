@@ -14,8 +14,8 @@ import umc.teumteum.server.domain.user.dto.OnboardingRequestDto;
 import umc.teumteum.server.domain.user.dto.OnboardingResponseDto;
 import umc.teumteum.server.domain.user.entity.User;
 import umc.teumteum.server.domain.user.exception.status.UserSuccessStatus;
+import umc.teumteum.server.domain.user.service.OnboardingLockService;
 import umc.teumteum.server.domain.user.service.OnboardingService;
-import umc.teumteum.server.domain.user.service.UserService;
 import umc.teumteum.server.global.annotation.CurrentUser;
 import umc.teumteum.server.global.apiPayload.ApiResponse;
 
@@ -26,8 +26,8 @@ import umc.teumteum.server.global.apiPayload.ApiResponse;
 @RequestMapping("/api/users")
 public class OnboardingController {
 
-    private final UserService userService;
     private final OnboardingService onboardingService;
+    private final OnboardingLockService onboardingLockService;
 
     @Operation(
             summary = "온보딩 약관 동의",
@@ -111,7 +111,7 @@ public class OnboardingController {
             @RequestBody @Valid OnboardingRequestDto.RoutineListRequest request,
             @CurrentUser @Parameter(hidden = true) User user
     ) {
-        onboardingService.saveRoutines(request, user);
+        onboardingLockService.saveRoutinesWithLock(request, user);
         return ApiResponse.of(UserSuccessStatus.ROUTINE_SAVED, null);
     }
 

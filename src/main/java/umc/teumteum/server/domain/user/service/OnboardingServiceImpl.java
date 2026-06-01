@@ -170,11 +170,14 @@ public class OnboardingServiceImpl implements OnboardingService {
         Map<Weekday, List<OnboardingRequestDto.RoutineDTO>> routinesByDay = groupRoutinesByDay(routines);
         validateRoutineConflictsByDay(routinesByDay);
 
-        // 4. 반복 일정 저장
+        // 4. 반복일정 중복 등록 확인
+        validateRoutineNotSaved(user);
+
+        // 5. 반복 일정 저장
         List<Routine> newRoutines = OnboardingConverter.toRoutineList(routines, user);
         routineJdbcRepository.batchInsertRoutines(newRoutines);
 
-        // 5. 오늘 요일에 해당하는 반복일정을 스케줄에 추가
+        // 6. 오늘 요일에 해당하는 반복일정을 스케줄에 추가
         createTodaySchedulesFromRoutines(user);
     }
 
@@ -343,6 +346,14 @@ public class OnboardingServiceImpl implements OnboardingService {
         List<Routine> todayRoutines = routineRepository.findByUserAndWeekday(user, todayWeekday);
         List<Schedule> routineSchedules = OnboardingConverter.toScheduleList(todayRoutines, user, today);
         scheduleJdbcRepository.batchInsertSchedules(routineSchedules);
+    }
+
+
+    // 반복일정 중복 등록 확인
+    private void validateRoutineNotSaved(User user) {
+        if (routineRepository.existsByUser(user)) {
+            throw new OnboardingException(UserErrorStatus.INVALID_STEP);
+        }
     }
 
 
